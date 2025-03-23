@@ -102,20 +102,79 @@ struct TimelineView: View {
     @StateObject var viewModel = TimelineViewModel()
     @State private var showNewEventView: Bool = false
     @State private var selectedMode: TimelineMode = .week
+    @State private var selectedDate: Date = Date()
+    @State private var isMonthMode: Bool = false
     
     // どのイベントがズームされているかを管理
     @State private var selectedEventID: UUID? = nil
     
     var body: some View {
         VStack(spacing: 0) {
-            Picker("表示モード", selection: $selectedMode) {
-                ForEach(TimelineMode.allCases, id: \.self) { mode in
-                    Text(mode.rawValue).tag(mode)
+            HStack {
+                Spacer()
+                
+                Spacer()
+                Button(action: {
+                    isMonthMode.toggle()
+                }) {
+                    Image(systemName: "calendar")
+                }
+                .padding(.trailing)
+            }
+            
+            if !isMonthMode {
+                // 週間ビュー
+                WeekTimelineView(viewModel: viewModel, selectedDate: $selectedDate, selectedEventID: $selectedEventID)
+            } else {
+                // 月間ビュー
+                MonthTimelineView(viewModel: viewModel, selectedDate: $selectedDate, selectedEventID: $selectedEventID)
+            }
+        }
+        .overlay(
+            VStack{
+                Spacer()
+                HStack{
+                    Spacer()
+                    Button(action: {
+                        showNewEventView = true
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 30))
+                            .padding(20)
+                            .background(.black).opacity(0.8)
+                            .foregroundColor(Color.white)
+                            .clipShape(Circle())
+                    }
+                    .shadow(radius: 3)
+                    .padding()
                 }
             }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding()
-            // タイムラインリスト（連結されたイベント）
+        )
+        .sheet(isPresented: $showNewEventView) {
+            NewEventView(viewModel: viewModel)
+        }
+    }
+}
+
+// 新規追加: 月間カレンダーを表示し、選択した日のイベント一覧を表示するビュー
+struct MonthTimelineView: View {
+    @ObservedObject var viewModel: TimelineViewModel
+    @Binding var selectedDate: Date
+    @Binding var selectedEventID: UUID?
+    
+    var body: some View {
+        VStack {
+            // 1) 月間カレンダーを表示（例: SwiftUI のグラフィカルDatePicker）
+            DatePicker(
+                "月間カレンダー",
+                selection: $selectedDate,
+                displayedComponents: [.date]
+            )
+            .datePickerStyle(GraphicalDatePickerStyle())
+            .labelsHidden().environment(\.locale, Locale(identifier: "ja_JP"))
+            .tint(.black)
+            
+            // 2) 選択した日付のイベント一覧を表示
             ScrollView {
                 VStack(spacing: 0) {
                     // ZStackを使用して連続する垂直線を描画
@@ -125,27 +184,191 @@ struct TimelineView: View {
                             .fill(Color.gray)
                             .frame(width: 1)
                             .offset(x: 68)
-                        
-                        // イベントリスト
-                        VStack(spacing: 0) {
-                            ForEach(viewModel.events) { event in
+                        VStack{
+                            ForEach(eventsForSelectedDate, id: \.id) { event in
                                 TimelineRow(event: event, selectedEventID: $selectedEventID)
                             }
                         }
                     }
                 }
-                .padding(.vertical)
-                Button("新規イベント追加") {
-                    showNewEventView = true
-                }
-                .padding()
             }
         }
-        .sheet(isPresented: $showNewEventView) {
-            NewEventView(viewModel: viewModel)
+    }
+    
+    private var eventsForSelectedDate: [TimelineView.TimelineEvent] {
+        viewModel.events.filter { event in
+            guard let date = dateFromString(event.time) else { return false }
+            return isSameDay(date, selectedDate)
         }
     }
+    
+    private func dateFromString(_ str: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd HH:mm"
+        return formatter.date(from: str)
+    }
+    
+    private func isSameDay(_ d1: Date, _ d2: Date) -> Bool {
+        let cal = Calendar.current
+        return cal.component(.year, from: d1) == cal.component(.year, from: d2)
+            && cal.component(.month, from: d1) == cal.component(.month, from: d2)
+            && cal.component(.day, from: d1) == cal.component(.day, from: d2)
+    }
 }
+
+
+// 新規追加: 1週間の日付を横並びで表示し、選択した日のイベント一覧を表示するビュー
+struct WeekTimelineView: View {
+    @ObservedObject var viewModel: TimelineViewModel
+    @Binding var selectedDate: Date
+    @Binding var selectedEventID: UUID?
+    
+    // 曜日を取得するフォーマッタ（例: "土", "日", "月"...）
+    private let dayOfWeekFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "E"   // 曜日（例: 土, 日, 月 ...）
+        return f
+    }()
+    
+    // 日を取得するフォーマッタ（例: "25"）
+    private let dayOfMonthFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "d"   // 日（例: 25）
+        return f
+    }()
+    
+    // selectedDate の3日前～3日後の計7日間を表示
+    private var weekDates: [Date] {
+        let calendar = Calendar.current
+        guard let startDate = calendar.date(byAdding: .day, value: -3, to: selectedDate) else {
+            return []
+        }
+        return (0..<7).compactMap { dayOffset in
+            calendar.date(byAdding: .day, value: dayOffset, to: startDate)
+        }
+    }
+    
+    private let yearMonthFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "yyyy年M月"
+        return f
+    }()
+    
+    private func eventCount(for date: Date) -> Int {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd HH:mm"
+        return viewModel.events.filter { event in
+            guard let eventDate = formatter.date(from: event.time) else { return false }
+            return isSameDay(eventDate, date)
+        }.count
+    }
+    
+    var body: some View {
+        VStack {
+            // 1) 横スクロールで日付を並べる
+            HStack{
+                Spacer()
+                Text(yearMonthFormatter.string(from: selectedDate))
+                    .font(.system(size: 18))
+                Spacer()
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 5) {
+                    ForEach(weekDates, id: \.self) { date in
+                        let weekday = dayOfWeekFormatter.string(from: date)    // 例: "土"
+                        let day = dayOfMonthFormatter.string(from: date)         // 例: "25"
+                        let count = eventCount(for: date)                        // その日のイベント数
+                        VStack {
+                            VStack(spacing: 5) {
+                                // 上段: 曜日
+                                Text(weekday)
+                                    .font(.system(size: 14))
+                                
+                                // 中段: 日付（選択時は丸背景）
+                                ZStack {
+                                    Circle()
+                                        .fill(isSameDay(date, selectedDate) ? Color.black : Color.clear)
+                                        .frame(width: 36, height: 36)
+                                    Text(day)
+                                        .font(.system(size: 16))
+                                        .foregroundColor(isSameDay(date, selectedDate) ? .white : .black)
+                                }.frame(height: 40)
+                                if count > 0 {
+                                       // イベント数に応じて最大3つまでドットを表示
+                                       HStack(spacing: 2) {
+                                           ForEach(0..<min(count, 3), id: \.self) { _ in
+                                               Circle()
+                                                   .fill(Color.black)
+                                                   .frame(width: 6, height: 6)
+                                           }
+                                       }
+                                       .frame(height: 10)
+                                   } else {
+                                       // ドットがない場合でも同じ高さを確保しておけば
+                                       // 日付の位置が変わらない
+                                       Spacer()
+                                           .frame(height: 10)
+                                   }
+                            }
+                            .padding(.horizontal, 8)
+                            .onTapGesture {
+                                selectedDate = date
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+            
+            // 2) 選択した日付のイベント一覧を表示
+            ScrollView {
+                VStack(spacing: 0) {
+                    // ZStackを使用して連続する垂直線を描画
+                    ZStack(alignment: .leading) {
+                        // 背景の連続垂直線
+                        Rectangle()
+                            .fill(Color.gray)
+                            .frame(width: 1)
+                            .offset(x: 68)
+                        VStack{
+                        ForEach(eventsForSelectedDate, id: \.id) { event in
+                            TimelineRow(event: event, selectedEventID: $selectedEventID)
+                        }
+                    }
+                    }
+                }
+            }
+        }
+    }
+    
+    // 選択した日付と同じ日のイベントのみを抽出
+    private var eventsForSelectedDate: [TimelineView.TimelineEvent] {
+        viewModel.events.filter { event in
+            guard let date = dateFromString(event.time) else { return false }
+            return isSameDay(date, selectedDate)
+        }
+    }
+    
+    // 日付文字列 -> Date に変換するヘルパー
+    private func dateFromString(_ str: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd HH:mm"
+        return formatter.date(from: str)
+    }
+    
+    // 同じ日かどうかを判定するヘルパー
+    private func isSameDay(_ d1: Date, _ d2: Date) -> Bool {
+        let cal = Calendar.current
+        return cal.component(.year, from: d1) == cal.component(.year, from: d2)
+            && cal.component(.month, from: d1) == cal.component(.month, from: d2)
+            && cal.component(.day, from: d1) == cal.component(.day, from: d2)
+    }
+}
+
+
 
 // タイムラインの各行を表示するサブビュー（ズームアニメーション付き）
 // 変更後（画像表示を追加）
@@ -247,36 +470,46 @@ struct NewEventView: View {
     
     var body: some View {
         VStack{
-            HStack {
-                Text("画像")
-                Spacer()
-                if let image = selectedImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 80, height: 80)
-                        .clipped()
-                } else {
-                    Text("画像未選択")
-                        .foregroundColor(.gray)
-                }
+            VStack {
                 Button(action: {
                     showImagePicker = true
                 }) {
-                    Text("選択")
+                    if let image = selectedImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .cornerRadius(10)
+                            .frame(width: 120, height: 120)
+                    } else {
+                        ZStack{
+                            Image(systemName: "photo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 120, height: 120)
+                                .foregroundColor(.black)
+                            RoundedRectangle(cornerRadius: 10, style: .continuous).foregroundColor(.black).opacity(0.3)
+                                .frame(width: 120, height: 100)
+                            Image(systemName: "camera.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundColor(.white)
+                                .frame(width: 40, height: 40)
+                        }
+                    }
                 }
+            }
+            
+            HStack{
+                Text("タイトル")
+                Spacer()
+                TextField("タイトル", text: $title)
+                    .multilineTextAlignment(.trailing)
             }
             HStack{
                 Text("日付を指定")
                 Spacer()
                 DatePickerTextField(date: $eventDate, placeholder: "日付と時間を指定")
                     .frame(height: 44)
-            }
-            HStack{
-                Text("タイトル")
-                Spacer()
-                TextField("タイトル", text: $title)
-                    .multilineTextAlignment(.trailing)
             }
             
             Toggle(isOn: $isOshiActivity) {
