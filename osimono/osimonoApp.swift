@@ -15,8 +15,11 @@ struct osimonoApp: App {
     }
     var body: some Scene {
         WindowGroup {
-//            ContentView()
-            TimelineView()
+//            ContentView1()
+//            TimelineView()
+//            MapView()
+//            AuthManager1(authManager: AuthManager())
+            TopView()
         }
     }
 }

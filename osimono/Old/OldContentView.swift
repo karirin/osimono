@@ -12,7 +12,7 @@ import PhotosUI
 import ShimmerEffect
 import Shimmer
 
-enum UploadImageType: Identifiable {
+enum UploadImageType1: Identifiable {
     case profile
     case background
 
@@ -24,7 +24,7 @@ enum UploadImageType: Identifiable {
     }
 }
 
-struct ContentView: View {
+struct OldContentView: View {
     @State private var image: UIImage? = nil
     @State private var imageUrl: URL? = nil
     @State private var isShowingImagePicker = false
@@ -33,129 +33,158 @@ struct ContentView: View {
     @State private var editFlag = false
     @ObservedObject var authManager = AuthManager()
     @State var backgroundImageUrl: URL?
-    @State private var editType: UploadImageType? = nil
-    @State private var currentEditType: UploadImageType? = nil
-
+    @State private var editType: UploadImageType1? = nil
+    @State private var currentEditType: UploadImageType1? = nil
+    @State private var isLoading = true
 
     var body: some View {
         NavigationView {
-            VStack(spacing: -60){
-                ZStack(alignment: .top){
-                    if let backgroundImageUrl = backgroundImageUrl {
-                        AsyncImage(url: backgroundImageUrl) { phase in
-                            switch phase {
-                            case .success(let image):
-                                ZStack{
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(height: 250)
-                                        .clipped()
-                                        .edgesIgnoringSafeArea(.all)
-                                    if editFlag {
-                                        ZStack{
-                                            Rectangle()
-                                                .foregroundColor(.black)
-                                                .opacity(0.4)
-                                                .frame(height: 250)
-                                                .frame(maxWidth: .infinity)
-                                                .edgesIgnoringSafeArea(.all)
-                                            HStack{
-                                                Spacer()
+            VStack(spacing: isSmallDevice() ? -15 : -60){
+                if isLoading {
+                    ZStack(alignment: .top){
+                        Rectangle()
+                            .frame(height: isSmallDevice() ? 200 : 250)
+                            .frame(maxWidth: .infinity)
+                            .redacted(reason: .placeholder)
+                            .edgesIgnoringSafeArea(.all)
+                            .foregroundColor(.black)
+                            .opacity(0.12)
+                        Circle().foregroundColor(.black).opacity(0.09)
+                            .frame(width: 150, height: 150)
+                    }
+                } else {
+                    ZStack(alignment: .top){
+                        if let backgroundImageUrl = backgroundImageUrl {
+                            
+                            AsyncImage(url: backgroundImageUrl) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    ZStack{
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(height: isSmallDevice() ? 200 : 250)
+                                            .clipped()
+                                            .edgesIgnoringSafeArea(.all)
+                                        if editFlag {
+                                            ZStack{
+                                                Rectangle()
+                                                    .foregroundColor(.black)
+                                                    .opacity(0.2)
+                                                    .frame(height: isSmallDevice() ? 200 : 250)
+                                                    .frame(maxWidth: .infinity)
+                                                    .edgesIgnoringSafeArea(.all)
+                                                HStack{
+                                                    Spacer()
                                                     Image(systemName: "camera.fill")
                                                         .resizable()
                                                         .scaledToFit()
                                                         .frame(width: 40, height: 40)
                                                         .foregroundColor(.white)
-                                            }.padding()
-                                        }.onTapGesture {
-                                            currentEditType = .background
-                                        }
-                                    }
-                                }
-                            default:
-                                Rectangle()
-                                    .frame(height: 250)
-                                    .frame(maxWidth: .infinity)
-                                    .redacted(reason: .placeholder)
-                                    .shimmering()
-                                    .edgesIgnoringSafeArea(.all)
-                            }
-                        }
-                    } else {
-                        Rectangle()
-                            .frame(height: 250)
-                            .frame(maxWidth: .infinity)
-                            .redacted(reason: .placeholder)
-                            .shimmering()
-                            .edgesIgnoringSafeArea(.all)
-                    }
-                    if let imageUrl = imageUrl {
-                        AsyncImage(url: imageUrl) { phase in
-                            switch phase {
-                            case .success(let image):
-                                ZStack{
-                                    image
-                                        .resizable().scaledToFill().frame(width:150,height: 150).cornerRadius(100)
-                                    if editFlag {
-                                        Button(action: {
-                                            currentEditType = .profile
-                                        }) {
-                                            ZStack{
-                                                Circle()
-                                                    .foregroundColor(.black)
-                                                    .opacity(0.4)
-                                                    .frame(width:150,height: 150)
-                                                    .cornerRadius(100)
-                                                Image(systemName: "camera.fill")
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: 40, height: 40)
-                                                    .foregroundColor(.white)
+                                                }.padding()
+                                            }.onTapGesture {
+                                                currentEditType = .background
                                             }
                                         }
                                     }
+                                default:
+                                    Rectangle()
+                                        .frame(height: isSmallDevice() ? 200 : 250)
+                                        .frame(maxWidth: .infinity)
+                                        .redacted(reason: .placeholder)
+                                        .shimmering()
+                                        .edgesIgnoringSafeArea(.all)
+                                        .foregroundColor(.black)
+                                        .opacity(0.4)
                                 }
-                            case .failure(_):
-                                Button(action: {
-                                    currentEditType = .profile
-                                }) {
-                                    ZStack{
-                                        Circle().foregroundColor(.black).opacity(0.3)
-                                            .frame(width: 150, height: 150)
-                                            .shimmering()
-                                    }
-                                }
-                            case .empty:
-                                Circle().foregroundColor(.black).opacity(0.3)
-                                    .frame(width: 150, height: 150)
-                                    .shimmering()
-                            @unknown default:
-                                Circle().foregroundColor(.black).opacity(0.3)
-                                    .frame(width: 150, height: 150)
-                                    .shimmering()
+                            }
+                        } else {
+                            ZStack{
+                                Rectangle()
+                                    .foregroundColor(.black)
+                                    .opacity(0.2)
+                                    .frame(height: isSmallDevice() ? 200 : 250)
+                                    .frame(maxWidth: .infinity)
+                                    .edgesIgnoringSafeArea(.all)
+                                HStack{
+                                    Spacer()
+                                    Image(systemName: "camera.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 40, height: 40)
+                                        .foregroundColor(.white)
+                                }.padding()
+                            }.onTapGesture {
+                                currentEditType = .background
                             }
                         }
-                    } else {
-                        Button(action: {
-                            isShowingImagePicker = true
-                        }) {
-                            ZStack {
-                                Image(systemName: "person.fill")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 120, height: 120)
-                                    .foregroundColor(.black)
-                                    .clipShape(Circle())
-                                
-                                Circle().foregroundColor(.black).opacity(0.3)
-                                    .frame(width: 150, height: 150)
-                                
-                                Image(systemName: "camera.fill")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .foregroundColor(.white)
-                                    .frame(width: 40, height: 40)
+                        if let imageUrl = imageUrl {
+                            AsyncImage(url: imageUrl) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    ZStack{
+                                        image
+                                            .resizable().scaledToFill().frame(width:150,height: 150).cornerRadius(100)
+                                        if editFlag {
+                                            Button(action: {
+                                                currentEditType = .profile
+                                            }) {
+                                                ZStack{
+                                                    Circle()
+                                                        .foregroundColor(.black)
+                                                        .opacity(0.2)
+                                                        .frame(width:150,height: 150)
+                                                        .cornerRadius(100)
+                                                    Image(systemName: "camera.fill")
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: 40, height: 40)
+                                                        .foregroundColor(.white)
+                                                }
+                                            }
+                                        }
+                                    }
+                                case .failure(_):
+                                    Button(action: {
+                                        currentEditType = .profile
+                                    }) {
+                                        ZStack{
+                                            Circle().foregroundColor(.black).opacity(0.3)
+                                                .frame(width: 150, height: 150)
+                                                .shimmering()
+                                        }
+                                    }
+                                case .empty:
+                                    Circle().foregroundColor(.black).opacity(0.3)
+                                        .frame(width: 150, height: 150)
+                                        .shimmering()
+                                @unknown default:
+                                    Circle().foregroundColor(.black).opacity(0.3)
+                                        .frame(width: 150, height: 150)
+                                        .shimmering()
+                                }
+                            }
+                        } else {
+                            Button(action: {
+                                isShowingImagePicker = true
+                            }) {
+                                ZStack {
+                                    Image(systemName: "person.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 120, height: 120)
+                                        .foregroundColor(.black)
+                                        .clipShape(Circle())
+                                    
+                                    Circle().foregroundColor(.black).opacity(0.3)
+                                        .frame(width: 150, height: 150)
+                                    
+                                    Image(systemName: "camera.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .foregroundColor(.white)
+                                        .frame(width: 40, height: 40)
+                                }
                             }
                         }
                     }
@@ -163,7 +192,7 @@ struct ContentView: View {
                 GoodsListView(addFlag: $addFlag)
             }
             .overlay(
-                VStack{
+                VStack(spacing:-5){
                     Spacer()
                     HStack{
                         Spacer()
@@ -172,7 +201,8 @@ struct ContentView: View {
                         }) {
                             Image(systemName: "square.and.pencil")
                                 .font(.system(size: 30))
-                                .padding(20)
+                                .padding(15)
+                                .padding(.bottom,3)
                                 .background(.black).opacity(0.8)
                                 .foregroundColor(Color.white)
                                 .clipShape(Circle())
@@ -187,7 +217,7 @@ struct ContentView: View {
                         }) {
                             Image(systemName: "plus")
                                 .font(.system(size: 30))
-                                .padding(20)
+                                .padding(18)
                                 .background(.black).opacity(0.8)
                                 .foregroundColor(Color.white)
                                 .clipShape(Circle())
@@ -199,12 +229,7 @@ struct ContentView: View {
             )
         }
         .onAppear {
-            fetchUserImageURL(type: .profile) { url in
-                self.imageUrl = url
-            }
-            fetchUserImageURL(type: .background) { url in
-                self.backgroundImageUrl = url
-            }
+            loadAllData()
         }
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(image: $image, onImagePicked: { pickedImage in
@@ -217,7 +242,7 @@ struct ContentView: View {
                 image: $image,
                 onImagePicked: { pickedImage in
                     self.image = pickedImage
-                    uploadImageToFirebase(pickedImage, type: type)
+//                    uploadImageToFirebase(pickedImage, type: type)
                     fetchUserImageURL(type: .profile) { url in
                         self.imageUrl = url
                     }
@@ -229,9 +254,31 @@ struct ContentView: View {
         }
     }
     
+    func loadAllData() {
+        isLoading = true
+
+        let dispatchGroup = DispatchGroup()
+        
+        dispatchGroup.enter()
+        fetchUserImageURL(type: .profile) { url in
+            self.imageUrl = url
+            dispatchGroup.leave()
+        }
+
+        dispatchGroup.enter()
+        fetchUserImageURL(type: .background) { url in
+            self.backgroundImageUrl = url
+            dispatchGroup.leave()
+        }
+
+        dispatchGroup.notify(queue: .main) {
+            print("isLoading false")
+            self.isLoading = false // 両方の画像ロード完了後に false にする
+        }
+    }
+    
     func fetchUserImageURL(type: UploadImageType, completion: @escaping (URL?) -> Void) {
         guard let userID = Auth.auth().currentUser?.uid else {
-            print("ユーザーがログインしていません")
             completion(nil)
             return
         }
@@ -240,6 +287,22 @@ struct ContentView: View {
         let storageRef = Storage.storage().reference().child("images/\(userID)/\(filename)")
 
         storageRef.downloadURL { url, error in
+            completion(url)
+        }
+    }
+
+    /// ✅ Firebase Storage からユーザーの画像URLを取得
+    func fetchUserImageURL(completion: @escaping (URL?) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("ユーザーがログインしていません")
+            completion(nil)
+            return
+        }
+
+        let storageRef = Storage.storage().reference()
+        let imageRef = storageRef.child("images/\(userID)/profile.jpg")
+
+        imageRef.downloadURL { url, error in
             if let error = error {
                 print("画像URL取得エラー: \(error.localizedDescription)")
                 completion(nil)
@@ -249,7 +312,6 @@ struct ContentView: View {
         }
     }
 
-    
     func uploadImageToFirebase(_ image: UIImage, type: UploadImageType) {
         guard let userID = Auth.auth().currentUser?.uid else {
             print("ユーザーがログインしていません")
@@ -283,7 +345,6 @@ struct ContentView: View {
         }
     }
 
-
     /// ✅ 画像を Firebase Storage にアップロード
     func uploadImageToFirebase(_ image: UIImage) {
            guard let userID = Auth.auth().currentUser?.uid else {
@@ -310,27 +371,6 @@ struct ContentView: View {
                }
            }
        }
-
-    /// ✅ Firebase Storage からユーザーの画像URLを取得
-    func fetchUserImageURL(completion: @escaping (URL?) -> Void) {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            print("ユーザーがログインしていません")
-            completion(nil)
-            return
-        }
-
-        let storageRef = Storage.storage().reference()
-        let imageRef = storageRef.child("images/\(userID)/profile.jpg")
-
-        imageRef.downloadURL { url, error in
-            if let error = error {
-                print("画像URL取得エラー: \(error.localizedDescription)")
-                completion(nil)
-            } else {
-                completion(url)
-            }
-        }
-    }
 }
 
 struct ShimmerView: View {
@@ -455,7 +495,6 @@ struct ImageEditView: View {
     }
 }
 
-
 #Preview {
-    ContentView()
+    OldContentView()
 }

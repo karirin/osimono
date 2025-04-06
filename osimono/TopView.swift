@@ -29,13 +29,13 @@ struct TopView: View {
                             .frame(width:1,height:1)
                         Text("年表")
                     }
-//                    ZStack {
-//                        SettingView()
-//                    }
-//                    .tabItem {
-//                        Image(systemName: "gearshape.fill")
-//                        Text("設定")
-//                    }
+                    ZStack {
+                        MapView()
+                    }
+                    .tabItem {
+                        Image(systemName: "map")
+                        Text("マップ")
+                    }
                 }
             
     }

@@ -51,9 +51,22 @@
 		1870AFCD2D8BC860004B827B /* osimonoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = osimonoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		18AB0D5D2DA244880047BB3B /* Exceptions for "osimono" folder in "osimono" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				TimeLineView/TimelineMockupView.swift,
+			);
+			target = 1870AFB22D8BC85E004B827B /* osimono */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1870AFB52D8BC85E004B827B /* osimono */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				18AB0D5D2DA244880047BB3B /* Exceptions for "osimono" folder in "osimono" target */,
+			);
 			path = osimono;
 			sourceTree = "<group>";
 		};
@@ -465,6 +478,7 @@
 				DEVELOPMENT_TEAM = F3XS565TSX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "このアプリでは、現在地を取得して地図表示やサービスの提供に利用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -495,6 +509,7 @@
 				DEVELOPMENT_TEAM = F3XS565TSX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "このアプリでは、現在地を取得して地図表示やサービスの提供に利用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
