@@ -39,6 +39,8 @@ struct TimelineView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                         .overlay(
                             HStack {
+                                
+                                Spacer()
                                 Button(action: {
                                     withAnimation {
                                         isMonthMode.toggle()
@@ -51,15 +53,13 @@ struct TimelineView: View {
                                         .background(cardBackgroundColor.opacity(0.8))
                                         .clipShape(Circle())
                                 }
-                                .padding(.trailing, 8)
-                                
-                                Spacer()
+                                .padding(.leading, 8)
                             }
                         )
                 }
                 .padding(.top, 8)
                 .padding(.horizontal, 16)
-                .padding(.bottom, 8)
+                .padding(.bottom, 14)
                 
                 Divider()
                     .padding(.horizontal, 16)

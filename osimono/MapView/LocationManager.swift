@@ -42,6 +42,10 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Location error: \(error.localizedDescription)")
     }
+    
+    func startUpdatingLocation() {
+        manager.startUpdatingLocation()
+    }
 }
 
 class LocationViewModel: ObservableObject {

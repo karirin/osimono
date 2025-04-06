@@ -30,40 +30,47 @@ struct EnhancedTimelineRow: View {
     }
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(spacing: 10) {
             // Time column
             VStack(alignment: .trailing, spacing: 4) {
                 Text(formattedTime)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(Color(UIColor.secondaryLabel))
             }
-            .frame(width: 46)
-            
-            // Timeline dot and line
-            VStack(spacing: 0) {
-                Circle()
-                    .fill(event.color)
-                    .frame(width: 12, height: 12)
-                    .shadow(color: event.color.opacity(0.3), radius: 2, x: 0, y: 1)
+//            .frame(width: 46)
                 
-                if selectedEventID == event.id {
-                    Rectangle()
-                        .fill(event.color.opacity(0.5))
-                        .frame(width: 2)
-                } else {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 2)
-                }
-            }
-            .frame(height: selectedEventID == event.id ? 200 : 80)
-            
+           
+                // Timeline dot and line
+
+                    Circle()
+                        .fill(event.color)
+                        .frame(width: 12, height: 12)
+                        .shadow(color: event.color.opacity(0.3), radius: 2, x: 0, y: 1)
+//                }
+//                .frame(height: selectedEventID == event.id ? 200 : 80)
             // Event content
             VStack(alignment: .leading, spacing: 8) {
-                Text(event.title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(UIColor.label))
-                
+                HStack{
+                    Text(event.title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Color(UIColor.label))
+                        // 画像アイコン分の余白を確保
+                        .padding(.trailing, (selectedEventID != event.id && event.imageURL != nil) ? 30 : 0)
+                    
+            }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .overlay(
+                    Group {
+                        if selectedEventID != event.id, event.imageURL != nil {
+                            Image(systemName: "photo")
+                                .font(.system(size: 20))
+                                .opacity(0.5)
+                                .padding(.trailing, 8)
+                        }
+                    },
+                    alignment: .trailing
+                )
+
                 if selectedEventID == event.id, let imageURL = event.imageURL, let url = URL(string: imageURL) {
                     AsyncImage(url: url) { phase in
                         switch phase {
@@ -98,6 +105,7 @@ struct EnhancedTimelineRow: View {
                     .transition(.opacity)
                 }
             }
+            .frame(maxWidth: .infinity)
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 16)
@@ -115,5 +123,11 @@ struct EnhancedTimelineRow: View {
                 }
             }
         }
+    }
+}
+
+struct EnhancedTimelineRow_Previews: PreviewProvider {
+    static var previews: some View {
+        TimelineView()
     }
 }

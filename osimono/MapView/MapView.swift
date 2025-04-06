@@ -1,4 +1,3 @@
-
 import MapKit
 import SwiftUI
 import Firebase
@@ -54,41 +53,41 @@ struct MapView: View {
                 // Top header overlay
                 VStack {
                     HStack {
-                        Button(action: {
-                            showUserProfile = true
-                        }) {
-                            Image(systemName: "person.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                                .padding(10)
-                                .background(Color(hex: "6366F1"))
-                                .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)
-                        }
+//                        Button(action: {
+//                            showUserProfile = true
+//                        }) {
+//                            Image(systemName: "person.circle.fill")
+//                                .font(.system(size: 24))
+//                                .foregroundColor(.white)
+//                                .padding(10)
+//                                .background(Color(hex: "6366F1"))
+//                                .clipShape(Circle())
+//                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)
+//                        }
                         
                         Spacer()
                         
-                        Text("オシモノ")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.black)
-                            .padding(8)
-                            .background(Color.white.opacity(0.9))
-                            .cornerRadius(15)
-                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
+//                        Text("オシモノ")
+//                            .font(.system(size: 20, weight: .bold))
+//                            .foregroundColor(.black)
+//                            .padding(8)
+//                            .background(Color.white.opacity(0.9))
+//                            .cornerRadius(15)
+//                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
                         
                         Spacer()
                         
-                        Button(action: {
-                            showFilterSheet = true
-                        }) {
-                            Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                                .padding(10)
-                                .background(Color(hex: "6366F1"))
-                                .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)
-                        }
+//                        Button(action: {
+//                            showFilterSheet = true
+//                        }) {
+//                            Image(systemName: "line.3.horizontal.decrease.circle.fill")
+//                                .font(.system(size: 24))
+//                                .foregroundColor(.white)
+//                                .padding(10)
+//                                .background(Color(hex: "6366F1"))
+//                                .clipShape(Circle())
+//                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)
+//                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 10)
@@ -164,10 +163,30 @@ struct MapView: View {
                 }
             }
             .overlay(
+                                    HStack {
+                                        Spacer()
                 VStack {
                     Spacer()
-                    HStack {
-                        Spacer()
+                        
+                        // 現在地ボタン
+                        Button(action: {
+                            moveToCurrentLocation()
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 50, height: 50)
+                                    .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
+                                
+                                Image(systemName: "location.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(Color(hex: "6366F1"))
+                            }
+                        }
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 10) // Position above the add button
+                        
+                        // 追加ボタン
                         Button(action: {
                             showAddLocation = true
                         }) {
@@ -189,7 +208,7 @@ struct MapView: View {
                             }
                         }
                         .padding(.trailing, 16)
-                        .padding(.bottom, 200) // Position above the card list
+                        .padding(.bottom, 170) // Position above the card list
                     }
                 }
             )
@@ -210,6 +229,25 @@ struct MapView: View {
             }
             .sheet(isPresented: $showUserProfile) {
                 UserProfileView()
+            }
+        }
+    }
+    
+    // 現在地に移動する関数
+    func moveToCurrentLocation() {
+        // 位置情報の権限をリクエストして現在位置を取得
+        locationManager.startUpdatingLocation()
+        
+        // ハプティックフィードバックを追加
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        // 現在位置が利用可能な場合、地図の中心を現在位置に設定
+        if let userLocation = locationManager.userLocation?.coordinate {
+            withAnimation(.easeInOut(duration: 0.5)) {
+                region.center = userLocation
+                // ズームレベルを適切に調整
+                region.span = MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)
             }
         }
     }

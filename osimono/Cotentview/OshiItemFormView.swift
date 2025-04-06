@@ -54,15 +54,15 @@ struct OshiItemFormView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         // ヘッダータイトル
-                        Text("推しアイテムを追加")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(primaryColor)
-                            .padding(.top)
-                            .padding(.horizontal)
+//                        Text("推しの投稿を追加")
+//                            .font(.system(size: 24, weight: .bold))
+//                            .foregroundColor(primaryColor)
+//                            .padding(.top)
+//                            .padding(.horizontal)
                         
                         // アイテムタイプ選択
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("アイテムタイプ")
+                            Text("投稿タイプ")
                                 .font(.headline)
                                 .foregroundColor(.gray)
                                 .padding(.horizontal)
@@ -238,6 +238,7 @@ struct OshiItemFormView: View {
                                     .background(cardColor)
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                    .environment(\.locale, Locale(identifier: "ja_JP"))
                             }
                             
                             // タグ
@@ -339,7 +340,7 @@ struct OshiItemFormView: View {
                         )
                 }
             }
-            .navigationBarTitle("", displayMode: .inline)
+            .navigationBarTitle("推しの投稿を追加", displayMode: .inline)
             .navigationBarItems(leading:
                 Button(action: {
                     presentationMode.wrappedValue.dismiss()
@@ -554,4 +555,8 @@ struct OshiItemFormView: View {
             }
         }
     }
+}
+
+#Preview {
+    OshiItemFormView()
 }

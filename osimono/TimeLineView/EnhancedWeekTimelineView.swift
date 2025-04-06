@@ -9,8 +9,6 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 
-// MARK: - Enhanced Week Timeline View
-// MARK: - Enhanced Week Timeline View
 struct EnhancedWeekTimelineView: View {
     @ObservedObject var viewModel: TimelineViewModel
     @Binding var selectedDate: Date
@@ -153,9 +151,10 @@ struct EnhancedWeekTimelineView: View {
                     }
                 }
             }
-            
+            .frame(height: 100)
             // Timeline Events List with modern styling
             if isFlag {
+                ForEach(eventsForSelectedDate, id: \.id) { event in}
                 // Empty state with elegant design
                 VStack(spacing: 20) {
                     Spacer()
@@ -181,11 +180,15 @@ struct EnhancedWeekTimelineView: View {
                     
                     Spacer()
                 }
-                .padding(.top, 40)
             } else {
                 // Events list with beautiful timeline design
                 ScrollView {
-                    VStack(spacing: 0) {
+                    ZStack{
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 2)
+                            .offset(x: -124)
+                    VStack(spacing: 10) {
                         ForEach(eventsForSelectedDate, id: \.id) { event in
                             EnhancedTimelineRow(
                                 event: event,
@@ -193,6 +196,7 @@ struct EnhancedWeekTimelineView: View {
                             )
                             .padding(.bottom, 8)
                         }
+                    }
                     }
                     .padding(.vertical, 16)
                     .padding(.horizontal, 16)
@@ -262,5 +266,11 @@ struct EnhancedWeekTimelineView: View {
         return cal.component(.year, from: d1) == cal.component(.year, from: d2)
             && cal.component(.month, from: d1) == cal.component(.month, from: d2)
             && cal.component(.day, from: d1) == cal.component(.day, from: d2)
+    }
+}
+
+struct EnhancedWeekTimelineView_Previews: PreviewProvider {
+    static var previews: some View {
+        TimelineView()
     }
 }

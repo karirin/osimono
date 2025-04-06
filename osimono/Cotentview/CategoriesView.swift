@@ -255,3 +255,7 @@ struct CategoriesView: View {
         }
     }
 }
+
+#Preview {
+    TopView()
+}

@@ -121,7 +121,7 @@ struct EnhancedAddLocationView: View {
                 }
                 .padding(.horizontal)
             }
-            .padding(.top,40)
+            .padding(.top,isSmallDevice() ? 0 : 40)
             .edgesIgnoringSafeArea(.all)
             .frame(height: 50)
             
@@ -197,37 +197,39 @@ struct EnhancedAddLocationView: View {
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.black)
                         
+                            ScrollView(.horizontal, showsIndicators: false){
                         HStack {
-                            ForEach(categories, id: \.self) { category in
-                                Button(action: {
-                                    selectedCategory = category
-                                }) {
-                                    HStack {
-                                        Circle()
-                                            .fill(categoryColor(category))
-                                            .frame(width: 12, height: 12)
-                                        
-                                        Text(category)
-                                            .font(.system(size: 14))
+                                ForEach(categories, id: \.self) { category in
+                                    Button(action: {
+                                        selectedCategory = category
+                                    }) {
+                                        HStack {
+                                            Circle()
+                                                .fill(categoryColor(category))
+                                                .frame(width: 12, height: 12)
+                                            
+                                            Text(category)
+                                                .font(.system(size: 14))
+                                        }
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .fill(selectedCategory == category ?
+                                                      categoryColor(category).opacity(0.15) :
+                                                        Color.gray.opacity(0.1))
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .stroke(selectedCategory == category ?
+                                                        categoryColor(category) :
+                                                            Color.clear,
+                                                        lineWidth: 1)
+                                        )
                                     }
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .fill(selectedCategory == category ?
-                                                  categoryColor(category).opacity(0.15) :
-                                                  Color.gray.opacity(0.1))
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(selectedCategory == category ?
-                                                    categoryColor(category) :
-                                                    Color.clear,
-                                                   lineWidth: 1)
-                                    )
+                                    .foregroundColor(selectedCategory == category ?
+                                                     categoryColor(category) : .gray)
                                 }
-                                .foregroundColor(selectedCategory == category ?
-                                                 categoryColor(category) : .gray)
                             }
                         }
                         .padding(.vertical, 4)
@@ -322,7 +324,7 @@ struct EnhancedAddLocationView: View {
                         
                         if let coordinate = coordinate {
                             Map(coordinateRegion: $region, annotationItems: [MapAnnotationItem(coordinate: coordinate)]) { item in
-                                MapAnnotation(coordinate: item.coordinate, anchorPoint: CGPoint(x: 0.5, y: 1.0)) {
+                                MapAnnotation(coordinate: item.coordinate, anchorPoint: CGPoint(x: 0.5, y: 0.5)) {
                                     MapPinView(
                                         imageName: "",
                                         isSelected: true,
@@ -497,4 +499,8 @@ struct EnhancedAddLocationView: View {
         "徳島県", "香川県", "愛媛県", "高知県",
         "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
     ]
+}
+
+#Preview {
+    EnhancedAddLocationView(viewModel: LocationViewModel())
 }

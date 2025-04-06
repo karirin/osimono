@@ -107,7 +107,7 @@ struct EnhancedNewEventView: View {
             .navigationBarHidden(true) // ナビゲーションバーを非表示にする
         }
         .sheet(isPresented: $isShowingImagePicker) {
-//            ImagePicker(selectedImage: $selectedImage)
+            ImageTimeLinePicker(selectedImage: $selectedImage)
         }
         .onAppear {
             isTitleFocused = true
@@ -227,6 +227,7 @@ struct EnhancedNewEventView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .padding(.horizontal, 12)
+                .environment(\.locale, Locale(identifier: "ja_JP"))
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(cardBackgroundColor)
@@ -394,4 +395,8 @@ struct EnhancedNewEventView: View {
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
     }
+}
+
+#Preview {
+    EnhancedNewEventView(viewModel: TimelineViewModel(), initialDate: Date())
 }
