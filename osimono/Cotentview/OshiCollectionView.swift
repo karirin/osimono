@@ -109,7 +109,7 @@ struct OshiCollectionView: View {
     let categories = ["すべて", "グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
     
     // アイテムタイプ（「聖地巡礼」と「その他」を追加）
-    let itemTypes = ["すべて", "グッズ", "SNS投稿", "ライブ記録", "聖地巡礼", "その他"]
+    let itemTypes = ["すべて", "グッズ", "聖地巡礼", "ライブ記録", "SNS投稿", "その他"]
     
     var userId: String? {
         Auth.auth().currentUser?.uid
@@ -213,95 +213,95 @@ struct OshiCollectionView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
             .padding(.top, isSmallDevice() ? 0 : 0)
-            // アイテムタイプ選択
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(itemTypes, id: \.self) { type in
-                        Button(action: {
-                            withAnimation {
-                                selectedItemType = type
-                            }
-                            generateHapticFeedback()
-                        }) {
-                            HStack {
-                                Image(systemName: itemTypeIcon(for: type))
-                                Text(type)
-                            }
-                            .font(.system(size: 14))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(selectedItemType == type ? primaryColor : Color.gray.opacity(0.1))
-                            )
-                            .foregroundColor(selectedItemType == type ? .white : .gray)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-            }
-            
-            // カテゴリー選択（グッズタイプ選択時のみ表示）
-            if selectedItemType == "すべて" || selectedItemType == "グッズ" {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(categories, id: \.self) { category in
-                            Button(action: {
-                                withAnimation {
-                                    selectedCategory = category
-                                }
-                                generateHapticFeedback()
-                            }) {
-                                Text(category)
-                                    .font(.system(size: 14))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .fill(selectedCategory == category ? accentColor : Color.gray.opacity(0.1))
-                                    )
-                                    .foregroundColor(selectedCategory == category ? .white : .gray)
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                }
-            }
-            
+            // 変更部分: showingFilterMenuがtrueの時に表示されるフィルターメニューの内容を変更します
             if showingFilterMenu {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("並び替え")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.gray)
-                    
-                    HStack {
-                        ForEach(["新しい順", "古い順", "価格高い順", "価格安い順", "お気に入り順"], id: \.self) { option in
-                            Button(action: {
-                                sortOption = option
-                                withAnimation {
-                                    showingFilterMenu = false
-                                }
-                            }) {
-                                Text(option)
-                                    .font(.system(size: 12))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .stroke(sortOption == option ? primaryColor : Color.gray.opacity(0.3), lineWidth: 1)
+                    // カテゴリー選択
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("カテゴリー")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.gray)
+                        
+                        // カテゴリボタン
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(categories, id: \.self) { category in
+                                    Button(action: {
+                                        selectedCategory = category
+                                        generateHapticFeedback()
+                                    }) {
+                                        Text(category)
+                                            .font(.system(size: 12))
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 6)
                                             .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(sortOption == option ? primaryColor.opacity(0.1) : Color.clear)
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    .fill(selectedCategory == category ? accentColor : Color.gray.opacity(0.1))
                                             )
-                                    )
-                                    .foregroundColor(sortOption == option ? primaryColor : .gray)
+                                            .foregroundColor(selectedCategory == category ? .white : .gray)
+                                    }
+                                }
                             }
-                            .padding(.trailing, 4)
                         }
                     }
-                    .padding(.bottom, 4)
+                    
+                    Divider()
+                        .padding(.vertical, 8)
+                    
+                    // 並び替え
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("並び替え")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.gray)
+                        
+                        // 並び替えオプション
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(["新しい順", "古い順", "価格高い順", "価格安い順", "お気に入り順"], id: \.self) { option in
+                                    Button(action: {
+                                        sortOption = option
+                                        generateHapticFeedback()
+                                    }) {
+                                        Text(option)
+                                            .font(.system(size: 12))
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 6)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    .stroke(sortOption == option ? primaryColor : Color.gray.opacity(0.3), lineWidth: 1)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 20)
+                                                            .fill(sortOption == option ? primaryColor.opacity(0.1) : Color.clear)
+                                                    )
+                                            )
+                                            .foregroundColor(sortOption == option ? primaryColor : .gray)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 適用ボタン
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            withAnimation {
+                                showingFilterMenu = false
+                            }
+                        }) {
+                            Text("適用")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(primaryColor)
+                                )
+                        }
+                        Spacer()
+                    }
+                    .padding(.top, 12)
                 }
                 .padding()
                 .background(cardColor)
@@ -374,16 +374,16 @@ struct OshiCollectionView: View {
             } else {
                 // コレクション表示
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 15) {
+                    LazyVGrid(columns: [GridItem(.flexible()),GridItem(.flexible()), GridItem(.flexible())], spacing: 5) {
                         ForEach(filteredItems) { item in
                             NavigationLink(destination: OshiItemDetailView(item: item)) {
                                 OshiItemCard(item: item)
                             }
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal,5)
                     .padding(.top, 8)
-                    .padding(.bottom, 80) // 下部のボタンのためのスペース
+                    .padding(.bottom, 160) // 下部のボタンのためのスペース
                 }
             }
         }
@@ -408,9 +408,9 @@ struct OshiCollectionView: View {
     func itemTypeIcon(for type: String) -> String {
         switch type {
         case "グッズ": return "gift.fill"
-        case "SNS投稿": return "bubble.right.fill"
-        case "ライブ記録": return "music.note.list"
         case "聖地巡礼": return "mappin.and.ellipse"
+        case "ライブ記録": return "music.note.list"
+        case "SNS投稿": return "bubble.right.fill"
         case "その他": return "ellipsis.circle.fill"
         default: return "square.grid.2x2.fill"
         }

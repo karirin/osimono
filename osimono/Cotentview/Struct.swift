@@ -30,6 +30,51 @@ struct UserProfile: Codable {
     var bio: String?
 }
 
+struct NumberTextField: UIViewRepresentable {
+    @Binding var text: String
+    var placeholder: String = ""
+
+    func makeUIView(context: Context) -> UITextField {
+        let textField = UITextField()
+        textField.placeholder = placeholder
+        textField.keyboardType = .numberPad
+        textField.inputAccessoryView = context.coordinator.toolbar
+        textField.delegate = context.coordinator
+        return textField
+    }
+
+    func updateUIView(_ uiView: UITextField, context: Context) {
+        uiView.text = text
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text)
+    }
+
+    class Coordinator: NSObject, UITextFieldDelegate {
+        @Binding var text: String
+        var toolbar: UIToolbar
+
+        init(text: Binding<String>) {
+            _text = text
+            toolbar = UIToolbar()
+            super.init() // ここで super.init() を呼び出す
+            toolbar.sizeToFit()
+            let flexSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+            let doneButton = UIBarButtonItem(title: "完了", style: .done, target: self, action: #selector(doneTapped))
+            toolbar.items = [flexSpace, doneButton]
+        }
+
+        @objc func doneTapped() {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
+
+        func textFieldDidChangeSelection(_ textField: UITextField) {
+            self.text = textField.text ?? ""
+        }
+    }
+}
+
 struct ImageTimeLinePicker: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
     @Binding var selectedImage: UIImage?

@@ -41,9 +41,9 @@ struct CategoriesView: View {
     // アイテムタイプ（「聖地巡礼」と「その他」を追加）
     let itemTypes = [
         OshiCategory(name: "グッズ", icon: "gift.fill"),
-        OshiCategory(name: "SNS投稿", icon: "bubble.right.fill"),
-        OshiCategory(name: "ライブ記録", icon: "music.note.list"),
         OshiCategory(name: "聖地巡礼", icon: "mappin.and.ellipse"),
+        OshiCategory(name: "ライブ記録", icon: "music.note.list"),
+        OshiCategory(name: "SNS投稿", icon: "bubble.right.fill"),
         OshiCategory(name: "その他", icon: "ellipsis.circle.fill")
     ]
     

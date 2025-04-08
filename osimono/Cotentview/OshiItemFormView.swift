@@ -1,10 +1,3 @@
-//
-//  OshiItemFormView.swift
-//  osimono
-//
-//  Created by Apple on 2025/04/06.
-//
-
 import SwiftUI
 import Firebase
 import FirebaseAuth
@@ -24,7 +17,11 @@ struct OshiItemFormView: View {
     @State private var selectedImage: UIImage?
     @State private var isShowingImagePicker = false
     @State private var isLoading = false
-    @State private var tagsInput: String = ""
+    
+    // タグ関連状態
+    @State private var tags: [String] = []
+    @State private var newTag: String = ""
+    
     @State private var itemType: String = "グッズ"
     @State private var showAlert = false
     @State private var alertMessage = ""
@@ -40,7 +37,7 @@ struct OshiItemFormView: View {
     let categories = ["グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
     
     // アイテムタイプ
-    let itemTypes = ["グッズ", "SNS投稿", "ライブ記録", "聖地巡礼", "その他"]
+    let itemTypes = ["グッズ", "聖地巡礼", "ライブ記録", "SNS投稿", "その他"]
     
     var userId: String? {
         Auth.auth().currentUser?.uid
@@ -53,13 +50,6 @@ struct OshiItemFormView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        // ヘッダータイトル
-//                        Text("推しの投稿を追加")
-//                            .font(.system(size: 24, weight: .bold))
-//                            .foregroundColor(primaryColor)
-//                            .padding(.top)
-//                            .padding(.horizontal)
-                        
                         // アイテムタイプ選択
                         VStack(alignment: .leading, spacing: 8) {
                             Text("投稿タイプ")
@@ -186,8 +176,7 @@ struct OshiItemFormView: View {
                                         .font(.headline)
                                         .foregroundColor(.gray)
                                     
-                                    TextField("例: 5500", text: $price)
-                                        .keyboardType(.numberPad)
+                                    NumberTextField(text: $price, placeholder: "例: 5500")
                                         .padding()
                                         .background(cardColor)
                                         .cornerRadius(12)
@@ -241,17 +230,55 @@ struct OshiItemFormView: View {
                                     .environment(\.locale, Locale(identifier: "ja_JP"))
                             }
                             
-                            // タグ
+                            // タグ（新しい実装）
                             VStack(alignment: .leading, spacing: 5) {
-                                Text("タグ（カンマ区切りで入力）")
+                                Text("タグ")
                                     .font(.headline)
                                     .foregroundColor(.gray)
                                 
-                                TextField("例: BTS, RM, ARMY", text: $tagsInput)
-                                    .padding()
-                                    .background(cardColor)
-                                    .cornerRadius(12)
-                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                // 現在のタグ表示
+                                if !tags.isEmpty {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack {
+                                            ForEach(tags.indices, id: \.self) { index in
+                                                HStack(spacing: 4) {
+                                                    Text("#\(tags[index])")
+                                                        .font(.system(size: 14))
+                                                        .foregroundColor(accentColor)
+                                                    
+                                                    Button(action: {
+                                                        tags.remove(at: index)
+                                                    }) {
+                                                        Image(systemName: "xmark.circle.fill")
+                                                            .foregroundColor(.gray)
+                                                            .font(.system(size: 14))
+                                                    }
+                                                }
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 5)
+                                                .background(accentColor.opacity(0.1))
+                                                .cornerRadius(15)
+                                            }
+                                        }
+                                    }
+                                    .frame(height: 40)
+                                    .padding(.vertical, 5)
+                                }
+                                
+                                // 新しいタグ追加
+                                HStack {
+                                    TextField("新しいタグを追加", text: $newTag)
+                                        .padding()
+                                        .background(cardColor)
+                                        .cornerRadius(12)
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                    
+                                    Button(action: addTag) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(accentColor)
+                                    }
+                                }
                             }
                             
                             // お気に入り度
@@ -359,17 +386,28 @@ struct OshiItemFormView: View {
         }
     }
     
+    // タグ追加関数
+    func addTag() {
+        let trimmedTag = newTag.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedTag.isEmpty && !tags.contains(trimmedTag) {
+            withAnimation {
+                tags.append(trimmedTag)
+                newTag = ""
+            }
+        }
+    }
+    
     // タイトルのプレースホルダーをアイテムタイプに応じて変更
     func titlePlaceholder() -> String {
         switch itemType {
         case "グッズ":
             return "例: BTS 公式ペンライト Ver.3"
-        case "SNS投稿":
-            return "例: インスタストーリー投稿"
-        case "ライブ記録":
-            return "例: 東京ドーム公演"
         case "聖地巡礼":
             return "例: MVロケ地・渋谷〇〇カフェ"
+        case "ライブ記録":
+            return "例: 東京ドーム公演"
+        case "SNS投稿":
+            return "例: インスタストーリー投稿"
         case "その他":
             return "例: 推しの誕生日、記念日など"
         default:
@@ -382,12 +420,12 @@ struct OshiItemFormView: View {
         switch itemType {
         case "グッズ":
             return "購入日"
-        case "SNS投稿":
-            return "投稿日"
-        case "ライブ記録":
-            return "イベント日"
         case "聖地巡礼":
             return "訪問日"
+        case "ライブ記録":
+            return "イベント日"
+        case "SNS投稿":
+            return "投稿日"
         case "その他":
             return "記録日"
         default:
@@ -400,12 +438,12 @@ struct OshiItemFormView: View {
         switch itemType {
         case "グッズ":
             return "メモ"
-        case "SNS投稿":
-            return "メモ"
-        case "ライブ記録":
-            return "思い出・エピソード"
         case "聖地巡礼":
             return "感想・エピソード"
+        case "ライブ記録":
+            return "思い出・エピソード"
+        case "SNS投稿":
+            return "メモ"
         case "その他":
             return "詳細メモ"
         default:
@@ -417,9 +455,9 @@ struct OshiItemFormView: View {
     func iconForItemType(_ type: String) -> String {
         switch type {
         case "グッズ": return "gift.fill"
-        case "SNS投稿": return "bubble.right.fill"
-        case "ライブ記録": return "music.note.list"
         case "聖地巡礼": return "mappin.and.ellipse"
+        case "ライブ記録": return "music.note.list"
+        case "SNS投稿": return "bubble.right.fill"
         case "その他": return "ellipsis.circle.fill"
         default: return "square.grid.2x2.fill"
         }
@@ -445,9 +483,8 @@ struct OshiItemFormView: View {
             "createdAt": Date().timeIntervalSince1970
         ]
         
-        // タグを処理
-        if !tagsInput.isEmpty {
-            let tags = tagsInput.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+        // タグを処理 (新しいタグシステムに対応)
+        if !tags.isEmpty {
             data["tags"] = tags
         }
         

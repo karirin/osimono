@@ -37,7 +37,7 @@ struct OshiItemDetailView: View {
                                 image
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(height: 300)
+//                                    .frame(height: 200)
                                     .frame(maxWidth: .infinity)
                                     .clipped()
                             } else {
@@ -61,6 +61,7 @@ struct OshiItemDetailView: View {
                         .background(Color.white.opacity(0.9))
                         .cornerRadius(20)
                         .padding(16)
+                        .padding(.bottom)
                     }
                 }
                 
@@ -224,7 +225,19 @@ struct OshiItemDetailView: View {
             }
         }
         .background(backgroundColor.ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
         .navigationBarTitle("", displayMode: .inline)
+        .navigationBarItems(leading:
+            Button(action: {
+                presentationMode.wrappedValue.dismiss()
+            }) {
+                HStack {
+                    Image(systemName: "chevron.left") // 左向きの矢印アイコン
+                    Text("戻る")
+                }
+                .foregroundColor(primaryColor) // テーマカラーなど好みに合わせて設定
+            }
+        )
         .navigationBarItems(
             trailing: Button(action: {
                 isShareSheetPresented = true
@@ -341,4 +354,8 @@ struct OshiItemDetailView: View {
             }
         }
     }
+}
+
+#Preview {
+    TopView()
 }
