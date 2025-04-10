@@ -399,6 +399,7 @@ struct EnhancedAddLocationView: View {
                 .padding(.bottom, 80)
             }
         }
+        .dismissKeyboardOnTap()
         .onChange(of: currentAddress) { _ in
             geocodeAddress()
         }

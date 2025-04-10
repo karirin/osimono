@@ -10,74 +10,74 @@ import Firebase
 import FirebaseAuth
 
 // 推しグッズデータモデル
-struct OshiItem: Identifiable, Codable {
-    var id: String = UUID().uuidString
-    var title: String?
-    var category: String?
-    var memo: String?
-    var imageUrl: String?
-    var price: Int?
-    var purchaseDate: TimeInterval?
-    var eventName: String?
-    var favorite: Int?  // お気に入り度（5段階）
-    var memories: String? // 思い出・エピソード
-    var tags: [String]?  // タグ（メンバー名など）
-    var location: String? // 購入場所
-    var itemType: String? // グッズ/SNS投稿/ライブ記録/聖地巡礼/その他
-    
-    // 聖地巡礼用フィールド
-    var locationAddress: String? // 聖地の場所・住所
-    var visitDate: TimeInterval? // 訪問日
-    
-    // その他用フィールド
-    var recordDate: TimeInterval? // 記録日
-    var details: String? // 詳細メモ
-    
-    // Firebase用のタイムスタンプ
-    var createdAt: TimeInterval?
-    
-    var date: Date? {
-        if let timestamp = createdAt {
-            return Date(timeIntervalSince1970: timestamp)
-        }
-        return nil
-    }
-    
-    // 各タイプごとの日付取得
-    var typeSpecificDate: Date? {
-        switch itemType {
-        case "グッズ":
-            if let timestamp = purchaseDate {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-        case "ライブ記録":
-            if let timestamp = purchaseDate {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-        case "SNS投稿":
-            if let timestamp = purchaseDate {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-        case "聖地巡礼":
-            if let timestamp = visitDate {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-        case "その他":
-            if let timestamp = recordDate {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-        default:
-            break
-        }
-        return date
-    }
-    
-    enum CodingKeys: String, CodingKey {
-        case id, title, category, memo, imageUrl, price, purchaseDate, eventName
-        case favorite, memories, tags, location, itemType, createdAt
-        case locationAddress, visitDate, recordDate, details
-    }
-}
+//struct OshiItem: Identifiable, Codable {
+//    var id: String = UUID().uuidString
+//    var title: String?
+//    var category: String?
+//    var memo: String?
+//    var imageUrl: String?
+//    var price: Int?
+//    var purchaseDate: TimeInterval?
+//    var eventName: String?
+//    var favorite: Int?  // お気に入り度（5段階）
+//    var memories: String? // 思い出・エピソード
+//    var tags: [String]?  // タグ（メンバー名など）
+//    var location: String? // 購入場所
+//    var itemType: String? // グッズ/SNS投稿/ライブ記録/聖地巡礼/その他
+//    
+//    // 聖地巡礼用フィールド
+//    var locationAddress: String? // 聖地の場所・住所
+//    var visitDate: TimeInterval? // 訪問日
+//    
+//    // その他用フィールド
+//    var recordDate: TimeInterval? // 記録日
+//    var details: String? // 詳細メモ
+//    
+//    // Firebase用のタイムスタンプ
+//    var createdAt: TimeInterval?
+//    
+//    var date: Date? {
+//        if let timestamp = createdAt {
+//            return Date(timeIntervalSince1970: timestamp)
+//        }
+//        return nil
+//    }
+//    
+//    // 各タイプごとの日付取得
+//    var typeSpecificDate: Date? {
+//        switch itemType {
+//        case "グッズ":
+//            if let timestamp = purchaseDate {
+//                return Date(timeIntervalSince1970: timestamp)
+//            }
+//        case "ライブ記録":
+//            if let timestamp = purchaseDate {
+//                return Date(timeIntervalSince1970: timestamp)
+//            }
+//        case "SNS投稿":
+//            if let timestamp = purchaseDate {
+//                return Date(timeIntervalSince1970: timestamp)
+//            }
+//        case "聖地巡礼":
+//            if let timestamp = visitDate {
+//                return Date(timeIntervalSince1970: timestamp)
+//            }
+//        case "その他":
+//            if let timestamp = recordDate {
+//                return Date(timeIntervalSince1970: timestamp)
+//            }
+//        default:
+//            break
+//        }
+//        return date
+//    }
+//    
+//    enum CodingKeys: String, CodingKey {
+//        case id, title, category, memo, imageUrl, price, purchaseDate, eventName
+//        case favorite, memories, tags, location, itemType, createdAt
+//        case locationAddress, visitDate, recordDate, details
+//    }
+//}
 
 // 推しカテゴリー
 struct OshiCategory: Identifiable {
@@ -387,6 +387,7 @@ struct OshiCollectionView: View {
                 }
             }
         }
+        .dismissKeyboardOnTap()
         .padding(.top, isSmallDevice() ? 0 : 0)
         .background(backgroundColor)
         .onAppear {

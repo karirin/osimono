@@ -171,6 +171,7 @@ struct OshiItemEditView: View {
                                 DatePicker("", selection: $date, displayedComponents: .date)
                                     .datePickerStyle(CompactDatePickerStyle())
                                     .labelsHidden()
+                                    .environment(\.locale, Locale(identifier: "ja_JP"))
                             }
                             .padding(.vertical, 5)
                             
@@ -179,18 +180,24 @@ struct OshiItemEditView: View {
                                 inputField(title: "購入場所", binding: $location, icon: "mappin.circle.fill")
                             }
                         }
-                        .padding()
                     }
+                    .padding(.horizontal)
                     
                     // メモまたは思い出
                     GroupBox(label: Text(itemType == "ライブ記録" ? "思い出・エピソード" : "メモ").fontWeight(.bold)) {
-                        TextEditor(text: $memo)
-                            .frame(minHeight: 100)
-                            .padding(4)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .padding()
+                        VStack(alignment: .leading) {
+                            TextEditor(text: $memo)
+                                .frame(minHeight: 120)
+                                .background(Color.white)
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                )
+                        }
+//                        .padding()
                     }
+                    .padding(.horizontal)
                     
                     // タグ
                     GroupBox(label: Text("タグ").fontWeight(.bold)) {
@@ -237,6 +244,7 @@ struct OshiItemEditView: View {
                             .padding()
                         }
                     }
+                    .padding(.horizontal)
                     
                     // お気に入り度
                     GroupBox(label: Text("お気に入り度").fontWeight(.bold)) {
@@ -245,24 +253,38 @@ struct OshiItemEditView: View {
                                 ForEach(0..<5) { index in
                                     Button(action: {
                                         if favorite == index + 1 {
-                                            favorite = index  // タップして同じならひとつ減らす
+                                            favorite = index
                                         } else {
                                             favorite = index + 1
                                         }
                                     }) {
-                                        Image(systemName: index < favorite ? "heart.fill" : "heart")
+                                        Image(systemName: index <= favorite ? "heart.fill" : "heart")
+                                            .foregroundColor(index <= favorite ? .red : .gray)
                                             .font(.system(size: 24))
-                                            .foregroundColor(index < favorite ? .red : .gray)
+                                            .padding(.horizontal, 5)
                                     }
                                 }
                                 Spacer()
+                                Text("\(favorite)/5")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(primaryColor)
+                                    .padding(.trailing)
                             }
                             .padding()
                         }
                     }
+                    .padding(.horizontal)
+                    
+//                    VStack(alignment: .leading, spacing: 5) {
+//                        Text("お気に入り度")
+//                            .font(.headline)
+//                            .foregroundColor(.gray)
+//
+//                    }
                 }
-                .padding()
+                .padding(.vertical)
             }
+            .dismissKeyboardOnTap()
             .background(backgroundColor.ignoresSafeArea())
             .navigationBarTitle("アイテム編集", displayMode: .inline)
             .navigationBarItems(
@@ -453,89 +475,88 @@ struct OshiItemEditView: View {
     }
 }
 
-// 画像ピッカー
-//struct ImagePicker: UIViewControllerRepresentable {
-//    @Binding var selectedImage: UIImage?
-//    @Environment(\.presentationMode) var presentationMode
-//    
-//    func makeUIViewController(context: Context) -> PHPickerViewController {
-//        var configuration = PHPickerConfiguration()
-//        configuration.filter = .images
-//        configuration.selectionLimit = 1
-//        
-//        let picker = PHPickerViewController(configuration: configuration)
-//        picker.delegate = context.coordinator
-//        return picker
-//    }
-//    
-//    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
-//    
-//    func makeCoordinator() -> Coordinator {
-//        Coordinator(self)
-//    }
-//    
-//    class Coordinator: NSObject, PHPickerViewControllerDelegate {
-//        let parent: ImagePicker
-//        
-//        init(_ parent: ImagePicker) {
-//            self.parent = parent
-//        }
-//        
-//        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-//            parent.presentationMode.wrappedValue.dismiss()
-//            
-//            guard let result = results.first else { return }
-//            
-//            result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-//                if let image = image as? UIImage {
-//                    DispatchQueue.main.async {
-//                        self?.parent.selectedImage = image
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-
-// OshiItemデータモデル（参照用）
-// struct OshiItem: Identifiable {
-//     let id: String
-//     var title: String?
-//     var itemType: String?
-//     var category: String?
-//     var eventName: String?
-//     var price: Int?
-//     var date: Date?
-//     var location: String?
-//     var memo: String?
-//     var imageUrl: String?
-//     var tags: [String]?
-//     var favorite: Int?
-//     var createdAt: Date?
-//     var updatedAt: Date?
-// }
-
-// 角丸を特定の角にだけ適用するための拡張
+// キーボードを非表示にする拡張
 //extension View {
-//    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-//        clipShape(RoundedCorner(radius: radius, corners: corners))
+//    func dismissKeyboardOnTap() -> some View {
+//        self.onTapGesture {
+//            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+//        }
 //    }
 //}
 
-//struct RoundedCorner: Shape {
-//    var radius: CGFloat = .infinity
-//    var corners: UIRectCorner = .allCorners
-//    
-//    func path(in rect: CGRect) -> Path {
-//        let path = UIBezierPath(
-//            roundedRect: rect,
-//            byRoundingCorners: corners,
-//            cornerRadii: CGSize(width: radius, height: radius)
-//        )
-//        return Path(path.cgPath)
-//    }
-//}
+// OshiItemデータモデル（参照用）は省略
+
+struct OshiItem: Identifiable, Codable {
+    var id: String = UUID().uuidString
+    var title: String?
+    var category: String?
+    var memo: String?
+    var imageUrl: String?
+    var price: Int?
+    var purchaseDate: TimeInterval?
+    var eventName: String?
+    var favorite: Int?  // お気に入り度（5段階）
+    var memories: String? // 思い出・エピソード
+    var tags: [String]?  // タグ（メンバー名など）
+    var location: String? // 購入場所
+    var itemType: String? // グッズ/SNS投稿/ライブ記録/聖地巡礼/その他
+    
+    // 聖地巡礼用フィールド
+    var locationAddress: String? // 聖地の場所・住所
+    var visitDate: TimeInterval? // 訪問日
+    
+    // その他用フィールド
+    var recordDate: TimeInterval? // 記録日
+    var details: String? // 詳細メモ
+    
+    // Firebase用のタイムスタンプ
+    var createdAt: TimeInterval?
+    
+    var date: Date? {
+        if let timestamp = createdAt {
+            return Date(timeIntervalSince1970: timestamp)
+        }
+        return nil
+    }
+    
+    // 各タイプごとの日付取得
+    var typeSpecificDate: Date? {
+        switch itemType {
+        case "グッズ":
+            if let timestamp = purchaseDate {
+                return Date(timeIntervalSince1970: timestamp)
+            }
+        case "ライブ記録":
+            if let timestamp = purchaseDate {
+                return Date(timeIntervalSince1970: timestamp)
+            }
+        case "SNS投稿":
+            if let timestamp = purchaseDate {
+                return Date(timeIntervalSince1970: timestamp)
+            }
+        case "聖地巡礼":
+            if let timestamp = visitDate {
+                return Date(timeIntervalSince1970: timestamp)
+            }
+        case "その他":
+            if let timestamp = recordDate {
+                return Date(timeIntervalSince1970: timestamp)
+            }
+        default:
+            break
+        }
+        return date
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case id, title, category, memo, imageUrl, price, purchaseDate, eventName
+        case favorite, memories, tags, location, itemType, createdAt
+        case locationAddress, visitDate, recordDate, details
+    }
+}
 
 #Preview {
     TopView()
 }
+
+

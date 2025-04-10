@@ -10,7 +10,7 @@ import Firebase
 import FirebaseAuth
 
 struct EnhancedNewEventView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Binding var isPresented: Bool
     @ObservedObject var viewModel: TimelineViewModel
     
     @State private var eventDate: Date
@@ -28,9 +28,11 @@ struct EnhancedNewEventView: View {
     private let textColor = Color(UIColor.label)
     private let secondaryTextColor = Color(UIColor.secondaryLabel)
     
-    init(viewModel: TimelineViewModel, initialDate: Date) {
+    init(isPresented: Binding<Bool>, viewModel: TimelineViewModel, initialDate: Date) {
+        self._isPresented = isPresented  // Binding の初期化
         self.viewModel = viewModel
         _eventDate = State(initialValue: initialDate)
+        // 残りの @State はすでに初期値が設定されているのでこれで問題ありません
     }
     
     var body: some View {
@@ -38,11 +40,11 @@ struct EnhancedNewEventView: View {
             ZStack {
                 backgroundColor.ignoresSafeArea()
                 
-                VStack(spacing: 0) {
+                VStack() {
                     // カスタムナビゲーションバー
                     HStack {
                         Button(action: {
-                            presentationMode.wrappedValue.dismiss()
+                            isPresented = false
                         }) {
                             Image(systemName: "xmark")
                                 .font(.system(size: 17, weight: .semibold))
@@ -61,13 +63,20 @@ struct EnhancedNewEventView: View {
                         Spacer()
                         
                         Button(action: {
-                            withAnimation {
-                                isShowingPreview.toggle()
-                            }
+                            saveEvent()
+                            isPresented = false
                         }) {
-                            Text(isShowingPreview ? "編集" : "プレビュー")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(brandColor)
+                            Text("保存")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .background(
+                                    Capsule()
+                                        .fill(brandColor)
+//                                        .fill(title.isEmpty ? Color.gray : brandColor)
+                                )
+//                                .opacity(title.isEmpty ? 0.5 : 1.0)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -101,11 +110,12 @@ struct EnhancedNewEventView: View {
                     }
                     
                     // Bottom action bar with save button
-                    bottomActionBar
+//                    bottomActionBar
                 }
             }
             .navigationBarHidden(true) // ナビゲーションバーを非表示にする
         }
+        .dismissKeyboardOnTap()
         .sheet(isPresented: $isShowingImagePicker) {
             ImageTimeLinePicker(selectedImage: $selectedImage)
         }
@@ -341,9 +351,9 @@ struct EnhancedNewEventView: View {
                 
                 Button(action: {
                     saveEvent()
-                    presentationMode.wrappedValue.dismiss()
+                    isPresented = false
                 }) {
-                    Text("タイムラインに追加")
+                    Text("保存")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                         .padding(.vertical, 14)
@@ -398,5 +408,6 @@ struct EnhancedNewEventView: View {
 }
 
 #Preview {
-    EnhancedNewEventView(viewModel: TimelineViewModel(), initialDate: Date())
+//    EnhancedNewEventView(viewModel: TimelineViewModel(), initialDate: Date())
+    TimelineView()
 }

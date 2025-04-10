@@ -37,7 +37,6 @@ struct OshiItemDetailView: View {
                                 image
                                     .resizable()
                                     .scaledToFill()
-//                                    .frame(height: 200)
                                     .frame(maxWidth: .infinity)
                                     .clipped()
                             } else {
@@ -47,37 +46,45 @@ struct OshiItemDetailView: View {
                     } else {
                         placeholderImage
                     }
-                    
-                    // お気に入りバッジ
-                    if let favorite = item.favorite, favorite > 0 {
-                        HStack(spacing: 4) {
-                            ForEach(1...favorite, id: \.self) { _ in
-                                Image(systemName: "heart.fill")
-                                    .foregroundColor(.red)
-                            }
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.9))
-                        .cornerRadius(20)
-                        .padding(16)
-                        .padding(.bottom)
-                    }
                 }
                 
                 // 基本情報
                 VStack(alignment: .leading, spacing: 20) {
                     // タイトルとタグ
                     VStack(alignment: .leading, spacing: 10) {
-                        // アイテムタイプバッジ
-                        if let itemType = item.itemType {
-                            Text(itemType)
-                                .font(.system(size: 12, weight: .medium))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 4)
-                                .background(badgeColor(for: itemType))
-                                .foregroundColor(.white)
-                                .cornerRadius(15)
+                        // アイテムタイプバッジとお気に入り
+                        HStack {
+                            // アイテムタイプバッジ
+                            if let itemType = item.itemType {
+                                Text(itemType)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 4)
+                                    .background(badgeColor(for: itemType))
+                                    .foregroundColor(.white)
+                                    .cornerRadius(15)
+                            }
+                            
+                            Spacer()
+                            
+                            // お気に入りバッジ
+                            if let favorite = item.favorite, favorite > 0 {
+                                HStack(spacing: 0) {
+                                    ForEach(1...favorite, id: \.self) { index in
+                                        Image(systemName: "heart.fill")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(.red)
+                                            .padding(4)
+                                            .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
+                                            .scaleEffect(1.0)
+                                            .animation(
+                                                Animation.spring(response: 0.3, dampingFraction: 0.6)
+                                                    .delay(0.05 * Double(index)),
+                                                value: favorite
+                                            )
+                                    }
+                                }
+                            }
                         }
                         
                         // タイトル
@@ -232,18 +239,19 @@ struct OshiItemDetailView: View {
                 presentationMode.wrappedValue.dismiss()
             }) {
                 HStack {
-                    Image(systemName: "chevron.left") // 左向きの矢印アイコン
+                    Image(systemName: "chevron.left")
                     Text("戻る")
                 }
-                .foregroundColor(primaryColor) // テーマカラーなど好みに合わせて設定
+                .foregroundColor(primaryColor)
             }
         )
         .navigationBarItems(
             trailing: Button(action: {
-                isShareSheetPresented = true
+                isEditing = true
             }) {
-                Image(systemName: "square.and.arrow.up")
-                    .foregroundColor(primaryColor)
+                Text("編集")
+                .foregroundColor(primaryColor)
+                .frame(maxWidth: .infinity)
             }
         )
         .alert(isPresented: $showDeleteConfirmation) {
@@ -312,6 +320,7 @@ struct OshiItemDetailView: View {
         case "グッズ": return "gift"
         case "SNS投稿": return "bubble.right"
         case "ライブ記録": return "music.note"
+        case "聖地巡礼": return "mappin.and.ellipse"
         default: return "photo"
         }
     }
@@ -322,6 +331,7 @@ struct OshiItemDetailView: View {
         case "グッズ": return Color.blue
         case "SNS投稿": return Color.green
         case "ライブ記録": return Color.purple
+        case "聖地巡礼": return Color.pink
         default: return Color.gray
         }
     }

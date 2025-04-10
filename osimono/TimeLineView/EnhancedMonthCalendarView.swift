@@ -79,26 +79,6 @@ struct EnhancedMonthCalendarView: View {
         )
     }
     
-    // MARK: - Subviews
-    
-//    private var weekdayHeaderView: some View {
-//        HStack {
-//            ForEach(["日", "月", "火", "水", "木", "金", "土"], id: \.self) { wday in
-//                Text(wday)
-//                    .font(.system(size: 14, weight: .medium))
-//                    .foregroundColor(
-//                        wday == "日" ? Color(hex: "EF4444") :
-//                        wday == "土" ? Color(hex: "3B82F6") :
-//                        secondaryTextColor
-//                    )
-//                    .frame(maxWidth: .infinity)
-//            }
-//        }
-//        .padding(.vertical, 12)
-//        .padding(.horizontal, 16)
-//        .background(cardBackgroundColor.opacity(0.5))
-//    }
-    
     private var calendarGridView: some View {
         let totalCells = firstWeekday + daysInMonth
         let rows = Int(ceil(Double(totalCells) / 7.0))

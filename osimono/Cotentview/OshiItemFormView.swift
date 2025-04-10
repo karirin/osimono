@@ -2,6 +2,7 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import FirebaseStorage
+import CoreLocation
 
 struct OshiItemFormView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -26,6 +27,10 @@ struct OshiItemFormView: View {
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var locationAddress: String = "" // 聖地巡礼の場所住所
+    
+    @StateObject private var locationManager = LocationManager()
+    @State private var isGettingLocation = false
+    @State private var locationCoordinate: CLLocationCoordinate2D?
     
     // 色の定義
     let primaryColor = Color(.systemPink) // ピンク
@@ -191,7 +196,7 @@ struct OshiItemFormView: View {
                                         .font(.headline)
                                         .foregroundColor(.gray)
                                     
-                                    TextField("例: BTS WORLD TOUR 'LOVE YOURSELF'", text: $eventName)
+                                    TextField("例: BTS ライブ『LOVE YOURSELF』", text: $eventName)
                                         .padding()
                                         .background(cardColor)
                                         .cornerRadius(12)
@@ -202,10 +207,28 @@ struct OshiItemFormView: View {
                             // 場所（聖地巡礼の場合のみ表示）
                             if itemType == "聖地巡礼" {
                                 VStack(alignment: .leading, spacing: 5) {
-                                    Text("場所")
-                                        .font(.headline)
-                                        .foregroundColor(.gray)
-                                    
+                                    HStack{
+                                        Text("場所")
+                                            .font(.headline)
+                                            .foregroundColor(.gray)
+                                        Spacer()
+                                        Button(action: {
+                                            requestCurrentLocation()
+                                        }) {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "location.fill")
+                                                    .font(.system(size: 12))
+                                                Text("現在地を設定")
+                                                    .font(.system(size: 12))
+                                            }
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(primaryColor)
+                                            .foregroundColor(.white)
+                                            .cornerRadius(8)
+                                        }
+                                        .disabled(isGettingLocation)
+                                    }
                                     TextField("例: 東京都渋谷区〇〇", text: $locationAddress)
                                         .padding()
                                         .background(cardColor)
@@ -332,7 +355,7 @@ struct OshiItemFormView: View {
                         Button(action: {
                             saveItem()
                         }) {
-                            Text("保存する")
+                            Text("投稿する")
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
@@ -349,7 +372,7 @@ struct OshiItemFormView: View {
                         .disabled(isLoading)
                     }
                 }
-                
+                .dismissKeyboardOnTap()
                 // ローディングオーバーレイ
                 if isLoading {
                     Color.black.opacity(0.3)
@@ -375,6 +398,13 @@ struct OshiItemFormView: View {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.gray)
+                }
+            )
+            .navigationBarItems(trailing:
+                Button(action: {
+                    saveItem()
+                }) {
+                    Text("投稿")
                 }
             )
         }
@@ -460,6 +490,71 @@ struct OshiItemFormView: View {
         case "SNS投稿": return "bubble.right.fill"
         case "その他": return "ellipsis.circle.fill"
         default: return "square.grid.2x2.fill"
+        }
+    }
+    
+    func requestCurrentLocation() {
+        isGettingLocation = true
+        
+        // 現在地の更新を開始
+        locationManager.startUpdatingLocation()
+        
+        // 位置情報の取得を待つ
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { // 2秒待機
+            if let location = self.locationManager.userLocation {
+                // 座標を保存
+                self.locationCoordinate = location.coordinate
+                
+                // 逆ジオコーディングで住所を取得
+                let geocoder = CLGeocoder()
+                geocoder.reverseGeocodeLocation(location) { (placemarks, error) in
+                    DispatchQueue.main.async {
+                        self.isGettingLocation = false
+                        
+                        if let error = error {
+                            self.alertMessage = "住所の取得に失敗しました: \(error.localizedDescription)"
+                            self.showAlert = true
+                            return
+                        }
+                        
+                        if let placemark = placemarks?.first {
+                            // 日本語住所の形式に整形
+                            var address = ""
+                            
+                            if let administrativeArea = placemark.administrativeArea {
+                                address += administrativeArea // 都道府県
+                            }
+                            
+                            if let locality = placemark.locality {
+                                address += locality // 市区町村
+                            }
+                            
+                            if let subLocality = placemark.subLocality, !subLocality.isEmpty {
+                                address += subLocality // 町名
+                            }
+                            
+                            if let thoroughfare = placemark.thoroughfare, !thoroughfare.isEmpty {
+                                address += thoroughfare // 番地
+                            }
+                            
+                            if let subThoroughfare = placemark.subThoroughfare, !subThoroughfare.isEmpty {
+                                address += subThoroughfare // 建物など
+                            }
+                            
+                            self.locationAddress = address
+                        } else {
+                            self.alertMessage = "住所の取得に失敗しました"
+                            self.showAlert = true
+                        }
+                    }
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.isGettingLocation = false
+                    self.alertMessage = "位置情報の取得に失敗しました。設定から位置情報の利用を許可してください。"
+                    self.showAlert = true
+                }
+            }
         }
     }
     

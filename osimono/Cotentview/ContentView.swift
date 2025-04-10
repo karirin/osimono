@@ -82,101 +82,101 @@ struct ContentView: View {
                     .animation(.easeInOut, value: selectedTab)
                 }
             }
-        }
-        .overlay(
-            VStack(spacing: -5) {
-                Spacer()
-                HStack {
+            .overlay(
+                VStack(spacing: -5) {
                     Spacer()
-                    Button(action: {
-                        withAnimation(.spring()) {
-                            editFlag.toggle()
-                            isEditingUsername.toggle()
-                            generateHapticFeedback()
-                        }
-                    }) {
-                        Image(systemName: "square.and.pencil")
-                            .font(.system(size: 22, weight: .medium))
-                            .padding(15)
-                            .background(
-                                Circle()
-                                    .fill(accentColor)
-                                    .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
-                            )
-                            .foregroundColor(.white)
-                    }
-                    .padding(.trailing)
-                }
-                
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        withAnimation(.spring()) {
-                            addFlag = true
-                        }
-                        generateHapticFeedback()
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 22, weight: .medium))
-                            .padding(18)
-                            .background(
-                                Circle()
-                                    .fill(primaryColor)
-                                    .shadow(color: primaryColor.opacity(0.3), radius: 5, x: 0, y: 3)
-                            )
-                            .foregroundColor(.white)
-                    }
-                    .padding()
-                }
-            }.padding(.trailing,10)
-        )
-        .overlay(
-            ZStack {
-                if isProfileImageEnlarged {
-                    Color.black.opacity(0.9)
-                        .edgesIgnoringSafeArea(.all)
-                        .onTapGesture {
+                    HStack {
+                        Spacer()
+                        Button(action: {
                             withAnimation(.spring()) {
-                                isProfileImageEnlarged = false
+                                editFlag.toggle()
+                                isEditingUsername.toggle()
+                                generateHapticFeedback()
                             }
+                        }) {
+                            Image(systemName: "square.and.pencil")
+                                .font(.system(size: 22, weight: .medium))
+                                .padding(15)
+                                .background(
+                                    Circle()
+                                        .fill(accentColor)
+                                        .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+                                )
+                                .foregroundColor(.white)
                         }
-                
-                    if let imageUrl = imageUrl {
-                        VStack {
-                            AsyncImage(url: imageUrl) { phase in
-                                switch phase {
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: isiPhone12Or13() ? 260 : isSmallDevice() ? 250 : 300)
-                                        .clipShape(Circle())
-                                default:
-                                    Circle().foregroundColor(.white)
-                                        .frame(height: isiPhone12Or13() ? 260 : isSmallDevice() ? 250 : 300)
-                                        .shimmering()
-                                }
+                        .padding(.trailing)
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            withAnimation(.spring()) {
+                                addFlag = true
                             }
-                            
-                            Button(action: {
+                            generateHapticFeedback()
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 22, weight: .medium))
+                                .padding(18)
+                                .background(
+                                    Circle()
+                                        .fill(primaryColor)
+                                        .shadow(color: primaryColor.opacity(0.3), radius: 5, x: 0, y: 3)
+                                )
+                                .foregroundColor(.white)
+                        }
+                        .padding()
+                    }
+                }.padding(.trailing,10)
+            )
+            .overlay(
+                ZStack {
+                    if isProfileImageEnlarged {
+                        Color.black.opacity(0.9)
+                            .edgesIgnoringSafeArea(.all)
+                            .onTapGesture {
                                 withAnimation(.spring()) {
                                     isProfileImageEnlarged = false
                                 }
-                            }) {
-                                Text("閉じる")
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 12)
-                                    .background(primaryColor)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
                             }
-                            .padding(.top, 30)
+                    
+                        if let imageUrl = imageUrl {
+                            VStack {
+                                AsyncImage(url: imageUrl) { phase in
+                                    switch phase {
+                                    case .success(let image):
+                                        image
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(height: isiPhone12Or13() ? 260 : isSmallDevice() ? 250 : 300)
+                                            .clipShape(Circle())
+                                    default:
+                                        Circle().foregroundColor(.white)
+                                            .frame(height: isiPhone12Or13() ? 260 : isSmallDevice() ? 250 : 300)
+                                            .shimmering()
+                                    }
+                                }
+                                
+                                Button(action: {
+                                    withAnimation(.spring()) {
+                                        isProfileImageEnlarged = false
+                                    }
+                                }) {
+                                    Text("閉じる")
+                                        .padding(.horizontal, 24)
+                                        .padding(.vertical, 12)
+                                        .background(primaryColor)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(8)
+                                }
+                                .padding(.top, 30)
+                            }
                         }
                     }
                 }
-            }
-            .animation(.easeInOut, value: isProfileImageEnlarged)
-        )
+                .animation(.easeInOut, value: isProfileImageEnlarged)
+            )
+        }
         .accentColor(primaryColor)
         .onAppear {
             loadAllData()

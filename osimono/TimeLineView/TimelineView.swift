@@ -104,7 +104,7 @@ struct TimelineView: View {
             }
         }
         .fullScreenCover(isPresented: $showNewEventView) {
-            EnhancedNewEventView(viewModel: viewModel, initialDate: selectedDate)
+            EnhancedNewEventView(isPresented: $showNewEventView, viewModel: viewModel, initialDate: selectedDate)
         }
     }
 }

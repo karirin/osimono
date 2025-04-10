@@ -184,10 +184,6 @@ struct EnhancedWeekTimelineView: View {
                 // Events list with beautiful timeline design
                 ScrollView {
                     ZStack{
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 2)
-                            .offset(x: -124)
                     VStack(spacing: 10) {
                         ForEach(eventsForSelectedDate, id: \.id) { event in
                             EnhancedTimelineRow(

@@ -37,27 +37,27 @@ struct EnhancedTimelineRow: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(Color(UIColor.secondaryLabel))
             }
-//            .frame(width: 46)
-                
-           
-                // Timeline dot and line
-
-                    Circle()
-                        .fill(event.color)
-                        .frame(width: 12, height: 12)
-                        .shadow(color: event.color.opacity(0.3), radius: 2, x: 0, y: 1)
-//                }
-//                .frame(height: selectedEventID == event.id ? 200 : 80)
+            //            .frame(width: 46)
+            
+            
+            // Timeline dot and line
+            
+            Circle()
+                .fill(event.color)
+                .frame(width: 12, height: 12)
+                .shadow(color: event.color.opacity(0.3), radius: 2, x: 0, y: 1)
+            //                }
+            //                .frame(height: selectedEventID == event.id ? 200 : 80)
             // Event content
             VStack(alignment: .leading, spacing: 8) {
                 HStack{
                     Text(event.title)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Color(UIColor.label))
-                        // 画像アイコン分の余白を確保
+                    // 画像アイコン分の余白を確保
                         .padding(.trailing, (selectedEventID != event.id && event.imageURL != nil) ? 30 : 0)
                     
-            }
+                }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .overlay(
                     Group {
@@ -70,7 +70,7 @@ struct EnhancedTimelineRow: View {
                     },
                     alignment: .trailing
                 )
-
+                
                 if selectedEventID == event.id, let imageURL = event.imageURL, let url = URL(string: imageURL) {
                     AsyncImage(url: url) { phase in
                         switch phase {
@@ -78,7 +78,7 @@ struct EnhancedTimelineRow: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.gray.opacity(0.1))
                                 .frame(height: 160)
-//                                .shimmer(true)
+                            //                                .shimmer(true)
                         case .success(let image):
                             image
                                 .resizable()
