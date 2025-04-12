@@ -20,11 +20,12 @@ struct EnhancedAddLocationView: View {
     @State private var selectedImage: UIImage? = nil
     @State private var isShowingImagePicker: Bool = false
     @State private var note: String = ""
-    @State private var selectedCategory: String = "ライブ"
+    @State private var selectedCategory: String = "ライブ会場"
     @State private var isShowingCategoryPicker = false
     @State private var coordinate: CLLocationCoordinate2D?
     @StateObject private var locationManager = LocationManager()
     @State private var userRating: Int = 0
+    @State private var localImageURL: String? = nil
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 35.6809591, longitude: 139.7673068),
         span: MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
@@ -240,6 +241,7 @@ struct EnhancedAddLocationView: View {
                                                      categoryColor(category) : .gray)
                                 }
                             }
+                            .padding(3)
                         }
                         .padding(.vertical, 4)
                     }
@@ -346,7 +348,7 @@ struct EnhancedAddLocationView: View {
                             Map(coordinateRegion: $region, annotationItems: [MapAnnotationItem(coordinate: coordinate)]) { item in
                                 MapAnnotation(coordinate: item.coordinate, anchorPoint: CGPoint(x: 0.5, y: 0.5)) {
                                     MapPinView(
-                                        imageName: "",
+                                        imageName: localImageURL ?? "",
                                         isSelected: true,
                                         pinType: getPinType(for: selectedCategory)
                                     )
@@ -420,6 +422,13 @@ struct EnhancedAddLocationView: View {
             }
         }
         .dismissKeyboardOnTap()
+        .onChange(of: selectedImage) { newImage in
+            if let newImage = newImage {
+                localImageURL = localFileURL(for: newImage)
+            } else {
+                localImageURL = nil
+            }
+        }
         .onChange(of: currentAddress) { _ in
             geocodeAddress()
         }
@@ -464,6 +473,22 @@ struct EnhancedAddLocationView: View {
         case 5: return "最高の推しスポット！"
         default: return ""
         }
+    }
+    
+    func localFileURL(for image: UIImage) -> String? {
+        if let data = image.jpegData(compressionQuality: 0.8) {
+            let tempDirectory = NSTemporaryDirectory()
+            let fileName = UUID().uuidString + ".jpg"
+            let fileURL = URL(fileURLWithPath: tempDirectory).appendingPathComponent(fileName)
+            do {
+                try data.write(to: fileURL)
+                return fileURL.absoluteString
+            } catch {
+                print("画像の一時保存に失敗しました: \(error)")
+                return nil
+            }
+        }
+        return nil
     }
     
     // Convert the selected category to pin type
