@@ -208,7 +208,7 @@ struct MapView: View {
                             }
                         }
                         .padding(.trailing, 16)
-                        .padding(.bottom, 170) // Position above the card list
+                        .padding(.bottom, 190) // Position above the card list
                     }
                 }
             )

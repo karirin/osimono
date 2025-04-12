@@ -148,21 +148,47 @@ struct OshiItemCard: View {
     }
     
     // アイテムタイプによってアイコンを変更
+//    func iconForItemType(_ type: String) -> String {
+//        switch type {
+//        case "グッズ": return "gift"
+//        case "SNS投稿": return "bubble.right"
+//        case "ライブ記録": return "music.note"
+//        default: return "photo"
+//        }
+//    }
+    
     func iconForItemType(_ type: String) -> String {
         switch type {
-        case "グッズ": return "gift"
-        case "SNS投稿": return "bubble.right"
-        case "ライブ記録": return "music.note"
-        default: return "photo"
+        case "すべて":
+            return "square.grid.2x2"        // 例：グリッド状のアイコン
+        case "グッズ":
+            return "gift.fill"
+        case "聖地巡礼":
+            return "mappin.and.ellipse"     // 例：地図ピンのアイコン
+        case "ライブ記録":
+            return "music.note"
+        case "SNS投稿":
+            return "bubble.right.fill"
+        case "その他":
+            return "questionmark.circle"     // 例：疑問符付き丸のアイコン
+        default:
+            return "photo"
         }
     }
     
+//    "すべて": Color(.systemBlue),
+//    "グッズ": Color(.systemPink),
+//    "聖地巡礼": Color(.systemGreen),
+//    "ライブ記録": Color(.systemOrange),
+//    "SNS投稿": Color(.systemPurple),
+//    "その他": Color(.systemGray)
     // アイテムタイプによって背景色を変更
     func badgeColor(for type: String) -> Color {
         switch type {
-        case "グッズ": return Color.blue
-        case "SNS投稿": return Color.green
-        case "ライブ記録": return Color.purple
+        case "グッズ": return Color(.systemPink)
+        case "SNS投稿": return Color(.systemPurple)
+        case "ライブ記録": return Color(.systemOrange)
+        case "聖地巡礼": return Color(.systemGreen)
         default: return Color.gray
         }
     }

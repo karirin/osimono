@@ -105,6 +105,16 @@ struct OshiCollectionView: View {
     let backgroundColor = Color(.white) // 明るい背景色
     let cardColor = Color(.white) // カード背景色
     
+    // 各アイテムタイプごとの色定義
+    let itemTypeColors: [String: Color] = [
+        "すべて": Color(.systemBlue),
+        "グッズ": Color(.systemPink),
+        "聖地巡礼": Color(.systemGreen),
+        "ライブ記録": Color(.systemOrange),
+        "SNS投稿": Color(.systemPurple),
+        "その他": Color(.systemGray)
+    ]
+    
     // カテゴリーリスト - 推し活向けカテゴリー
     let categories = ["すべて", "グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
     
@@ -212,33 +222,41 @@ struct OshiCollectionView: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
-            .padding(.top, isSmallDevice() ? 0 : 0)
-            // 変更部分: showingFilterMenuがtrueの時に表示されるフィルターメニューの内容を変更します
+            
+            // フィルターメニュー - itemTypesに変更
             if showingFilterMenu {
                 VStack(alignment: .leading, spacing: 12) {
-                    // カテゴリー選択
+                    // アイテムタイプ選択
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("カテゴリー")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.gray)
-                        
-                        // カテゴリボタン
+                        // アイテムタイプボタン
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 10) {
-                                ForEach(categories, id: \.self) { category in
+                                ForEach(itemTypes, id: \.self) { itemType in
                                     Button(action: {
-                                        selectedCategory = category
+                                        selectedItemType = itemType
                                         generateHapticFeedback()
                                     }) {
-                                        Text(category)
-                                            .font(.system(size: 12))
-                                            .padding(.horizontal, 10)
-                                            .padding(.vertical, 6)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 20)
-                                                    .fill(selectedCategory == category ? accentColor : Color.gray.opacity(0.1))
-                                            )
-                                            .foregroundColor(selectedCategory == category ? .white : .gray)
+                                        HStack(spacing: 4) {
+                                            Image(systemName: itemTypeIcon(for: itemType))
+                                                .font(.system(size: 10))
+                                            Text(itemType)
+                                                .font(.system(size: 12))
+                                        }
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
+                                        
+                                        
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(selectedItemType == itemType ? Color.white : Color.gray.opacity(0.3), lineWidth: 1)
+                                                                                            .background(
+                                                                                                RoundedRectangle(cornerRadius: 20)
+                                                .fill(selectedItemType == itemType ?
+                                                      (itemTypeColors[itemType] ?? accentColor) :
+                                                        (Color.white ?? Color.gray))
+                                                                                                )
+                                        )
+                                        .foregroundColor(selectedItemType == itemType ? .white : .gray ?? .gray)
                                     }
                                 }
                             }
@@ -246,14 +264,9 @@ struct OshiCollectionView: View {
                     }
                     
                     Divider()
-                        .padding(.vertical, 8)
                     
                     // 並び替え
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("並び替え")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.gray)
-                        
                         // 並び替えオプション
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 10) {
@@ -275,35 +288,14 @@ struct OshiCollectionView: View {
                                                     )
                                             )
                                             .foregroundColor(sortOption == option ? primaryColor : .gray)
+                                            .padding(3)
                                     }
                                 }
                             }
                         }
                     }
-                    
-                    // 適用ボタン
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            withAnimation {
-                                showingFilterMenu = false
-                            }
-                        }) {
-                            Text("適用")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(primaryColor)
-                                )
-                        }
-                        Spacer()
-                    }
-                    .padding(.top, 12)
                 }
-                .padding()
+                .padding(.vertical)
                 .background(cardColor)
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.05), radius: 3)
@@ -388,7 +380,6 @@ struct OshiCollectionView: View {
             }
         }
         .dismissKeyboardOnTap()
-        .padding(.top, isSmallDevice() ? 0 : 0)
         .background(backgroundColor)
         .onAppear {
             fetchOshiItems()
@@ -415,6 +406,11 @@ struct OshiCollectionView: View {
         case "その他": return "ellipsis.circle.fill"
         default: return "square.grid.2x2.fill"
         }
+    }
+    
+    // 特定のアイテムタイプの色を取得
+    func colorForItemType(_ type: String) -> Color {
+        return itemTypeColors[type] ?? accentColor
     }
     
     // データ取得
@@ -451,6 +447,11 @@ struct OshiCollectionView: View {
     func generateHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
+    }
+    
+    // isSmallDevice関数（この関数がコード内で使用されていますが、定義がないため追加します）
+    func isSmallDevice() -> Bool {
+        return UIScreen.main.bounds.height < 700
     }
 }
 

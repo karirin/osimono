@@ -325,14 +325,16 @@ struct OshiItemDetailView: View {
         }
     }
     
-    // アイテムタイプによって背景色を変更
     func badgeColor(for type: String) -> Color {
         switch type {
-        case "グッズ": return Color.blue
-        case "SNS投稿": return Color.green
-        case "ライブ記録": return Color.purple
-        case "聖地巡礼": return Color.pink
-        default: return Color.gray
+        case "すべて": return Color(.systemBlue)
+        case "グッズ": return Color(.systemPink)
+        case "聖地巡礼": return Color(.systemGreen)
+        case "ライブ記録": return Color(.systemOrange)
+        case "SNS投稿": return Color(.systemPurple)
+        case "その他": return Color(.systemGray)
+        default:
+            return Color(.systemGray)
         }
     }
     

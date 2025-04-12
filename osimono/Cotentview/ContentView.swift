@@ -56,13 +56,9 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                
-                VStack(spacing: 0) {
+                VStack(spacing: -60) {
                     // プロフィールセクション
                     profileSection
-                    
-                    // タブビュー
-                    customTabView
                     
                     // メインコンテンツ
                     TabView(selection: $selectedTab) {
@@ -213,9 +209,9 @@ struct ContentView: View {
                 Rectangle()
                     .frame(height: profileSectionHeight)
                     .frame(maxWidth: .infinity)
-                    .edgesIgnoringSafeArea(.all)
                     .foregroundColor(Color.gray.opacity(0.1))
                     .shimmering(active: true)
+                    .edgesIgnoringSafeArea(.all)
             } else {
                 if let backgroundImageUrl = backgroundImageUrl {
                     AsyncImage(url: backgroundImageUrl) { phase in
@@ -224,13 +220,7 @@ struct ContentView: View {
                             image
                                 .resizable()
                                 .scaledToFill()
-//                                .overlay(
-//                                    LinearGradient(
-//                                        gradient: Gradient(colors: [.clear, primaryColor.opacity(1.6)]),
-//                                        startPoint: .top,
-//                                        endPoint: .bottom
-//                                    )
-//                                )
+                                .frame(maxWidth: .infinity)
                                 .frame(height: profileSectionHeight)
                                 .overlay(
                                     editFlag ? editBackgroundOverlay : nil
@@ -240,6 +230,7 @@ struct ContentView: View {
                         default:
                             Rectangle()
                                 .frame(height: profileSectionHeight)
+                                .frame(maxWidth: .infinity)
                                 .foregroundColor(Color.gray.opacity(0.1))
                                 .shimmering(active: true)
                                 .edgesIgnoringSafeArea(.all)
@@ -253,6 +244,7 @@ struct ContentView: View {
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
+                        .frame(maxWidth: .infinity)
                         .frame(height: profileSectionHeight)
                         .edgesIgnoringSafeArea(.all)
                         if editFlag {
@@ -460,7 +452,7 @@ struct ContentView: View {
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
-        .padding(.top, isSmallDevice() ? -20 : -50)
+//        .padding(.top, isSmallDevice() ?   -20 : -50)
     }
     
     // 背景編集オーバーレイ

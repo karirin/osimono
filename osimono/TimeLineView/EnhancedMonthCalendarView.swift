@@ -161,7 +161,7 @@ struct EnhancedMonthCalendarView: View {
     private var eventScrollView: some View {
         ScrollView {
             VStack(spacing: 0) {
-                ForEach(eventsForSelectedDate, id: \.id) { event in
+                ForEach(Array(eventsForSelectedDate.enumerated()), id: \.element.id) { index, event in
                     EnhancedTimelineRow(
                         event: event,
                         selectedEventID: $selectedEventID

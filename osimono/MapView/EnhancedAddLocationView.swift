@@ -116,8 +116,8 @@ struct EnhancedAddLocationView: View {
                             .background(Color.white.opacity(0.2))
                             .cornerRadius(16)
                     }
-                    .disabled(coordinate == nil && currentAddress.isEmpty)
-                    .opacity((coordinate == nil && currentAddress.isEmpty) ? 0.5 : 1)
+//                    .disabled(coordinate == nil && currentAddress.isEmpty)
+//                    .opacity((coordinate == nil && currentAddress.isEmpty) ? 0.5 : 1)
                 }
                 .padding(.horizontal)
             }
@@ -406,7 +406,7 @@ struct EnhancedAddLocationView: View {
         .sheet(isPresented: $isShowingImagePicker) {
             // Use your image picker implementation here
             // For example:
-            // ImagePicker(image: $selectedImage)
+            ImageTimeLinePicker(selectedImage: $selectedImage)
         }
         .onAppear {
             // If we have a current location, use it initially

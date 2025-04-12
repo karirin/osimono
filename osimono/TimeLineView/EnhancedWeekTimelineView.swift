@@ -181,18 +181,17 @@ struct EnhancedWeekTimelineView: View {
                     Spacer()
                 }
             } else {
-                // Events list with beautiful timeline design
                 ScrollView {
-                    ZStack{
-                    VStack(spacing: 10) {
-                        ForEach(eventsForSelectedDate, id: \.id) { event in
-                            EnhancedTimelineRow(
-                                event: event,
-                                selectedEventID: $selectedEventID
-                            )
-                            .padding(.bottom, 8)
+                    ZStack {
+                        VStack(spacing: 10) {
+                            ForEach(Array(eventsForSelectedDate.enumerated()), id: \.element.id) { index, event in
+                                EnhancedTimelineRow(
+                                    event: event,
+                                    selectedEventID: $selectedEventID
+                                )
+                                .padding(.bottom, 8)
+                            }
                         }
-                    }
                     }
                     .padding(.vertical, 16)
                     .padding(.horizontal, 16)

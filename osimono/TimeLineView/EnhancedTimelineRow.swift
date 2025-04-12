@@ -15,6 +15,7 @@ struct EnhancedTimelineRow: View {
     
     // Colors
     private let cardBackgroundColor = Color(UIColor.secondarySystemBackground)
+    private let timelineColor = Color(UIColor.systemGray4) // Color for the timeline line
     
     var formattedTime: String {
         let inputFormatter = DateFormatter()
@@ -37,20 +38,29 @@ struct EnhancedTimelineRow: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(Color(UIColor.secondaryLabel))
             }
-            //            .frame(width: 46)
-            
+            .frame(width: 46)
             
             // Timeline dot and line
+            ZStack {
+                // Vertical line
+//                if !isLast {
+                    Rectangle()
+                        .fill(timelineColor)
+                        .frame(width: 2)
+//                        .padding(.top, 12) // Start line below the circle
+//                }
+                
+                // Dot
+                Circle()
+                    .fill(event.color)
+                    .frame(width: 12, height: 12)
+                    .shadow(color: event.color.opacity(0.3), radius: 2, x: 0, y: 1)
+            }
+//            .frame(height: selectedEventID == event.id ? 200 : 20)
             
-            Circle()
-                .fill(event.color)
-                .frame(width: 12, height: 12)
-                .shadow(color: event.color.opacity(0.3), radius: 2, x: 0, y: 1)
-            //                }
-            //                .frame(height: selectedEventID == event.id ? 200 : 80)
             // Event content
             VStack(alignment: .leading, spacing: 8) {
-                HStack{
+                HStack {
                     Text(event.title)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Color(UIColor.label))
