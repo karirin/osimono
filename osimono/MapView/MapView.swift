@@ -67,14 +67,6 @@ struct MapView: View {
                         
                         Spacer()
                         
-//                        Text("オシモノ")
-//                            .font(.system(size: 20, weight: .bold))
-//                            .foregroundColor(.black)
-//                            .padding(8)
-//                            .background(Color.white.opacity(0.9))
-//                            .cornerRadius(15)
-//                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
-                        
                         Spacer()
                         
 //                        Button(action: {
@@ -107,7 +99,8 @@ struct MapView: View {
                                         LocationCardView(
                                             location: location,
                                             isSelected: selectedLocationId == location.id,
-                                            pinType: getPinType(for: location)
+                                            pinType: getPinType(for: location),
+                                            userLocation: locationManager.userLocation
                                         )
                                         .id(location.id)
                                         .onTapGesture {

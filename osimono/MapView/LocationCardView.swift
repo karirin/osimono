@@ -8,11 +8,27 @@
 import SwiftUI
 import Firebase
 import FirebaseAuth
+import MapKit
 
 struct LocationCardView: View {
     var location: EventLocation
     var isSelected: Bool
     var pinType: MapPinView.PinType
+    var userLocation: CLLocation?
+    
+    var distanceText: String {
+        if let userLoc = userLocation {
+            let eventLoc = CLLocation(latitude: location.latitude, longitude: location.longitude)
+            let distance = eventLoc.distance(from: userLoc)
+            if distance >= 1000 {
+                return String(format: "%.1f km", distance / 1000)
+            } else {
+                return String(format: "%.0f m", distance)
+            }
+        } else {
+            return "--"
+        }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -70,7 +86,7 @@ struct LocationCardView: View {
                         .font(.system(size: 12))
                     
                     // Simulate distance (would need actual calculation)
-                    Text("約100m")
+                    Text(distanceText)
                         .font(.system(size: 12))
                         .foregroundColor(.gray)
                     
