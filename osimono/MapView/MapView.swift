@@ -70,13 +70,16 @@ struct MapView: View {
                         ScrollViewReader { scrollProxy in
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 16) {
-                                    ForEach(filteredLocations) { location in
+                                    ForEach(viewModel.locations) { location in
                                         LocationCardView(
                                             location: location,
                                             isSelected: selectedLocationId == location.id,
                                             pinType: getPinType(for: location),
                                             userLocation: locationManager.userLocation
                                         )
+                                        .onAppear{
+                                            print("locations      :\(location)")
+                                        }
                                         .id(location.id)
                                         .onTapGesture {
                                             withAnimation {
