@@ -53,33 +53,8 @@ struct MapView: View {
                 // Top header overlay
                 VStack {
                     HStack {
-//                        Button(action: {
-//                            showUserProfile = true
-//                        }) {
-//                            Image(systemName: "person.circle.fill")
-//                                .font(.system(size: 24))
-//                                .foregroundColor(.white)
-//                                .padding(10)
-//                                .background(Color(hex: "6366F1"))
-//                                .clipShape(Circle())
-//                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)
-//                        }
-                        
                         Spacer()
-                        
                         Spacer()
-                        
-//                        Button(action: {
-//                            showFilterSheet = true
-//                        }) {
-//                            Image(systemName: "line.3.horizontal.decrease.circle.fill")
-//                                .font(.system(size: 24))
-//                                .foregroundColor(.white)
-//                                .padding(10)
-//                                .background(Color(hex: "6366F1"))
-//                                .clipShape(Circle())
-//                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)
-//                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 10)
@@ -123,7 +98,6 @@ struct MapView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                             }
-//                            .background(Color.white.opacity(0.9))
                             .cornerRadius(20, corners: [.topLeft, .topRight])
                             .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: -2)
                             .frame(height: 180)
@@ -156,10 +130,10 @@ struct MapView: View {
                 }
             }
             .overlay(
-                                    HStack {
-                                        Spacer()
-                VStack {
+                HStack {
                     Spacer()
+                    VStack {
+                        Spacer()
                         
                         // 現在地ボタン
                         Button(action: {
@@ -255,22 +229,63 @@ struct MapView: View {
     
     // Determine the pin type based on location data
     func getPinType(for location: EventLocation) -> MapPinView.PinType {
-        // Logic to determine pin type based on location data
-        // This is an example - you would need to adjust this logic based on your data structure
+        // First check if the category property exists and has a value
+        let mirror = Mirror(reflecting: location)
+        let categoryExists = mirror.children.contains { $0.label == "category" }
+        
+        if categoryExists {
+            // Since we know category exists, we can use it directly
+            // The compiler error suggests category is not optional, so we use direct access
+            switch location.category {
+            case "ライブ会場": return .live
+            case "ロケ地": return .location
+            case "カフェ・飲食店": return .cafe
+            case "グッズショップ": return .shop
+            case "撮影スポット": return .photo
+            case "聖地": return .sacred
+            case "その他": return .other
+            default: break // Go to title check if none matched
+            }
+        }
+        
+        // Fallback to checking title
         if location.title.contains("ライブ") || location.title.contains("コンサート") {
             return .live
-        } else if location.title.contains("広告") || location.title.contains("看板") {
-            return .ad
-        } else if location.title.contains("カフェ") || location.title.contains("cafe") {
+        } else if location.title.contains("ロケ") || location.title.contains("撮影地") {
+            return .location
+        } else if location.title.contains("カフェ") || location.title.contains("レストラン") || location.title.contains("cafe") {
             return .cafe
+        } else if location.title.contains("ショップ") || location.title.contains("グッズ") || location.title.contains("shop") {
+            return .shop
+        } else if location.title.contains("撮影") || location.title.contains("写真") {
+            return .photo
+        } else if location.title.contains("聖地") {
+            return .sacred
         } else {
             return .other
         }
     }
 }
-                    
+
 struct MapView_Previews: PreviewProvider {
     static var previews: some View {
         MapView()
     }
 }
+
+// Extension for rounded corners on specific sides
+//extension View {
+//    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+//        clipShape(RoundedCorner(radius: radius, corners: corners))
+//    }
+//}
+//
+//struct RoundedCorner: Shape {
+//    var radius: CGFloat = .infinity
+//    var corners: UIRectCorner = .allCorners
+//
+//    func path(in rect: CGRect) -> Path {
+//        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+//        return Path(path.cgPath)
+//    }
+//}

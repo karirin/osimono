@@ -247,40 +247,15 @@ struct OshiItemEditView: View {
                     .padding(.horizontal)
                     
                     // お気に入り度
-                    GroupBox(label: Text("お気に入り度").fontWeight(.bold)) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                ForEach(0..<5) { index in
-                                    Button(action: {
-                                        if favorite == index + 1 {
-                                            favorite = index
-                                        } else {
-                                            favorite = index + 1
-                                        }
-                                    }) {
-                                        Image(systemName: index <= favorite ? "heart.fill" : "heart")
-                                            .foregroundColor(index <= favorite ? .red : .gray)
-                                            .font(.system(size: 24))
-                                            .padding(.horizontal, 5)
-                                    }
-                                }
-                                Spacer()
-                                Text("\(favorite)/5")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(primaryColor)
-                                    .padding(.trailing)
-                            }
-                            .padding()
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack{
+                            Text("お気に入り度")
+                                .font(.system(size: 16, weight: .medium))
+                            Spacer()
                         }
+                        StarRatingView(rating: $favorite, size: 40)
                     }
                     .padding(.horizontal)
-                    
-//                    VStack(alignment: .leading, spacing: 5) {
-//                        Text("お気に入り度")
-//                            .font(.headline)
-//                            .foregroundColor(.gray)
-//
-//                    }
                 }
                 .padding(.vertical)
             }

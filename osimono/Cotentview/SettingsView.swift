@@ -9,6 +9,11 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 
+func generateHapticFeedback() {
+    let generator = UIImpactFeedbackGenerator(style: .medium)
+    generator.impactOccurred()
+}
+
 struct SettingsView: View {
     @State private var username: String = "推し活ユーザー"
     @State private var favoriteOshi: String = ""

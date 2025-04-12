@@ -15,6 +15,9 @@ struct LocationCardView: View {
     var isSelected: Bool
     var pinType: MapPinView.PinType
     var userLocation: CLLocation?
+    @ObservedObject private var viewModel = LocationViewModel()
+    @State private var userRating: Int = 0
+    @State private var showRatingModal: Bool = false
     
     var distanceText: String {
         if let userLoc = userLocation {
@@ -50,7 +53,6 @@ struct LocationCardView: View {
                                     .foregroundColor(pinType.color)
                             )
                             .frame(height: isSelected ? 100 : 80)
-//                            .shimmer(true)
                     }
                 } else {
                     Rectangle()
@@ -85,21 +87,26 @@ struct LocationCardView: View {
                         .foregroundColor(pinType.color)
                         .font(.system(size: 12))
                     
-                    // Simulate distance (would need actual calculation)
                     Text(distanceText)
                         .font(.system(size: 12))
                         .foregroundColor(.gray)
                     
                     Spacer()
                     
-                    // Like count or other metric
-                    Image(systemName: "heart.fill")
-                        .foregroundColor(Color(hex: "EC4899"))
-                        .font(.system(size: 12))
-                    
-                    Text("10")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                    // Rating display
+                    Button(action: {
+                        showRatingModal = true
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(Color(hex: "EC4899"))
+                                .font(.system(size: 12))
+                            
+                            Text("\(location.ratingSum)")
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                        }
+                    }
                 }
             }
             .padding(10)
@@ -110,5 +117,104 @@ struct LocationCardView: View {
         .shadow(color: .black.opacity(isSelected ? 0.15 : 0.1), radius: isSelected ? 8 : 4, x: 0, y: isSelected ? 4 : 2)
         .scaleEffect(isSelected ? 1.05 : 1.0)
         .animation(.spring(response: 0.3), value: isSelected)
+        .sheet(isPresented: $showRatingModal) {
+            RatingModalView(
+                location: location,
+                userRating: $userRating,
+                onRate: { rating in
+                    if let locationId = location.id {
+                        // 既存の評価(userRating)も渡す必要があります
+                        viewModel.updateRating(for: locationId, newRating: rating, oldRating: userRating)
+                    }
+                    showRatingModal = false
+                },
+                onCancel: {
+                    showRatingModal = false
+                }
+            )
+        }
+        .onAppear {
+            // ユーザーの既存評価をロード
+            if let locationId = location.id {
+                viewModel.getUserRating(for: locationId) { rating in
+                    if let rating = rating {
+                        userRating = rating
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Rating Modal View
+struct RatingModalView: View {
+    var location: EventLocation
+    @Binding var userRating: Int
+    var onRate: (Int) -> Void
+    var onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("「\(location.title)」を評価")
+                .font(.system(size: 18, weight: .bold))
+                .multilineTextAlignment(.center)
+                .padding(.top, 20)
+            
+            Divider()
+            
+            VStack(spacing: 10) {
+                StarRatingView(rating: $userRating, size: 40)
+                    .padding(.vertical, 10)
+                
+                Text(ratingDescriptionText)
+                    .font(.system(size: 16))
+                    .foregroundColor(.gray)
+            }
+            .padding()
+            
+            Divider()
+            
+            HStack(spacing: 20) {
+                Button(action: onCancel) {
+                    Text("キャンセル")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.gray)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 20)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(10)
+                }
+                
+                Button(action: {
+                    onRate(userRating)
+                }) {
+                    Text("評価する")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 20)
+                        .background(userRating > 0 ? Color(hex: "EC4899") : Color.gray)
+                        .cornerRadius(10)
+                }
+                .disabled(userRating == 0)
+            }
+            .padding(.bottom, 20)
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(16)
+        .padding()
+    }
+    
+    var ratingDescriptionText: String {
+        switch userRating {
+        case 0: return "タップして評価してください"
+        case 1: return "イマイチ"
+        case 2: return "まあまあ"
+        case 3: return "普通"
+        case 4: return "良い"
+        case 5: return "最高の推しスポット！"
+        default: return ""
+        }
     }
 }

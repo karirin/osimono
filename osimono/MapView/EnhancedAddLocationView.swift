@@ -24,12 +24,14 @@ struct EnhancedAddLocationView: View {
     @State private var isShowingCategoryPicker = false
     @State private var coordinate: CLLocationCoordinate2D?
     @StateObject private var locationManager = LocationManager()
+    @State private var userRating: Int = 0
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 35.6809591, longitude: 139.7673068),
         span: MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
     )
     
-    let categories = ["ライブ", "広告", "カフェ", "その他"]
+//    let categories = ["ライブ", "広告", "カフェ", "その他"]
+    let categories = ["ライブ会場", "ロケ地", "カフェ・飲食店", "グッズショップ", "撮影スポット", "聖地", "その他"]
     
     // Computed property for the current address
     var currentAddress: String {
@@ -43,9 +45,13 @@ struct EnhancedAddLocationView: View {
     // Category color
     func categoryColor(_ category: String) -> Color {
         switch category {
-        case "ライブ": return Color(hex: "6366F1")
-        case "広告": return Color(hex: "EC4899")
-        case "カフェ": return Color(hex: "10B981")
+        case "ライブ会場": return Color(hex: "6366F1")  // インディゴ/青紫
+        case "ロケ地": return Color(hex: "8B5CF6")      // バイオレット/紫
+        case "カフェ・飲食店": return Color(hex: "10B981") // エメラルド/緑
+        case "グッズショップ": return Color(hex: "F59E0B") // アンバー/オレンジ
+        case "撮影スポット": return Color(hex: "EC4899")  // ピンク
+        case "聖地": return Color(hex: "EF4444")        // レッド/赤
+        case "その他": return Color(hex: "6B7280")      // グレー
         default: return Color(hex: "6366F1")
         }
     }
@@ -61,7 +67,6 @@ struct EnhancedAddLocationView: View {
                         endPoint: .trailing
                     ))
                     .edgesIgnoringSafeArea(.all)
-//                    .frame(height: 60)
                 
                 HStack {
                     Button(action: {
@@ -90,6 +95,9 @@ struct EnhancedAddLocationView: View {
                                 title: title.isEmpty ? selectedCategory : title,
                                 latitude: coordinate.latitude,
                                 longitude: coordinate.longitude,
+                                category: selectedCategory,
+                                initialRating: userRating,
+                                note: note.isEmpty ? nil : note,
                                 image: selectedImage
                             )
                         } else {
@@ -101,6 +109,9 @@ struct EnhancedAddLocationView: View {
                                         title: title.isEmpty ? selectedCategory : title,
                                         latitude: coordinate.latitude,
                                         longitude: coordinate.longitude,
+                                        category: selectedCategory,
+                                        initialRating: userRating,
+                                        note: note.isEmpty ? nil : note,
                                         image: selectedImage
                                     )
                                 }
@@ -116,8 +127,6 @@ struct EnhancedAddLocationView: View {
                             .background(Color.white.opacity(0.2))
                             .cornerRadius(16)
                     }
-//                    .disabled(coordinate == nil && currentAddress.isEmpty)
-//                    .opacity((coordinate == nil && currentAddress.isEmpty) ? 0.5 : 1)
                 }
                 .padding(.horizontal)
             }
@@ -197,8 +206,8 @@ struct EnhancedAddLocationView: View {
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.black)
                         
-                            ScrollView(.horizontal, showsIndicators: false){
-                        HStack {
+                        ScrollView(.horizontal, showsIndicators: false){
+                            HStack {
                                 ForEach(categories, id: \.self) { category in
                                     Button(action: {
                                         selectedCategory = category
@@ -253,6 +262,17 @@ struct EnhancedAddLocationView: View {
                             .padding()
                             .background(Color(UIColor.systemGray6))
                             .cornerRadius(12)
+                    }
+                    .padding(.horizontal)
+                    
+                    // New 5-Star Rating System
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack{
+                            Text("評価")
+                                .font(.system(size: 16, weight: .medium))
+                            Spacer()
+                        }
+                        StarRatingView(rating: $userRating, size: 40)
                     }
                     .padding(.horizontal)
                     
@@ -405,7 +425,6 @@ struct EnhancedAddLocationView: View {
         }
         .sheet(isPresented: $isShowingImagePicker) {
             // Use your image picker implementation here
-            // For example:
             ImageTimeLinePicker(selectedImage: $selectedImage)
         }
         .onAppear {
@@ -434,16 +453,32 @@ struct EnhancedAddLocationView: View {
         }
     }
     
-    // Convert the selected category to pin type
-    func getPinType(for category: String) -> MapPinView.PinType {
-        switch category {
-        case "ライブ": return .live
-        case "広告": return .ad
-        case "カフェ": return .cafe
-        default: return .other
+    // Rating description text based on the selected rating
+    var ratingDescriptionText: String {
+        switch userRating {
+        case 0: return "タップして評価してください"
+        case 1: return "イマイチ"
+        case 2: return "まあまあ"
+        case 3: return "普通"
+        case 4: return "良い"
+        case 5: return "最高の推しスポット！"
+        default: return ""
         }
     }
     
+    // Convert the selected category to pin type
+    func getPinType(for category: String) -> MapPinView.PinType {
+        switch category {
+        case "ライブ会場": return .live
+        case "ロケ地": return .location
+        case "カフェ・飲食店": return .cafe
+        case "グッズショップ": return .shop
+        case "撮影スポット": return .photo
+        case "聖地": return .sacred
+        case "その他": return .other
+        default: return .other
+        }
+    }
     // Geocode the address to get coordinates
     func geocodeAddress() {
         guard !currentAddress.isEmpty else { return }
@@ -501,6 +536,54 @@ struct EnhancedAddLocationView: View {
         "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
     ]
 }
+
+// Helper function to check if the device is a smaller model
+//func isSmallDevice() -> Bool {
+//    return UIScreen.main.bounds.height <= 667
+//}
+//
+//// Helper struct for map annotation
+//struct MapAnnotationItem: Identifiable {
+//    let id = UUID()
+//    let coordinate: CLLocationCoordinate2D
+//}
+//
+//// Extension for hex colors
+//extension Color {
+//    init(hex: String) {
+//        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+//        var int: UInt64 = 0
+//        Scanner(string: hex).scanHexInt64(&int)
+//        let a, r, g, b: UInt64
+//        switch hex.count {
+//        case 3: // RGB (12-bit)
+//            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+//        case 6: // RGB (24-bit)
+//            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+//        case 8: // ARGB (32-bit)
+//            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+//        default:
+//            (a, r, g, b) = (1, 1, 1, 0)
+//        }
+//
+//        self.init(
+//            .sRGB,
+//            red: Double(r) / 255,
+//            green: Double(g) / 255,
+//            blue:  Double(b) / 255,
+//            opacity: Double(a) / 255
+//        )
+//    }
+//}
+
+// Extension to dismiss keyboard when tapping outside
+//extension View {
+//    func dismissKeyboardOnTap() -> some View {
+//        self.onTapGesture {
+//            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+//        }
+//    }
+//}
 
 #Preview {
     EnhancedAddLocationView(viewModel: LocationViewModel())

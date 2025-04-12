@@ -36,84 +36,81 @@ struct EnhancedNewEventView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                backgroundColor.ignoresSafeArea()
-                
-                VStack() {
-                    // カスタムナビゲーションバー
-                    HStack {
-                        Button(action: {
-                            isPresented = false
-                        }) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(textColor)
-                                .frame(width: 36, height: 36)
-                                .background(Color(UIColor.secondarySystemBackground))
-                                .clipShape(Circle())
-                        }
-                        
-                        Spacer()
-                        
-                        Text("タイムライン作成")
-                            .font(.system(size: 18, weight: .bold))
+        ZStack {
+            backgroundColor.ignoresSafeArea()
+            
+            VStack {
+                // カスタムナビゲーションバー
+                HStack {
+                    Button(action: {
+                        isPresented = false
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(textColor)
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            saveEvent()
-                            isPresented = false
-                        }) {
-                            Text("保存")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 12)
-                                .background(
-                                    Capsule()
-                                        .fill(brandColor)
+                            .frame(width: 36, height: 36)
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .clipShape(Circle())
+                    }
+                    
+                    Spacer()
+                    
+                    Text("タイムライン作成")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(textColor)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        saveEvent()
+                        isPresented = false
+                    }) {
+                        Text("保存")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .background(
+                                Capsule()
+                                    .fill(brandColor)
 //                                        .fill(title.isEmpty ? Color.gray : brandColor)
-                                )
+                            )
 //                                .opacity(title.isEmpty ? 0.5 : 1.0)
-                        }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 8)
-                    
-                    // Modern scrollable content
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            // Image picker with modern design
-                            imagePickerSection
-                                .padding(.top, 16)
-                            
-                            // Title input with character count
-                            titleSection
-                            
-                            // Date picker
-                            datePickerSection
-                            
-                            // Activity toggle
-                            activityToggleSection
-                            
-                            // Preview section
-                            if isShowingPreview {
-                                eventPreviewSection
-                            }
-                            
-                            Spacer(minLength: 60)
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    
-                    // Bottom action bar with save button
-//                    bottomActionBar
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
+                
+                // Modern scrollable content
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Image picker with modern design
+                        imagePickerSection
+                            .padding(.top, 16)
+                        
+                        // Title input with character count
+                        titleSection
+                        
+                        // Date picker
+                        datePickerSection
+                        
+                        // Activity toggle
+                        activityToggleSection
+                        
+                        // Preview section
+                        if isShowingPreview {
+                            eventPreviewSection
+                        }
+                        
+                        Spacer(minLength: 60)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                
+                // Bottom action bar with save button
+//                    bottomActionBar
             }
-            .navigationBarHidden(true) // ナビゲーションバーを非表示にする
         }
         .dismissKeyboardOnTap()
         .sheet(isPresented: $isShowingImagePicker) {

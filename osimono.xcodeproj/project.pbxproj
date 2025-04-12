@@ -126,12 +126,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1813D8332DAA1EB000AB8CDA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		1870AFAA2D8BC85E004B827B = {
 			isa = PBXGroup;
 			children = (
 				1870AFB52D8BC85E004B827B /* osimono */,
 				1870AFC62D8BC860004B827B /* osimonoTests */,
 				1870AFD02D8BC860004B827B /* osimonoUITests */,
+				1813D8332DAA1EB000AB8CDA /* Frameworks */,
 				1870AFB42D8BC85E004B827B /* Products */,
 			);
 			sourceTree = "<group>";

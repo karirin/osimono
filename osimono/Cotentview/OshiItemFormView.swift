@@ -305,35 +305,15 @@ struct OshiItemFormView: View {
                             }
                             
                             // お気に入り度
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text("お気に入り度")
-                                    .font(.headline)
-                                    .foregroundColor(.gray)
-                                
-                                HStack {
-                                    ForEach(1...5, id: \.self) { rating in
-                                        Button(action: {
-                                            favorite = rating
-                                        }) {
-                                            Image(systemName: rating <= favorite ? "heart.fill" : "heart")
-                                                .foregroundColor(rating <= favorite ? .red : .gray)
-                                                .font(.system(size: 24))
-                                                .padding(.horizontal, 5)
-                                        }
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    Text("\(favorite)/5")
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack{
+                                    Text("お気に入り度")
                                         .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(primaryColor)
-                                        .padding(.trailing)
+                                    Spacer()
                                 }
-                                .padding()
-                                .background(cardColor)
-                                .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                StarRatingView(rating: $favorite, size: 40)
                             }
+                            .padding(.horizontal)
                             
                             // メモ
                             VStack(alignment: .leading, spacing: 5) {
@@ -560,11 +540,11 @@ struct OshiItemFormView: View {
     
     // データ保存
     func saveItem() {
-        guard let userId = userId, !title.isEmpty else {
-            alertMessage = "タイトルを入力してください"
-            showAlert = true
-            return
-        }
+//        guard let userId = userId, !title.isEmpty else {
+//            alertMessage = "タイトルを入力してください"
+//            showAlert = true
+//            return
+//        }
         
         isLoading = true
         

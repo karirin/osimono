@@ -15,34 +15,46 @@ struct MapPinView: View {
     var pinType: PinType
     
     enum PinType {
-        case live
-        case ad
-        case cafe
-        case other
+        case live // ライブ会場
+        case location // ロケ地
+        case cafe // カフェ・飲食店
+        case shop // グッズショップ
+        case photo // 撮影スポット
+        case sacred // 聖地
+        case other // その他
         
         var color: Color {
             switch self {
-            case .live: return Color(hex: "6366F1") // Indigo
-            case .ad: return Color(hex: "EC4899")   // Pink
-            case .cafe: return Color(hex: "10B981") // Green
-            case .other: return Color(hex: "6366F1") // Default Indigo
+            case .live: return Color(hex: "6366F1")     // インディゴ/青紫
+            case .location: return Color(hex: "8B5CF6") // バイオレット/紫
+            case .cafe: return Color(hex: "10B981")     // エメラルド/緑
+            case .shop: return Color(hex: "F59E0B")     // アンバー/オレンジ
+            case .photo: return Color(hex: "EC4899")    // ピンク
+            case .sacred: return Color(hex: "EF4444")   // レッド/赤
+            case .other: return Color(hex: "6B7280")    // グレー
             }
         }
         
         var icon: String {
             switch self {
             case .live: return "music.note"
-            case .ad: return "megaphone"
+            case .location: return "film"
             case .cafe: return "cup.and.saucer"
+            case .shop: return "bag"
+            case .photo: return "camera"
+            case .sacred: return "star"
             case .other: return "mappin"
             }
         }
         
         var label: String {
             switch self {
-            case .live: return "ライブ"
-            case .ad: return "広告"
-            case .cafe: return "カフェ"
+            case .live: return "ライブ会場"
+            case .location: return "ロケ地"
+            case .cafe: return "カフェ・飲食店"
+            case .shop: return "グッズショップ"
+            case .photo: return "撮影スポット"
+            case .sacred: return "聖地"
             case .other: return "その他"
             }
         }
