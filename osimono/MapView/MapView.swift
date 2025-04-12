@@ -192,7 +192,23 @@ struct MapView: View {
                 viewModel.fetchLocations()
             }
             .fullScreenCover(isPresented: $showAddLocation) {
-                EnhancedAddLocationView(viewModel: viewModel)
+                EnhancedAddLocationView(
+                    viewModel: viewModel,
+                    onLocationAdded: { newLocationId in
+                        // Set the newly added location as selected
+                        selectedLocationId = newLocationId
+                        
+                        // Find the new location and center the map on it
+                        if let newLocation = viewModel.locations.first(where: { $0.id == newLocationId }) {
+                            withAnimation {
+                                region.center = CLLocationCoordinate2D(
+                                    latitude: newLocation.latitude,
+                                    longitude: newLocation.longitude
+                                )
+                            }
+                        }
+                    }
+                )
             }
             .sheet(isPresented: $showFilterSheet) {
                 FilterSheetView(selectedCategories: $selectedCategories)

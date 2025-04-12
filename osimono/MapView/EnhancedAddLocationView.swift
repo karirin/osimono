@@ -30,7 +30,8 @@ struct EnhancedAddLocationView: View {
         center: CLLocationCoordinate2D(latitude: 35.6809591, longitude: 139.7673068),
         span: MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
     )
-    
+    var onLocationAdded: (String) -> Void
+
 //    let categories = ["ライブ", "広告", "カフェ", "その他"]
     let categories = ["ライブ会場", "ロケ地", "カフェ・飲食店", "グッズショップ", "撮影スポット", "聖地", "その他"]
     
@@ -100,7 +101,13 @@ struct EnhancedAddLocationView: View {
                                 initialRating: userRating,
                                 note: note.isEmpty ? nil : note,
                                 image: selectedImage
-                            )
+                            ) { newLocationId in
+                                if let newLocationId = newLocationId {
+                                    // Call the callback with the new location ID
+                                    onLocationAdded(newLocationId)
+                                }
+                                self.presentationMode.wrappedValue.dismiss()
+                            }
                         } else {
                             // Try to geocode the address if coordinate is nil
                             let geocoder = CLGeocoder()
@@ -114,11 +121,18 @@ struct EnhancedAddLocationView: View {
                                         initialRating: userRating,
                                         note: note.isEmpty ? nil : note,
                                         image: selectedImage
-                                    )
+                                    ) { newLocationId in
+                                        if let newLocationId = newLocationId {
+                                            // Call the callback with the new location ID
+                                            onLocationAdded(newLocationId)
+                                        }
+                                        self.presentationMode.wrappedValue.dismiss()
+                                    }
+                                } else {
+                                    self.presentationMode.wrappedValue.dismiss()
                                 }
                             }
                         }
-                        self.presentationMode.wrappedValue.dismiss()
                     }) {
                         Text("保存")
                             .font(.system(size: 16, weight: .bold))
@@ -610,6 +624,6 @@ struct EnhancedAddLocationView: View {
 //    }
 //}
 
-#Preview {
-    EnhancedAddLocationView(viewModel: LocationViewModel())
-}
+//#Preview {
+//    EnhancedAddLocationView(viewModel: LocationViewModel())
+//}

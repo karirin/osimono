@@ -114,10 +114,13 @@ class LocationViewModel: ObservableObject {
     }
     
     // 現在ログイン中のユーザーの ID 直下にロケーションを保存する
-    func addLocation(title: String, latitude: Double, longitude: Double, category: String = "その他", initialRating: Int = 0, note: String? = nil, image: UIImage? = nil) {
+    func addLocation(title: String, latitude: Double, longitude: Double, category: String = "その他",
+                    initialRating: Int = 0, note: String? = nil, image: UIImage? = nil,
+                    completion: @escaping (String?) -> Void = {_ in }) {
         // ログインしているユーザーの ID を取得（ログインしていなければ保存しない）
         guard let userId = Auth.auth().currentUser?.uid else {
             print("User not logged in")
+            completion(nil)
             return
         }
         
@@ -143,41 +146,55 @@ class LocationViewModel: ObservableObject {
             ref.setValue(locationDict) { error, _ in
                 if let error = error {
                     print("Error adding location: \(error.localizedDescription)")
+                    completion(nil)
                 } else {
+                    // Return the newly created location ID
+                    let newLocationId = ref.key
+                    
                     // 初回評価がある場合はユーザー評価も保存
                     if initialRating > 0 {
-                        self.saveUserRating(locationId: ref.key ?? "", rating: initialRating, userId: userId)
+                        self.saveUserRating(locationId: newLocationId ?? "", rating: initialRating, userId: userId)
                     }
                     
                     // 画像がある場合は Firebase Storage にアップロードし、imageURL を更新
                     if let image = image, let imageData = image.jpegData(compressionQuality: 0.7) {
-                        let storageRef = self.storage.reference().child("location_images/\(ref.key ?? "no_key").jpg")
+                        let storageRef = self.storage.reference().child("location_images/\(newLocationId ?? "no_key").jpg")
                         storageRef.putData(imageData, metadata: nil) { metadata, error in
                             if let error = error {
                                 print("Error uploading image: \(error.localizedDescription)")
+                                completion(newLocationId)
                                 return
                             }
                             
                             storageRef.downloadURL { url, error in
                                 if let error = error {
                                     print("Error getting download URL: \(error.localizedDescription)")
+                                    completion(newLocationId)
                                     return
                                 }
                                 
-                                guard let downloadURL = url else { return }
+                                guard let downloadURL = url else {
+                                    completion(newLocationId)
+                                    return
+                                }
                                 
                                 ref.updateChildValues(["imageURL": downloadURL.absoluteString]) { error, _ in
                                     if let error = error {
                                         print("Error updating imageURL: \(error.localizedDescription)")
                                     }
+                                    completion(newLocationId)
                                 }
                             }
                         }
+                    } else {
+                        // If no image, still return the ID
+                        completion(newLocationId)
                     }
                 }
             }
         } catch {
             print("Error converting location to dictionary: \(error.localizedDescription)")
+            completion(nil)
         }
     }
     

@@ -47,6 +47,7 @@ struct EnhancedTimelineRow: View {
                     Rectangle()
                         .fill(timelineColor)
                         .frame(width: 2)
+                        .padding(.vertical, -10)
 //                        .padding(.top, 12) // Start line below the circle
 //                }
                 
