@@ -51,6 +51,8 @@ struct ContentView: View {
     @State private var editingFavoriteOshi = ""
     @State private var saveTimer: Timer? = nil
     @State private var refreshTrigger = false
+    @State private var isShowingOshiSelector = false
+    @State private var showChangeOshiButton = false
     
     // プロフィールセクションの高さ
     var profileSectionHeight: CGFloat {
@@ -86,11 +88,11 @@ struct ContentView: View {
                     Spacer()
                     HStack {
                         Spacer()
-                        oshiSelector
                         Button(action: {
                             withAnimation(.spring()) {
                                 editFlag.toggle()
                                 isEditingUsername.toggle()
+                                showChangeOshiButton.toggle()
                                 generateHapticFeedback()
                             }
                         }) {
@@ -128,6 +130,13 @@ struct ContentView: View {
                         .padding()
                     }
                 }.padding(.trailing,10)
+            )
+            .overlay(
+                ZStack {
+                    if isShowingOshiSelector {
+                        oshiSelectorOverlay
+                    }
+                }
             )
             // プロフィール画像が拡大表示されている場合のオーバーレイを修正
             .overlay(
@@ -222,6 +231,167 @@ struct ContentView: View {
             )
         }
     }
+    
+    var changeOshiButtonOverlay: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Button(action: {
+                    withAnimation(.spring()) {
+                        isShowingOshiSelector = true
+                    }
+                    generateHapticFeedback()
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Text("推し変更")
+                            .fontWeight(.medium)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule()
+                            .fill(Color.black.opacity(0.3))
+                            .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+                    )
+                    .foregroundColor(.white)
+                }
+            }
+        }
+        .padding(.bottom,70)
+        .padding(.trailing,30)
+    }
+    
+    var oshiSelectorOverlay: some View {
+           ZStack {
+               // 半透明の背景
+               Color.black.opacity(0.7)
+                   .edgesIgnoringSafeArea(.all)
+                   .onTapGesture {
+                       withAnimation(.spring()) {
+                           isShowingOshiSelector = false
+                       }
+                   }
+               
+               VStack(spacing: 20) {
+                   // ヘッダー
+                   HStack {
+                       Text("推しを選択")
+                           .font(.title2)
+                           .fontWeight(.bold)
+                           .foregroundColor(.white)
+                       
+                       Spacer()
+                       
+                       Button(action: {
+                           withAnimation(.spring()) {
+                               isShowingOshiSelector = false
+                           }
+                       }) {
+                           Image(systemName: "xmark.circle.fill")
+                               .font(.title2)
+                               .foregroundColor(.white)
+                       }
+                   }
+                   .padding()
+                   
+                   // 推しリスト - グリッドレイアウト
+                   LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
+                       // 新規追加ボタン
+                       Button(action: {
+                           showAddOshiForm = true
+                           isShowingOshiSelector = false
+                       }) {
+                           VStack {
+                               ZStack {
+                                   Circle()
+                                       .fill(primaryColor.opacity(0.2))
+                                       .frame(width: 80, height: 80)
+                                   
+                                   Image(systemName: "plus")
+                                       .font(.system(size: 30))
+                                       .foregroundColor(primaryColor)
+                               }
+                               
+                               Text("新規追加")
+                                   .font(.subheadline)
+                                   .foregroundColor(.white)
+                           }
+                       }
+                       
+                       // 推しリスト
+                       ForEach(oshiList) { oshi in
+                           Button(action: {
+                               selectedOshi = oshi
+                               saveSelectedOshiId(oshi.id)
+                               generateHapticFeedback()
+                               withAnimation(.spring()) {
+                                   isShowingOshiSelector = false
+                                   editFlag = false
+                                   isEditingUsername = false
+                                   showChangeOshiButton = false
+                               }
+                           }) {
+                               VStack {
+                                   ZStack {
+                                       // プロフィール画像またはプレースホルダー
+                                       if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                           AsyncImage(url: url) { phase in
+                                               switch phase {
+                                               case .success(let image):
+                                                   image
+                                                       .resizable()
+                                                       .scaledToFill()
+                                                       .frame(width: 80, height: 80)
+                                                       .clipShape(Circle())
+                                               default:
+                                                   Circle()
+                                                       .fill(Color.gray.opacity(0.3))
+                                                       .frame(width: 80, height: 80)
+                                                       .overlay(
+                                                           Text(String(oshi.name.prefix(1)))
+                                                               .font(.system(size: 30, weight: .bold))
+                                                               .foregroundColor(.white)
+                                                       )
+                                               }
+                                           }
+                                       } else {
+                                           Circle()
+                                               .fill(Color.gray.opacity(0.3))
+                                               .frame(width: 80, height: 80)
+                                               .overlay(
+                                                   Text(String(oshi.name.prefix(1)))
+                                                       .font(.system(size: 30, weight: .bold))
+                                                       .foregroundColor(.white)
+                                               )
+                                       }
+                                       
+                                       // 選択インジケーター
+                                       if selectedOshi?.id == oshi.id {
+                                           Circle()
+                                               .stroke(primaryColor, lineWidth: 4)
+                                               .frame(width: 85, height: 85)
+                                       }
+                                   }
+                                   
+                                   Text(oshi.name)
+                                       .font(.subheadline)
+                                       .foregroundColor(.white)
+                                       .lineLimit(1)
+                               }
+                           }
+                       }
+                   }
+                   .padding()
+               }
+               .background(
+                   RoundedRectangle(cornerRadius: 20)
+                       .fill(Color.black.opacity(0.8))
+               )
+               .padding()
+           }
+       }
     
     // 背景編集オーバーレイ
     var editBackgroundOverlay: some View {
@@ -377,7 +547,7 @@ struct ContentView: View {
                             TextField("推しの名前", text: $editingUsername)
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.black)
-                                .padding(8)
+                                .padding(2)
                                 .background(Color.white)
                                 .cornerRadius(8)
                                 .multilineTextAlignment(.center)
@@ -405,6 +575,13 @@ struct ContentView: View {
                 print("oshi.backgroundImageUrl      :\(selectedOshi)")
             }
         }
+        .overlay(
+            ZStack {
+                if showChangeOshiButton {
+                    changeOshiButtonOverlay
+                }
+            }
+        )
     }
     
     
