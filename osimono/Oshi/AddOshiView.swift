@@ -15,7 +15,9 @@ struct AddOshiView: View {
     @State private var oshiName: String = ""
     @State private var oshiMemo: String = ""
     @State private var selectedImage: UIImage?
+    @State private var selectedBackgroundImage: UIImage?
     @State private var isShowingImagePicker = false
+    @State private var isShowingBackgroundPicker = false
     @State private var isLoading = false
     
     var body: some View {
@@ -28,7 +30,7 @@ struct AddOshiView: View {
                         isShowingImagePicker = true
                     }) {
                         HStack {
-                            Text("画像を選択")
+                            Text("プロフィール画像")
                             Spacer()
                             if let image = selectedImage {
                                 Image(uiImage: image)
@@ -38,6 +40,25 @@ struct AddOshiView: View {
                                     .clipShape(Circle())
                             } else {
                                 Image(systemName: "person.crop.circle.badge.plus")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    }
+                    
+                    Button(action: {
+                        isShowingBackgroundPicker = true
+                    }) {
+                        HStack {
+                            Text("背景画像")
+                            Spacer()
+                            if let image = selectedBackgroundImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 60, height: 30)
+                                    .cornerRadius(4)
+                            } else {
+                                Image(systemName: "photo.badge.plus")
                                     .foregroundColor(.blue)
                             }
                         }
@@ -68,6 +89,9 @@ struct AddOshiView: View {
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(image: $selectedImage, onImagePicked: { _ in })
         }
+        .sheet(isPresented: $isShowingBackgroundPicker) {
+            ImagePicker(image: $selectedBackgroundImage, onImagePicked: { _ in })
+        }
     }
     
     func saveOshi() {
@@ -83,27 +107,38 @@ struct AddOshiView: View {
             "createdAt": Date().timeIntervalSince1970
         ]
         
+        let dispatchGroup = DispatchGroup()
+        
+        // プロフィール画像をアップロード
         if let image = selectedImage {
-            uploadImage(image) { imageUrl in
+            dispatchGroup.enter()
+            uploadImage(image, path: "oshis/\(userId)/\(oshiId)/profile.jpg") { imageUrl in
                 if let url = imageUrl {
                     data["imageUrl"] = url
                 }
-                self.saveDataToFirebase(oshiId, data)
+                dispatchGroup.leave()
             }
-        } else {
-            saveDataToFirebase(oshiId, data)
+        }
+        
+        // 背景画像をアップロード
+        if let image = selectedBackgroundImage {
+            dispatchGroup.enter()
+            uploadImage(image, path: "oshis/\(userId)/\(oshiId)/background.jpg") { imageUrl in
+                if let url = imageUrl {
+                    data["backgroundImageUrl"] = url
+                }
+                dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            self.saveDataToFirebase(oshiId, data)
         }
     }
     
-    func uploadImage(_ image: UIImage, completion: @escaping (String?) -> Void) {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            completion(nil)
-            return
-        }
-        
+    func uploadImage(_ image: UIImage, path: String, completion: @escaping (String?) -> Void) {
         let storageRef = Storage.storage().reference()
-        let imageId = UUID().uuidString
-        let imageRef = storageRef.child("oshis/\(userId)/\(imageId).jpg")
+        let imageRef = storageRef.child(path)
         
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             completion(nil)

@@ -128,9 +128,10 @@ struct ContentView: View {
                     }
                 }.padding(.trailing,10)
             )
+            // プロフィール画像が拡大表示されている場合のオーバーレイを修正
             .overlay(
                 ZStack {
-                    if isProfileImageEnlarged {
+                    if isProfileImageEnlarged, let oshi = selectedOshi, let imageUrlString = oshi.imageUrl, let imageUrl = URL(string: imageUrlString) {
                         Color.black.opacity(0.9)
                             .edgesIgnoringSafeArea(.all)
                             .onTapGesture {
@@ -139,37 +140,35 @@ struct ContentView: View {
                                 }
                             }
                     
-                        if let imageUrl = imageUrl {
-                            VStack {
-                                AsyncImage(url: imageUrl) { phase in
-                                    switch phase {
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(height: isiPhone12Or13() ? 260 : isSmallDevice() ? 250 : 300)
-                                            .clipShape(Circle())
-                                    default:
-                                        Circle().foregroundColor(.white)
-                                            .frame(height: isiPhone12Or13() ? 260 : isSmallDevice() ? 250 : 300)
-                                            .shimmering()
-                                    }
+                        VStack {
+                            AsyncImage(url: imageUrl) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(height: isiPhone12Or13() ? 260 : isSmallDevice() ? 250 : 300)
+                                        .clipShape(Circle())
+                                default:
+                                    Circle().foregroundColor(.white)
+                                        .frame(height: isiPhone12Or13() ? 260 : isSmallDevice() ? 250 : 300)
+                                        .shimmering()
                                 }
-                                
-                                Button(action: {
-                                    withAnimation(.spring()) {
-                                        isProfileImageEnlarged = false
-                                    }
-                                }) {
-                                    Text("閉じる")
-                                        .padding(.horizontal, 24)
-                                        .padding(.vertical, 12)
-                                        .background(primaryColor)
-                                        .foregroundColor(.white)
-                                        .cornerRadius(8)
-                                }
-                                .padding(.top, 30)
                             }
+                            
+                            Button(action: {
+                                withAnimation(.spring()) {
+                                    isProfileImageEnlarged = false
+                                }
+                            }) {
+                                Text("閉じる")
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 12)
+                                    .background(primaryColor)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                            .padding(.top, 30)
                         }
                     }
                 }
@@ -184,8 +183,17 @@ struct ContentView: View {
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(image: $image, onImagePicked: { pickedImage in
                 self.image = pickedImage
-                uploadImageToFirebase(pickedImage)
+                uploadOshiImageToFirebase(pickedImage)
             })
+        }
+        .sheet(item: $currentEditType) { type in
+            ImagePicker(
+                image: $image,
+                onImagePicked: { pickedImage in
+                    self.image = pickedImage
+                    uploadOshiImageToFirebase(pickedImage, type: type)
+                }
+            )
         }
         .sheet(isPresented: $showAddOshiForm) {
             AddOshiView()
@@ -207,12 +215,37 @@ struct ContentView: View {
         }
     }
     
+    // 背景編集オーバーレイ
+    var editBackgroundOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3)
+            
+            VStack {
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        currentEditType = .background
+                        generateHapticFeedback()
+                    }) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
+                            .padding(12)
+                            .background(Circle().fill(Color.black.opacity(0.5)))
+                    }
+                    .padding()
+                }
+                Spacer()
+            }
+        }
+    }
+    
     // プロフィールセクション - 推し活ユーザー向け
     var profileSection: some View {
         ZStack(alignment: .top) {
-            // 背景画像
+            // 背景画像 - 選択中の推しの背景画像に変更
             if isLoading {
-                // ローディング状態の背景
+                // ローディング状態の背景（既存コード）
                 Rectangle()
                     .frame(height: profileSectionHeight)
                     .frame(maxWidth: .infinity)
@@ -220,8 +253,9 @@ struct ContentView: View {
                     .shimmering(active: true)
                     .edgesIgnoringSafeArea(.all)
             } else {
-                if let backgroundImageUrl = backgroundImageUrl {
-                    AsyncImage(url: backgroundImageUrl) { phase in
+                if let oshi = selectedOshi, let backgroundUrl = oshi.backgroundImageUrl, let url = URL(string: backgroundUrl) {
+                    // 選択中の推しの背景画像を表示
+                    AsyncImage(url: url) { phase in
                         switch phase {
                         case .success(let image):
                             image
@@ -244,7 +278,7 @@ struct ContentView: View {
                         }
                     }
                 } else {
-                    // 背景画像がない場合
+                    // 背景画像がない場合（既存コード）
                     ZStack {
                         LinearGradient(
                             gradient: Gradient(colors: [primaryColor.opacity(0.7), accentColor.opacity(0.7)]),
@@ -263,9 +297,9 @@ struct ContentView: View {
             
             // プロフィール情報とアバター
             VStack(spacing: 8) {
-                // プロフィール画像
+                // プロフィール画像 - 選択中の推しのプロフィール画像に変更
                 ZStack {
-                    if let imageUrl = imageUrl {
+                    if let oshi = selectedOshi, let imageUrlString = oshi.imageUrl, let imageUrl = URL(string: imageUrlString) {
                         AsyncImage(url: imageUrl) { phase in
                             switch phase {
                             case .success(let image):
@@ -314,7 +348,12 @@ struct ContentView: View {
                         }
                     } else {
                         Button(action: {
-                            isShowingImagePicker = true
+                            if let oshi = selectedOshi {
+                                isShowingImagePicker = true
+                            } else {
+                                // 推しが選択されていない場合は、推し追加フォームを表示
+                                showAddOshiForm = true
+                            }
                         }) {
                             profilePlaceholder
                         }
@@ -339,71 +378,26 @@ struct ContentView: View {
                                     startEditing()
                                 }
                                 .onChange(of: editingUsername) { newValue in
-//                                    saveTimer?.invalidate()
-//                                    saveTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
-                                        saveUserProfile()
-//                                    }
+                                    saveOshiProfile()
                                 }
-//                            Button(action: {
-//                                saveUserProfile()
-//                                generateHapticFeedback()
-//                            }) {
-//                                Image(systemName: "checkmark.circle.fill")
-//                                    .font(.system(size: 22))
-//                                    .foregroundColor(.white)
-//                            }
-                        }
-                        
-                        if userProfile.favoriteOshi != nil || !editingFavoriteOshi.isEmpty {
-//                            TextField("推しの名前", text: $editingFavoriteOshi)
-//                                .font(.system(size: 14))
-//                                .foregroundColor(.black)
-//                                .padding(6)
-//                                .background(Color.white)
-//                                .cornerRadius(6)
-//                                .multilineTextAlignment(.center)
-//                                .frame(width: 180)
                         }
                     } else {
                         // 表示モード: 通常のテキスト表示
-                        Text(userProfile.username ?? "推しの名前")
+                        Text(selectedOshi?.name ?? "推しを選択してください")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
-//                            .onTapGesture {
-//                                if editFlag {
-//                                    startEditing()
-//                                    generateHapticFeedback()
-//                                }
-//                            }
-                        
-                        if let favoriteOshi = userProfile.favoriteOshi, !favoriteOshi.isEmpty {
-                            Text("推し: \(favoriteOshi)")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.9))
-//                                .onTapGesture {
-//                                    if editFlag {
-//                                        startEditing()
-//                                        generateHapticFeedback()
-//                                    }
-//                                }
-                        }
                     }
-                    
-//                    Text("コレクション: \(oshiItems.count)点")
-//                        .font(.system(size: 14))
-//                        .foregroundColor(.white.opacity(0.9))
                 }
                 .padding(.bottom, 12)
             }
             .offset(y: 30)
         }
-//        .frame(height: profileSectionHeight + 60)
     }
     
     func startEditing() {
-        editingUsername = userProfile.username ?? ""
-        editingFavoriteOshi = userProfile.favoriteOshi ?? ""
-//        isEditingUsername = true
+        if let oshi = selectedOshi {
+            editingUsername = oshi.name
+        }
     }
 
     // プロフィール保存関数 - ContentViewに追加
@@ -460,31 +454,6 @@ struct ContentView: View {
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
 //        .padding(.top, isSmallDevice() ?   -20 : -50)
-    }
-    
-    // 背景編集オーバーレイ
-    var editBackgroundOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.3)
-            
-            VStack {
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        currentEditType = .background
-                        generateHapticFeedback()
-                    }) {
-                        Image(systemName: "camera.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white)
-                            .padding(12)
-                            .background(Circle().fill(Color.black.opacity(0.5)))
-                    }
-                    .padding()
-                }
-                Spacer()
-            }
-        }
     }
     
     // プロフィール画像プレースホルダー
@@ -596,6 +565,33 @@ struct ContentView: View {
         }
     }
     
+    func saveOshiProfile() {
+        guard let userID = Auth.auth().currentUser?.uid, let oshi = selectedOshi else { return }
+        
+        let updatedName = editingUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !updatedName.isEmpty {
+            // Firebaseにデータを保存
+            let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
+            let updates: [String: Any] = [
+                "name": updatedName
+            ]
+            
+            dbRef.updateChildValues(updates) { error, _ in
+                if error == nil {
+                    // ローカルのselectedOshiを更新
+                    var updatedOshi = self.selectedOshi!
+                    updatedOshi.name = updatedName
+                    self.selectedOshi = updatedOshi
+                    
+                    // oshiListも更新
+                    if let index = self.oshiList.firstIndex(where: { $0.id == oshi.id }) {
+                        self.oshiList[index].name = updatedName
+                    }
+                }
+            }
+        }
+    }
+    
     func fetchOshiList() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let ref = Database.database().reference().child("oshis").child(userId)
@@ -631,6 +627,74 @@ struct ContentView: View {
                 if let firstOshi = newOshis.first, self.selectedOshi == nil {
                     self.selectedOshi = firstOshi
                 }
+            }
+        }
+    }
+    
+    // 推し用の画像アップロード
+    func uploadOshiImageToFirebase(_ image: UIImage, type: UploadImageType = .profile) {
+        guard let userID = Auth.auth().currentUser?.uid, let oshi = selectedOshi else {
+            print("ユーザーがログインしていないか、推しが選択されていません")
+            return
+        }
+
+        let storageRef = Storage.storage().reference()
+        let filename = type == .profile ? "profile.jpg" : "background.jpg"
+        let imageRef = storageRef.child("oshis/\(userID)/\(oshi.id)/\(filename)")
+
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+
+        // アップロード中の表示
+        withAnimation {
+            isLoading = true
+        }
+
+        imageRef.putData(imageData, metadata: metadata) { _, error in
+            if let error = error {
+                print("アップロードエラー: \(error.localizedDescription)")
+            } else {
+                print("画像をアップロードしました")
+                
+                // 画像URL取得
+                imageRef.downloadURL { url, error in
+                    if let url = url {
+                        // DBにURLを保存
+                        let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
+                        let updates: [String: Any] = type == .profile
+                            ? ["imageUrl": url.absoluteString]
+                            : ["backgroundImageUrl": url.absoluteString]
+                        
+                        dbRef.updateChildValues(updates) { error, _ in
+                            if error == nil {
+                                // ローカルのselectedOshiを更新
+                                var updatedOshi = self.selectedOshi!
+                                if type == .profile {
+                                    updatedOshi.imageUrl = url.absoluteString
+                                } else {
+                                    updatedOshi.backgroundImageUrl = url.absoluteString
+                                }
+                                self.selectedOshi = updatedOshi
+                                
+                                // oshiListも更新
+                                if let index = self.oshiList.firstIndex(where: { $0.id == oshi.id }) {
+                                    if type == .profile {
+                                        self.oshiList[index].imageUrl = url.absoluteString
+                                    } else {
+                                        self.oshiList[index].backgroundImageUrl = url.absoluteString
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // アップロード完了後
+            withAnimation {
+                isLoading = false
             }
         }
     }
