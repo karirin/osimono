@@ -137,8 +137,8 @@ struct EnhancedTimelineRow: View {
     }
 }
 
-struct EnhancedTimelineRow_Previews: PreviewProvider {
-    static var previews: some View {
-        TimelineView()
-    }
-}
+//struct EnhancedTimelineRow_Previews: PreviewProvider {
+//    static var previews: some View {
+//        TimelineView()
+//    }
+//}

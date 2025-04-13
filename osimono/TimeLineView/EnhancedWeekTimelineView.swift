@@ -264,8 +264,8 @@ struct EnhancedWeekTimelineView: View {
     }
 }
 
-struct EnhancedWeekTimelineView_Previews: PreviewProvider {
-    static var previews: some View {
-        TimelineView()
-    }
-}
+//struct EnhancedWeekTimelineView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        TimelineView()
+//    }
+//}

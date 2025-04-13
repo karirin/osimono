@@ -19,6 +19,8 @@ struct TimelineView: View {
     private let textColor = Color(UIColor.label)
     private let secondaryTextColor = Color(UIColor.secondaryLabel)
     
+    var oshiId: String
+    
     private var formattedYearMonth: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy年M月"
@@ -103,14 +105,20 @@ struct TimelineView: View {
                 }
             }
         }
+        .onAppear {
+            viewModel.updateCurrentOshi(id: oshiId)
+        }
+        .onChange(of: oshiId) { newId in
+            viewModel.updateCurrentOshi(id: newId)
+        }
         .fullScreenCover(isPresented: $showNewEventView) {
             EnhancedNewEventView(isPresented: $showNewEventView, viewModel: viewModel, initialDate: selectedDate)
         }
     }
 }
 
-struct TimelineView_Previews: PreviewProvider {
-    static var previews: some View {
-        TimelineView()
-    }
-}
+//struct TimelineView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        TimelineView()
+//    }
+//}

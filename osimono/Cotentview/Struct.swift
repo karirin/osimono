@@ -28,6 +28,7 @@ struct UserProfile: Codable {
     var profileImageUrl: String?
     var backgroundImageUrl: String?
     var bio: String?
+    var selectedOshiId: String?
 }
 
 struct NumberTextField: UIViewRepresentable {

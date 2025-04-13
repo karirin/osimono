@@ -68,7 +68,7 @@ struct ContentView: View {
                         OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger)
                             .tag(0)
                         
-                        FavoritesView()
+                        TimelineView(oshiId: selectedOshi?.id ?? "default")
                             .tag(1)
                         
                         CategoriesView()
@@ -181,17 +181,6 @@ struct ContentView: View {
             loadAllData()
             fetchOshiList()
         }
-//        .onChange(of: selectedOshi?.id) { newOshi in
-//            // 選択中の推しが変わったとき、投稿を再取得するためにaddFlagを変更する
-//            if newOshi != nil {
-//                // 一時的にaddFlagをtrueにしてからfalseに戻すことで、
-//                // OshiCollectionViewのonChange処理をトリガーする
-//                addFlag = true
-//                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-//                    addFlag = false
-//                }
-//            }
-//        }
         .onChange(of: selectedOshi?.id) { newOshi in
             // 選択中の推しが変わったとき、投稿を再取得するためにリフレッシュトリガーを変更する
             if newOshi != nil {
@@ -418,6 +407,34 @@ struct ContentView: View {
         }
     }
     
+    
+    func saveSelectedOshiId(_ oshiId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedOshiId": oshiId]) { error, _ in
+            if let error = error {
+                print("推しID保存エラー: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func loadSelectedOshi() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.observeSingleEvent(of: .value) { snapshot in
+            guard let value = snapshot.value as? [String: Any] else { return }
+            
+            if let selectedOshiId = value["selectedOshiId"] as? String {
+                // 選択中の推しIDが存在する場合、oshiListから該当する推しを検索して設定
+                if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
+                    self.selectedOshi = oshi
+                }
+            }
+        }
+    }
+    
     func startEditing() {
         if let oshi = selectedOshi {
             editingUsername = oshi.name
@@ -536,6 +553,7 @@ struct ContentView: View {
                     Button(action: {
                         selectedOshi = oshi
                         generateHapticFeedback()
+                        saveSelectedOshiId(oshi.id)
                     }) {
                         VStack {
                             if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
@@ -648,6 +666,7 @@ struct ContentView: View {
             
             DispatchQueue.main.async {
                 self.oshiList = newOshis
+                self.loadSelectedOshi()
                 // 初期表示用に最初の推しを選択
                 if let firstOshi = newOshis.first, self.selectedOshi == nil {
                     self.selectedOshi = firstOshi

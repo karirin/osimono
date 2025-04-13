@@ -384,7 +384,8 @@ struct EnhancedNewEventView: View {
             title: title,
             color: color,
             image: selectedImage,
-            imageURL: nil
+            imageURL: nil,
+            oshiId: viewModel.currentOshiId // 現在の推しIDを設定
         )
         
         viewModel.addEvent(event: newEvent)
@@ -404,7 +405,7 @@ struct EnhancedNewEventView: View {
     }
 }
 
-#Preview {
-//    EnhancedNewEventView(viewModel: TimelineViewModel(), initialDate: Date())
-    TimelineView()
-}
+//#Preview {
+////    EnhancedNewEventView(viewModel: TimelineViewModel(), initialDate: Date())
+//    TimelineView()
+//}
