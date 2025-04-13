@@ -30,6 +30,9 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @Environment(\.colorScheme) var colorScheme
     @State private var userProfile = UserProfile(id: "", username: "推し活ユーザー", favoriteOshi: "")
+    @State private var selectedOshi: Oshi? = nil
+    @State private var oshiList: [Oshi] = []
+    @State private var showAddOshiForm = false
     
     // テーマカラーの定義 - アイドル/推し活向けに明るく元気なカラースキーム
 //    let primaryColor = Color("#FF4B8A") // 明るいピンク
@@ -59,10 +62,9 @@ struct ContentView: View {
                 VStack(spacing: -60) {
                     // プロフィールセクション
                     profileSection
-                    
                     // メインコンテンツ
                     TabView(selection: $selectedTab) {
-                        OshiCollectionView(addFlag: $addFlag)
+                        OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default")
                             .tag(0)
                         
                         FavoritesView()
@@ -83,6 +85,7 @@ struct ContentView: View {
                     Spacer()
                     HStack {
                         Spacer()
+                        oshiSelector
                         Button(action: {
                             withAnimation(.spring()) {
                                 editFlag.toggle()
@@ -176,12 +179,16 @@ struct ContentView: View {
         .accentColor(primaryColor)
         .onAppear {
             loadAllData()
+            fetchOshiList()
         }
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(image: $image, onImagePicked: { pickedImage in
                 self.image = pickedImage
                 uploadImageToFirebase(pickedImage)
             })
+        }
+        .sheet(isPresented: $showAddOshiForm) {
+            AddOshiView()
         }
         .sheet(item: $currentEditType) { type in
             ImagePicker(
@@ -505,6 +512,125 @@ struct ContentView: View {
                     .foregroundColor(.white)
                     .background(Circle().fill(primaryColor))
                     .offset(x: 32, y: 32)
+            }
+        }
+    }
+    
+    var oshiSelector: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 15) {
+                // 新規追加ボタン
+                Button(action: {
+                    // 推し追加画面を表示
+                    showAddOshiForm = true
+                }) {
+                    VStack {
+                        Image(systemName: "plus")
+                            .font(.system(size: 24))
+                            .padding(12)
+                            .background(Circle().fill(primaryColor))
+                            .foregroundColor(.black)
+                        
+                        Text("推し追加")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .frame(width: 70)
+                }
+                
+                // 推しリスト
+                ForEach(oshiList) { oshi in
+                    Button(action: {
+                        selectedOshi = oshi
+                        generateHapticFeedback()
+                    }) {
+                        VStack {
+                            if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                AsyncImage(url: url) { phase in
+                                    switch phase {
+                                    case .success(let image):
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 60, height: 60)
+                                            .clipShape(Circle())
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(selectedOshi?.id == oshi.id ? primaryColor : Color.clear, lineWidth: 3)
+                                            )
+                                    default:
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 60, height: 60)
+                                            .overlay(
+                                                Text(String(oshi.name.prefix(1)))
+                                                    .font(.system(size: 24, weight: .bold))
+                                                    .foregroundColor(.white)
+                                            )
+                                    }
+                                }
+                            } else {
+                                Circle()
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 60, height: 60)
+                                    .overlay(
+                                        Text(String(oshi.name.prefix(1)))
+                                            .font(.system(size: 24, weight: .bold))
+                                            .foregroundColor(.white)
+                                    )
+                                    .overlay(
+                                        Circle()
+                                            .stroke(selectedOshi?.id == oshi.id ? primaryColor : Color.clear, lineWidth: 3)
+                                    )
+                            }
+                            
+                            Text(oshi.name)
+                                .font(.caption)
+                                .lineLimit(1)
+                                .frame(width: 70)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    func fetchOshiList() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        let ref = Database.database().reference().child("oshis").child(userId)
+        
+        ref.observeSingleEvent(of: .value) { snapshot in
+            var newOshis: [Oshi] = []
+            
+            for child in snapshot.children {
+                if let childSnapshot = child as? DataSnapshot {
+                    if let value = childSnapshot.value as? [String: Any] {
+                        let id = childSnapshot.key
+                        let name = value["name"] as? String ?? "名前なし"
+                        let imageUrl = value["imageUrl"] as? String
+                        let memo = value["memo"] as? String
+                        let createdAt = value["createdAt"] as? TimeInterval
+                        
+                        let oshi = Oshi(
+                            id: id,
+                            name: name,
+                            imageUrl: imageUrl,
+                            memo: memo,
+                            createdAt: createdAt
+                        )
+                        print("oshi     :\(oshi)")
+                        newOshis.append(oshi)
+                    }
+                }
+            }
+            
+            DispatchQueue.main.async {
+                self.oshiList = newOshis
+                // 初期表示用に最初の推しを選択
+                if let firstOshi = newOshis.first, self.selectedOshi == nil {
+                    self.selectedOshi = firstOshi
+                }
             }
         }
     }

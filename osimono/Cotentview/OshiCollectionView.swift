@@ -9,76 +9,6 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 
-// 推しグッズデータモデル
-//struct OshiItem: Identifiable, Codable {
-//    var id: String = UUID().uuidString
-//    var title: String?
-//    var category: String?
-//    var memo: String?
-//    var imageUrl: String?
-//    var price: Int?
-//    var purchaseDate: TimeInterval?
-//    var eventName: String?
-//    var favorite: Int?  // お気に入り度（5段階）
-//    var memories: String? // 思い出・エピソード
-//    var tags: [String]?  // タグ（メンバー名など）
-//    var location: String? // 購入場所
-//    var itemType: String? // グッズ/SNS投稿/ライブ記録/聖地巡礼/その他
-//    
-//    // 聖地巡礼用フィールド
-//    var locationAddress: String? // 聖地の場所・住所
-//    var visitDate: TimeInterval? // 訪問日
-//    
-//    // その他用フィールド
-//    var recordDate: TimeInterval? // 記録日
-//    var details: String? // 詳細メモ
-//    
-//    // Firebase用のタイムスタンプ
-//    var createdAt: TimeInterval?
-//    
-//    var date: Date? {
-//        if let timestamp = createdAt {
-//            return Date(timeIntervalSince1970: timestamp)
-//        }
-//        return nil
-//    }
-//    
-//    // 各タイプごとの日付取得
-//    var typeSpecificDate: Date? {
-//        switch itemType {
-//        case "グッズ":
-//            if let timestamp = purchaseDate {
-//                return Date(timeIntervalSince1970: timestamp)
-//            }
-//        case "ライブ記録":
-//            if let timestamp = purchaseDate {
-//                return Date(timeIntervalSince1970: timestamp)
-//            }
-//        case "SNS投稿":
-//            if let timestamp = purchaseDate {
-//                return Date(timeIntervalSince1970: timestamp)
-//            }
-//        case "聖地巡礼":
-//            if let timestamp = visitDate {
-//                return Date(timeIntervalSince1970: timestamp)
-//            }
-//        case "その他":
-//            if let timestamp = recordDate {
-//                return Date(timeIntervalSince1970: timestamp)
-//            }
-//        default:
-//            break
-//        }
-//        return date
-//    }
-//    
-//    enum CodingKeys: String, CodingKey {
-//        case id, title, category, memo, imageUrl, price, purchaseDate, eventName
-//        case favorite, memories, tags, location, itemType, createdAt
-//        case locationAddress, visitDate, recordDate, details
-//    }
-//}
-
 // 推しカテゴリー
 struct OshiCategory: Identifiable {
     var id = UUID()
@@ -98,6 +28,7 @@ struct OshiCollectionView: View {
     @State private var sortOption = "新しい順"
     @State private var showingItemTypeFilter = false
     @State private var selectedItemType: String = "すべて"
+    var oshiId: String
     
     // 色の定義 - 推し活向けカラー
     let primaryColor = Color(.systemPink) // ピンク
@@ -206,7 +137,6 @@ struct OshiCollectionView: View {
                 .cornerRadius(10)
                 .shadow(color: Color.black.opacity(0.05), radius: 2)
                 
-                // フィルターボタン
                 Button(action: {
                     withAnimation {
                         showingFilterMenu.toggle()
@@ -392,7 +322,7 @@ struct OshiCollectionView: View {
             }
         }
         .fullScreenCover(isPresented: $addFlag) {
-            OshiItemFormView()
+            OshiItemFormView(oshiId: oshiId)
         }
     }
     
@@ -415,33 +345,35 @@ struct OshiCollectionView: View {
     
     // データ取得
     func fetchOshiItems() {
-        guard let userId = userId else { return }
-        self.isLoading = true
-        let ref = Database.database().reference().child("oshiItems").child(userId)
-        ref.observeSingleEvent(of: .value) { snapshot in
-            var newItems: [OshiItem] = []
+            guard let userId = userId else { return }
+            self.isLoading = true
             
-            for child in snapshot.children {
-                if let childSnapshot = child as? DataSnapshot {
-                    
-                    if let value = childSnapshot.value as? [String: Any] {
-                        do {
-                            let jsonData = try JSONSerialization.data(withJSONObject: value)
-                            let item = try JSONDecoder().decode(OshiItem.self, from: jsonData)
-                            newItems.append(item)
-                        } catch {
-                            print("デコードエラー: \(error.localizedDescription)")
+            // 変更：選択中の推しIDのパスから取得
+            let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId)
+            
+            ref.observeSingleEvent(of: .value) { snapshot in
+                var newItems: [OshiItem] = []
+                
+                for child in snapshot.children {
+                    if let childSnapshot = child as? DataSnapshot {
+                        if let value = childSnapshot.value as? [String: Any] {
+                            do {
+                                let jsonData = try JSONSerialization.data(withJSONObject: value)
+                                let item = try JSONDecoder().decode(OshiItem.self, from: jsonData)
+                                newItems.append(item)
+                            } catch {
+                                print("デコードエラー: \(error.localizedDescription)")
+                            }
                         }
                     }
                 }
-            }
-            
-            DispatchQueue.main.async {
-                self.oshiItems = newItems
-                self.isLoading = false
+                
+                DispatchQueue.main.async {
+                    self.oshiItems = newItems
+                    self.isLoading = false
+                }
             }
         }
-    }
     
     // 触覚フィードバック
     func generateHapticFeedback() {

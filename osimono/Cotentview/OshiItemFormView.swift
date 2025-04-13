@@ -18,6 +18,7 @@ struct OshiItemFormView: View {
     @State private var selectedImage: UIImage?
     @State private var isShowingImagePicker = false
     @State private var isLoading = false
+    var oshiId: String
     
     // タグ関連状態
     @State private var tags: [String] = []
@@ -555,6 +556,7 @@ struct OshiItemFormView: View {
             "memo": memo,
             "favorite": favorite,
             "itemType": itemType,
+            "oshiId": oshiId,
             "createdAt": Date().timeIntervalSince1970
         ]
         
@@ -651,7 +653,9 @@ struct OshiItemFormView: View {
             return
         }
         
-        let ref = Database.database().reference().child("oshiItems").child(userId).child(itemId)
+        // ここを変更：oshiIdを含めたパスに保存
+        let oshiId = data["oshiId"] as? String ?? "default"
+        let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(itemId)
         
         ref.setValue(data) { error, _ in
             DispatchQueue.main.async {
@@ -669,6 +673,6 @@ struct OshiItemFormView: View {
     }
 }
 
-#Preview {
-    OshiItemFormView()
-}
+//#Preview {
+//    OshiItemFormView(oshiId: "test")
+//}

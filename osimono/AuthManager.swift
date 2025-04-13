@@ -69,6 +69,29 @@ class AuthManager: ObservableObject {
         }
     }
     
+    func createUserRecord(completion: @escaping (Bool) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("ユーザーがログインしていません")
+            completion(false)
+            return
+        }
+        let userRecord: [String: Any] = [
+            "uid": uid,
+            "createdAt": ServerValue.timestamp(),
+            "userFlag": 0  // 必要に応じて初期値を設定
+        ]
+        let usersRef = Database.database().reference().child("users").child(uid)
+        usersRef.setValue(userRecord) { error, _ in
+            if let error = error {
+                print("ユーザーレコード作成エラー: \(error.localizedDescription)")
+                completion(false)
+            } else {
+                completion(true)
+            }
+        }
+    }
+
+    
     func updateUserFlag(userId: String, userFlag: Int, completion: @escaping (Bool) -> Void) {
         let userRef = Database.database().reference().child("users").child(userId)
         let updates = ["userFlag": userFlag]
@@ -88,6 +111,17 @@ struct AuthManager1: View {
 
     var body: some View {
         VStack {
+            Button(action: {
+                authManager.createUserRecord { success in
+                    if success {
+                        print("ユーザーレコードが正常に作成されました。")
+                    } else {
+                        print("ユーザーレコードの作成に失敗しました。")
+                    }
+                }
+            }) {
+                Text("ユーザーレコード作成")
+            }
             if authManager.user == nil {
                 Text("Not logged in")
             } else {
