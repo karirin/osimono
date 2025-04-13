@@ -18,6 +18,7 @@ struct MapView: View {
     @StateObject private var locationManager = LocationManager()
     @State private var selectedCategories: Set<String> = ["ライブ", "広告", "カフェ", "その他"]
     @State private var showUserProfile = false
+    var oshiId: String
     
     var body: some View {
         NavigationView {
@@ -75,7 +76,8 @@ struct MapView: View {
                                             location: location,
                                             isSelected: selectedLocationId == location.id,
                                             pinType: getPinType(for: location),
-                                            userLocation: locationManager.userLocation
+                                            userLocation: locationManager.userLocation,
+                                            oshiId: oshiId
                                         )
                                         .onAppear{
                                             print("locations      :\(location)")
@@ -189,7 +191,11 @@ struct MapView: View {
                         region.center = userLocation.coordinate
                     }
                 }
-                viewModel.fetchLocations()
+                viewModel.updateCurrentOshi(id: oshiId)
+            }
+            .onChange(of: oshiId) { newId in
+                // 推しが変更されたら更新
+                viewModel.updateCurrentOshi(id: newId)
             }
             .fullScreenCover(isPresented: $showAddLocation) {
                 EnhancedAddLocationView(
@@ -286,11 +292,11 @@ struct MapView: View {
     }
 }
 
-struct MapView_Previews: PreviewProvider {
-    static var previews: some View {
-        MapView()
-    }
-}
+//struct MapView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        MapView()
+//    }
+//}
 
 // Extension for rounded corners on specific sides
 //extension View {

@@ -25,6 +25,7 @@ struct EventLocation: Identifiable, Codable {
     var ratingSum: Int = 0
     var note: String?
     var createdAt: Date = Date()
+    var oshiId: String? // 推しID追加
 }
 
 // ユーザーの評価モデル
@@ -32,6 +33,7 @@ struct UserRating: Codable {
     var locationId: String
     var rating: Int      // 1～5の評価
     var userId: String?
+    var oshiId: String?  // 推しIDを追加
     var timestamp: Date = Date()
 }
 
@@ -81,52 +83,55 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
 class LocationViewModel: ObservableObject {
     @Published var locations: [EventLocation] = []
+    @Published var currentOshiId: String = "default"
     
     // Realtime Database の参照
     private var db = Database.database().reference()
     private var storage = Storage.storage()
     
     // 全ユーザーのロケーションを読み込む場合の実装
-    func fetchLocations() {
-        // 「locations」ノードの下に各ユーザー毎に保存されているので全ユーザーノードを巡回する
-        db.child("locations").observe(.value) { snapshot in
+    func fetchLocations(forOshiId oshiId: String = "default") {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        // ユーザーID → 推しID → 投稿ID という階層構造でデータを取得
+        let locationsRef = db.child("locations").child(userId).child(oshiId)
+        
+        locationsRef.observe(.value) { snapshot in
             var newLocations: [EventLocation] = []
-            for userChild in snapshot.children {
-                if let userSnap = userChild as? DataSnapshot {
-                    for locChild in userSnap.children {
-                        if let locSnap = locChild as? DataSnapshot,
-                           let dict = locSnap.value as? [String: Any] {
-                            do {
-                                let jsonData = try JSONSerialization.data(withJSONObject: dict)
-                                var location = try JSONDecoder().decode(EventLocation.self, from: jsonData)
-                                // 自動生成されたキーを ID として利用
-                                location.id = locSnap.key
-                                newLocations.append(location)
-                            } catch {
-                                print("Error decoding location: \(error)")
-                            }
-                        }
+            
+            for child in snapshot.children {
+                if let childSnapshot = child as? DataSnapshot,
+                   let dict = childSnapshot.value as? [String: Any] {
+                    do {
+                        let jsonData = try JSONSerialization.data(withJSONObject: dict)
+                        var location = try JSONDecoder().decode(EventLocation.self, from: jsonData)
+                        location.id = childSnapshot.key
+                        location.oshiId = oshiId  // 明示的に推しIDを設定
+                        newLocations.append(location)
+                    } catch {
+                        print("Error decoding location: \(error)")
                     }
                 }
             }
-            self.locations = newLocations.sorted { $0.createdAt > $1.createdAt }
+            
+            DispatchQueue.main.async {
+                self.locations = newLocations.sorted { $0.createdAt > $1.createdAt }
+            }
         }
     }
     
     // 現在ログイン中のユーザーの ID 直下にロケーションを保存する
     func addLocation(title: String, latitude: Double, longitude: Double, category: String = "その他",
-                    initialRating: Int = 0, note: String? = nil, image: UIImage? = nil,
-                    completion: @escaping (String?) -> Void = {_ in }) {
-        // ログインしているユーザーの ID を取得（ログインしていなければ保存しない）
+                     initialRating: Int = 0, note: String? = nil, image: UIImage? = nil,
+                     completion: @escaping (String?) -> Void = {_ in }) {
+        
         guard let userId = Auth.auth().currentUser?.uid else {
             print("User not logged in")
             completion(nil)
             return
         }
         
-        // 初回評価がある場合の設定
         let ratingSum = initialRating > 0 ? initialRating : 0
-        let ratingCount = initialRating > 0 ? 1 : 0
         
         var newLocation = EventLocation(
             title: title,
@@ -136,13 +141,15 @@ class LocationViewModel: ObservableObject {
             category: category,
             ratingSum: ratingSum,
             note: note,
-            createdAt: Date()
+            createdAt: Date(),
+            oshiId: currentOshiId
         )
         
         do {
-            // 「locations」直下の該当ユーザー ID ノードに自動生成のキーで保存
-            let ref = db.child("locations").child(userId).childByAutoId()
+            // ユーザーID → 推しID → 投稿ID という階層構造で保存
+            let ref = db.child("locations").child(userId).child(currentOshiId).childByAutoId()
             let locationDict = try newLocation.asDictionary()
+            
             ref.setValue(locationDict) { error, _ in
                 if let error = error {
                     print("Error adding location: \(error.localizedDescription)")
@@ -153,12 +160,14 @@ class LocationViewModel: ObservableObject {
                     
                     // 初回評価がある場合はユーザー評価も保存
                     if initialRating > 0 {
-                        self.saveUserRating(locationId: newLocationId ?? "", rating: initialRating, userId: userId)
+                        self.saveUserRating(locationId: newLocationId ?? "", rating: initialRating, userId: userId, oshiId: self.currentOshiId)
                     }
                     
-                    // 画像がある場合は Firebase Storage にアップロードし、imageURL を更新
+                    // 画像がある場合は Firebase Storage にアップロード
                     if let image = image, let imageData = image.jpegData(compressionQuality: 0.7) {
-                        let storageRef = self.storage.reference().child("location_images/\(newLocationId ?? "no_key").jpg")
+                        let imagePath = "location_images/\(userId)/\(self.currentOshiId)/\(newLocationId ?? "no_key").jpg"
+                        let storageRef = self.storage.reference().child(imagePath)
+                        
                         storageRef.putData(imageData, metadata: nil) { metadata, error in
                             if let error = error {
                                 print("Error uploading image: \(error.localizedDescription)")
@@ -187,7 +196,6 @@ class LocationViewModel: ObservableObject {
                             }
                         }
                     } else {
-                        // If no image, still return the ID
                         completion(newLocationId)
                     }
                 }
@@ -199,15 +207,17 @@ class LocationViewModel: ObservableObject {
     }
     
     // ユーザーの評価を別テーブル「userRatings」に保存
-    func saveUserRating(locationId: String, rating: Int, userId: String) {
+    func saveUserRating(locationId: String, rating: Int, userId: String, oshiId: String) {
         let userRating = UserRating(
             locationId: locationId,
             rating: rating,
-            userId: userId
+            userId: userId,
+            oshiId: oshiId  // 推しIDを追加
         )
         
         do {
-            let ref = db.child("userRatings").childByAutoId()
+            // userRatingsの下にもユーザーID→推しID構造を作る
+            let ref = db.child("userRatings").child(userId).child(oshiId).childByAutoId()
             let ratingDict = try userRating.asDictionary()
             ref.setValue(ratingDict) { error, _ in
                 if let error = error {
@@ -221,79 +231,66 @@ class LocationViewModel: ObservableObject {
     
     // 既存のロケーション評価をトランザクションで更新する
     // oldRating は、ユーザーが既に付けた評価の値として渡します
-    func updateRating(for locationId: String, newRating: Int, oldRating: Int) {
+    func updateRating(for locationId: String, newRating: Int, oldRating: Int, oshiId: String) {
         guard let userId = Auth.auth().currentUser?.uid else {
             print("No user logged in")
             return
         }
         
-        // 「locations」直下の全ユーザーノードを巡回して対象のロケーションを検索
-        db.child("locations").observeSingleEvent(of: .value) { snapshot in
-            for userChild in snapshot.children {
-                if let userSnap = userChild as? DataSnapshot {
-                    if userSnap.hasChild(locationId) {
-                        let locationRef = userSnap.childSnapshot(forPath: locationId).ref
-                        locationRef.runTransactionBlock({ currentData -> TransactionResult in
-                            if var locationData = currentData.value as? [String: Any],
-                               let ratingSum = locationData["ratingSum"] as? Int,
-                               let ratingCount = locationData["ratingCount"] as? Int {
-                                let newRatingSum = ratingSum - oldRating + newRating
-                                locationData["ratingSum"] = newRatingSum
-                                currentData.value = locationData
-                                return TransactionResult.success(withValue: currentData)
+        // ユーザーID→推しID→locationIdの構造で直接アクセス
+        let locationRef = db.child("locations").child(userId).child(oshiId).child(locationId)
+        
+        locationRef.runTransactionBlock({ currentData -> TransactionResult in
+            if var locationData = currentData.value as? [String: Any],
+               let ratingSum = locationData["ratingSum"] as? Int {
+                let newRatingSum = ratingSum - oldRating + newRating
+                locationData["ratingSum"] = newRatingSum
+                currentData.value = locationData
+                return TransactionResult.success(withValue: currentData)
+            }
+            return TransactionResult.success(withValue: currentData)
+        }) { error, committed, snapshot in
+            if let error = error {
+                print("Error updating rating: \(error.localizedDescription)")
+            } else {
+                // userRatingsの更新も階層構造に対応
+                self.db.child("userRatings").child(userId).child(oshiId)
+                    .queryOrdered(byChild: "locationId")
+                    .queryEqual(toValue: locationId)
+                    .observeSingleEvent(of: .value) { snapshot in
+                        var ratingFound = false
+                        for child in snapshot.children {
+                            if let childSnapshot = child as? DataSnapshot {
+                                childSnapshot.ref.updateChildValues([
+                                    "rating": newRating,
+                                    "timestamp": Date().timeIntervalSince1970
+                                ])
+                                ratingFound = true
+                                break
                             }
-                            return TransactionResult.success(withValue: currentData)
-                        }, andCompletionBlock: { error, committed, snapshot in
-                            if let error = error {
-                                print("Error updating rating: \(error.localizedDescription)")
-                            } else {
-                                // 更新後、userRatingsテーブルも更新する
-                                self.db.child("userRatings")
-                                    .queryOrdered(byChild: "locationId")
-                                    .queryEqual(toValue: locationId)
-                                    .observeSingleEvent(of: .value) { snapshot in
-                                        var ratingFound = false
-                                        for child in snapshot.children {
-                                            if let childSnapshot = child as? DataSnapshot,
-                                               let dict = childSnapshot.value as? [String: Any],
-                                               let uid = dict["userId"] as? String,
-                                               uid == userId {
-                                                childSnapshot.ref.updateChildValues([
-                                                    "rating": newRating,
-                                                    "timestamp": Date().timeIntervalSince1970
-                                                ])
-                                                ratingFound = true
-                                                break
-                                            }
-                                        }
-                                        if !ratingFound {
-                                            self.saveUserRating(locationId: locationId, rating: newRating, userId: userId)
-                                        }
-                                    }
-                            }
-                        })
-                        break
+                        }
+                        if !ratingFound {
+                            self.saveUserRating(locationId: locationId, rating: newRating, userId: userId, oshiId: oshiId)
+                        }
                     }
-                }
             }
         }
     }
     
     // 指定したロケーションに対する、現在のユーザーの評価を取得
-    func getUserRating(for locationId: String, completion: @escaping (Int?) -> Void) {
+    func getUserRating(for locationId: String, oshiId: String, completion: @escaping (Int?) -> Void) {
         guard let userId = Auth.auth().currentUser?.uid else {
             completion(nil)
             return
         }
-        db.child("userRatings")
+        
+        db.child("userRatings").child(userId).child(oshiId)
             .queryOrdered(byChild: "locationId")
             .queryEqual(toValue: locationId)
             .observeSingleEvent(of: .value) { snapshot in
                 for child in snapshot.children {
                     if let childSnapshot = child as? DataSnapshot,
                        let dict = childSnapshot.value as? [String: Any],
-                       let uid = dict["userId"] as? String,
-                       uid == userId,
                        let rating = dict["rating"] as? Int {
                         completion(rating)
                         return
@@ -302,4 +299,37 @@ class LocationViewModel: ObservableObject {
                 completion(nil)
             }
     }
+    
+    func updateCurrentOshi(id: String) {
+        currentOshiId = id
+        fetchLocations(forOshiId: id)
+    }
+
+//    func fetchLocations(forOshiId oshiId: String = "default") {
+//        db.child("locations").observe(.value) { snapshot in
+//            var newLocations: [EventLocation] = []
+//            for userChild in snapshot.children {
+//                if let userSnap = userChild as? DataSnapshot {
+//                    for locChild in userSnap.children {
+//                        if let locSnap = locChild as? DataSnapshot,
+//                           let dict = locSnap.value as? [String: Any] {
+//                            do {
+//                                let jsonData = try JSONSerialization.data(withJSONObject: dict)
+//                                var location = try JSONDecoder().decode(EventLocation.self, from: jsonData)
+//                                location.id = locSnap.key
+//                                
+//                                // 推しIDでフィルタリング
+//                                if location.oshiId == oshiId || location.oshiId == nil {
+//                                    newLocations.append(location)
+//                                }
+//                            } catch {
+//                                print("Error decoding location: \(error)")
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            self.locations = newLocations.sorted { $0.createdAt > $1.createdAt }
+//        }
+//    }
 }

@@ -33,7 +33,7 @@ struct TopView: View {
                         Text("年表")
                     }
                     ZStack {
-                        MapView()
+                        MapView(oshiId: selectedOshiId)
                     }
                     .tabItem {
                         Image(systemName: "map")
@@ -41,24 +41,8 @@ struct TopView: View {
                     }
                 }
                 .onAppear{
-                    fetchSelectedOshiId()
                     observeSelectedOshiId()
                 }
-    }
-    
-    func fetchSelectedOshiId() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
-        
-        let dbRef = Database.database().reference().child("users").child(userID)
-        dbRef.observeSingleEvent(of: .value) { snapshot in
-            guard let value = snapshot.value as? [String: Any] else { return }
-            
-            if let selectedOshiId = value["selectedOshiId"] as? String {
-                DispatchQueue.main.async {
-                    self.selectedOshiId = selectedOshiId
-                }
-            }
-        }
     }
     
     func observeSelectedOshiId() {

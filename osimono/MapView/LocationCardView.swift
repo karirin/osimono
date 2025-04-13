@@ -18,6 +18,7 @@ struct LocationCardView: View {
     @ObservedObject private var viewModel = LocationViewModel()
     @State private var userRating: Int = 0
     @State private var showRatingModal: Bool = false
+    var oshiId: String
     
     var distanceText: String {
         if let userLoc = userLocation {
@@ -124,7 +125,7 @@ struct LocationCardView: View {
                 onRate: { rating in
                     if let locationId = location.id {
                         // 既存の評価(userRating)も渡す必要があります
-                        viewModel.updateRating(for: locationId, newRating: rating, oldRating: userRating)
+                        viewModel.updateRating(for: locationId, newRating: rating, oldRating: userRating, oshiId: oshiId)
                     }
                     showRatingModal = false
                 },
@@ -136,7 +137,7 @@ struct LocationCardView: View {
         .onAppear {
             // ユーザーの既存評価をロード
             if let locationId = location.id {
-                viewModel.getUserRating(for: locationId) { rating in
+                viewModel.getUserRating(for: locationId, oshiId: oshiId) { rating in
                     if let rating = rating {
                         userRating = rating
                     }
