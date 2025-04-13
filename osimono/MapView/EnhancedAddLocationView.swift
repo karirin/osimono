@@ -9,6 +9,7 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import MapKit
+import FirebaseStorage
 
 struct EnhancedAddLocationView: View {
     @ObservedObject var viewModel: LocationViewModel
@@ -31,6 +32,7 @@ struct EnhancedAddLocationView: View {
         span: MKCoordinateSpan(latitudeDelta: 0.0008, longitudeDelta: 0.0008)
     )
     var onLocationAdded: (String) -> Void
+    @State private var oshiItems: [String: Any] = [:]
 
 //    let categories = ["ライブ", "広告", "カフェ", "その他"]
     let categories = ["ライブ会場", "ロケ地", "カフェ・飲食店", "グッズショップ", "撮影スポット", "聖地", "その他"]
@@ -95,41 +97,15 @@ struct EnhancedAddLocationView: View {
                         generateHapticFeedback()
                         // Save the location
                         if let coordinate = coordinate {
-                            viewModel.addLocation(
-                                title: title.isEmpty ? selectedCategory : title,
-                                latitude: coordinate.latitude,
-                                longitude: coordinate.longitude,
-                                category: selectedCategory,
-                                initialRating: userRating,
-                                note: note.isEmpty ? nil : note,
-                                image: selectedImage
-                            ) { newLocationId in
-                                if let newLocationId = newLocationId {
-                                    // Call the callback with the new location ID
-                                    onLocationAdded(newLocationId)
-                                }
-                                self.presentationMode.wrappedValue.dismiss()
-                            }
+                            // 両方のテーブルに保存
+                            saveToLocationsAndOshiItems(coordinate: coordinate)
                         } else {
                             // Try to geocode the address if coordinate is nil
                             let geocoder = CLGeocoder()
                             geocoder.geocodeAddressString(currentAddress) { placemarks, error in
                                 if let coordinate = placemarks?.first?.location?.coordinate {
-                                    viewModel.addLocation(
-                                        title: title.isEmpty ? selectedCategory : title,
-                                        latitude: coordinate.latitude,
-                                        longitude: coordinate.longitude,
-                                        category: selectedCategory,
-                                        initialRating: userRating,
-                                        note: note.isEmpty ? nil : note,
-                                        image: selectedImage
-                                    ) { newLocationId in
-                                        if let newLocationId = newLocationId {
-                                            // Call the callback with the new location ID
-                                            onLocationAdded(newLocationId)
-                                        }
-                                        self.presentationMode.wrappedValue.dismiss()
-                                    }
+                                    // 両方のテーブルに保存
+                                    self.saveToLocationsAndOshiItems(coordinate: coordinate)
                                 } else {
                                     self.presentationMode.wrappedValue.dismiss()
                                 }
@@ -492,6 +468,134 @@ struct EnhancedAddLocationView: View {
         case 4: return "良い"
         case 5: return "最高の推しスポット！"
         default: return ""
+        }
+    }
+    
+    private func saveToOshiItems(coordinate: CLLocationCoordinate2D, locationId: String?) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("User not logged in")
+            return
+        }
+        
+        // 現在の日付
+        let currentDate = Date()
+        
+        // アイテムデータの準備
+        var oshiItemData: [String: Any] = [
+            "id": locationId ?? UUID().uuidString,
+            "title": title.isEmpty ? selectedCategory : title,
+            "memo": note,
+            "favorite": userRating,
+            "itemType": "聖地巡礼", // OshiItemFormViewのタイプに合わせる
+            "oshiId": viewModel.currentOshiId,
+            "createdAt": currentDate.timeIntervalSince1970,
+            "visitDate": currentDate.timeIntervalSince1970,
+            "locationAddress": currentAddress,
+            "memories": note
+        ]
+        
+        // 画像URLがある場合（先にlocationsに保存して画像URLが取得できている場合）は、
+        // 同じURLを使用
+        if let loc = viewModel.locations.first(where: { $0.id == locationId }),
+           let imageURL = loc.imageURL {
+            oshiItemData["imageUrl"] = imageURL
+            saveOshiItemToFirebase(oshiItemData)
+        } else if let image = selectedImage {
+            // 画像をアップロード
+            uploadImageForOshiItem(image) { imageUrl in
+                if let url = imageUrl {
+                    oshiItemData["imageUrl"] = url
+                }
+                self.saveOshiItemToFirebase(oshiItemData)
+            }
+        } else {
+            // 画像なしで保存
+            saveOshiItemToFirebase(oshiItemData)
+        }
+    }
+
+    // oshiItemsテーブルへの画像アップロード
+    private func uploadImageForOshiItem(_ image: UIImage, completion: @escaping (String?) -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion(nil)
+            return
+        }
+        
+        let storageRef = Storage.storage().reference()
+        let imageId = UUID().uuidString
+        let imageRef = storageRef.child("oshiItems/\(userId)/\(imageId).jpg")
+        
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            completion(nil)
+            return
+        }
+        
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        
+        imageRef.putData(imageData, metadata: metadata) { _, error in
+            if let error = error {
+                print("画像アップロードエラー: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            imageRef.downloadURL { url, error in
+                if let error = error {
+                    print("URL取得エラー: \(error.localizedDescription)")
+                    completion(nil)
+                    return
+                }
+                
+                completion(url?.absoluteString)
+            }
+        }
+    }
+
+    // oshiItemsテーブルにデータを保存
+    private func saveOshiItemToFirebase(_ data: [String: Any]) {
+        guard let userId = Auth.auth().currentUser?.uid,
+              let itemId = data["id"] as? String,
+              let oshiId = data["oshiId"] as? String else {
+            print("必要なデータが不足しています")
+            return
+        }
+        
+        let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(itemId)
+        
+        ref.setValue(data) { error, _ in
+            if let error = error {
+                print("oshiItemsテーブルへの保存に失敗しました: \(error.localizedDescription)")
+            } else {
+                print("oshiItemsテーブルへの保存に成功しました")
+            }
+        }
+    }
+    
+    private func saveToLocationsAndOshiItems(coordinate: CLLocationCoordinate2D) {
+        // まずlocationsテーブルに保存
+        viewModel.addLocation(
+            title: title.isEmpty ? selectedCategory : title,
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            category: selectedCategory,
+            initialRating: userRating,
+            note: note.isEmpty ? nil : note,
+            image: selectedImage
+        ) { newLocationId in
+            // 次にoshiItemsテーブルにも保存
+            if selectedCategory == "聖地" || selectedCategory == "ロケ地" {
+                self.saveToOshiItems(
+                    coordinate: coordinate,
+                    locationId: newLocationId
+                )
+            }
+            
+            if let newLocationId = newLocationId {
+                // Call the callback with the new location ID
+                onLocationAdded(newLocationId)
+            }
+            self.presentationMode.wrappedValue.dismiss()
         }
     }
     

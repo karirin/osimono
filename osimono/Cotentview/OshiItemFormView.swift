@@ -32,6 +32,7 @@ struct OshiItemFormView: View {
     @StateObject private var locationManager = LocationManager()
     @State private var isGettingLocation = false
     @State private var locationCoordinate: CLLocationCoordinate2D?
+    @ObservedObject private var locationViewModel = LocationViewModel()
     
     // 色の定義
     let primaryColor = Color(.systemPink) // ピンク
@@ -550,12 +551,6 @@ struct OshiItemFormView: View {
     
     // データ保存
     func saveItem() {
-//        guard let userId = userId, !title.isEmpty else {
-//            alertMessage = "タイトルを入力してください"
-//            showAlert = true
-//            return
-//        }
-        
         isLoading = true
         
         // アイテムデータの準備
@@ -569,7 +564,6 @@ struct OshiItemFormView: View {
             "createdAt": Date().timeIntervalSince1970
         ]
         
-        // タグを処理 (新しいタグシステムに対応)
         if !tags.isEmpty {
             data["tags"] = tags
         }
@@ -590,6 +584,14 @@ struct OshiItemFormView: View {
             data["locationAddress"] = locationAddress
             data["visitDate"] = purchaseDate.timeIntervalSince1970
             data["memories"] = memo
+            
+            // 位置情報が取得できている場合、locationViewModelにも保存
+            if let locationCoord = locationCoordinate {
+                saveToLocationsTable(coordinate: locationCoord)
+            } else if !locationAddress.isEmpty {
+                // 住所から座標を取得して保存
+                geocodeAddressAndSaveLocation()
+            }
         } else if itemType == "その他" {
             data["recordDate"] = purchaseDate.timeIntervalSince1970
             data["details"] = memo
@@ -612,6 +614,44 @@ struct OshiItemFormView: View {
         } else {
             // 画像なしで保存
             saveDataToFirebase(data)
+        }
+    }
+    
+    private func geocodeAddressAndSaveLocation() {
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(locationAddress) { placemarks, error in
+            if let error = error {
+                print("住所のジオコーディングに失敗しました: \(error.localizedDescription)")
+                return
+            }
+            
+            if let placemark = placemarks?.first,
+               let location = placemark.location {
+                self.saveToLocationsTable(coordinate: location.coordinate)
+            }
+        }
+    }
+
+    // locationsテーブルに聖地巡礼データを保存する関数
+    private func saveToLocationsTable(coordinate: CLLocationCoordinate2D) {
+        // OshiItemFormViewで使用するカテゴリーからEnhancedAddLocationViewの対応するカテゴリーに変換
+        let locationCategory = "聖地" // EnhancedAddLocationViewのカテゴリーに合わせる
+        
+        // LocationViewModelのcurrentOshiIdをoshiIdに設定
+        locationViewModel.currentOshiId = oshiId
+        
+        // locationsテーブルに保存
+        locationViewModel.addLocation(
+            title: title.isEmpty ? "聖地巡礼スポット" : title,
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            category: locationCategory,
+            initialRating: favorite, // お気に入り度をratingとして使用
+            note: memo.isEmpty ? nil : memo,
+            image: selectedImage
+        ) { _ in
+            // locationsテーブルへの保存完了。特に何もしなくてOK
+            print("聖地巡礼データをlocationsテーブルにも保存しました")
         }
     }
     

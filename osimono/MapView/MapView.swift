@@ -12,19 +12,20 @@ struct MapView: View {
     @State private var showFilterSheet = false
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 35.6809591, longitude: 139.7673068),
-        span: MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)
+        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01) // Increased span to see more area
     )
     @State private var selectedLocationId: String? = nil
     @StateObject private var locationManager = LocationManager()
-    @State private var selectedCategories: Set<String> = ["ライブ", "広告", "カフェ", "その他"]
+    // Start with all categories selected by default
+    @State private var selectedCategories: Set<String> = ["ライブ会場", "ロケ地", "カフェ・飲食店", "グッズショップ", "撮影スポット", "聖地", "その他"]
     @State private var showUserProfile = false
     var oshiId: String
     
     var body: some View {
         NavigationView {
             ZStack(alignment: .bottom) {
-                // Map with pins
-                Map(coordinateRegion: $region, annotationItems: filteredLocations) { location in
+                // Use viewModel.locations directly to ensure all pins are shown
+                Map(coordinateRegion: $region, annotationItems: viewModel.locations) { location in
                     MapAnnotation(
                         coordinate: CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude),
                         anchorPoint: CGPoint(x: 0.5, y: 1.0)
@@ -55,6 +56,13 @@ struct MapView: View {
                 VStack {
                     HStack {
                         Spacer()
+                        
+                        // Debug text to show pin count
+                        Text("\(viewModel.locations.count) locations")
+                            .padding(8)
+                            .background(Color.white.opacity(0.8))
+                            .cornerRadius(8)
+                        
                         Spacer()
                     }
                     .padding(.horizontal, 16)
@@ -79,9 +87,6 @@ struct MapView: View {
                                             userLocation: locationManager.userLocation,
                                             oshiId: oshiId
                                         )
-                                        .onAppear{
-                                            print("locations      :\(location)")
-                                        }
                                         .id(location.id)
                                         .onTapGesture {
                                             withAnimation {
@@ -186,13 +191,31 @@ struct MapView: View {
                 }
             )
             .onAppear {
+                // Debug all locations
+                print("oshiId: \(oshiId)")
+                
                 // Show user location when the screen opens
                 if let userLocation = locationManager.userLocation {
                     withAnimation {
                         region.center = userLocation.coordinate
                     }
                 }
+                
+                // Update view model with oshi ID
                 viewModel.updateCurrentOshi(id: oshiId)
+                
+                // Debug after a delay to ensure data is loaded
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    print("Locations count: \(viewModel.locations.count)")
+                    print("Selected categories: \(selectedCategories)")
+                    
+                    // Check if locations are loaded correctly
+                    if viewModel.locations.isEmpty {
+                        print("⚠️ WARNING: No locations loaded")
+                    } else {
+                        print("✅ Locations loaded successfully")
+                    }
+                }
             }
             .onChange(of: oshiId) { newId in
                 // 推しが変更されたら更新
@@ -245,24 +268,17 @@ struct MapView: View {
         }
     }
     
-    // Filter the locations based on selected categories
-    var filteredLocations: [EventLocation] {
-        viewModel.locations.filter { location in
-            let type = getPinType(for: location)
-            return selectedCategories.contains(type.label)
-        }
+    // Helper function for haptic feedback
+    func generateHapticFeedback() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
     }
     
     // Determine the pin type based on location data
     func getPinType(for location: EventLocation) -> MapPinView.PinType {
         // First check if the category property exists and has a value
-        let mirror = Mirror(reflecting: location)
-        let categoryExists = mirror.children.contains { $0.label == "category" }
-        
-        if categoryExists {
-            // Since we know category exists, we can use it directly
-            // The compiler error suggests category is not optional, so we use direct access
-            switch location.category {
+        if let category = location.category as String? {
+            switch category {
             case "ライブ会場": return .live
             case "ロケ地": return .location
             case "カフェ・飲食店": return .cafe
@@ -293,11 +309,11 @@ struct MapView: View {
     }
 }
 
-//struct MapView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        MapView()
-//    }
-//}
+struct MapView_Previews: PreviewProvider {
+    static var previews: some View {
+        MapView(oshiId: "09073E24-E385-43AC-978E-33425C819285")
+    }
+}
 
 // Extension for rounded corners on specific sides
 //extension View {
