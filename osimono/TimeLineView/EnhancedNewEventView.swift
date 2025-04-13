@@ -43,6 +43,7 @@ struct EnhancedNewEventView: View {
                 // カスタムナビゲーションバー
                 HStack {
                     Button(action: {
+                        generateHapticFeedback()
                         isPresented = false
                     }) {
                         Image(systemName: "xmark")
@@ -62,6 +63,7 @@ struct EnhancedNewEventView: View {
                     Spacer()
                     
                     Button(action: {
+                        generateHapticFeedback()
                         saveEvent()
                         isPresented = false
                     }) {
@@ -130,6 +132,7 @@ struct EnhancedNewEventView: View {
                 .foregroundColor(textColor)
             
             Button(action: {
+                generateHapticFeedback()
                 isShowingImagePicker = true
             }) {
                 ZStack {
@@ -145,6 +148,7 @@ struct EnhancedNewEventView: View {
                                     HStack {
                                         Spacer()
                                         Button(action: {
+                                            generateHapticFeedback()
                                             selectedImage = nil
                                         }) {
                                             Image(systemName: "xmark.circle.fill")
@@ -347,6 +351,7 @@ struct EnhancedNewEventView: View {
                 Spacer()
                 
                 Button(action: {
+                    generateHapticFeedback()
                     saveEvent()
                     isPresented = false
                 }) {

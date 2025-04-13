@@ -167,6 +167,7 @@ struct ContentView: View {
                             }
                             
                             Button(action: {
+                                generateHapticFeedback()
                                 withAnimation(.spring()) {
                                     isProfileImageEnlarged = false
                                 }
@@ -285,6 +286,7 @@ struct ContentView: View {
                        Spacer()
                        
                        Button(action: {
+                           generateHapticFeedback()
                            withAnimation(.spring()) {
                                isShowingOshiSelector = false
                            }
@@ -300,6 +302,7 @@ struct ContentView: View {
                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
                        // 新規追加ボタン
                        Button(action: {
+                           generateHapticFeedback()
                            showAddOshiForm = true
                            isShowingOshiSelector = false
                        }) {
@@ -526,6 +529,7 @@ struct ContentView: View {
                         }
                     } else {
                         Button(action: {
+                            generateHapticFeedback()
                             if let oshi = selectedOshi {
                                 isShowingImagePicker = true
                             } else {
@@ -708,6 +712,7 @@ struct ContentView: View {
             HStack(spacing: 15) {
                 // 新規追加ボタン
                 Button(action: {
+                    generateHapticFeedback()
                     // 推し追加画面を表示
                     showAddOshiForm = true
                 }) {

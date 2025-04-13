@@ -44,6 +44,7 @@ struct TimelineView: View {
                                 
                                 Spacer()
                                 Button(action: {
+                                    generateHapticFeedback()
                                     withAnimation {
                                         isMonthMode.toggle()
                                     }

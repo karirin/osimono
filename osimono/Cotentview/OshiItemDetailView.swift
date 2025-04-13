@@ -169,6 +169,7 @@ struct OshiItemDetailView: View {
                     // 管理ボタン
                     HStack(spacing: 20) {
                         Button(action: {
+                            generateHapticFeedback()
                             isShareSheetPresented = true
                         }) {
                             VStack {
@@ -187,6 +188,7 @@ struct OshiItemDetailView: View {
                         }
                         
                         Button(action: {
+                            generateHapticFeedback()
                             isEditing = true
                         }) {
                             VStack {
@@ -205,6 +207,7 @@ struct OshiItemDetailView: View {
                         }
                         
                         Button(action: {
+                            generateHapticFeedback()
                             showDeleteConfirmation = true
                         }) {
                             VStack {
@@ -236,6 +239,7 @@ struct OshiItemDetailView: View {
         .navigationBarTitle("", displayMode: .inline)
         .navigationBarItems(leading:
             Button(action: {
+                generateHapticFeedback()
                 presentationMode.wrappedValue.dismiss()
             }) {
                 HStack {
@@ -247,6 +251,7 @@ struct OshiItemDetailView: View {
         )
         .navigationBarItems(
             trailing: Button(action: {
+                generateHapticFeedback()
                 isEditing = true
             }) {
                 Text("編集")

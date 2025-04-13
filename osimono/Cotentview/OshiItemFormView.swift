@@ -66,6 +66,7 @@ struct OshiItemFormView: View {
                                 HStack(spacing: 15) {
                                     ForEach(itemTypes, id: \.self) { type in
                                         Button(action: {
+                                            generateHapticFeedback()
                                             itemType = type
                                         }) {
                                             VStack(spacing: 5) {
@@ -97,6 +98,7 @@ struct OshiItemFormView: View {
                                 .padding(.horizontal)
                             
                             Button(action: {
+                                generateHapticFeedback()
                                 isShowingImagePicker = true
                             }) {
                                 if let image = selectedImage {
@@ -158,6 +160,7 @@ struct OshiItemFormView: View {
                                         HStack(spacing: 10) {
                                             ForEach(categories, id: \.self) { cat in
                                                 Button(action: {
+                                                    generateHapticFeedback()
                                                     category = cat
                                                 }) {
                                                     Text(cat)
@@ -214,6 +217,7 @@ struct OshiItemFormView: View {
                                             .foregroundColor(.gray)
                                         Spacer()
                                         Button(action: {
+                                            generateHapticFeedback()
                                             requestCurrentLocation()
                                         }) {
                                             HStack(spacing: 4) {
@@ -271,6 +275,7 @@ struct OshiItemFormView: View {
                                                         .foregroundColor(accentColor)
                                                     
                                                     Button(action: {
+                                                        generateHapticFeedback()
                                                         tags.remove(at: index)
                                                     }) {
                                                         Image(systemName: "xmark.circle.fill")
@@ -334,6 +339,7 @@ struct OshiItemFormView: View {
                         
                         // 送信ボタン
                         Button(action: {
+                            generateHapticFeedback()
                             saveItem()
                         }) {
                             Text("投稿する")
@@ -374,6 +380,7 @@ struct OshiItemFormView: View {
             .navigationBarTitle("推しの投稿を追加", displayMode: .inline)
             .navigationBarItems(leading:
                 Button(action: {
+                generateHapticFeedback()
                     presentationMode.wrappedValue.dismiss()
                 }) {
                     Image(systemName: "xmark")
@@ -383,6 +390,7 @@ struct OshiItemFormView: View {
             )
             .navigationBarItems(trailing:
                 Button(action: {
+                generateHapticFeedback()
                     saveItem()
                 }) {
                     Text("投稿")
@@ -399,6 +407,7 @@ struct OshiItemFormView: View {
     
     // タグ追加関数
     func addTag() {
+        generateHapticFeedback()
         let trimmedTag = newTag.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedTag.isEmpty && !tags.contains(trimmedTag) {
             withAnimation {

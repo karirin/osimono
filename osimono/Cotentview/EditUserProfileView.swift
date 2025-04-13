@@ -61,6 +61,7 @@ struct EditUserProfileView: View {
             .navigationTitle("プロフィール編集")
             .navigationBarItems(
                 leading: Button("キャンセル") {
+                    generateHapticFeedback()
                     presentationMode.wrappedValue.dismiss()
                 }
             )
@@ -82,7 +83,7 @@ struct EditUserProfileView: View {
         dbRef.updateChildValues(updatedProfileData) { error, _ in
             DispatchQueue.main.async {
                 isLoading = false
-                
+                generateHapticFeedback()
                 if error == nil {
                     // 成功したら、親ビューのuserProfileを更新
                     userProfile.username = username

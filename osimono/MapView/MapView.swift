@@ -160,6 +160,7 @@ struct MapView: View {
                         
                         // 追加ボタン
                         Button(action: {
+                            generateHapticFeedback()
                             showAddLocation = true
                         }) {
                             ZStack {

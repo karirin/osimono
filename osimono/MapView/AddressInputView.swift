@@ -42,6 +42,7 @@ struct AddressInputView: View {
                 
                 Section {
                     Button(action: {
+                        generateHapticFeedback()
                         useCurrentLocation()
                     }) {
                         Text("現在地を入力")
@@ -55,6 +56,7 @@ struct AddressInputView: View {
                 
                 Section {
                     Button(action: {
+                        generateHapticFeedback()
                         validateAddress()
                     }) {
                         Text("住所を確認")

@@ -72,6 +72,7 @@ struct SettingsView: View {
                     
                     // 保存ボタン
                     Button(action: {
+                        generateHapticFeedback()
                         saveProfile()
                     }) {
                         Text("保存")
@@ -116,6 +117,7 @@ struct SettingsView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
                     Button(action: {
+                        generateHapticFeedback()
                         isShowingLogoutAlert = true
                     }) {
                         HStack {

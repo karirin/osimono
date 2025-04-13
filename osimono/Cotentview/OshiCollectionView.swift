@@ -127,6 +127,7 @@ struct OshiCollectionView: View {
                     
                     if !searchText.isEmpty {
                         Button(action: {
+                            generateHapticFeedback()
                             searchText = ""
                         }) {
                             Image(systemName: "xmark.circle.fill")

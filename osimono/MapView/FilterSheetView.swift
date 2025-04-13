@@ -28,6 +28,7 @@ struct FilterSheetView: View {
                 Section(header: Text("カテゴリー")) {
                     ForEach(categories, id: \.self) { category in
                         Button(action: {
+                            generateHapticFeedback()
                             if selectedCategories.contains(category) {
                                 // Only remove if it wouldn't make the selection empty
                                 if selectedCategories.count > 1 {

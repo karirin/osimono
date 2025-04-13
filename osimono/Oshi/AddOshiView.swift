@@ -27,6 +27,7 @@ struct AddOshiView: View {
                     TextField("推しの名前", text: $oshiName)
                     
                     Button(action: {
+                        generateHapticFeedback()
                         isShowingImagePicker = true
                     }) {
                         HStack {
@@ -46,6 +47,7 @@ struct AddOshiView: View {
                     }
                     
                     Button(action: {
+                        generateHapticFeedback()
                         isShowingBackgroundPicker = true
                     }) {
                         HStack {
@@ -69,6 +71,7 @@ struct AddOshiView: View {
                 
                 Section {
                     Button(action: {
+                        generateHapticFeedback()
                         saveOshi()
                     }) {
                         Text("追加")

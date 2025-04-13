@@ -72,6 +72,7 @@ struct EnhancedAddLocationView: View {
                 
                 HStack {
                     Button(action: {
+                        generateHapticFeedback()
                         self.presentationMode.wrappedValue.dismiss()
                     }) {
                         Image(systemName: "xmark")
@@ -91,6 +92,7 @@ struct EnhancedAddLocationView: View {
                     Spacer()
                     
                     Button(action: {
+                        generateHapticFeedback()
                         // Save the location
                         if let coordinate = coordinate {
                             viewModel.addLocation(
@@ -153,6 +155,7 @@ struct EnhancedAddLocationView: View {
                 VStack(spacing: 20) {
                     // Image selector
                     Button(action: {
+                        generateHapticFeedback()
                         isShowingImagePicker = true
                     }) {
                         ZStack {
@@ -198,6 +201,7 @@ struct EnhancedAddLocationView: View {
                                     Spacer()
                                     
                                     Button(action: {
+                                        generateHapticFeedback()
                                         isShowingImagePicker = true
                                     }) {
                                         Text("画像を変更")
@@ -225,6 +229,7 @@ struct EnhancedAddLocationView: View {
                             HStack {
                                 ForEach(categories, id: \.self) { category in
                                     Button(action: {
+                                        generateHapticFeedback()
                                         selectedCategory = category
                                     }) {
                                         HStack {
@@ -301,6 +306,7 @@ struct EnhancedAddLocationView: View {
                             Spacer()
                             
                             Button(action: {
+                                generateHapticFeedback()
                                 useCurrentLocation()
                             }) {
                                 HStack {

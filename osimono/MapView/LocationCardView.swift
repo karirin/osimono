@@ -96,6 +96,7 @@ struct LocationCardView: View {
                     
                     // Rating display
                     Button(action: {
+                        generateHapticFeedback()
                         showRatingModal = true
                     }) {
                         HStack(spacing: 4) {
@@ -188,6 +189,7 @@ struct RatingModalView: View {
                 }
                 
                 Button(action: {
+                    generateHapticFeedback()
                     onRate(userRating)
                 }) {
                     Text("評価する")

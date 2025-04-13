@@ -90,6 +90,7 @@ struct OshiItemEditView: View {
                             HStack {
                                 Spacer()
                                 Button(action: {
+                                    generateHapticFeedback()
                                     isImagePickerPresented = true
                                 }) {
                                     Image(systemName: "camera.fill")
@@ -212,6 +213,7 @@ struct OshiItemEditView: View {
                                                 .foregroundColor(accentColor)
                                             
                                             Button(action: {
+                                                generateHapticFeedback()
                                                 tags.remove(at: index)
                                             }) {
                                                 Image(systemName: "xmark.circle.fill")
@@ -264,9 +266,11 @@ struct OshiItemEditView: View {
             .navigationBarTitle("アイテム編集", displayMode: .inline)
             .navigationBarItems(
                 leading: Button("キャンセル") {
+                    generateHapticFeedback()
                     presentationMode.wrappedValue.dismiss()
                 },
                 trailing: Button("保存") {
+                    generateHapticFeedback()
                     saveItem()
                 }
                 .disabled(title.isEmpty)
@@ -343,6 +347,7 @@ struct OshiItemEditView: View {
     
     // タグ追加
     func addTag() {
+        generateHapticFeedback()
         let trimmedTag = newTag.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedTag.isEmpty && !tags.contains(trimmedTag) {
             withAnimation {

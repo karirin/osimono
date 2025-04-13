@@ -112,6 +112,7 @@ struct AuthManager1: View {
     var body: some View {
         VStack {
             Button(action: {
+                generateHapticFeedback()
                 authManager.createUserRecord { success in
                     if success {
                         print("ユーザーレコードが正常に作成されました。")

@@ -84,6 +84,7 @@ struct CategoriesView: View {
                                                 } else {
                                                     selectedCategory = category.name
                                                 }
+                                                generateHapticFeedback()
                                                 filterItems()
                                             }
                                         )
@@ -114,6 +115,7 @@ struct CategoriesView: View {
                                                     } else {
                                                         selectedCategory = category.name
                                                     }
+                                                    generateHapticFeedback()
                                                     filterItems()
                                                 }
                                             )
@@ -135,6 +137,7 @@ struct CategoriesView: View {
                                     Spacer()
                                     
                                     Button(action: {
+                                        generateHapticFeedback()
                                         self.selectedCategory = nil
                                         filterItems()
                                     }) {
