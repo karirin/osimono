@@ -50,6 +50,7 @@ struct ContentView: View {
     @State private var editingUsername = ""
     @State private var editingFavoriteOshi = ""
     @State private var saveTimer: Timer? = nil
+    @State private var refreshTrigger = false
     
     // プロフィールセクションの高さ
     var profileSectionHeight: CGFloat {
@@ -64,7 +65,7 @@ struct ContentView: View {
                     profileSection
                     // メインコンテンツ
                     TabView(selection: $selectedTab) {
-                        OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default")
+                        OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger)
                             .tag(0)
                         
                         FavoritesView()
@@ -179,6 +180,24 @@ struct ContentView: View {
         .onAppear {
             loadAllData()
             fetchOshiList()
+        }
+//        .onChange(of: selectedOshi?.id) { newOshi in
+//            // 選択中の推しが変わったとき、投稿を再取得するためにaddFlagを変更する
+//            if newOshi != nil {
+//                // 一時的にaddFlagをtrueにしてからfalseに戻すことで、
+//                // OshiCollectionViewのonChange処理をトリガーする
+//                addFlag = true
+//                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+//                    addFlag = false
+//                }
+//            }
+//        }
+        .onChange(of: selectedOshi?.id) { newOshi in
+            // 選択中の推しが変わったとき、投稿を再取得するためにリフレッシュトリガーを変更する
+            if newOshi != nil {
+                // refreshTriggerの値を反転させることで変更を通知
+                refreshTrigger.toggle()
+            }
         }
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(image: $image, onImagePicked: { pickedImage in
@@ -391,6 +410,11 @@ struct ContentView: View {
                 .padding(.bottom, 12)
             }
             .offset(y: 30)
+        }
+        .onAppear{
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                print("oshi.backgroundImageUrl      :\(selectedOshi)")
+            }
         }
     }
     
@@ -605,6 +629,7 @@ struct ContentView: View {
                         let id = childSnapshot.key
                         let name = value["name"] as? String ?? "名前なし"
                         let imageUrl = value["imageUrl"] as? String
+                        let backgroundImageUrl = value["backgroundImageUrl"] as? String
                         let memo = value["memo"] as? String
                         let createdAt = value["createdAt"] as? TimeInterval
                         
@@ -612,10 +637,10 @@ struct ContentView: View {
                             id: id,
                             name: name,
                             imageUrl: imageUrl,
+                            backgroundImageUrl: backgroundImageUrl, // ここで追加
                             memo: memo,
                             createdAt: createdAt
                         )
-                        print("oshi     :\(oshi)")
                         newOshis.append(oshi)
                     }
                 }

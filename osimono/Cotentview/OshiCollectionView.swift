@@ -29,6 +29,7 @@ struct OshiCollectionView: View {
     @State private var showingItemTypeFilter = false
     @State private var selectedItemType: String = "すべて"
     var oshiId: String
+    var refreshTrigger: Bool
     
     // 色の定義 - 推し活向けカラー
     let primaryColor = Color(.systemPink) // ピンク
@@ -312,6 +313,13 @@ struct OshiCollectionView: View {
         .dismissKeyboardOnTap()
         .background(backgroundColor)
         .onAppear {
+            fetchOshiItems()
+        }
+        .onChange(of: oshiId) { newOshiId in
+            fetchOshiItems()
+        }
+        .onChange(of: refreshTrigger) { _ in
+            // リフレッシュトリガーが変更されたときに投稿を再取得
             fetchOshiItems()
         }
         .onChange(of: addFlag) { newValue in
