@@ -90,7 +90,7 @@ struct OshiItemFormView: View {
                                 .padding(.horizontal)
                             }
                         }
-                        
+                        .padding(.horizontal,isSmallDevice() ? 10 : 0)
                         // 画像選択
                         VStack(alignment: .leading, spacing: 8) {
                             Text("画像")
@@ -134,7 +134,7 @@ struct OshiItemFormView: View {
                             }
                             .padding(.horizontal)
                         }
-                        
+                        .padding(.horizontal,isSmallDevice() ? 10 : 0)
                         // 基本情報フォーム
                         VStack(alignment: .leading, spacing: 15) {
                             // タイトル
@@ -149,7 +149,7 @@ struct OshiItemFormView: View {
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.05), radius: 2)
                             }
-                            
+                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             // カテゴリー（グッズの場合のみ表示）
                             if itemType == "グッズ" {
                                 VStack(alignment: .leading, spacing: 5) {
@@ -177,6 +177,7 @@ struct OshiItemFormView: View {
                                         }
                                     }
                                 }
+                                .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             }
                             
                             // 価格（グッズの場合のみ表示）
@@ -192,6 +193,7 @@ struct OshiItemFormView: View {
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 }
+                                .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             }
                             
                             // イベント名（ライブ記録の場合のみ表示）
@@ -207,6 +209,7 @@ struct OshiItemFormView: View {
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 }
+                                .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             }
                             
                             // 場所（聖地巡礼の場合のみ表示）
@@ -241,6 +244,7 @@ struct OshiItemFormView: View {
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 }
+                                .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             }
                             
                             // 日付
@@ -258,7 +262,7 @@ struct OshiItemFormView: View {
                                     .shadow(color: Color.black.opacity(0.05), radius: 2)
                                     .environment(\.locale, Locale(identifier: "ja_JP"))
                             }
-                            
+                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             // タグ（新しい実装）
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("タグ")
@@ -310,17 +314,18 @@ struct OshiItemFormView: View {
                                     }
                                 }
                             }
-                            
+                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             // お気に入り度
-                            VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 20) {
                                 HStack{
                                     Text("お気に入り度")
-                                        .font(.system(size: 16, weight: .medium))
+                                        .font(.headline)
+                                        .foregroundColor(.gray)
                                     Spacer()
                                 }
                                 StarRatingView(rating: $favorite, size: 40)
                             }
-                            .padding(.horizontal)
+                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             
                             // メモ
                             VStack(alignment: .leading, spacing: 5) {
@@ -335,6 +340,7 @@ struct OshiItemFormView: View {
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.05), radius: 2)
                             }
+                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
                         }
                         .padding(.horizontal)
                         
@@ -722,6 +728,6 @@ struct OshiItemFormView: View {
     }
 }
 
-//#Preview {
-//    OshiItemFormView(oshiId: "test")
-//}
+#Preview {
+    OshiItemFormView(oshiId: "test")
+}

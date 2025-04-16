@@ -48,28 +48,10 @@ struct MapView: View {
                             }
                         }
                         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 4)
+                        .zIndex(selectedLocationId == location.id ? 100 : 1) 
                     }
                 }
                 .edgesIgnoringSafeArea(.all)
-                
-                // Top header overlay
-                VStack {
-                    HStack {
-                        Spacer()
-                        
-                        // Debug text to show pin count
-                        Text("\(viewModel.locations.count) locations")
-                            .padding(8)
-                            .background(Color.white.opacity(0.8))
-                            .cornerRadius(8)
-                        
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 10)
-                    
-                    Spacer()
-                }
                 
                 // Location Cards
                 VStack {

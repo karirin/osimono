@@ -257,16 +257,16 @@ struct OshiCollectionView: View {
                     Image(systemName: "star.square.on.square")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: isSmallDevice() ? 40 : 60, height: isSmallDevice() ? 50 : 60)
+                        .frame(width: 60, height: 60)
                         .foregroundColor(primaryColor.opacity(0.3))
                     
                     VStack(spacing: 8) {
                         Text("推しコレクションがありません")
-                            .font(.system(size: isSmallDevice() ? 16 : 20, weight: .medium))
+                            .font(.system(size: 20, weight: .medium))
                             .foregroundColor(.gray)
                         
                         Text("右下の「+」ボタンから推しグッズやSNS投稿を追加してみましょう！")
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                             .foregroundColor(.gray.opacity(0.7))
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
@@ -280,7 +280,7 @@ struct OshiCollectionView: View {
                             Image(systemName: "plus")
                             Text("推しアイテムを追加")
                         }
-                        .font(.system(size: isSmallDevice() ? 12 : 16, weight: .medium))
+                        .font(.system(size: isSmallDevice() ? 14 : 16, weight: .medium))
                         .foregroundColor(.white)
                         .padding(.horizontal, 24)
                         .padding(.vertical, isSmallDevice() ? 8 : 12)

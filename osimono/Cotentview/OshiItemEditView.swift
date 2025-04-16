@@ -3,6 +3,7 @@ import Firebase
 import FirebaseAuth
 import FirebaseStorage
 import PhotosUI
+import CoreLocation
 
 struct OshiItemEditView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -19,6 +20,7 @@ struct OshiItemEditView: View {
     @State private var memo: String
     @State private var tags: [String]
     @State private var favorite: Int
+    @State private var locationAddress: String
     
     // 画像関連
     @State private var selectedImage: UIImage?
@@ -28,13 +30,22 @@ struct OshiItemEditView: View {
     @State private var showAlert = false
     @State private var alertMessage = ""
     
+    // 位置情報関連
+    @StateObject private var locationManager = LocationManager()
+    @State private var isGettingLocation = false
+    @State private var locationCoordinate: CLLocationCoordinate2D?
+    
     // カラー定義
     let primaryColor = Color(.systemPink)
-    let accentColor = Color(.purple)
-    let backgroundColor = Color(.systemGray6)
+    let accentColor = Color(.systemPurple)
+    let backgroundColor = Color(.white)
+    let cardColor = Color(.white)
     
     // アイテムタイプの選択肢
-    let itemTypes = ["グッズ", "SNS投稿", "ライブ記録"]
+    let itemTypes = ["グッズ", "聖地巡礼", "ライブ記録", "SNS投稿", "その他"]
+    
+    // カテゴリーリスト
+    let categories = ["グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
     
     // 初期化
     init(item: OshiItem) {
@@ -50,230 +61,368 @@ struct OshiItemEditView: View {
         _tags = State(initialValue: item.tags ?? [])
         _favorite = State(initialValue: item.favorite ?? 0)
         _imageUrl = State(initialValue: item.imageUrl ?? "")
+        _locationAddress = State(initialValue: item.locationAddress ?? "")
     }
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // 画像選択
-                    ZStack {
-                        if let selectedImage = selectedImage {
-                            Image(uiImage: selectedImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(height: 200)
-                                .frame(maxWidth: .infinity)
-                                .clipped()
-                                .cornerRadius(12)
-                        } else if !imageUrl.isEmpty, let url = URL(string: imageUrl) {
-                            AsyncImage(url: url) { phase in
-                                if let image = phase.image {
-                                    image
+            ZStack {
+                backgroundColor.ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // アイテムタイプ選択
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("投稿タイプ")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                                .padding(.horizontal)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 15) {
+                                    ForEach(itemTypes, id: \.self) { type in
+                                        Button(action: {
+                                            generateHapticFeedback()
+                                            itemType = type
+                                        }) {
+                                            VStack(spacing: 5) {
+                                                Image(systemName: iconForItemType(type))
+                                                    .font(.system(size: 24))
+                                                Text(type)
+                                                    .font(.caption)
+                                            }
+                                            .foregroundColor(itemType == type ? primaryColor : .gray)
+                                            .frame(width: 80, height: 80)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(itemType == type ? primaryColor : Color.gray.opacity(0.3), lineWidth: 2)
+                                                    .background(itemType == type ? primaryColor.opacity(0.1) : Color.white)
+                                                    .cornerRadius(12)
+                                            )
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                        
+                        // 画像選択
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("画像")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                                .padding(.horizontal)
+                            
+                            Button(action: {
+                                generateHapticFeedback()
+                                isImagePickerPresented = true
+                            }) {
+                                if let image = selectedImage {
+                                    Image(uiImage: image)
                                         .resizable()
                                         .scaledToFill()
                                         .frame(height: 200)
                                         .frame(maxWidth: .infinity)
                                         .clipped()
                                         .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                } else if !imageUrl.isEmpty, let url = URL(string: imageUrl) {
+                                    AsyncImage(url: url) { phase in
+                                        if let image = phase.image {
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(height: 200)
+                                                .frame(maxWidth: .infinity)
+                                                .clipped()
+                                                .cornerRadius(12)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                )
+                                        } else {
+                                            imagePlaceholder
+                                        }
+                                    }
                                 } else {
                                     imagePlaceholder
                                 }
                             }
-                        } else {
-                            imagePlaceholder
+                            .padding(.horizontal)
                         }
+                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
                         
-                        // 画像選択ボタン
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Spacer()
-                                Button(action: {
-                                    generateHapticFeedback()
-                                    isImagePickerPresented = true
-                                }) {
-                                    Image(systemName: "camera.fill")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(.white)
-                                        .padding(12)
-                                        .background(primaryColor)
-                                        .clipShape(Circle())
-                                        .shadow(radius: 3)
-                                }
-                                .padding()
-                            }
-                        }
-                    }
-                    .frame(height: 200)
-                    
-                    // 基本情報
-                    GroupBox(label: Text("基本情報").fontWeight(.bold)) {
+                        // 基本情報フォーム
                         VStack(alignment: .leading, spacing: 15) {
                             // タイトル
-                            inputField(title: "タイトル", binding: $title, icon: "tag.fill")
-                            
-                            // アイテムタイプ
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "square.grid.2x2.fill")
-                                        .foregroundColor(primaryColor)
-                                    Text("タイプ")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                }
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("タイトル")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
                                 
-                                Picker("アイテムタイプ", selection: $itemType) {
-                                    ForEach(itemTypes, id: \.self) { type in
-                                        Text(type).tag(type)
-                                    }
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
+                                TextField(titlePlaceholder(), text: $title)
+                                    .padding()
+                                    .background(cardColor)
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
                             }
-                            .padding(.vertical, 5)
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
                             
-                            // カテゴリー（グッズの場合）またはイベント名（ライブ記録の場合）
+                            // カテゴリー（グッズの場合のみ表示）
                             if itemType == "グッズ" {
-                                inputField(title: "カテゴリー", binding: $category, icon: "folder.fill")
-                            } else if itemType == "ライブ記録" {
-                                inputField(title: "イベント名", binding: $eventName, icon: "music.note.list")
-                            }
-                            
-                            // 価格（グッズの場合）
-                            if itemType == "グッズ" {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack {
-                                        Image(systemName: "yensign.circle.fill")
-                                            .foregroundColor(primaryColor)
-                                        Text("価格")
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                    }
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("カテゴリー")
+                                        .font(.headline)
+                                        .foregroundColor(.gray)
                                     
-                                    TextField("価格を入力", text: $price)
-                                        .keyboardType(.numberPad)
-                                        .padding()
-                                        .background(Color(.systemGray6))
-                                        .cornerRadius(8)
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 10) {
+                                            ForEach(categories, id: \.self) { cat in
+                                                Button(action: {
+                                                    generateHapticFeedback()
+                                                    category = cat
+                                                }) {
+                                                    Text(cat)
+                                                        .padding(.horizontal, 15)
+                                                        .padding(.vertical, 8)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 20)
+                                                                .fill(category == cat ? accentColor : Color.gray.opacity(0.1))
+                                                        )
+                                                        .foregroundColor(category == cat ? .white : .gray)
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
-                                .padding(.vertical, 5)
+                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                            }
+                            
+                            // 価格（グッズの場合のみ表示）
+                            if itemType == "グッズ" {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("価格")
+                                        .font(.headline)
+                                        .foregroundColor(.gray)
+                                    
+                                    NumberTextField(text: $price, placeholder: "例: 5500")
+                                        .padding()
+                                        .background(cardColor)
+                                        .cornerRadius(12)
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                }
+                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                            }
+                            
+                            // イベント名（ライブ記録の場合のみ表示）
+                            if itemType == "ライブ記録" {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("イベント名")
+                                        .font(.headline)
+                                        .foregroundColor(.gray)
+                                    
+                                    TextField("例: BTS ライブ『LOVE YOURSELF』", text: $eventName)
+                                        .padding()
+                                        .background(cardColor)
+                                        .cornerRadius(12)
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                }
+                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                            }
+                            
+                            // 場所（聖地巡礼の場合のみ表示）
+                            if itemType == "聖地巡礼" {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    HStack {
+                                        Text("場所")
+                                            .font(.headline)
+                                            .foregroundColor(.gray)
+                                        Spacer()
+                                        Button(action: {
+                                            generateHapticFeedback()
+                                            requestCurrentLocation()
+                                        }) {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "location.fill")
+                                                    .font(.system(size: 12))
+                                                Text("現在地を設定")
+                                                    .font(.system(size: 12))
+                                            }
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(primaryColor)
+                                            .foregroundColor(.white)
+                                            .cornerRadius(8)
+                                        }
+                                        .disabled(isGettingLocation)
+                                    }
+                                    TextField("例: 東京都渋谷区〇〇", text: $locationAddress)
+                                        .padding()
+                                        .background(cardColor)
+                                        .cornerRadius(12)
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                }
+                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
                             }
                             
                             // 日付
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "calendar")
-                                        .foregroundColor(primaryColor)
-                                    Text(itemType == "グッズ" ? "購入日" : (itemType == "ライブ記録" ? "イベント日" : "投稿日"))
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                }
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(dateLabel())
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
                                 
                                 DatePicker("", selection: $date, displayedComponents: .date)
                                     .datePickerStyle(CompactDatePickerStyle())
                                     .labelsHidden()
+                                    .padding()
+                                    .background(cardColor)
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
                                     .environment(\.locale, Locale(identifier: "ja_JP"))
                             }
-                            .padding(.vertical, 5)
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
                             
-                            // 場所（グッズの場合）
-                            if itemType == "グッズ" {
-                                inputField(title: "購入場所", binding: $location, icon: "mappin.circle.fill")
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    // メモまたは思い出
-                    GroupBox(label: Text(itemType == "ライブ記録" ? "思い出・エピソード" : "メモ").fontWeight(.bold)) {
-                        VStack(alignment: .leading) {
-                            TextEditor(text: $memo)
-                                .frame(minHeight: 120)
-                                .background(Color.white)
-                                .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                                )
-                        }
-//                        .padding()
-                    }
-                    .padding(.horizontal)
-                    
-                    // タグ
-                    GroupBox(label: Text("タグ").fontWeight(.bold)) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            // 現在のタグ表示
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack {
-                                    ForEach(tags.indices, id: \.self) { index in
-                                        HStack(spacing: 4) {
-                                            Text("#\(tags[index])")
-                                                .font(.system(size: 14))
-                                                .foregroundColor(accentColor)
-                                            
-                                            Button(action: {
-                                                generateHapticFeedback()
-                                                tags.remove(at: index)
-                                            }) {
-                                                Image(systemName: "xmark.circle.fill")
-                                                    .foregroundColor(.gray)
-                                                    .font(.system(size: 14))
+                            // タグ
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("タグ")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                
+                                // 現在のタグ表示
+                                if !tags.isEmpty {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack {
+                                            ForEach(tags.indices, id: \.self) { index in
+                                                HStack(spacing: 4) {
+                                                    Text("#\(tags[index])")
+                                                        .font(.system(size: 14))
+                                                        .foregroundColor(accentColor)
+                                                    
+                                                    Button(action: {
+                                                        generateHapticFeedback()
+                                                        tags.remove(at: index)
+                                                    }) {
+                                                        Image(systemName: "xmark.circle.fill")
+                                                            .foregroundColor(.gray)
+                                                            .font(.system(size: 14))
+                                                    }
+                                                }
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 5)
+                                                .background(accentColor.opacity(0.1))
+                                                .cornerRadius(15)
                                             }
                                         }
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(accentColor.opacity(0.1))
-                                        .cornerRadius(15)
+                                    }
+                                    .frame(height: 40)
+                                    .padding(.vertical, 5)
+                                }
+                                
+                                // 新しいタグ追加
+                                HStack {
+                                    TextField("新しいタグを追加", text: $newTag)
+                                        .padding()
+                                        .background(cardColor)
+                                        .cornerRadius(12)
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                    
+                                    Button(action: addTag) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(accentColor)
                                     }
                                 }
                             }
-                            .frame(height: tags.isEmpty ? 0 : 40)
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
                             
-                            // 新しいタグ追加
-                            HStack {
-                                TextField("新しいタグを追加", text: $newTag)
-                                    .padding()
-                                    .background(Color(.systemGray6))
-                                    .cornerRadius(8)
-                                
-                                Button(action: addTag) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(accentColor)
+                            // お気に入り度
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("お気に入り度")
+                                        .font(.headline)
+                                        .foregroundColor(.gray)
+                                    Spacer()
                                 }
+                                StarRatingView(rating: $favorite, size: 40)
                             }
-                            .padding()
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                            
+                            // メモ
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(memoLabel())
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                
+                                TextEditor(text: $memo)
+                                    .frame(minHeight: 100)
+                                    .padding()
+                                    .background(cardColor)
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
+                            }
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
                         }
-                    }
-                    .padding(.horizontal)
-                    
-                    // お気に入り度
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack{
-                            Text("お気に入り度")
-                                .font(.system(size: 16, weight: .medium))
-                            Spacer()
+                        .padding(.horizontal)
+                        
+                        // 保存ボタン
+                        Button(action: {
+                            generateHapticFeedback()
+                            saveItem()
+                        }) {
+                            Text("保存する")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 15)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(primaryColor)
+                                )
+                                .shadow(color: primaryColor.opacity(0.4), radius: 5, x: 0, y: 3)
                         }
-                        StarRatingView(rating: $favorite, size: 40)
+                        .padding(.horizontal)
+                        .padding(.top, 10)
+                        .padding(.bottom, 30)
+                        .disabled(isLoading || title.isEmpty)
                     }
-                    .padding(.horizontal)
                 }
-                .padding(.vertical)
+                .dismissKeyboardOnTap()
+                
+                // ローディングオーバーレイ
+                if isLoading {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .overlay(
+                            VStack {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                                    .tint(.white)
+                                Text("保存中...")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .padding(.top, 10)
+                            }
+                        )
+                }
             }
-            .dismissKeyboardOnTap()
-            .background(backgroundColor.ignoresSafeArea())
             .navigationBarTitle("アイテム編集", displayMode: .inline)
             .navigationBarItems(
-                leading: Button("キャンセル") {
+                leading: Button(action: {
                     generateHapticFeedback()
                     presentationMode.wrappedValue.dismiss()
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.gray)
                 },
                 trailing: Button("保存") {
                     generateHapticFeedback()
                     saveItem()
                 }
-                .disabled(title.isEmpty)
+                .disabled(isLoading || title.isEmpty)
             )
             .alert(isPresented: $showAlert) {
                 Alert(
@@ -282,19 +431,6 @@ struct OshiItemEditView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            .overlay(
-                Group {
-                    if isLoading {
-                        ZStack {
-                            Color.black.opacity(0.4)
-                                .ignoresSafeArea()
-                            ProgressView()
-                                .scaleEffect(1.5)
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        }
-                    }
-                }
-            )
         }
         .sheet(isPresented: $isImagePickerPresented) {
             ImageTimeLinePicker(selectedImage: $selectedImage)
@@ -309,37 +445,18 @@ struct OshiItemEditView: View {
                 .frame(height: 200)
                 .cornerRadius(12)
             
-            VStack(spacing: 8) {
-                Image(systemName: "photo")
+            VStack(spacing: 10) {
+                Image(systemName: "camera.fill")
                     .font(.system(size: 40))
-                    .foregroundColor(.gray)
-                Text("画像をタップして選択")
-                    .font(.caption)
+                    .foregroundColor(primaryColor.opacity(0.8))
+                Text("タップして画像を選択")
+                    .font(.system(size: 16))
                     .foregroundColor(.gray)
             }
         }
         .onTapGesture {
             isImagePickerPresented = true
         }
-    }
-    
-    // 入力フィールド
-    func inputField(title: String, binding: Binding<String>, icon: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(primaryColor)
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-            }
-            
-            TextField(title + "を入力", text: binding)
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
-        }
-        .padding(.vertical, 5)
     }
     
     // 新しいタグ用の状態変数
@@ -353,6 +470,143 @@ struct OshiItemEditView: View {
             withAnimation {
                 tags.append(trimmedTag)
                 newTag = ""
+            }
+        }
+    }
+    
+    // タイトルのプレースホルダーをアイテムタイプに応じて変更
+    func titlePlaceholder() -> String {
+        switch itemType {
+        case "グッズ":
+            return "例: BTS 公式ペンライト Ver.3"
+        case "聖地巡礼":
+            return "例: MVロケ地・渋谷〇〇カフェ"
+        case "ライブ記録":
+            return "例: 東京ドーム公演"
+        case "SNS投稿":
+            return "例: インスタストーリー投稿"
+        case "その他":
+            return "例: 推しの誕生日、記念日など"
+        default:
+            return "タイトルを入力"
+        }
+    }
+    
+    // 日付ラベルをアイテムタイプに応じて変更
+    func dateLabel() -> String {
+        switch itemType {
+        case "グッズ":
+            return "購入日"
+        case "聖地巡礼":
+            return "訪問日"
+        case "ライブ記録":
+            return "イベント日"
+        case "SNS投稿":
+            return "投稿日"
+        case "その他":
+            return "記録日"
+        default:
+            return "日付"
+        }
+    }
+    
+    // メモラベルをアイテムタイプに応じて変更
+    func memoLabel() -> String {
+        switch itemType {
+        case "グッズ":
+            return "メモ"
+        case "聖地巡礼":
+            return "感想・エピソード"
+        case "ライブ記録":
+            return "思い出・エピソード"
+        case "SNS投稿":
+            return "メモ"
+        case "その他":
+            return "詳細メモ"
+        default:
+            return "メモ"
+        }
+    }
+    
+    // アイコンの取得
+    func iconForItemType(_ type: String) -> String {
+        switch type {
+        case "グッズ": return "gift.fill"
+        case "聖地巡礼": return "mappin.and.ellipse"
+        case "ライブ記録": return "music.note.list"
+        case "SNS投稿": return "bubble.right.fill"
+        case "その他": return "ellipsis.circle.fill"
+        default: return "square.grid.2x2.fill"
+        }
+    }
+    
+    // 小さいデバイスかどうかを確認
+    func isSmallDevice() -> Bool {
+        return UIScreen.main.bounds.height < 700
+    }
+    
+    // 現在地の取得
+    func requestCurrentLocation() {
+        isGettingLocation = true
+        
+        // 現在地の更新を開始
+        locationManager.startUpdatingLocation()
+        
+        // 位置情報の取得を待つ
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { // 2秒待機
+            if let location = self.locationManager.userLocation {
+                // 座標を保存
+                self.locationCoordinate = location.coordinate
+                
+                // 逆ジオコーディングで住所を取得
+                let geocoder = CLGeocoder()
+                geocoder.reverseGeocodeLocation(location) { (placemarks, error) in
+                    DispatchQueue.main.async {
+                        self.isGettingLocation = false
+                        
+                        if let error = error {
+                            self.alertMessage = "住所の取得に失敗しました: \(error.localizedDescription)"
+                            self.showAlert = true
+                            return
+                        }
+                        
+                        if let placemark = placemarks?.first {
+                            // 日本語住所の形式に整形
+                            var address = ""
+                            
+                            if let administrativeArea = placemark.administrativeArea {
+                                address += administrativeArea // 都道府県
+                            }
+                            
+                            if let locality = placemark.locality {
+                                address += locality // 市区町村
+                            }
+                            
+                            if let subLocality = placemark.subLocality, !subLocality.isEmpty {
+                                address += subLocality // 町名
+                            }
+                            
+                            if let thoroughfare = placemark.thoroughfare, !thoroughfare.isEmpty {
+                                address += thoroughfare // 番地
+                            }
+                            
+                            if let subThoroughfare = placemark.subThoroughfare, !subThoroughfare.isEmpty {
+                                address += subThoroughfare // 建物など
+                            }
+                            
+                            self.locationAddress = address
+                        } else {
+                            self.alertMessage = "住所の取得に失敗しました"
+                            self.showAlert = true
+                        }
+                    }
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.isGettingLocation = false
+                    self.alertMessage = "位置情報の取得に失敗しました。設定から位置情報の利用を許可してください。"
+                    self.showAlert = true
+                }
             }
         }
     }
@@ -373,18 +627,32 @@ struct OshiItemEditView: View {
             "title": title,
             "itemType": itemType,
             "memo": memo,
-            "date": date.timeIntervalSince1970,
-            "favorite": favorite,
-            "updatedAt": Date().timeIntervalSince1970
+            "updatedAt": Date().timeIntervalSince1970,
+            "favorite": favorite
         ]
         
         // アイテムタイプに応じたデータを追加
-        if itemType == "グッズ" {
+        switch itemType {
+        case "グッズ":
             itemData["category"] = category
             itemData["price"] = Int(price) ?? 0
             itemData["location"] = location
-        } else if itemType == "ライブ記録" {
+            itemData["purchaseDate"] = date.timeIntervalSince1970
+        case "ライブ記録":
             itemData["eventName"] = eventName
+            itemData["purchaseDate"] = date.timeIntervalSince1970
+            itemData["memories"] = memo
+        case "聖地巡礼":
+            itemData["locationAddress"] = locationAddress
+            itemData["visitDate"] = date.timeIntervalSince1970
+            itemData["memories"] = memo
+        case "SNS投稿":
+            itemData["publishDate"] = date.timeIntervalSince1970
+        case "その他":
+            itemData["recordDate"] = date.timeIntervalSince1970
+            itemData["details"] = memo
+        default:
+            itemData["date"] = date.timeIntervalSince1970
         }
         
         // タグの追加
@@ -392,18 +660,26 @@ struct OshiItemEditView: View {
             itemData["tags"] = tags
         }
         
+        print("item.oshiId      :\(item)")
+        guard let oshiId = item.oshiId else {
+            isLoading = false
+            alertMessage = "推し情報が取得できませんでした。"
+            showAlert = true
+            return
+        }
+        
         // 画像の処理
         let uploadCompletion: () -> Void = {
             // Firestoreに保存
-            let ref = Database.database().reference().child("oshiItems").child(userId).child(self.item.id)
+            let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(self.item.id)
             ref.updateChildValues(itemData) { error, _ in
-                isLoading = false
+                self.isLoading = false
                 
                 if let error = error {
-                    alertMessage = "保存に失敗しました: \(error.localizedDescription)"
-                    showAlert = true
+                    self.alertMessage = "保存に失敗しました: \(error.localizedDescription)"
+                    self.showAlert = true
                 } else {
-                    presentationMode.wrappedValue.dismiss()
+                    self.presentationMode.wrappedValue.dismiss()
                 }
             }
         }
@@ -415,24 +691,24 @@ struct OshiItemEditView: View {
             if let imageData = selectedImage.jpegData(compressionQuality: 0.7) {
                 storageRef.putData(imageData, metadata: nil) { _, error in
                     if let error = error {
-                        isLoading = false
-                        alertMessage = "画像のアップロードに失敗しました: \(error.localizedDescription)"
-                        showAlert = true
+                        self.isLoading = false
+                        self.alertMessage = "画像のアップロードに失敗しました: \(error.localizedDescription)"
+                        self.showAlert = true
                         return
                     }
                     
                     // 画像URLの取得
                     storageRef.downloadURL { url, error in
                         if let error = error {
-                            isLoading = false
-                            alertMessage = "画像URLの取得に失敗しました: \(error.localizedDescription)"
-                            showAlert = true
+                            self.isLoading = false
+                            self.alertMessage = "画像URLの取得に失敗しました: \(error.localizedDescription)"
+                            self.showAlert = true
                             return
                         }
                         
                         if let downloadURL = url {
                             // 以前の画像がある場合は削除
-                            if !imageUrl.isEmpty, let oldImageURL = URL(string: imageUrl) {
+                            if !self.imageUrl.isEmpty, let oldImageURL = URL(string: self.imageUrl) {
                                 let oldStorageRef = Storage.storage().reference(forURL: oldImageURL.absoluteString)
                                 oldStorageRef.delete { _ in }
                             }
@@ -498,7 +774,7 @@ struct OshiItem: Identifiable, Codable {
         }
         return nil
     }
-    
+    var oshiId: String?
     // 各タイプごとの日付取得
     var typeSpecificDate: Date? {
         switch itemType {
@@ -531,11 +807,32 @@ struct OshiItem: Identifiable, Codable {
     enum CodingKeys: String, CodingKey {
         case id, title, category, memo, imageUrl, price, purchaseDate, eventName
         case favorite, memories, tags, location, itemType, createdAt
-        case locationAddress, visitDate, recordDate, details
+        case locationAddress, visitDate, recordDate, details, oshiId
     }
 }
 
 #Preview {
+    let dummyItem = OshiItem(
+        id: UUID().uuidString,
+        title: "ダミータイトル",
+        category: "ダミーカテゴリ",
+        memo: "ここにメモを入力",
+        imageUrl: "",
+        price: 1000,
+        purchaseDate: Date().timeIntervalSince1970,
+        eventName: "ダミーイベント",
+        favorite: 3,
+        memories: "ダミー思い出",
+        tags: ["タグ1", "タグ2"],
+        location: "ダミー購入場所",
+        itemType: "グッズ",
+        locationAddress: "ダミー住所",
+        visitDate: nil,
+        recordDate: nil,
+        details: "ダミー詳細",
+        createdAt: Date().timeIntervalSince1970
+    )
+//    OshiItemEditView(item: dummyItem)
     TopView()
 }
 

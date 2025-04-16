@@ -133,5 +133,6 @@ struct MapPinView: View {
                 .opacity(isSelected ? 1.0 : 0.8)
         }
         .shadow(color: Color.black.opacity(0.2), radius: isSelected ? 8 : 4, x: 0, y: 4)
+        .zIndex(isSelected ? 10 : 1)
     }
 }
