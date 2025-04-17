@@ -169,26 +169,40 @@ struct EnhancedAddLocationView: View {
                                         }
                                     )
                             }
-                            
-                            // Edit button overlay
-                            VStack {
-                                Spacer()
-                                HStack {
-                                    Spacer()
-                                    
-                                    Button(action: {
-                                        generateHapticFeedback()
-                                        isShowingImagePicker = true
-                                    }) {
-                                        Text("画像を変更")
-                                            .font(.system(size: 14))
-                                            .padding(.vertical, 6)
-                                            .padding(.horizontal, 12)
-                                            .background(Color.black.opacity(0.6))
-                                            .foregroundColor(.white)
-                                            .cornerRadius(16)
+                            if let image = selectedImage {
+                                // Edit button overlay
+                                VStack {
+                                    HStack {
+                                        Spacer()
+                                        Button(action: {
+                                            generateHapticFeedback()
+                                            selectedImage = nil
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.system(size: 22))
+                                                .foregroundColor(.white)
+                                                .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                                .padding(12)
+                                        }
                                     }
-                                    .padding(12)
+                                    Spacer()
+                                    HStack {
+                                        Spacer()
+                                        
+                                        Button(action: {
+                                            generateHapticFeedback()
+                                            isShowingImagePicker = true
+                                        }) {
+                                            Text("画像を変更")
+                                                .font(.system(size: 14))
+                                                .padding(.vertical, 6)
+                                                .padding(.horizontal, 12)
+                                                .background(Color.black.opacity(0.6))
+                                                .foregroundColor(.white)
+                                                .cornerRadius(16)
+                                        }
+                                        .padding(12)
+                                    }
                                 }
                             }
                         }

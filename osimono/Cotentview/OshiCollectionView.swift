@@ -155,7 +155,7 @@ struct OshiCollectionView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
             
-            // フィルターメニュー - itemTypesに変更
+             // フィルターメニュー - itemTypesに変更
             if showingFilterMenu {
                 VStack(alignment: .leading, spacing: 12) {
                     // アイテムタイプ選択

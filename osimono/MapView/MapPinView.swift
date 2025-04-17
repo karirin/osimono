@@ -8,6 +8,7 @@
 import SwiftUI
 import Firebase
 import FirebaseAuth
+import Shimmer
 
 struct MapPinView: View {
     var imageName: String
@@ -90,7 +91,7 @@ struct MapPinView: View {
                                     .font(.system(size: isSelected ? 24 : 18))
                                     .foregroundColor(pinType.color)
                             }
-//                            .shimmer(true)
+                            .shimmering(active: true)
                         }
                         .frame(width: isSelected ? 85 : 55, height: isSelected ? 85 : 55)
                         .clipShape(Circle())

@@ -41,6 +41,8 @@ struct OshiItemEditView: View {
     let backgroundColor = Color(.white)
     let cardColor = Color(.white)
     
+    var onSaveCompleted: ((OshiItem) -> Void)?
+    
     // アイテムタイプの選択肢
     let itemTypes = ["グッズ", "聖地巡礼", "ライブ記録", "SNS投稿", "その他"]
     
@@ -118,31 +120,92 @@ struct OshiItemEditView: View {
                                 isImagePickerPresented = true
                             }) {
                                 if let image = selectedImage {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(height: 200)
-                                        .frame(maxWidth: .infinity)
-                                        .clipped()
-                                        .cornerRadius(12)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                        )
+                                    ZStack{
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(height: 200)
+                                            .frame(maxWidth: .infinity)
+                                            .clipped()
+                                            .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            )
+                                        VStack {
+                                            HStack {
+                                                Spacer()
+                                                Button(action: {
+                                                    generateHapticFeedback()
+                                                    withAnimation {
+                                                        selectedImage = nil
+                                                    }
+                                                }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .font(.system(size: 22))
+                                                        .foregroundColor(.white)
+                                                        .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                                        .padding(12)
+                                                }
+                                            }
+                                            Spacer()
+                                            HStack {
+                                                Spacer()
+                                                    Text("画像を変更")
+                                                        .font(.system(size: 14))
+                                                        .padding(.vertical, 6)
+                                                        .padding(.horizontal, 12)
+                                                        .background(Color.black.opacity(0.6))
+                                                        .foregroundColor(.white)
+                                                        .cornerRadius(16)
+                                                }
+                                                .padding(12)
+                                            }
+                                    }
                                 } else if !imageUrl.isEmpty, let url = URL(string: imageUrl) {
                                     AsyncImage(url: url) { phase in
                                         if let image = phase.image {
-                                            image
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(height: 200)
-                                                .frame(maxWidth: .infinity)
-                                                .clipped()
-                                                .cornerRadius(12)
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                                )
+                                            ZStack{
+                                                image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(height: 200)
+                                                    .frame(maxWidth: .infinity)
+                                                    .clipped()
+                                                    .cornerRadius(12)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 12)
+                                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                    )
+                                                
+                                                VStack {
+                                                    HStack {
+                                                        Spacer()
+                                                        Button(action: {
+                                                            generateHapticFeedback()
+                                                            imageUrl = ""
+                                                        }) {
+                                                            Image(systemName: "xmark.circle.fill")
+                                                                .font(.system(size: 22))
+                                                                .foregroundColor(.white)
+                                                                .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                                                .padding(12)
+                                                        }
+                                                    }
+                                                    Spacer()
+                                                    HStack {
+                                                        Spacer()
+                                                            Text("画像を変更")
+                                                                .font(.system(size: 14))
+                                                                .padding(.vertical, 6)
+                                                                .padding(.horizontal, 12)
+                                                                .background(Color.black.opacity(0.6))
+                                                                .foregroundColor(.white)
+                                                                .cornerRadius(16)
+                                                        }
+                                                        .padding(12)
+                                                    }
+                                            }
                                         } else {
                                             imagePlaceholder
                                         }
@@ -611,6 +674,12 @@ struct OshiItemEditView: View {
         }
     }
     
+    func onSaveCompleted(action: @escaping (OshiItem) -> Void) -> Self {
+        var view = self
+        view.onSaveCompleted = action
+        return view
+    }
+    
     // アイテム保存
     func saveItem() {
         isLoading = true
@@ -660,7 +729,6 @@ struct OshiItemEditView: View {
             itemData["tags"] = tags
         }
         
-        print("item.oshiId      :\(item)")
         guard let oshiId = item.oshiId else {
             isLoading = false
             alertMessage = "推し情報が取得できませんでした。"
@@ -679,6 +747,43 @@ struct OshiItemEditView: View {
                     self.alertMessage = "保存に失敗しました: \(error.localizedDescription)"
                     self.showAlert = true
                 } else {
+                    // Create updated item with all the new values
+                    var updatedItem = self.item
+                    updatedItem.title = self.title
+                    updatedItem.itemType = self.itemType
+                    updatedItem.memo = self.memo
+                    updatedItem.favorite = self.favorite
+                    updatedItem.tags = self.tags
+                    
+                    // Update type-specific fields
+                    switch self.itemType {
+                    case "グッズ":
+                        updatedItem.category = self.category
+                        updatedItem.price = Int(self.price) ?? 0
+                        updatedItem.location = self.location
+                        updatedItem.purchaseDate = self.date.timeIntervalSince1970
+                    case "ライブ記録":
+                        updatedItem.eventName = self.eventName
+                        updatedItem.purchaseDate = self.date.timeIntervalSince1970
+                        updatedItem.memories = self.memo
+                    case "聖地巡礼":
+                        updatedItem.locationAddress = self.locationAddress
+                        updatedItem.visitDate = self.date.timeIntervalSince1970
+                        updatedItem.memories = self.memo
+                    case "SNS投稿":
+                        updatedItem.purchaseDate = self.date.timeIntervalSince1970
+                    case "その他":
+                        updatedItem.recordDate = self.date.timeIntervalSince1970
+                        updatedItem.details = self.memo
+                    default:
+                        break
+                    }
+                    
+                    // Update imageUrl
+                    updatedItem.imageUrl = itemData["imageUrl"] as? String ?? self.imageUrl
+                    
+                    // Call callback with updated item
+                    self.onSaveCompleted?(updatedItem)
                     self.presentationMode.wrappedValue.dismiss()
                 }
             }

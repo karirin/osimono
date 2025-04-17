@@ -9,14 +9,18 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import FirebaseStorage
+import Shimmer
 
 struct OshiItemDetailView: View {
-    let item: OshiItem
+    @State private var item: OshiItem
     @State private var isEditing = false
     @State private var isShareSheetPresented = false
     @State private var showDeleteConfirmation = false
     @Environment(\.presentationMode) var presentationMode
     
+    init(item: OshiItem) {
+        self._item = State(initialValue: item)
+    }
     // 色の定義
     let primaryColor = Color(.systemPink) // 明るいピンク
     let accentColor = Color(.purple) // 紫系
@@ -278,6 +282,9 @@ struct OshiItemDetailView: View {
         }
         .fullScreenCover(isPresented: $isEditing) {
             OshiItemEditView(item: item)
+                .onSaveCompleted { updatedItem in
+                    self.item = updatedItem
+                }
         }
     }
     
@@ -287,6 +294,7 @@ struct OshiItemDetailView: View {
             Rectangle()
                 .foregroundColor(Color.gray.opacity(0.1))
                 .frame(height: 300)
+                .shimmering()
             
             if let itemType = item.itemType {
                 Image(systemName: iconForItemType(itemType))
@@ -316,6 +324,60 @@ struct OshiItemDetailView: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.black)
             }
+        }
+    }
+    
+    func fetchUpdatedItemData() {
+        guard let userId = Auth.auth().currentUser?.uid,
+              let oshiId = item.oshiId else { return }
+        
+        let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(item.id)
+        ref.observeSingleEvent(of: .value) { snapshot in
+            guard let data = snapshot.value as? [String: Any] else { return }
+            
+            // Create a new item with the same ID
+            var updatedItem = OshiItem(id: self.item.id)
+            updatedItem.oshiId = oshiId
+            
+            // Parse all the fields from the data
+            updatedItem.title = data["title"] as? String
+            updatedItem.itemType = data["itemType"] as? String
+            updatedItem.memo = data["memo"] as? String
+            updatedItem.imageUrl = data["imageUrl"] as? String
+            updatedItem.favorite = data["favorite"] as? Int
+            updatedItem.tags = data["tags"] as? [String]
+            
+            // Parse specific fields based on item type
+            if let itemType = updatedItem.itemType {
+                switch itemType {
+                case "グッズ":
+                    updatedItem.category = data["category"] as? String
+                    updatedItem.price = data["price"] as? Int
+                    updatedItem.location = data["location"] as? String
+                    updatedItem.purchaseDate = data["purchaseDate"] as? TimeInterval
+                case "ライブ記録":
+                    updatedItem.eventName = data["eventName"] as? String
+                    updatedItem.purchaseDate = data["purchaseDate"] as? TimeInterval
+                    updatedItem.memories = data["memories"] as? String
+                case "聖地巡礼":
+                    updatedItem.locationAddress = data["locationAddress"] as? String
+                    updatedItem.visitDate = data["visitDate"] as? TimeInterval
+                    updatedItem.memories = data["memories"] as? String
+                case "SNS投稿":
+                    updatedItem.purchaseDate = data["publishDate"] as? TimeInterval
+                case "その他":
+                    updatedItem.recordDate = data["recordDate"] as? TimeInterval
+                    updatedItem.details = data["details"] as? String
+                default:
+                    break
+                }
+            }
+            
+            // Parse timestamps
+            updatedItem.createdAt = data["createdAt"] as? TimeInterval ?? data["updatedAt"] as? TimeInterval
+            
+            // Update the view's item with the fresh data
+            self.item = updatedItem
         }
     }
     

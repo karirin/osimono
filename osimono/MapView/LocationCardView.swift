@@ -54,6 +54,7 @@ struct LocationCardView: View {
                                     .foregroundColor(pinType.color)
                             )
                             .frame(height: isSelected ? 100 : 80)
+                            .shimmering(active: true)
                     }
                 } else {
                     Rectangle()
@@ -64,15 +65,17 @@ struct LocationCardView: View {
                                 .foregroundColor(pinType.color)
                         )
                         .frame(height: isSelected ? 100 : 80)
+                        .shimmering(active: true)
                 }
                 
                 // Category badge
                 Text(pinType.label)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(pinType.color)
+                    .foregroundColor(pinType.color.opacity(2.0))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(pinType.color.opacity(0.15))
+                    .background(pinType.color.opacity(0.125))
+                    .background(Color.white)
                     .cornerRadius(10)
                     .padding(8)
             }
