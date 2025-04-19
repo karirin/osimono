@@ -35,11 +35,6 @@ struct ContentView: View {
     @State private var showAddOshiForm = false
     
     // テーマカラーの定義 - アイドル/推し活向けに明るく元気なカラースキーム
-//    let primaryColor = Color("#FF4B8A") // 明るいピンク
-//    let accentColor = Color("#8A4FFF") // 紫系
-//    let backgroundColor = Color("#FCFAFF") // 明るい背景色
-//    let cardColor = Color("#FFFFFF") // カード背景色
-//    let textColor = Color("#333333") // テキスト色
     let primaryColor = Color(.systemPink) // 明るいピンク
     let accentColor = Color(.purple) // 紫系
     let backgroundColor = Color(.white) // 明るい背景色
@@ -56,7 +51,7 @@ struct ContentView: View {
     
     // プロフィールセクションの高さ
     var profileSectionHeight: CGFloat {
-        isSmallDevice() ? 230 : 280
+        isSmallDevice() ? 280 : 280
     }
 
     var body: some View {
@@ -64,80 +59,12 @@ struct ContentView: View {
             ZStack {
                 VStack(spacing: -60) {
                     // プロフィールセクション
-                    profileSection
-                    // メインコンテンツ
-                    TabView(selection: $selectedTab) {
-                        OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger)
-                            .tag(0)
-                        
-                        TimelineView(oshiId: selectedOshi?.id ?? "default")
-                            .tag(1)
-                        
-                        CategoriesView()
-                            .tag(2)
-                        
-                        SettingsView()
-                            .tag(3)
-                    }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
-                    .animation(.easeInOut, value: selectedTab)
+//                    profileSection
+                    ProfileSection(editFlag: $editFlag, showAddOshiForm :$showAddOshiForm, isEditingUsername: $isEditingUsername, isShowingOshiSelector: $isShowingOshiSelector, showChangeOshiButton: $showChangeOshiButton)
+                    
+                        OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger,editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton)
                 }
             }
-            .overlay(
-                VStack(spacing: -5) {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            withAnimation(.spring()) {
-                                editFlag.toggle()
-                                isEditingUsername.toggle()
-                                showChangeOshiButton.toggle()
-                                generateHapticFeedback()
-                            }
-                        }) {
-                            Image(systemName: "square.and.pencil")
-                                .font(.system(size: 22, weight: .medium))
-                                .padding(15)
-                                .background(
-                                    Circle()
-                                        .fill(accentColor)
-                                        .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
-                                )
-                                .foregroundColor(.white)
-                        }
-                        .padding(.trailing)
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            withAnimation(.spring()) {
-                                addFlag = true
-                            }
-                            generateHapticFeedback()
-                        }) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 22, weight: .medium))
-                                .padding(18)
-                                .background(
-                                    Circle()
-                                        .fill(primaryColor)
-                                        .shadow(color: primaryColor.opacity(0.3), radius: 5, x: 0, y: 3)
-                                )
-                                .foregroundColor(.white)
-                        }
-                        .padding()
-                    }
-                }.padding(.trailing,10)
-            )
-            .overlay(
-                ZStack {
-                    if isShowingOshiSelector {
-                        oshiSelectorOverlay
-                    }
-                }
-            )
             // プロフィール画像が拡大表示されている場合のオーバーレイを修正
             .overlay(
                 ZStack {
@@ -188,9 +115,15 @@ struct ContentView: View {
         }
         .accentColor(primaryColor)
         .onAppear {
-            loadAllData()
             fetchOshiList()
         }
+        .overlay(
+            ZStack {
+                if isShowingOshiSelector {
+                    oshiSelectorOverlay
+                }
+            }
+        )
         .onChange(of: selectedOshi?.id) { newOshi in
             // 選択中の推しが変わったとき、投稿を再取得するためにリフレッシュトリガーを変更する
             if newOshi != nil {
@@ -198,21 +131,21 @@ struct ContentView: View {
                 refreshTrigger.toggle()
             }
         }
-        .sheet(isPresented: $isShowingImagePicker) {
-            ImagePicker(image: $image, onImagePicked: { pickedImage in
-                self.image = pickedImage
-                uploadOshiImageToFirebase(pickedImage)
-            })
-        }
-        .sheet(item: $currentEditType) { type in
-            ImagePicker(
-                image: $image,
-                onImagePicked: { pickedImage in
-                    self.image = pickedImage
-                    uploadOshiImageToFirebase(pickedImage, type: type)
-                }
-            )
-        }
+//        .sheet(isPresented: $isShowingImagePicker) {
+//            ImagePicker(image: $image, onImagePicked: { pickedImage in
+//                self.image = pickedImage
+//                uploadOshiImageToFirebase(pickedImage)
+//            })
+//        }
+//        .sheet(item: $currentEditType) { type in
+//            ImagePicker(
+//                image: $image,
+//                onImagePicked: { pickedImage in
+//                    self.image = pickedImage
+//                    uploadOshiImageToFirebase(pickedImage, type: type)
+//                }
+//            )
+//        }
         .sheet(isPresented: $showAddOshiForm) {
             AddOshiView()
         }
@@ -233,37 +166,37 @@ struct ContentView: View {
         }
     }
     
-    var changeOshiButtonOverlay: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Spacer()
-                Button(action: {
-                    withAnimation(.spring()) {
-                        isShowingOshiSelector = true
-                    }
-                    generateHapticFeedback()
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                        Text("推し変更")
-                            .fontWeight(.medium)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(
-                        Capsule()
-                            .fill(Color.black.opacity(0.3))
-                            .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
-                    )
-                    .foregroundColor(.white)
-                }
-            }
-        }
-        .padding(.bottom,70)
-        .padding(.trailing,30)
-    }
-    
+//    var changeOshiButtonOverlay: some View {
+//        VStack {
+//            Spacer()
+//            HStack {
+//                Spacer()
+//                Button(action: {
+//                    withAnimation(.spring()) {
+//                        isShowingOshiSelector = true
+//                    }
+//                    generateHapticFeedback()
+//                }) {
+//                    HStack {
+//                        Image(systemName: "arrow.triangle.2.circlepath")
+//                        Text("推し変更")
+//                            .fontWeight(.medium)
+//                    }
+//                    .padding(.horizontal, 8)
+//                    .padding(.vertical, 5)
+//                    .background(
+//                        Capsule()
+//                            .fill(Color.black.opacity(0.3))
+//                            .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+//                    )
+//                    .foregroundColor(.white)
+//                }
+//            }
+//        }
+//        .padding(.bottom,70)
+//        .padding(.trailing,isSmallDevice() ? 10 : 30)
+//    }
+//    
     var oshiSelectorOverlay: some View {
            ZStack {
                // 半透明の背景
@@ -397,196 +330,29 @@ struct ContentView: View {
        }
     
     // 背景編集オーバーレイ
-    var editBackgroundOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.3)
-            
-            VStack {
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        currentEditType = .background
-                        generateHapticFeedback()
-                    }) {
-                        Image(systemName: "camera.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white)
-                            .padding(12)
-                            .background(Circle().fill(Color.black.opacity(0.5)))
-                    }
-                    .padding()
-                }
-                Spacer()
-            }
-        }
-    }
-    
-    // プロフィールセクション - 推し活ユーザー向け
-    var profileSection: some View {
-        ZStack(alignment: .top) {
-            // 背景画像 - 選択中の推しの背景画像に変更
-            if isLoading {
-                // ローディング状態の背景（既存コード）
-                Rectangle()
-                    .frame(height: profileSectionHeight)
-                    .frame(maxWidth: .infinity)
-                    .foregroundColor(Color.gray.opacity(0.1))
-                    .shimmering(active: true)
-                    .edgesIgnoringSafeArea(.all)
-            } else {
-                if let oshi = selectedOshi, let backgroundUrl = oshi.backgroundImageUrl, let url = URL(string: backgroundUrl) {
-                    // 選択中の推しの背景画像を表示
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(maxWidth: .infinity)
-                                .frame(height: profileSectionHeight)
-                                .overlay(
-                                    editFlag ? editBackgroundOverlay : nil
-                                )
-                                .clipped()
-                                .edgesIgnoringSafeArea(.all)
-                        default:
-                            Rectangle()
-                                .frame(height: profileSectionHeight)
-                                .frame(maxWidth: .infinity)
-                                .foregroundColor(Color.gray.opacity(0.1))
-                                .shimmering(active: true)
-                                .edgesIgnoringSafeArea(.all)
-                        }
-                    }
-                } else {
-                    // 背景画像がない場合（既存コード）
-                    ZStack {
-                        LinearGradient(
-                            gradient: Gradient(colors: [primaryColor.opacity(0.7), accentColor.opacity(0.7)]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .frame(maxWidth: .infinity)
-                        .frame(height: profileSectionHeight)
-                        .edgesIgnoringSafeArea(.all)
-                        if editFlag {
-                            editBackgroundOverlay
-                        }
-                    }
-                }
-            }
-            
-            // プロフィール情報とアバター
-            VStack(spacing: 8) {
-                // プロフィール画像 - 選択中の推しのプロフィール画像に変更
-                ZStack {
-                    if let oshi = selectedOshi, let imageUrlString = oshi.imageUrl, let imageUrl = URL(string: imageUrlString) {
-                        AsyncImage(url: imageUrl) { phase in
-                            switch phase {
-                            case .success(let image):
-                                ZStack {
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 100, height: 100)
-                                        .clipShape(Circle())
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color.white, lineWidth: 3)
-                                        )
-                                        .shadow(color: Color.black.opacity(0.2), radius: 5)
-                                        .onTapGesture {
-                                            withAnimation(.spring()) {
-                                                isProfileImageEnlarged = true
-                                            }
-                                            generateHapticFeedback()
-                                        }
-                                    
-                                    if editFlag {
-                                        Button(action: {
-                                            currentEditType = .profile
-                                            generateHapticFeedback()
-                                        }) {
-                                            ZStack {
-                                                Circle()
-                                                    .fill(Color.black.opacity(0.5))
-                                                    .frame(width: 100, height: 100)
-                                                
-                                                Image(systemName: "camera.fill")
-                                                    .foregroundColor(.white)
-                                                    .font(.system(size: 30))
-                                            }
-                                        }
-                                    }
-                                }
-                            case .failure(_):
-                                profilePlaceholder
-                            case .empty:
-                                profilePlaceholder
-                            @unknown default:
-                                profilePlaceholder
-                            }
-                        }
-                    } else {
-                        Button(action: {
-                            generateHapticFeedback()
-                            if let oshi = selectedOshi {
-                                isShowingImagePicker = true
-                            } else {
-                                // 推しが選択されていない場合は、推し追加フォームを表示
-                                showAddOshiForm = true
-                            }
-                        }) {
-                            profilePlaceholder
-                        }
-                    }
-                }
-                .padding(.bottom, 4)
-                
-                // ユーザー名と詳細 - 推し情報表示
-                VStack(spacing: 4) {
-                    if isEditingUsername {
-                        // 編集モード: テキストフィールドを表示
-                        HStack {
-                            TextField("推しの名前", text: $editingUsername)
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.black)
-                                .padding(2)
-                                .background(Color.white)
-                                .cornerRadius(8)
-                                .multilineTextAlignment(.center)
-                                .frame(width: 200)
-                                .onAppear{
-                                    startEditing()
-                                }
-                                .onChange(of: editingUsername) { newValue in
-                                    saveOshiProfile()
-                                }
-                        }
-                    } else {
-                        // 表示モード: 通常のテキスト表示
-                        Text(selectedOshi?.name ?? "推しを選択してください")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                }
-                .padding(.bottom, 12)
-            }
-            .offset(y: 30)
-        }
-        .onAppear{
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                print("oshi.backgroundImageUrl      :\(selectedOshi)")
-            }
-        }
-        .overlay(
-            ZStack {
-                if showChangeOshiButton {
-                    changeOshiButtonOverlay
-                }
-            }
-        )
-    }
+//    var editBackgroundOverlay: some View {
+//        ZStack {
+//            Color.black.opacity(0.3)
+//            
+//            VStack {
+//                HStack {
+//                    Spacer()
+//                    Button(action: {
+//                        currentEditType = .background
+//                        generateHapticFeedback()
+//                    }) {
+//                        Image(systemName: "camera.fill")
+//                            .font(.system(size: 24))
+//                            .foregroundColor(.white)
+//                            .padding(12)
+//                            .background(Circle().fill(Color.black.opacity(0.5)))
+//                    }
+//                    .padding()
+//                }
+//                Spacer()
+//            }
+//        }
+//    }
     
     
     func saveSelectedOshiId(_ oshiId: String) {
@@ -679,33 +445,33 @@ struct ContentView: View {
     }
     
     // プロフィール画像プレースホルダー
-    var profilePlaceholder: some View {
-        ZStack {
-            Circle()
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 100, height: 100)
-                .overlay(
-                    Circle()
-                        .stroke(Color.white, lineWidth: 3)
-                )
-                .shadow(color: Color.black.opacity(0.1), radius: 5)
-            
-            .shimmering(active: true)
-            Image(systemName: "person.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 50, height: 50)
-                .foregroundColor(.white)
-            
-            if isShowingImagePicker == false {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(.white)
-                    .background(Circle().fill(primaryColor))
-                    .offset(x: 32, y: 32)
-            }
-        }
-    }
+//    var profilePlaceholder: some View {
+//        ZStack {
+//            Circle()
+//                .fill(Color.gray.opacity(0.3))
+//                .frame(width: 100, height: 100)
+//                .overlay(
+//                    Circle()
+//                        .stroke(Color.white, lineWidth: 3)
+//                )
+//                .shadow(color: Color.black.opacity(0.1), radius: 5)
+//            
+//            .shimmering(active: true)
+//            Image(systemName: "person.fill")
+//                .resizable()
+//                .scaledToFit()
+//                .frame(width: 50, height: 50)
+//                .foregroundColor(.white)
+//            
+//            if isShowingImagePicker == false {
+//                Image(systemName: "plus.circle.fill")
+//                    .font(.system(size: 24))
+//                    .foregroundColor(.white)
+//                    .background(Circle().fill(primaryColor))
+//                    .offset(x: 32, y: 32)
+//            }
+//        }
+//    }
     
     var oshiSelector: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -864,19 +630,21 @@ struct ContentView: View {
             return
         }
 
-        let storageRef = Storage.storage().reference()
-        let filename = type == .profile ? "profile.jpg" : "background.jpg"
-        let imageRef = storageRef.child("oshis/\(userID)/\(oshi.id)/\(filename)")
-
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
-
-        let metadata = StorageMetadata()
-        metadata.contentType = "image/jpeg"
-
         // アップロード中の表示
         withAnimation {
             isLoading = true
         }
+
+        let storageRef = Storage.storage().reference()
+        let filename = type == .profile ? "profile.jpg" : "background.jpg"
+        let imageRef = storageRef.child("oshis/\(userID)/\(oshi.id)/\(filename)")
+
+        // プロフィール画像と背景画像で圧縮率を調整
+        let compressionQuality: CGFloat = type == .profile ? 0.8 : 0.7
+        guard let imageData = image.jpegData(compressionQuality: compressionQuality) else { return }
+
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
 
         imageRef.putData(imageData, metadata: metadata) { _, error in
             if let error = error {

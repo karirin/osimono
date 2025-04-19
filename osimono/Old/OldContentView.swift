@@ -397,40 +397,112 @@ struct ShimmerView: View {
     }
 }
 
+import UIKit
+import CropViewController
 
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var image: UIImage?
-    var onImagePicked: (UIImage) -> Void
+    var onImagePicked: ((UIImage) -> Void)?
+    var aspectRatio: CGFloat = 16/9 // 背景画像用の推奨アスペクト比
 
-    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        picker.allowsEditing = false
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate, CropViewControllerDelegate {
         let parent: ImagePicker
 
         init(_ parent: ImagePicker) {
             self.parent = parent
         }
 
+        // 画像が選択されたとき
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let selectedImage = info[.originalImage] as? UIImage {
-                parent.image = selectedImage
-                parent.onImagePicked(selectedImage) // ✅ 画像選択時に即アップロード
+            if let image = info[.originalImage] as? UIImage {
+                // クロップビューコントローラーを表示
+                let cropViewController = CropViewController(image: image)
+                cropViewController.delegate = self
+                
+                // アスペクト比を設定（背景画像用）
+                cropViewController.customAspectRatio = CGSize(width: 16, height: 9)
+                cropViewController.aspectRatioLockEnabled = true
+                cropViewController.resetAspectRatioEnabled = false
+                
+                // UIを日本語化
+                cropViewController.doneButtonTitle = "完了"
+                cropViewController.cancelButtonTitle = "キャンセル"
+                
+                picker.dismiss(animated: true) {
+                    // 選択した画像をクロップビューで開く
+                    UIApplication.shared.windows.first?.rootViewController?.present(cropViewController, animated: true, completion: nil)
+                }
             }
-            picker.dismiss(animated: true)
+        }
+
+        // キャンセル時
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            picker.dismiss(animated: true, completion: nil)
+        }
+        
+        // クロップ完了時
+        func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
+            parent.image = image
+            if let onImagePicked = parent.onImagePicked {
+                onImagePicked(image)
+            }
+            cropViewController.dismiss(animated: true, completion: nil)
+        }
+        
+        // クロップキャンセル時
+        func cropViewController(_ cropViewController: CropViewController, didFinishCancelled cancelled: Bool) {
+            cropViewController.dismiss(animated: true, completion: nil)
         }
     }
-
-    func makeCoordinator() -> Coordinator {
-        return Coordinator(self)
-    }
-
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.delegate = context.coordinator
-        picker.sourceType = .photoLibrary
-        return picker
-    }
-
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 }
+
+
+//struct ImageAddOshiPicker: UIViewControllerRepresentable {
+//    @Binding var image: UIImage?
+//    var onImagePicked: (UIImage) -> Void
+//
+//    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+//        let parent: ImagePicker
+//
+//        init(_ parent: ImagePicker) {
+//            self.parent = parent
+//        }
+//
+//        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+//            if let selectedImage = info[.originalImage] as? UIImage {
+//                parent.image = selectedImage
+//                parent.onImagePicked(selectedImage) // ✅ 画像選択時に即アップロード
+//            }
+//            picker.dismiss(animated: true)
+//        }
+//    }
+//
+//    func makeCoordinator() -> Coordinator {
+//        return Coordinator(self)
+//    }
+//
+//    func makeUIViewController(context: Context) -> UIImagePickerController {
+//        let picker = UIImagePickerController()
+//        picker.delegate = context.coordinator
+//        picker.sourceType = .photoLibrary
+//        return picker
+//    }
+//
+//    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+//}
 
 struct ImageEditView: View {
     @State private var selectedImage: UIImage?

@@ -217,13 +217,13 @@ class LocationViewModel: ObservableObject {
         
         do {
             // userRatingsの下にもユーザーID→推しID構造を作る
-            let ref = db.child("userRatings").child(userId).child(oshiId).childByAutoId()
-            let ratingDict = try userRating.asDictionary()
-            ref.setValue(ratingDict) { error, _ in
-                if let error = error {
-                    print("Error saving user rating: \(error.localizedDescription)")
-                }
-            }
+//            let ref = db.child("userRatings").child(userId).child(oshiId).childByAutoId()
+//            let ratingDict = try userRating.asDictionary()
+//            ref.setValue(ratingDict) { error, _ in
+//                if let error = error {
+//                    print("Error saving user rating: \(error.localizedDescription)")
+//                }
+//            }
         } catch {
             print("Error converting user rating to dictionary: \(error.localizedDescription)")
         }
@@ -254,25 +254,25 @@ class LocationViewModel: ObservableObject {
                 print("Error updating rating: \(error.localizedDescription)")
             } else {
                 // userRatingsの更新も階層構造に対応
-                self.db.child("userRatings").child(userId).child(oshiId)
-                    .queryOrdered(byChild: "locationId")
-                    .queryEqual(toValue: locationId)
-                    .observeSingleEvent(of: .value) { snapshot in
-                        var ratingFound = false
-                        for child in snapshot.children {
-                            if let childSnapshot = child as? DataSnapshot {
-                                childSnapshot.ref.updateChildValues([
-                                    "rating": newRating,
-                                    "timestamp": Date().timeIntervalSince1970
-                                ])
-                                ratingFound = true
-                                break
-                            }
-                        }
-                        if !ratingFound {
-                            self.saveUserRating(locationId: locationId, rating: newRating, userId: userId, oshiId: oshiId)
-                        }
-                    }
+//                self.db.child("userRatings").child(userId).child(oshiId)
+//                    .queryOrdered(byChild: "locationId")
+//                    .queryEqual(toValue: locationId)
+//                    .observeSingleEvent(of: .value) { snapshot in
+//                        var ratingFound = false
+//                        for child in snapshot.children {
+//                            if let childSnapshot = child as? DataSnapshot {
+//                                childSnapshot.ref.updateChildValues([
+//                                    "rating": newRating,
+//                                    "timestamp": Date().timeIntervalSince1970
+//                                ])
+//                                ratingFound = true
+//                                break
+//                            }
+//                        }
+//                        if !ratingFound {
+//                            self.saveUserRating(locationId: locationId, rating: newRating, userId: userId, oshiId: oshiId)
+//                        }
+//                    }
             }
         }
     }
@@ -284,20 +284,20 @@ class LocationViewModel: ObservableObject {
             return
         }
         
-        db.child("userRatings").child(userId).child(oshiId)
-            .queryOrdered(byChild: "locationId")
-            .queryEqual(toValue: locationId)
-            .observeSingleEvent(of: .value) { snapshot in
-                for child in snapshot.children {
-                    if let childSnapshot = child as? DataSnapshot,
-                       let dict = childSnapshot.value as? [String: Any],
-                       let rating = dict["rating"] as? Int {
-                        completion(rating)
-                        return
-                    }
-                }
-                completion(nil)
-            }
+//        db.child("userRatings").child(userId).child(oshiId)
+//            .queryOrdered(byChild: "locationId")
+//            .queryEqual(toValue: locationId)
+//            .observeSingleEvent(of: .value) { snapshot in
+//                for child in snapshot.children {
+//                    if let childSnapshot = child as? DataSnapshot,
+//                       let dict = childSnapshot.value as? [String: Any],
+//                       let rating = dict["rating"] as? Int {
+//                        completion(rating)
+//                        return
+//                    }
+//                }
+//                completion(nil)
+//            }
     }
     
     func updateCurrentOshi(id: String) {

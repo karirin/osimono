@@ -30,6 +30,9 @@ struct OshiCollectionView: View {
     @State private var selectedItemType: String = "すべて"
     var oshiId: String
     var refreshTrigger: Bool
+    @Binding var editFlag: Bool
+    @Binding var isEditingUsername: Bool
+    @Binding var showChangeOshiButton: Bool
     
     // 色の定義 - 推し活向けカラー
     let primaryColor = Color(.systemPink) // ピンク
@@ -280,7 +283,7 @@ struct OshiCollectionView: View {
                             Image(systemName: "plus")
                             Text("推しアイテムを追加")
                         }
-                        .font(.system(size: isSmallDevice() ? 14 : 16, weight: .medium))
+                        .font(.system(size: isSmallDevice() ? 13 : 16, weight: .medium))
                         .foregroundColor(.white)
                         .padding(.horizontal, 24)
                         .padding(.vertical, isSmallDevice() ? 8 : 12)
@@ -311,10 +314,58 @@ struct OshiCollectionView: View {
                 }
             }
         }
+        .overlay(
+            VStack(spacing: -5) {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            editFlag.toggle()
+                            isEditingUsername.toggle()
+                            showChangeOshiButton.toggle()
+                            generateHapticFeedback()
+                        }
+                    }) {
+                        Image(systemName: "square.and.pencil")
+                            .font(.system(size: 22, weight: .medium))
+                            .padding(15)
+                            .background(
+                                Circle()
+                                    .fill(accentColor)
+                                    .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+                            )
+                            .foregroundColor(.white)
+                    }
+                    .padding(.trailing)
+                }
+                
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            addFlag = true
+                        }
+                        generateHapticFeedback()
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 22, weight: .medium))
+                            .padding(18)
+                            .background(
+                                Circle()
+                                    .fill(primaryColor)
+                                    .shadow(color: primaryColor.opacity(0.3), radius: 5, x: 0, y: 3)
+                            )
+                            .foregroundColor(.white)
+                    }
+                    .padding()
+                }
+            }.padding(.trailing,0)
+        )
         .dismissKeyboardOnTap()
         .background(backgroundColor)
         .onAppear {
-            fetchOshiItems()
+//            fetchOshiItems()
         }
         .onChange(of: oshiId) { newOshiId in
             fetchOshiItems()

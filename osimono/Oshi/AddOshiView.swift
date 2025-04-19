@@ -81,7 +81,6 @@ struct AddOshiView: View {
                             .background(Color.blue)
                             .cornerRadius(10)
                     }
-                    .disabled(oshiName.isEmpty)
                 }
             }
             .navigationTitle("推しを追加")
@@ -98,8 +97,9 @@ struct AddOshiView: View {
     }
     
     func saveOshi() {
+        print("saveOshi1")
         guard let userId = Auth.auth().currentUser?.uid, !oshiName.isEmpty else { return }
-        
+        print("saveOshi2")
         isLoading = true
         
         let oshiId = UUID().uuidString
@@ -114,6 +114,7 @@ struct AddOshiView: View {
         
         // プロフィール画像をアップロード
         if let image = selectedImage {
+            print("saveOshi3")
             dispatchGroup.enter()
             uploadImage(image, path: "oshis/\(userId)/\(oshiId)/profile.jpg") { imageUrl in
                 if let url = imageUrl {
@@ -125,6 +126,7 @@ struct AddOshiView: View {
         
         // 背景画像をアップロード
         if let image = selectedBackgroundImage {
+            print("saveOshi4")
             dispatchGroup.enter()
             uploadImage(image, path: "oshis/\(userId)/\(oshiId)/background.jpg") { imageUrl in
                 if let url = imageUrl {
@@ -135,6 +137,7 @@ struct AddOshiView: View {
         }
         
         dispatchGroup.notify(queue: .main) {
+            print("saveOshi5")
             self.saveDataToFirebase(oshiId, data)
         }
     }
@@ -188,4 +191,8 @@ struct AddOshiView: View {
             }
         }
     }
+}
+
+#Preview {
+    AddOshiView()
 }
