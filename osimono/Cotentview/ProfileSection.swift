@@ -30,6 +30,7 @@ struct ProfileSection: View {
     @Binding var isEditingUsername: Bool
     @Binding var isShowingOshiSelector: Bool
     @Binding var showChangeOshiButton: Bool
+    @Binding var isOshiChange: Bool
     @State private var editingUsername = ""
     @State private var oshiList: [Oshi] = []
     @State var backgroundImageUrl: URL?
@@ -173,7 +174,6 @@ struct ProfileSection: View {
                             if let oshi = selectedOshi {
                                 isShowingImagePicker = true
                             } else {
-                                // 推しが選択されていない場合は、推し追加フォームを表示
                                 showAddOshiForm = true
                             }
                         }) {
@@ -230,6 +230,10 @@ struct ProfileSection: View {
             )
         }
         .onAppear {
+            loadAllData()
+            fetchOshiList()
+        }
+        .onChange(of: isOshiChange) { newOshi in
             loadAllData()
             fetchOshiList()
         }
@@ -681,7 +685,7 @@ struct ProfileSection: View {
                         .stroke(Color.white, lineWidth: 3)
                 )
                 .shadow(color: Color.black.opacity(0.1), radius: 5)
-            
+                .padding(5)
                 .shimmering(active: true)
             Image(systemName: "person.fill")
                 .resizable()

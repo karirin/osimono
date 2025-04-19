@@ -46,6 +46,7 @@ struct ContentView: View {
     @State private var editingFavoriteOshi = ""
     @State private var saveTimer: Timer? = nil
     @State private var refreshTrigger = false
+    @State private var isOshiChange = false
     @State private var isShowingOshiSelector = false
     @State private var showChangeOshiButton = false
     
@@ -60,7 +61,7 @@ struct ContentView: View {
                 VStack(spacing: -60) {
                     // プロフィールセクション
 //                    profileSection
-                    ProfileSection(editFlag: $editFlag, showAddOshiForm :$showAddOshiForm, isEditingUsername: $isEditingUsername, isShowingOshiSelector: $isShowingOshiSelector, showChangeOshiButton: $showChangeOshiButton)
+                    ProfileSection(editFlag: $editFlag, showAddOshiForm :$showAddOshiForm, isEditingUsername: $isEditingUsername, isShowingOshiSelector: $isShowingOshiSelector, showChangeOshiButton: $showChangeOshiButton, isOshiChange: $isOshiChange)
                     
                         OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger,editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton)
                 }
@@ -146,7 +147,11 @@ struct ContentView: View {
 //                }
 //            )
 //        }
-        .sheet(isPresented: $showAddOshiForm) {
+        .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                isOshiChange.toggle()
+            }
+        }) {
             AddOshiView()
         }
         .sheet(item: $currentEditType) { type in
