@@ -49,6 +49,7 @@ struct ContentView: View {
     @State private var isOshiChange = false
     @State private var isShowingOshiSelector = false
     @State private var showChangeOshiButton = false
+    @State private var isShowingEditOshiView = false
     
     // プロフィールセクションの高さ
     var profileSectionHeight: CGFloat {
@@ -61,9 +62,20 @@ struct ContentView: View {
                 VStack(spacing: -60) {
                     // プロフィールセクション
 //                    profileSection
-                    ProfileSection(editFlag: $editFlag, showAddOshiForm :$showAddOshiForm, isEditingUsername: $isEditingUsername, isShowingOshiSelector: $isShowingOshiSelector, showChangeOshiButton: $showChangeOshiButton, isOshiChange: $isOshiChange)
+                    ProfileSection(
+                        editFlag: $editFlag,
+                        showAddOshiForm: $showAddOshiForm,
+                        isEditingUsername: $isEditingUsername,
+                        isShowingOshiSelector: $isShowingOshiSelector,
+                        showChangeOshiButton: $showChangeOshiButton,
+                        isOshiChange: $isOshiChange,
+                        isShowingEditOshiView: $isShowingEditOshiView, onOshiUpdated: {
+                            // 推しが更新されたときの処理
+                            self.refreshTrigger.toggle()
+                        }
+                    )
                     
-                        OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger,editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton)
+                    OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger,editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton, isShowingEditOshiView: $isShowingEditOshiView)
                 }
             }
             // プロフィール画像が拡大表示されている場合のオーバーレイを修正

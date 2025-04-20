@@ -33,6 +33,7 @@ struct OshiCollectionView: View {
     @Binding var editFlag: Bool
     @Binding var isEditingUsername: Bool
     @Binding var showChangeOshiButton: Bool
+    @Binding var isShowingEditOshiView: Bool
     
     // 色の定義 - 推し活向けカラー
     let primaryColor = Color(.systemPink) // ピンク
@@ -321,9 +322,7 @@ struct OshiCollectionView: View {
                     Spacer()
                     Button(action: {
                         withAnimation(.spring()) {
-                            editFlag.toggle()
-                            isEditingUsername.toggle()
-                            showChangeOshiButton.toggle()
+                            isShowingEditOshiView.toggle()
                             generateHapticFeedback()
                         }
                     }) {

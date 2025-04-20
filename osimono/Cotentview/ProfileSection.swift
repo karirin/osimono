@@ -37,6 +37,8 @@ struct ProfileSection: View {
     @State private var imageUrl: URL? = nil
     @State private var userProfile = UserProfile(id: "", username: "推し活ユーザー", favoriteOshi: "")
     @State private var image: UIImage? = nil
+    @Binding var isShowingEditOshiView: Bool
+    var onOshiUpdated: (() -> Void)? = nil
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -61,13 +63,54 @@ struct ProfileSection: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: profileSectionHeight)
                                 .clipped()
-                                .overlay(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [.clear, Color.black.opacity(0.3)]),
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
+//                                    ZStack {
+//                                        if !showChangeOshiButton {
+//                                            
+//                                                if !editFlag && selectedOshi != nil {
+//                                                    Button(action: {
+//                                                        isShowingEditOshiView = true
+//                                                        generateHapticFeedback()
+//                                                    }) {
+//                                                        HStack {
+//                                                            Image(systemName: "pencil")
+//                                                            Text("推しを編集")
+//                                                                .fontWeight(.medium)
+//                                                        }
+//                                                        .padding(.horizontal, 12)
+//                                                        .padding(.vertical, 6)
+//                                                        .background(
+//                                                            Capsule()
+//                                                                .fill(Color.white.opacity(0.7))
+//                                                                .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 2)
+//                                                        )
+//                                                        .foregroundColor(.black)
+//                                                    }
+//                                                    .padding(.top, 8)
+//                                                }
+//                                            Button(action: {
+//                                                withAnimation(.spring()) {
+//                                                    isShowingOshiSelector = true
+//                                                }
+//                                                generateHapticFeedback()
+//                                            }) {
+//                                                HStack {
+//                                                    Image(systemName: "arrow.triangle.2.circlepath")
+//                                                    Text("推し変更")
+//                                                        .fontWeight(.medium)
+//                                                }
+//                                                .padding(.horizontal, 8)
+//                                                .padding(.vertical, 5)
+//                                                .background(
+//                                                    Capsule()
+//                                                        .fill(Color.black.opacity(0.3))
+//                                                        .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+//                                                )
+//                                                .foregroundColor(.white)
+//                                            }
+//                                            .position(x: UIScreen.main.bounds.width - 40, y: 200)
+//                                        }
+//                                    }
+//                                )
                                 .edgesIgnoringSafeArea(.all)
                         default:
                             Rectangle()
@@ -213,6 +256,28 @@ struct ProfileSection: View {
                 .zIndex(1) 
             }
             .offset(y: 30)
+            
+//            Color.black.opacity(0.3)
+//                .edgesIgnoringSafeArea(.all)
+//            VStack {
+//                HStack {
+//                    Spacer()
+//                }
+//                Spacer()
+//            }
+//            HStack{
+//                Spacer()
+//                Button(action: {
+//                    currentEditType = .background
+//                    generateHapticFeedback()
+//                }) {
+//                    Image(systemName: "camera.fill")
+//                        .font(.system(size: 24))
+//                        .foregroundColor(.white)
+//                        .padding(12)
+//                        .background(Circle().fill(Color.black.opacity(0.5)))
+//                }
+//            }
         }
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(image: $image, onImagePicked: { pickedImage in
@@ -236,6 +301,15 @@ struct ProfileSection: View {
         .onChange(of: isOshiChange) { newOshi in
             loadAllData()
             fetchOshiList()
+        }
+        .fullScreenCover(isPresented: $isShowingEditOshiView) {
+            if let oshi = selectedOshi {
+                EditOshiView(oshi: oshi) {
+                    // 推しが更新されたときのコールバック
+                    loadAllData()
+                    fetchOshiList()
+                }
+            }
         }
 //        .overlay(
 //            ZStack {
@@ -262,41 +336,33 @@ struct ProfileSection: View {
 //                }
 //            }
 //        )
-        .overlay(
-            
-            ZStack {
-                if showChangeOshiButton {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                withAnimation(.spring()) {
-                                    isShowingOshiSelector = true
-                                }
-                                generateHapticFeedback()
-                            }) {
-                                HStack {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
-                                    Text("推し変更")
-                                        .fontWeight(.medium)
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.black.opacity(0.3))
-                                        .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
-                                )
-                                .foregroundColor(.white)
-                            }
-                        }
-                    }
-                    .padding(.bottom,70)
-                    .padding(.trailing,isSmallDevice() ? 10 : 30)
-                }
-            }
-        )
+//        .overlay(
+//            ZStack {
+//                if !showChangeOshiButton {
+//                    Button(action: {
+//                        withAnimation(.spring()) {
+//                            isShowingOshiSelector = true
+//                        }
+//                        generateHapticFeedback()
+//                    }) {
+//                        HStack {
+//                            Image(systemName: "arrow.triangle.2.circlepath")
+//                            Text("推し変更")
+//                                .fontWeight(.medium)
+//                        }
+//                        .padding(.horizontal, 8)
+//                        .padding(.vertical, 5)
+//                        .background(
+//                            Capsule()
+//                                .fill(Color.black.opacity(0.3))
+//                                .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+//                        )
+//                        .foregroundColor(.white)
+//                    }
+//                    .position(x: UIScreen.main.bounds.width - 40, y: 200)
+//                }
+//            }
+//        )
     }
     
     func uploadOshiImageToFirebase(_ image: UIImage, type: UploadImageType = .profile) {
