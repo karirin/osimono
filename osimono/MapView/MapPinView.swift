@@ -26,7 +26,7 @@ struct MapPinView: View {
     
     enum PinType {
         case live // ライブ会場
-        case location // ロケ地
+//        case location // ロケ地
         case cafe // カフェ・飲食店
         case shop // グッズショップ
         case photo // 撮影スポット
@@ -36,11 +36,11 @@ struct MapPinView: View {
         var color: Color {
             switch self {
             case .live: return Color(hex: "6366F1")     // インディゴ/青紫
-            case .location: return Color(hex: "8B5CF6") // バイオレット/紫
+            case .sacred: return Color(hex: "EF4444") // バイオレット/紫
             case .cafe: return Color(hex: "10B981")     // エメラルド/緑
             case .shop: return Color(hex: "F59E0B")     // アンバー/オレンジ
             case .photo: return Color(hex: "EC4899")    // ピンク
-            case .sacred: return Color(hex: "EF4444")   // レッド/赤
+//            case .sacred: return Color(hex: "EF4444")   // レッド/赤
             case .other: return Color(hex: "6B7280")    // グレー
             }
         }
@@ -48,11 +48,11 @@ struct MapPinView: View {
         var icon: String {
             switch self {
             case .live: return "music.note"
-            case .location: return "film"
+//            case .location: return "mappin"
             case .cafe: return "cup.and.saucer"
             case .shop: return "bag"
             case .photo: return "camera"
-            case .sacred: return "star"
+            case .sacred: return "mappin"
             case .other: return "mappin"
             }
         }
@@ -60,7 +60,7 @@ struct MapPinView: View {
         var label: String {
             switch self {
             case .live: return "ライブ会場"
-            case .location: return "ロケ地"
+//            case .location: return "ロケ地"
             case .cafe: return "カフェ・飲食店"
             case .shop: return "グッズショップ"
             case .photo: return "撮影スポット"

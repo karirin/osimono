@@ -13,36 +13,36 @@ struct TopView: View {
     @State private var selectedOshiId: String = "default"
     
     var body: some View {
-                TabView {
-                    HStack{
-                        ContentView()
-                    }
-                    
-                    .tabItem {
-                        Image(systemName: "rectangle.split.2x2")
-                            .padding()
-                        Text("推しコレ")
-                            .padding()
-                    }
-                    ZStack {
-                        TimelineView(oshiId: selectedOshiId)
-                    }
-                    .tabItem {
-                        Image(systemName: "calendar.day.timeline.left")
-                            .frame(width:1,height:1)
-                        Text("年表")
-                    }
-                    ZStack {
-                        MapView(oshiId: selectedOshiId)
-                    }
-                    .tabItem {
-                        Image(systemName: "map")
-                        Text("マップ")
-                    }
-                }
-                .onAppear{
-                    observeSelectedOshiId()
-                }
+        TabView {
+            HStack{
+                ContentView()
+            }
+            
+            .tabItem {
+                Image(systemName: "rectangle.split.2x2")
+                    .padding()
+                Text("推しコレ")
+                    .padding()
+            }
+            ZStack {
+                TimelineView(oshiId: selectedOshiId)
+            }
+            .tabItem {
+                Image(systemName: "calendar.day.timeline.left")
+                    .frame(width:1,height:1)
+                Text("年表")
+            }
+            ZStack {
+                MapView(oshiId: selectedOshiId)
+            }
+            .tabItem {
+                Image(systemName: "map")
+                Text("マップ")
+            }
+        }
+        .onAppear{
+            observeSelectedOshiId()
+        }
     }
     
     func observeSelectedOshiId() {

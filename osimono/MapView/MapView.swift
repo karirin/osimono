@@ -262,7 +262,7 @@ struct MapView: View {
         if let category = location.category as String? {
             switch category {
             case "ライブ会場": return .live
-            case "ロケ地": return .location
+//            case "ロケ地": return .sacred
             case "カフェ・飲食店": return .cafe
             case "グッズショップ": return .shop
             case "撮影スポット": return .photo
@@ -275,8 +275,8 @@ struct MapView: View {
         // Fallback to checking title
         if location.title.contains("ライブ") || location.title.contains("コンサート") {
             return .live
-        } else if location.title.contains("ロケ") || location.title.contains("撮影地") {
-            return .location
+//        } else if location.title.contains("ロケ") || location.title.contains("撮影地") {
+//            return .location
         } else if location.title.contains("カフェ") || location.title.contains("レストラン") || location.title.contains("cafe") {
             return .cafe
         } else if location.title.contains("ショップ") || location.title.contains("グッズ") || location.title.contains("shop") {

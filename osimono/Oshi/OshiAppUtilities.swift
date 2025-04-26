@@ -54,7 +54,7 @@ class OshiAppUtilities {
         switch locationCategory {
         case "ライブ会場":
             return "ライブ記録"
-        case "ロケ地", "聖地巡礼":
+        case "聖地巡礼":
             return "聖地巡礼"
         case "カフェ・飲食店":
             return "聖地巡礼"

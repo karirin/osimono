@@ -35,7 +35,7 @@ struct EnhancedAddLocationView: View {
     @State private var oshiItems: [String: Any] = [:]
 
 //    let categories = ["ライブ", "広告", "カフェ", "その他"]
-    let categories = ["ライブ会場", "ロケ地", "カフェ・飲食店", "グッズショップ", "撮影スポット", "聖地巡礼", "その他"]
+    let categories = ["聖地巡礼", "撮影スポット", "カフェ・飲食店", "ライブ会場", "グッズショップ", "その他"]
     
     // Computed property for the current address
     var currentAddress: String {
@@ -50,11 +50,11 @@ struct EnhancedAddLocationView: View {
     func categoryColor(_ category: String) -> Color {
         switch category {
         case "ライブ会場": return Color(hex: "6366F1")  // インディゴ/青紫
-        case "ロケ地": return Color(hex: "8B5CF6")      // バイオレット/紫
+        case "聖地巡礼": return Color(hex: "EF4444")      // バイオレット/紫
         case "カフェ・飲食店": return Color(hex: "10B981") // エメラルド/緑
         case "グッズショップ": return Color(hex: "F59E0B") // アンバー/オレンジ
         case "撮影スポット": return Color(hex: "EC4899")  // ピンク
-        case "聖地巡礼": return Color(hex: "EF4444")        // レッド/赤
+//        case "聖地巡礼": return Color(hex: "EF4444")        // レッド/赤
         case "その他": return Color(hex: "6B7280")      // グレー
         default: return Color(hex: "6366F1")
         }
@@ -598,7 +598,7 @@ struct EnhancedAddLocationView: View {
             image: selectedImage
         ) { newLocationId in
             // 次にoshiItemsテーブルにも保存
-            if selectedCategory == "聖地巡礼" || selectedCategory == "ロケ地" {
+            if selectedCategory == "聖地巡礼" {
                 self.saveToOshiItems(
                     coordinate: coordinate,
                     locationId: newLocationId
@@ -633,11 +633,11 @@ struct EnhancedAddLocationView: View {
     func getPinType(for category: String) -> MapPinView.PinType {
         switch category {
         case "ライブ会場": return .live
-        case "ロケ地": return .location
+        case "聖地巡礼": return .sacred
         case "カフェ・飲食店": return .cafe
         case "グッズショップ": return .shop
         case "撮影スポット": return .photo
-        case "聖地巡礼": return .sacred
+//        case "聖地巡礼": return .sacred
         case "その他": return .other
         default: return .other
         }
