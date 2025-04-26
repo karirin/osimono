@@ -27,7 +27,7 @@ struct OshiItemFormView: View {
     @State private var itemType: String = "グッズ"
     @State private var showAlert = false
     @State private var alertMessage = ""
-    @State private var locationAddress: String = "新宿区北新宿2-2-14" // 聖地巡礼の場所住所
+    @State private var locationAddress: String = "東京都新宿区北新宿2-2-14" // 聖地巡礼の場所住所
     
     @StateObject private var locationManager = LocationManager()
     @State private var isGettingLocation = false
@@ -587,16 +587,131 @@ struct OshiItemFormView: View {
             data["purchaseDate"] = purchaseDate.timeIntervalSince1970
             data["memories"] = memo
         } else if itemType == "聖地巡礼" {
+//            data["locationAddress"] = locationAddress
+//            data["visitDate"] = purchaseDate.timeIntervalSince1970
+//            data["memories"] = memo
+//            
+//            // 位置情報が取得できている場合、locationViewModelにも保存
+//            if let locationCoord = locationCoordinate {
+//                saveToLocationsTable(coordinate: locationCoord)
+//            } else if !locationAddress.isEmpty {
+//                // 住所から座標を取得して保存
+//                geocodeAddressAndSaveLocation()
+//            }
             data["locationAddress"] = locationAddress
             data["visitDate"] = purchaseDate.timeIntervalSince1970
             data["memories"] = memo
             
-            // 位置情報が取得できている場合、locationViewModelにも保存
+            // LocationViewModelの設定
+            locationViewModel.currentOshiId = oshiId
+            
+            // 位置情報があれば直接保存
             if let locationCoord = locationCoordinate {
-                saveToLocationsTable(coordinate: locationCoord)
+                // このIDをoshiItemsとlocationsで共有する
+                let sharedId = UUID().uuidString
+                data["id"] = sharedId
+                
+                // 画像がある場合はアップロード
+                if let image = selectedImage {
+                    uploadImage(image) { imageUrl in
+                        if let url = imageUrl {
+                            data["imageUrl"] = url
+                            
+                            // locationsテーブルに保存
+                            saveToLocationsTable(
+                                coordinate: locationCoord,
+                                id: sharedId,
+                                imageUrl: url
+                            )
+                            
+                            // oshiItemsテーブルに保存
+                            self.saveDataToFirebase(data)
+                        } else {
+                            self.isLoading = false
+                            self.alertMessage = "画像のアップロードに失敗しました"
+                            self.showAlert = true
+                        }
+                    }
+                } else {
+                    // 画像なしで保存
+                    saveToLocationsTable(
+                        coordinate: locationCoord,
+                        id: sharedId,
+                        imageUrl: nil
+                    )
+                    self.saveDataToFirebase(data)
+                }
             } else if !locationAddress.isEmpty {
                 // 住所から座標を取得して保存
-                geocodeAddressAndSaveLocation()
+                let sharedId = UUID().uuidString
+                data["id"] = sharedId
+                
+                // ジオコーディング処理を改善
+                let geocoder = CLGeocoder()
+                geocoder.geocodeAddressString(locationAddress) { placemarks, error in
+                    if let error = error {
+                        print("住所のジオコーディングに失敗しました: \(error.localizedDescription)")
+                        // エラーがあってもoshiItemsには保存
+                        self.saveDataToFirebase(data)
+                        return
+                    }
+                    
+                    if let placemark = placemarks?.first,
+                       let location = placemark.location {
+                        
+                        // 画像がある場合はアップロード
+                        if let image = self.selectedImage {
+                            self.uploadImage(image) { imageUrl in
+                                if let url = imageUrl {
+                                    data["imageUrl"] = url
+                                    
+                                    // locationsテーブルに保存
+                                    saveToLocationsTable(
+                                        coordinate: location.coordinate,
+                                        id: sharedId,
+                                        imageUrl: url
+                                    )
+                                    
+                                    // oshiItemsテーブルに保存
+                                    self.saveDataToFirebase(data)
+                                } else {
+                                    // 画像アップロードに失敗してもデータは保存
+                                    saveToLocationsTable(
+                                        coordinate: location.coordinate,
+                                        id: sharedId,
+                                        imageUrl: nil
+                                    )
+                                    self.saveDataToFirebase(data)
+                                }
+                            }
+                        } else {
+                            // 画像なしで保存
+                            saveToLocationsTable(
+                                coordinate: location.coordinate,
+                                id: sharedId,
+                                imageUrl: nil
+                            )
+                            self.saveDataToFirebase(data)
+                        }
+                    } else {
+                        // 座標が取得できなくてもoshiItemsには保存
+                        self.saveDataToFirebase(data)
+                    }
+                }
+                return // 非同期処理なのでここで終了
+            } else {
+                // 住所も座標もない場合はoshiItemsのみ保存
+                if let image = selectedImage {
+                    uploadImage(image) { imageUrl in
+                        if let url = imageUrl {
+                            data["imageUrl"] = url
+                        }
+                        self.saveDataToFirebase(data)
+                    }
+                } else {
+                    self.saveDataToFirebase(data)
+                }
+                return // ここで終了
             }
         } else if itemType == "その他" {
             data["recordDate"] = purchaseDate.timeIntervalSince1970
@@ -605,22 +720,43 @@ struct OshiItemFormView: View {
             data["publishDate"] = purchaseDate.timeIntervalSince1970
         }
         
-        // 画像がある場合はアップロード
-        if let image = selectedImage {
-            uploadImage(image) { imageUrl in
-                if let url = imageUrl {
-                    data["imageUrl"] = url
-                    self.saveDataToFirebase(data)
-                } else {
-                    self.isLoading = false
-                    self.alertMessage = "画像のアップロードに失敗しました"
-                    self.showAlert = true
-                }
+        func saveToLocationsTable(coordinate: CLLocationCoordinate2D, id: String, imageUrl: String?) {
+            // LocationViewModelのcurrentOshiIdをoshiIdに設定
+            locationViewModel.currentOshiId = oshiId
+            
+            // locationsテーブルに保存
+            locationViewModel.addLocation(
+                id: id, // IDを指定して保存
+                title: title.isEmpty ? "聖地巡礼スポット" : title,
+                latitude: coordinate.latitude,
+                longitude: coordinate.longitude,
+                category: "聖地", // EnhancedAddLocationViewのカテゴリーに合わせる
+                initialRating: favorite, // お気に入り度をratingとして使用
+                note: memo.isEmpty ? nil : memo,
+                image: selectedImage,
+                customImageUrl: imageUrl // 既にアップロードした画像URLを使用
+            ) { _ in
+                // locationsテーブルへの保存完了。特に何もしなくてOK
+                print("聖地巡礼データをlocationsテーブルにも保存しました")
             }
-        } else {
-            // 画像なしで保存
-            saveDataToFirebase(data)
         }
+        
+        // 画像がある場合はアップロード
+//        if let image = selectedImage {
+//            uploadImage(image) { imageUrl in
+//                if let url = imageUrl {
+//                    data["imageUrl"] = url
+//                    self.saveDataToFirebase(data)
+//                } else {
+//                    self.isLoading = false
+//                    self.alertMessage = "画像のアップロードに失敗しました"
+//                    self.showAlert = true
+//                }
+//            }
+//        } else {
+//            // 画像なしで保存
+//            saveDataToFirebase(data)
+//        }
     }
     
     private func geocodeAddressAndSaveLocation() {
@@ -633,13 +769,13 @@ struct OshiItemFormView: View {
             
             if let placemark = placemarks?.first,
                let location = placemark.location {
-                self.saveToLocationsTable(coordinate: location.coordinate)
+                self.saveToLocationsTable2(coordinate: location.coordinate)
             }
         }
     }
 
     // locationsテーブルに聖地巡礼データを保存する関数
-    private func saveToLocationsTable(coordinate: CLLocationCoordinate2D) {
+    private func saveToLocationsTable2(coordinate: CLLocationCoordinate2D) {
         // OshiItemFormViewで使用するカテゴリーからEnhancedAddLocationViewの対応するカテゴリーに変換
         let locationCategory = "聖地" // EnhancedAddLocationViewのカテゴリーに合わせる
         

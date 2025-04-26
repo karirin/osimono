@@ -121,9 +121,16 @@ class LocationViewModel: ObservableObject {
     }
     
     // 現在ログイン中のユーザーの ID 直下にロケーションを保存する
-    func addLocation(title: String, latitude: Double, longitude: Double, category: String = "その他",
-                     initialRating: Int = 0, note: String? = nil, image: UIImage? = nil,
-                     completion: @escaping (String?) -> Void = {_ in }) {
+    func addLocation(id: String? = nil,
+                     title: String,
+                     latitude: Double,
+                     longitude: Double,
+                     category: String,
+                     initialRating: Int,
+                     note: String?,
+                     image: UIImage?,
+                     customImageUrl: String? = nil,
+                     completion: @escaping (String?) -> Void) {
         
         guard let userId = Auth.auth().currentUser?.uid else {
             print("User not logged in")
