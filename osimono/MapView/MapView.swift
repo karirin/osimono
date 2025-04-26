@@ -17,7 +17,7 @@ struct MapView: View {
     @State private var selectedLocationId: String? = nil
     @StateObject private var locationManager = LocationManager()
     // Start with all categories selected by default
-    @State private var selectedCategories: Set<String> = ["ライブ会場", "ロケ地", "カフェ・飲食店", "グッズショップ", "撮影スポット", "聖地", "その他"]
+    @State private var selectedCategories: Set<String> = ["ライブ会場", "ロケ地", "カフェ・飲食店", "グッズショップ", "撮影スポット", "聖地巡礼", "その他"]
     @State private var showUserProfile = false
     var oshiId: String
     
@@ -266,7 +266,7 @@ struct MapView: View {
             case "カフェ・飲食店": return .cafe
             case "グッズショップ": return .shop
             case "撮影スポット": return .photo
-            case "聖地": return .sacred
+            case "聖地巡礼": return .sacred
             case "その他": return .other
             default: break // Go to title check if none matched
             }
@@ -283,7 +283,7 @@ struct MapView: View {
             return .shop
         } else if location.title.contains("撮影") || location.title.contains("写真") {
             return .photo
-        } else if location.title.contains("聖地") {
+        } else if location.title.contains("聖地巡礼") {
             return .sacred
         } else {
             return .other

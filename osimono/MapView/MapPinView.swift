@@ -64,7 +64,7 @@ struct MapPinView: View {
             case .cafe: return "カフェ・飲食店"
             case .shop: return "グッズショップ"
             case .photo: return "撮影スポット"
-            case .sacred: return "聖地"
+            case .sacred: return "聖地巡礼"
             case .other: return "その他"
             }
         }

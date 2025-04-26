@@ -730,7 +730,7 @@ struct OshiItemFormView: View {
                 title: title.isEmpty ? "聖地巡礼スポット" : title,
                 latitude: coordinate.latitude,
                 longitude: coordinate.longitude,
-                category: "聖地", // EnhancedAddLocationViewのカテゴリーに合わせる
+                category: "聖地巡礼", // EnhancedAddLocationViewのカテゴリーに合わせる
                 initialRating: favorite, // お気に入り度をratingとして使用
                 note: memo.isEmpty ? nil : memo,
                 image: selectedImage,
@@ -777,7 +777,7 @@ struct OshiItemFormView: View {
     // locationsテーブルに聖地巡礼データを保存する関数
     private func saveToLocationsTable2(coordinate: CLLocationCoordinate2D) {
         // OshiItemFormViewで使用するカテゴリーからEnhancedAddLocationViewの対応するカテゴリーに変換
-        let locationCategory = "聖地" // EnhancedAddLocationViewのカテゴリーに合わせる
+        let locationCategory = "聖地巡礼" // EnhancedAddLocationViewのカテゴリーに合わせる
         
         // LocationViewModelのcurrentOshiIdをoshiIdに設定
         locationViewModel.currentOshiId = oshiId
