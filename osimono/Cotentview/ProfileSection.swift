@@ -302,7 +302,11 @@ struct ProfileSection: View {
             loadAllData()
             fetchOshiList()
         }
-        .fullScreenCover(isPresented: $isShowingEditOshiView) {
+        .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
+            // 編集ビューが閉じられた時にデータを再読み込み
+            loadAllData()
+            fetchOshiList()
+        }) {
             if let oshi = selectedOshi {
                 EditOshiView(oshi: oshi) {
                     // 推しが更新されたときのコールバック

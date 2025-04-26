@@ -272,7 +272,7 @@ struct EditOshiView: View {
             }
         }
         .sheet(item: $currentEditType) { type in
-            ImagePicker(
+            ImageAddOshiPicker(
                 image: $image,
                 onImagePicked: { pickedImage in
                     self.image = pickedImage
@@ -285,7 +285,7 @@ struct EditOshiView: View {
                     }
                     
                     // アップロード処理
-                    uploadImageToFirebase(pickedImage, type: type)
+//                    uploadImageToFirebase(pickedImage, type: type)
                 }
             )
         }
@@ -550,20 +550,118 @@ struct EditOshiView: View {
         
         isLoading = true
         
-        let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
-        let updates: [String: Any] = [
-            "name": oshiName
-        ]
+        // 画像のアップロードが必要な場合は先にアップロードする
+        let dispatchGroup = DispatchGroup()
         
-        dbRef.updateChildValues(updates) { error, _ in
-            DispatchQueue.main.async {
-                isLoading = false
+        var profileImageUrl: String? = nil
+        var backgroundImageUrl: String? = nil
+        
+        // プロフィール画像をアップロード
+        if let profileImage = selectedImage {
+            dispatchGroup.enter()
+            uploadImage(profileImage, type: .profile) { url in
+                profileImageUrl = url
+                dispatchGroup.leave()
+            }
+        }
+        
+        // 背景画像をアップロード
+        if let backgroundImage = selectedBackgroundImage {
+            dispatchGroup.enter()
+            uploadImage(backgroundImage, type: .background) { url in
+                backgroundImageUrl = url
+                dispatchGroup.leave()
+            }
+        }
+        
+        // すべてのアップロードが完了したらデータベースを更新
+        dispatchGroup.notify(queue: .main) {
+            let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
+            var updates: [String: Any] = [
+                "name": oshiName
+            ]
+            
+            if let url = profileImageUrl {
+                updates["imageUrl"] = url
+            }
+            
+            if let url = backgroundImageUrl {
+                updates["backgroundImageUrl"] = url
+            }
+            
+            dbRef.updateChildValues(updates) { error, _ in
+                DispatchQueue.main.async {
+                    isLoading = false
+                    
+                    if error == nil {
+                        // 更新コールバックを呼び出し
+                        onUpdate()
+                        // ビューを閉じる
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+        }
+        
+        // 画像のアップロードがない場合は直接データベースを更新
+        if selectedImage == nil && selectedBackgroundImage == nil {
+            let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
+            let updates: [String: Any] = [
+                "name": oshiName
+            ]
+            
+            dbRef.updateChildValues(updates) { error, _ in
+                DispatchQueue.main.async {
+                    isLoading = false
+                    
+                    if error == nil {
+                        // 更新コールバックを呼び出し
+                        onUpdate()
+                        // ビューを閉じる
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    func uploadImage(_ image: UIImage, type: UploadImageType, completion: @escaping (String?) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("ユーザーがログインしていません")
+            completion(nil)
+            return
+        }
+        
+        let storageRef = Storage.storage().reference()
+        let filename = type == .profile ? "profile.jpg" : "background.jpg"
+        let imageRef = storageRef.child("oshis/\(userID)/\(oshi.id)/\(filename)")
+        
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            completion(nil)
+            return
+        }
+        
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        
+        imageRef.putData(imageData, metadata: metadata) { _, error in
+            if let error = error {
+                print("アップロードエラー: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            imageRef.downloadURL { url, error in
+                if let error = error {
+                    print("URL取得エラー: \(error.localizedDescription)")
+                    completion(nil)
+                    return
+                }
                 
-                if error == nil {
-                    // 更新コールバックを呼び出し
-                    onUpdate()
-                    // ビューを閉じる
-                    presentationMode.wrappedValue.dismiss()
+                if let url = url {
+                    completion(url.absoluteString)
+                } else {
+                    completion(nil)
                 }
             }
         }
