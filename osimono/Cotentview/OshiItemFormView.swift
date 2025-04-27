@@ -558,7 +558,7 @@ struct OshiItemFormView: View {
     // データ保存
     func saveItem() {
         isLoading = true
-        
+        print("saveItem1")
         // アイテムデータの準備
         var data: [String: Any] = [
             "id": UUID().uuidString,
@@ -576,6 +576,7 @@ struct OshiItemFormView: View {
         
         // アイテムタイプ別のデータ追加
         if itemType == "グッズ" {
+            print("saveItem2")
             data["category"] = category
             if let priceInt = Int(price) {
                 data["price"] = priceInt
@@ -645,7 +646,7 @@ struct OshiItemFormView: View {
                 // 住所から座標を取得して保存
                 let sharedId = UUID().uuidString
                 data["id"] = sharedId
-                
+                print("saveItem3")
                 // ジオコーディング処理を改善
                 let geocoder = CLGeocoder()
                 geocoder.geocodeAddressString(locationAddress) { placemarks, error in
@@ -719,44 +720,44 @@ struct OshiItemFormView: View {
         } else {
             data["publishDate"] = purchaseDate.timeIntervalSince1970
         }
-        
-        func saveToLocationsTable(coordinate: CLLocationCoordinate2D, id: String, imageUrl: String?) {
-            // LocationViewModelのcurrentOshiIdをoshiIdに設定
-            locationViewModel.currentOshiId = oshiId
-            
-            // locationsテーブルに保存
-            locationViewModel.addLocation(
-                id: id, // IDを指定して保存
-                title: title.isEmpty ? "聖地巡礼スポット" : title,
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude,
-                category: "聖地巡礼", // EnhancedAddLocationViewのカテゴリーに合わせる
-                initialRating: favorite, // お気に入り度をratingとして使用
-                note: memo.isEmpty ? nil : memo,
-                image: selectedImage,
-                customImageUrl: imageUrl // 既にアップロードした画像URLを使用
-            ) { _ in
-                // locationsテーブルへの保存完了。特に何もしなくてOK
-                print("聖地巡礼データをlocationsテーブルにも保存しました")
-            }
-        }
-        
+        print("saveItem3")
         // 画像がある場合はアップロード
-//        if let image = selectedImage {
-//            uploadImage(image) { imageUrl in
-//                if let url = imageUrl {
-//                    data["imageUrl"] = url
-//                    self.saveDataToFirebase(data)
-//                } else {
-//                    self.isLoading = false
-//                    self.alertMessage = "画像のアップロードに失敗しました"
-//                    self.showAlert = true
-//                }
-//            }
-//        } else {
-//            // 画像なしで保存
-//            saveDataToFirebase(data)
-//        }
+        if let image = selectedImage {
+            uploadImage(image) { imageUrl in
+                if let url = imageUrl {
+                    data["imageUrl"] = url
+                    self.saveDataToFirebase(data)
+                } else {
+                    self.isLoading = false
+                    self.alertMessage = "画像のアップロードに失敗しました"
+                    self.showAlert = true
+                }
+            }
+        } else {
+            // 画像なしで保存
+            saveDataToFirebase(data)
+        }
+    }
+
+    func saveToLocationsTable(coordinate: CLLocationCoordinate2D, id: String, imageUrl: String?) {
+        // LocationViewModelのcurrentOshiIdをoshiIdに設定
+        locationViewModel.currentOshiId = oshiId
+        
+        // locationsテーブルに保存
+        locationViewModel.addLocation(
+            id: id, // IDを指定して保存
+            title: title.isEmpty ? "" : title,
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            category: "聖地巡礼", // EnhancedAddLocationViewのカテゴリーに合わせる
+            initialRating: favorite, // お気に入り度をratingとして使用
+            note: memo.isEmpty ? nil : memo,
+            image: selectedImage,
+            customImageUrl: imageUrl // 既にアップロードした画像URLを使用
+        ) { _ in
+            // locationsテーブルへの保存完了。特に何もしなくてOK
+            print("聖地巡礼データをlocationsテーブルにも保存しました")
+        }
     }
     
     private func geocodeAddressAndSaveLocation() {
@@ -784,7 +785,7 @@ struct OshiItemFormView: View {
         
         // locationsテーブルに保存
         locationViewModel.addLocation(
-            title: title.isEmpty ? "聖地巡礼スポット" : title,
+            title: title.isEmpty ? "" : title,
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,
             category: locationCategory,
@@ -843,7 +844,7 @@ struct OshiItemFormView: View {
             showAlert = true
             return
         }
-        
+        print("saveDataToFirebase1")
         // ここを変更：oshiIdを含めたパスに保存
         let oshiId = data["oshiId"] as? String ?? "default"
         let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(itemId)
@@ -851,7 +852,7 @@ struct OshiItemFormView: View {
         ref.setValue(data) { error, _ in
             DispatchQueue.main.async {
                 self.isLoading = false
-                
+                print("saveDataToFirebase2")
                 if let error = error {
                     self.alertMessage = "保存に失敗しました: \(error.localizedDescription)"
                     self.showAlert = true
