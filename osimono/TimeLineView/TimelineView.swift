@@ -113,13 +113,16 @@ struct TimelineView: View {
             viewModel.updateCurrentOshi(id: newId)
         }
         .fullScreenCover(isPresented: $showNewEventView) {
+            // イベント作成ビューが閉じられた時にイベントリストを更新
+            viewModel.fetchEvents(forOshiId: oshiId)
+        } content: {
             EnhancedNewEventView(isPresented: $showNewEventView, viewModel: viewModel, initialDate: selectedDate)
         }
     }
 }
 
-//struct TimelineView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        TimelineView()
-//    }
-//}
+struct TimelineView_Previews: PreviewProvider {
+    static var previews: some View {
+        TimelineView(oshiId: "C1B81ED5-7388-407A-9302-8DF67A1F55FC")
+    }
+}

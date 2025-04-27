@@ -394,6 +394,10 @@ struct EnhancedNewEventView: View {
         )
         
         viewModel.addEvent(event: newEvent)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.viewModel.fetchEvents(forOshiId: self.viewModel.currentOshiId)
+        }
     }
     
     private func formatDate(_ date: Date) -> String {

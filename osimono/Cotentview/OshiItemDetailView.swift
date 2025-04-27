@@ -48,7 +48,18 @@ struct OshiItemDetailView: View {
                             }
                         }
                     } else {
-                        placeholderImage
+                        ZStack {
+                            Rectangle()
+                                .foregroundColor(Color.gray.opacity(0.1))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 300)
+                            if let itemType = item.itemType {
+                                Image(systemName: iconForItemType(itemType))
+                                    .font(.system(size: 30))
+                                    .foregroundColor(.gray)
+                                //                    placeholderImage
+                            }
+                        }
                     }
                 }
                 
