@@ -1,10 +1,3 @@
-//
-//  EnhancedNewEventView.swift
-//  osimono
-//
-//  Created by Apple on 2025/04/06.
-//
-
 import SwiftUI
 import Firebase
 import FirebaseAuth
@@ -19,6 +12,7 @@ struct EnhancedNewEventView: View {
     @State private var selectedImage: UIImage?
     @State private var isShowingImagePicker = false
     @State private var isShowingPreview = false
+    @State private var isSaving = false // 保存中の状態を管理
     @FocusState private var isTitleFocused: Bool
     
     // Colors
@@ -29,10 +23,9 @@ struct EnhancedNewEventView: View {
     private let secondaryTextColor = Color(UIColor.secondaryLabel)
     
     init(isPresented: Binding<Bool>, viewModel: TimelineViewModel, initialDate: Date) {
-        self._isPresented = isPresented  // Binding の初期化
+        self._isPresented = isPresented
         self.viewModel = viewModel
         _eventDate = State(initialValue: initialDate)
-        // 残りの @State はすでに初期値が設定されているのでこれで問題ありません
     }
     
     var body: some View {
@@ -53,6 +46,7 @@ struct EnhancedNewEventView: View {
                             .background(Color(UIColor.secondarySystemBackground))
                             .clipShape(Circle())
                     }
+                    .disabled(isSaving) // 保存中は閉じられないようにする
                     
                     Spacer()
                     
@@ -64,8 +58,7 @@ struct EnhancedNewEventView: View {
                     
                     Button(action: {
                         generateHapticFeedback()
-                        saveEvent()
-                        isPresented = false
+                        startSaveProcess()
                     }) {
                         Text("保存")
                             .font(.system(size: 16, weight: .semibold))
@@ -74,11 +67,11 @@ struct EnhancedNewEventView: View {
                             .padding(.horizontal, 12)
                             .background(
                                 Capsule()
-                                    .fill(brandColor)
-//                                        .fill(title.isEmpty ? Color.gray : brandColor)
+                                    .fill(title.isEmpty || isSaving ? Color.gray : brandColor)
                             )
-//                                .opacity(title.isEmpty ? 0.5 : 1.0)
+                            .opacity(title.isEmpty || isSaving ? 0.5 : 1.0)
                     }
+                    .disabled(title.isEmpty || isSaving) // タイトルが空または保存中の場合は無効化
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -108,10 +101,14 @@ struct EnhancedNewEventView: View {
                         Spacer(minLength: 60)
                     }
                     .padding(.horizontal, 20)
+                    .opacity(isSaving ? 0.5 : 1.0) // 保存中は薄くする
+                    .disabled(isSaving) // 保存中は操作できないようにする
                 }
-                
-                // Bottom action bar with save button
-//                    bottomActionBar
+            }
+            
+            // 保存中のオーバーレイ
+            if isSaving {
+                savingOverlay
             }
         }
         .dismissKeyboardOnTap()
@@ -120,6 +117,29 @@ struct EnhancedNewEventView: View {
         }
         .onAppear {
             isTitleFocused = true
+        }
+    }
+    
+    // 保存中のオーバーレイ
+    private var savingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                
+                Text("保存中...")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.black.opacity(0.7))
+            )
         }
     }
     
@@ -343,41 +363,14 @@ struct EnhancedNewEventView: View {
         }
     }
     
-    private var bottomActionBar: some View {
-        VStack(spacing: 0) {
-            Divider()
-            
-            HStack {
-                Spacer()
-                
-                Button(action: {
-                    generateHapticFeedback()
-                    saveEvent()
-                    isPresented = false
-                }) {
-                    Text("保存")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.vertical, 14)
-                        .padding(.horizontal, 20)
-                        .background(
-                            Capsule()
-                                .fill(title.isEmpty ? Color.gray : brandColor)
-                        )
-                        .opacity(title.isEmpty ? 0.5 : 1.0)
-                }
-                .disabled(title.isEmpty)
-                
-                Spacer()
-            }
-            .padding(.vertical, 12)
-            .background(backgroundColor)
-        }
-    }
-    
     // MARK: - Helper Functions
     
-    private func saveEvent() {
+    // 保存プロセスを開始する新しい関数
+    private func startSaveProcess() {
+        // 保存中の状態に設定
+        isSaving = true
+        
+        // 新しいイベントを作成
         let color: Color = isOshiActivity ? .gray : Color(hex: "3B82F6")
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy/MM/dd HH:mm"
@@ -390,13 +383,15 @@ struct EnhancedNewEventView: View {
             color: color,
             image: selectedImage,
             imageURL: nil,
-            oshiId: viewModel.currentOshiId // 現在の推しIDを設定
+            oshiId: viewModel.currentOshiId
         )
         
-        viewModel.addEvent(event: newEvent)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.viewModel.fetchEvents(forOshiId: self.viewModel.currentOshiId)
+        // コールバック付きでイベントを追加
+        viewModel.addEvent(event: newEvent) { success in
+            // 保存が完了したら画面を閉じる
+            DispatchQueue.main.async {
+                self.isPresented = false
+            }
         }
     }
     
@@ -413,8 +408,3 @@ struct EnhancedNewEventView: View {
         return formatter.string(from: date)
     }
 }
-
-//#Preview {
-////    EnhancedNewEventView(viewModel: TimelineViewModel(), initialDate: Date())
-//    TimelineView()
-//}
