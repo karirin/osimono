@@ -304,6 +304,7 @@ struct ProfileSection: View {
         }
         .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
             // 編集ビューが閉じられた時にデータを再読み込み
+            print("fullScreenCover")
             loadAllData()
             fetchOshiList()
         }) {

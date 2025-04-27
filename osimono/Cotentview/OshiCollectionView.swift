@@ -369,6 +369,9 @@ struct OshiCollectionView: View {
         .onChange(of: oshiId) { newOshiId in
             fetchOshiItems()
         }
+        .onChange(of: isShowingEditOshiView) { newOshiId in
+            loadSelectedOshi()
+        }
         .onChange(of: refreshTrigger) { _ in
             // リフレッシュトリガーが変更されたときに投稿を再取得
             fetchOshiItems()
@@ -382,6 +385,46 @@ struct OshiCollectionView: View {
         }
         .fullScreenCover(isPresented: $addFlag) {
             OshiItemFormView(oshiId: oshiId)
+        }
+    }
+    
+    func loadSelectedOshi() {
+        guard let userId = userId else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userId)
+        dbRef.observeSingleEvent(of: .value) { snapshot in
+            guard let value = snapshot.value as? [String: Any] else { return }
+            
+            if let selectedOshiId = value["selectedOshiId"] as? String {
+                self.isLoading = true
+                
+                // 変更：選択中の推しIDのパスから取得
+                let ref = Database.database().reference().child("oshiItems").child(userId).child(selectedOshiId)
+                
+                ref.observeSingleEvent(of: .value) { snapshot in
+                    var newItems: [OshiItem] = []
+                    
+                    for child in snapshot.children {
+                        if let childSnapshot = child as? DataSnapshot {
+                            if let value = childSnapshot.value as? [String: Any] {
+                                do {
+                                    let jsonData = try JSONSerialization.data(withJSONObject: value)
+                                    let item = try JSONDecoder().decode(OshiItem.self, from: jsonData)
+                                    newItems.append(item)
+                                } catch {
+                                    print("デコードエラー: \(error.localizedDescription)")
+                                }
+                            }
+                        }
+                    }
+                    
+                    DispatchQueue.main.async {
+                        print("self.oshiItems       :\(newItems)")
+                        self.oshiItems = newItems
+                        self.isLoading = false
+                    }
+                }
+            }
         }
     }
     

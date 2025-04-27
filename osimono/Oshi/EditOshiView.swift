@@ -325,7 +325,7 @@ struct EditOshiView: View {
             VStack(spacing: 20) {
                 // ヘッダー
                 HStack {
-                    Text("推しを選択")
+                    Text("推しを変更")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
@@ -373,15 +373,9 @@ struct EditOshiView: View {
                     // 推しリスト
                     ForEach(oshiList) { oshi in
                         Button(action: {
-                            self.oshi = oshi // 編集対象の推しを更新
-                            self.oshiName = oshi.name // 名前フィールドを更新
-                            // 選択した画像もリセット
-                            self.selectedImage = nil
-                            self.selectedBackgroundImage = nil
                             generateHapticFeedback()
-                            withAnimation(.spring()) {
-                                isShowingOshiSelector = false
-                            }
+                            saveSelectedOshiId(oshi.id)
+                            presentationMode.wrappedValue.dismiss()
                         }) {
                             VStack {
                                 ZStack {
@@ -461,6 +455,17 @@ struct EditOshiView: View {
                         .padding(.top, 8)
                 }
             )
+    }
+    
+    func saveSelectedOshiId(_ oshiId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedOshiId": oshiId]) { error, _ in
+            if let error = error {
+                print("推しID保存エラー: \(error.localizedDescription)")
+            }
+        }
     }
     
     func fetchOshiList() {
