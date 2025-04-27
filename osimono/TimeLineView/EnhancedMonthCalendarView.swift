@@ -237,3 +237,7 @@ struct EnhancedMonthCalendarView: View {
             && cal.component(.day, from: d1) == cal.component(.day, from: d2)
     }
 }
+
+#Preview {
+    TimelineView(oshiId: "C1B81ED5-7388-407A-9302-8DF67A1F55FC")
+}
