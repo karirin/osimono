@@ -103,17 +103,48 @@ struct OshiItemFormView: View {
                                 isShowingImagePicker = true
                             }) {
                                 if let image = selectedImage {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(height: 200)
-                                        .frame(maxWidth: .infinity)
-                                        .clipped()
-                                        .cornerRadius(12)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                        )
+                                    ZStack{
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(height: 200)
+                                            .frame(maxWidth: .infinity)
+                                            .clipped()
+                                            .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            )
+                                        VStack {
+                                            HStack {
+                                                Spacer()
+                                                Button(action: {
+                                                    generateHapticFeedback()
+                                                    withAnimation {
+                                                        selectedImage = nil
+                                                    }
+                                                }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .font(.system(size: 22))
+                                                        .foregroundColor(.white)
+                                                        .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                                        .padding(12)
+                                                }
+                                            }
+                                            Spacer()
+                                            HStack {
+                                                Spacer()
+                                                    Text("画像を変更")
+                                                        .font(.system(size: 14))
+                                                        .padding(.vertical, 6)
+                                                        .padding(.horizontal, 12)
+                                                        .background(Color.black.opacity(0.6))
+                                                        .foregroundColor(.white)
+                                                        .cornerRadius(16)
+                                                }
+                                                .padding(12)
+                                            }
+                                    }
                                 } else {
                                     ZStack {
                                         Rectangle()

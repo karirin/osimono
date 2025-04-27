@@ -199,7 +199,7 @@ struct OshiCollectionView: View {
                         }
                     }
                     
-                    Divider()
+//                    Divider()
                     
                     // 並び替え
                     VStack(alignment: .leading, spacing: 10) {
@@ -234,7 +234,6 @@ struct OshiCollectionView: View {
                 .padding(.vertical)
                 .background(cardColor)
                 .cornerRadius(12)
-                .shadow(color: Color.black.opacity(0.05), radius: 3)
                 .padding(.horizontal)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -448,7 +447,7 @@ struct OshiCollectionView: View {
     // データ取得
     func fetchOshiItems() {
             guard let userId = userId else { return }
-            self.isLoading = true
+//            self.isLoading = true
             
             // 変更：選択中の推しIDのパスから取得
             let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId)

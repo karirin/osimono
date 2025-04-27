@@ -43,15 +43,15 @@ struct ProfileSection: View {
     var body: some View {
         ZStack(alignment: .top) {
             // 背景画像 - 選択中の推しの背景画像に変更
-            if isLoading {
-                // ローディング状態の背景（既存コード）
-                Rectangle()
-                    .frame(height: profileSectionHeight)
-                    .frame(maxWidth: .infinity)
-                    .foregroundColor(Color.gray.opacity(0.1))
-                    .shimmering(active: true)
-                    .edgesIgnoringSafeArea(.all)
-            } else {
+//            if isLoading {
+//                // ローディング状態の背景（既存コード）
+//                Rectangle()
+//                    .frame(height: profileSectionHeight)
+//                    .frame(maxWidth: .infinity)
+//                    .foregroundColor(Color.gray.opacity(0.1))
+//                    .shimmering(active: true)
+//                    .edgesIgnoringSafeArea(.all)
+//            } else {
                 if let oshi = selectedOshi, let backgroundUrl = oshi.backgroundImageUrl, let url = URL(string: backgroundUrl) {
                     // 選択中の推しの背景画像を表示
                     AsyncImage(url: url) { phase in
@@ -62,6 +62,13 @@ struct ProfileSection: View {
                                 .scaledToFill()
                                 .frame(maxWidth: .infinity)
                                 .frame(height: profileSectionHeight)
+                                .overlay(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [.clear, Color.black.opacity(0.6)]),
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
                                 .clipped()
 //                                    ZStack {
 //                                        if !showChangeOshiButton {
@@ -158,7 +165,7 @@ struct ProfileSection: View {
                     .frame(height: profileSectionHeight)
                     .edgesIgnoringSafeArea(.all)
                 }
-            }
+//            }
             
             // プロフィール情報とアバター
             VStack(spacing: 8) {
@@ -296,15 +303,14 @@ struct ProfileSection: View {
         }
         .onAppear {
             loadAllData()
+            print("onappear!!!!!!")
             fetchOshiList()
         }
         .onChange(of: isOshiChange) { newOshi in
-            loadAllData()
-            fetchOshiList()
+//            loadAllData()
+//            fetchOshiList()
         }
         .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
-            // 編集ビューが閉じられた時にデータを再読み込み
-            print("fullScreenCover")
             loadAllData()
             fetchOshiList()
         }) {
@@ -596,6 +602,7 @@ struct ProfileSection: View {
                             memo: memo,
                             createdAt: createdAt
                         )
+                        print("fetchOshiList!!!!!!!")
                         newOshis.append(oshi)
                     }
                 }

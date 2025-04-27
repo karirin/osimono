@@ -144,21 +144,6 @@ struct ContentView: View {
                 refreshTrigger.toggle()
             }
         }
-//        .sheet(isPresented: $isShowingImagePicker) {
-//            ImagePicker(image: $image, onImagePicked: { pickedImage in
-//                self.image = pickedImage
-//                uploadOshiImageToFirebase(pickedImage)
-//            })
-//        }
-//        .sheet(item: $currentEditType) { type in
-//            ImagePicker(
-//                image: $image,
-//                onImagePicked: { pickedImage in
-//                    self.image = pickedImage
-//                    uploadOshiImageToFirebase(pickedImage, type: type)
-//                }
-//            )
-//        }
         .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 isOshiChange.toggle()
