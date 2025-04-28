@@ -133,7 +133,8 @@ struct EnhancedMonthCalendarView: View {
     private var emptyStateView: some View {
         VStack(spacing: 20) {
             Spacer()
-            
+            ForEach(Array(eventsForSelectedDate.enumerated()), id: \.element.id) { index, event in
+            }
             Circle()
                 .fill(cardBackgroundColor)
                 .frame(width: 80, height: 80)
@@ -240,5 +241,6 @@ struct EnhancedMonthCalendarView: View {
 }
 
 #Preview {
-    TimelineView(oshiId: "C1B81ED5-7388-407A-9302-8DF67A1F55FC")
+    TimelineView(oshiId: "CDD84D85-B207-4DDE-B3F0-603461E64AA5")
+//    TopView()
 }

@@ -125,6 +125,7 @@ struct EnhancedTimelineRow: View {
             )
             .contentShape(Rectangle())
             .onTapGesture {
+                print("onTapGesture!!!!")
                 withAnimation(.spring(response: 0.3)) {
                     if selectedEventID == event.id {
                         selectedEventID = nil

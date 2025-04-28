@@ -52,7 +52,7 @@ struct TopView: View {
                 }
             }
             // チュートリアルオーバーレイを条件付きで表示
-            if tutorialManager.isShowingTutorial {
+            if !tutorialManager.isShowingTutorial {
                 TutorialOverlayView(closeAction: {
                     withAnimation {
                         tutorialManager.isShowingTutorial = false
