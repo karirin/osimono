@@ -131,32 +131,30 @@ struct EnhancedMonthCalendarView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 10) {
+                ForEach(Array(eventsForSelectedDate.enumerated()), id: \.element.id) { index, event in
+                }
+                Circle()
+                    .fill(cardBackgroundColor)
+                    .frame(width: 80, height: 80)
+                    .overlay(
+                        Image(systemName: "calendar.badge.clock")
+                            .font(.system(size: 32))
+                            .foregroundColor(brandColor.opacity(0.7))
+                    )
+                
+                Text("タイムラインがありません")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(secondaryTextColor)
+                
+                Text("この日はまだ登録されていません")
+                    .font(.system(size: 14))
+                    .foregroundColor(secondaryTextColor.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
             Spacer()
-            ForEach(Array(eventsForSelectedDate.enumerated()), id: \.element.id) { index, event in
             }
-            Circle()
-                .fill(cardBackgroundColor)
-                .frame(width: 80, height: 80)
-                .overlay(
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.system(size: 32))
-                        .foregroundColor(brandColor.opacity(0.7))
-                )
-            
-            Text("タイムラインがありません")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(secondaryTextColor)
-            
-            Text("この日のイベントはまだ登録されていません")
-                .font(.system(size: 14))
-                .foregroundColor(secondaryTextColor.opacity(0.8))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Spacer()
-        }
-        .padding(.top, 20)
+        .padding(.top, 30)
     }
     
     private var eventScrollView: some View {
@@ -172,6 +170,7 @@ struct EnhancedMonthCalendarView: View {
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 16)
+            .padding(.bottom, 70)
         }
     }
     

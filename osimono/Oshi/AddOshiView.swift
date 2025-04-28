@@ -177,23 +177,23 @@ struct AddOshiView: View {
                             }
                             
                             // メモフィールド
-//                            VStack(alignment: .leading) {
-//                                Text("メモ")
-//                                    .font(.headline)
-//                                    .padding(.horizontal)
-//
-//                                TextEditor(text: $oshiMemo)
-//                                    .frame(minHeight: 120)
-//                                    .padding(4)
-//                                    .background(Color.white)
-//                                    .cornerRadius(10)
-//                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-//                                    .overlay(
-//                                        RoundedRectangle(cornerRadius: 10)
-//                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-//                                    )
-//                                    .padding(.horizontal)
-//                            }
+                            //                            VStack(alignment: .leading) {
+                            //                                Text("メモ")
+                            //                                    .font(.headline)
+                            //                                    .padding(.horizontal)
+                            //
+                            //                                TextEditor(text: $oshiMemo)
+                            //                                    .frame(minHeight: 120)
+                            //                                    .padding(4)
+                            //                                    .background(Color.white)
+                            //                                    .cornerRadius(10)
+                            //                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                            //                                    .overlay(
+                            //                                        RoundedRectangle(cornerRadius: 10)
+                            //                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            //                                    )
+                            //                                    .padding(.horizontal)
+                            //                            }
                         }
                         
                         // 追加ボタン
@@ -223,8 +223,8 @@ struct AddOshiView: View {
                             .cornerRadius(15)
                             .shadow(color: primaryColor.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
-//                        .disabled(oshiName.isEmpty || isLoading)
-//                        .opacity(oshiName.isEmpty ? 0.6 : 1.0)
+                        //                        .disabled(oshiName.isEmpty || isLoading)
+                        //                        .opacity(oshiName.isEmpty ? 0.6 : 1.0)
                         .padding(.horizontal, 30)
                         .padding(.vertical)
                     }
@@ -246,7 +246,7 @@ struct AddOshiView: View {
                     }
                     
                     // アップロード処理
-                    uploadImageToFirebase(pickedImage, type: type)
+                    //                    uploadImageToFirebase(pickedImage, type: type)
                 }
             )
         }
@@ -260,10 +260,10 @@ struct AddOshiView: View {
             completion(nil)
             return
         }
-
+        
         let filename = type == .profile ? "profile.jpg" : "background.jpg"
         let storageRef = Storage.storage().reference().child("images/\(userID)/\(filename)")
-
+        
         storageRef.downloadURL { url, error in
             completion(url)
         }
@@ -275,21 +275,21 @@ struct AddOshiView: View {
             print("ユーザーがログインしていません")
             return
         }
-
+        
         let storageRef = Storage.storage().reference()
         let filename = type == .profile ? "profile.jpg" : "background.jpg"
         let imageRef = storageRef.child("images/\(userID)/\(filename)")
-
+        
         guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
-
+        
         let metadata = StorageMetadata()
         metadata.contentType = "image/jpeg"
-
+        
         // アップロード中の表示
         withAnimation {
             isLoading = true
         }
-
+        
         imageRef.putData(imageData, metadata: metadata) { _, error in
             if let error = error {
                 print("アップロードエラー: \(error.localizedDescription)")
@@ -326,9 +326,7 @@ struct AddOshiView: View {
     }
     
     func saveOshi() {
-        print("saveOshi1")
         guard let userId = Auth.auth().currentUser?.uid, !oshiName.isEmpty else { return }
-        print("saveOshi2")
         isLoading = true
         
         let oshiId = UUID().uuidString
@@ -343,7 +341,6 @@ struct AddOshiView: View {
         
         // プロフィール画像をアップロード
         if let image = selectedImage {
-            print("saveOshi3")
             dispatchGroup.enter()
             uploadImage(image, path: "oshis/\(userId)/\(oshiId)/profile.jpg") { imageUrl in
                 if let url = imageUrl {
@@ -355,7 +352,6 @@ struct AddOshiView: View {
         
         // 背景画像をアップロード
         if let image = selectedBackgroundImage {
-            print("saveOshi4")
             dispatchGroup.enter()
             uploadImage(image, path: "oshis/\(userId)/\(oshiId)/background.jpg") { imageUrl in
                 if let url = imageUrl {
@@ -366,7 +362,6 @@ struct AddOshiView: View {
         }
         
         dispatchGroup.notify(queue: .main) {
-            print("saveOshi5")
             self.saveDataToFirebase(oshiId, data)
         }
     }
@@ -415,7 +410,29 @@ struct AddOshiView: View {
                 self.isLoading = false
                 
                 if error == nil {
+                    self.saveSelectedOshiId(oshiId)
                     self.presentationMode.wrappedValue.dismiss()
+                }
+            }
+        }
+    }
+    
+    func saveSelectedOshiId(_ oshiId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            isLoading = false
+            return
+        }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedOshiId": oshiId]) { error, _ in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                
+                if error == nil {
+                    // 全ての処理が完了したらビューを閉じる
+                    self.presentationMode.wrappedValue.dismiss()
+                } else {
+                    print("推しID保存エラー: \(error!.localizedDescription)")
                 }
             }
         }

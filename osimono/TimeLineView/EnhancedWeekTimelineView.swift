@@ -192,7 +192,7 @@ struct EnhancedWeekTimelineView: View {
                                 .padding(.bottom, 8)
                             }
                         }
-                    }
+                    }.padding(.bottom, 70)
                     .padding(.vertical, 16)
                     .padding(.horizontal, 16)
                 }

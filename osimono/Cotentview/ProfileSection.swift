@@ -311,8 +311,16 @@ struct ProfileSection: View {
             }
         }
         .onChange(of: isOshiChange) { newOshi in
-//            loadAllData()
+            withAnimation {
+                loadAllData()
+            }
 //            fetchOshiList()
+        }
+        .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
+            loadAllData()
+            fetchOshiList()
+        }) {
+            AddOshiView()
         }
         .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
             loadAllData()

@@ -371,7 +371,7 @@ struct EnhancedNewEventView: View {
         isSaving = true
         
         // 新しいイベントを作成
-        let color: Color = isOshiActivity ? .gray : Color(hex: "3B82F6")
+        let color: Color = isOshiActivity ? Color(hex: "3B82F6") : .gray
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy/MM/dd HH:mm"
         let timeString = dateFormatter.string(from: eventDate)

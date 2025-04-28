@@ -60,8 +60,6 @@ struct ContentView: View {
         NavigationView {
             ZStack {
                 VStack(spacing: -60) {
-                    // プロフィールセクション
-//                    profileSection
                     ProfileSection(
                         editFlag: $editFlag,
                         showAddOshiForm: $showAddOshiForm,
@@ -70,7 +68,6 @@ struct ContentView: View {
                         showChangeOshiButton: $showChangeOshiButton,
                         isOshiChange: $isOshiChange,
                         isShowingEditOshiView: $isShowingEditOshiView, onOshiUpdated: {
-                            // 推しが更新されたときの処理
                             self.refreshTrigger.toggle()
                         }
                     )
@@ -78,7 +75,6 @@ struct ContentView: View {
                     OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger,editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton, isShowingEditOshiView: $isShowingEditOshiView)
                 }
             }
-            // プロフィール画像が拡大表示されている場合のオーバーレイを修正
             .overlay(
                 ZStack {
                     if isProfileImageEnlarged, let oshi = selectedOshi, let imageUrlString = oshi.imageUrl, let imageUrl = URL(string: imageUrlString) {
@@ -89,7 +85,6 @@ struct ContentView: View {
                                     isProfileImageEnlarged = false
                                 }
                             }
-                    
                         VStack {
                             AsyncImage(url: imageUrl) { phase in
                                 switch phase {
@@ -106,6 +101,17 @@ struct ContentView: View {
                                 }
                             }
                             
+                            Button(action: {
+                                generateHapticFeedback()
+                                if let oshi = selectedOshi {
+                                    isShowingImagePicker = true
+                                } else {
+                                    showAddOshiForm = true
+                                }
+                            }) {
+                                Text("登録")
+                            }
+
                             Button(action: {
                                 generateHapticFeedback()
                                 withAnimation(.spring()) {
@@ -144,12 +150,10 @@ struct ContentView: View {
                 refreshTrigger.toggle()
             }
         }
-        .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                isOshiChange.toggle()
+        .onChange(of: isOshiChange) { newFlag in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                loadAllData()
             }
-        }) {
-            AddOshiView()
         }
         .sheet(item: $currentEditType) { type in
             ImagePicker(
@@ -168,37 +172,6 @@ struct ContentView: View {
         }
     }
     
-//    var changeOshiButtonOverlay: some View {
-//        VStack {
-//            Spacer()
-//            HStack {
-//                Spacer()
-//                Button(action: {
-//                    withAnimation(.spring()) {
-//                        isShowingOshiSelector = true
-//                    }
-//                    generateHapticFeedback()
-//                }) {
-//                    HStack {
-//                        Image(systemName: "arrow.triangle.2.circlepath")
-//                        Text("推し変更")
-//                            .fontWeight(.medium)
-//                    }
-//                    .padding(.horizontal, 8)
-//                    .padding(.vertical, 5)
-//                    .background(
-//                        Capsule()
-//                            .fill(Color.black.opacity(0.3))
-//                            .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
-//                    )
-//                    .foregroundColor(.white)
-//                }
-//            }
-//        }
-//        .padding(.bottom,70)
-//        .padding(.trailing,isSmallDevice() ? 10 : 30)
-//    }
-//    
     var oshiSelectorOverlay: some View {
            ZStack {
                // 半透明の背景
