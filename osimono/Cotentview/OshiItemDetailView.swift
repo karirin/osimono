@@ -276,8 +276,8 @@ struct OshiItemDetailView: View {
         )
         .alert(isPresented: $showDeleteConfirmation) {
             Alert(
-                title: Text("アイテムを削除"),
-                message: Text("このアイテムを削除してもよろしいですか？この操作は元に戻せません。"),
+                title: Text("投稿を削除"),
+                message: Text("この投稿を削除してもよろしいですか？この操作は元に戻せません。"),
                 primaryButton: .destructive(Text("削除")) {
                     deleteItem()
                 },
@@ -425,16 +425,30 @@ struct OshiItemDetailView: View {
     
     // アイテム削除
     func deleteItem() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = Auth.auth().currentUser?.uid,
+              let oshiId = item.oshiId else {
+            print("削除エラー: ユーザーIDまたは推しIDが取得できません")
+            return
+        }
         
         // Firebaseからアイテムを削除
-        let ref = Database.database().reference().child("oshiItems").child(userId).child(item.id)
+        let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(item.id)
         ref.removeValue { error, _ in
-            if error == nil {
+            if let error = error {
+                print("削除エラー: \(error.localizedDescription)")
+            } else {
+                print("投稿を削除しました")
+                
                 // 画像も削除
                 if let imageUrl = item.imageUrl, !imageUrl.isEmpty {
                     let storageRef = Storage.storage().reference(forURL: imageUrl)
-                    storageRef.delete { _ in }
+                    storageRef.delete { error in
+                        if let error = error {
+                            print("画像削除エラー: \(error.localizedDescription)")
+                        } else {
+                            print("関連画像も削除しました")
+                        }
+                    }
                 }
                 
                 // 前の画面に戻る

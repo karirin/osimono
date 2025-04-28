@@ -43,10 +43,11 @@ struct TopView: View {
                     Text("タイムライン")
                 }
                 ZStack {
-                    TimelineView(oshiId: selectedOshiId)
+                    //                    TimelineView(oshiId: selectedOshiId)
+                SettingsView()
                 }
                 .tabItem {
-                    Image(systemName: "calendar.day.timeline.left")
+                    Image(systemName: "gear")
                         .frame(width:1,height:1)
                     Text("設定")
                 }
