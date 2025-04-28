@@ -868,19 +868,19 @@ struct ContentView: View {
         return UIScreen.main.bounds.height < 700
     }
     
-    func isiPhone12Or13() -> Bool {
-        let screenSize = UIScreen.main.bounds.size
-        let width = min(screenSize.width, screenSize.height)
-        let height = max(screenSize.width, screenSize.height)
-        // iPhone 12,13 の画面サイズは約幅390ポイント、高さ844ポイント
-        return abs(width - 390) < 1 && abs(height - 844) < 1
-    }
-    
     // 触覚フィードバック生成
     func generateHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
     }
+}
+
+func isiPhone12Or13() -> Bool {
+    let screenSize = UIScreen.main.bounds.size
+    let width = min(screenSize.width, screenSize.height)
+    let height = max(screenSize.width, screenSize.height)
+    // iPhone 12,13 の画面サイズは約幅390ポイント、高さ844ポイント
+    return abs(width - 390) < 1 && abs(height - 844) < 1
 }
       
 #Preview {

@@ -39,19 +39,20 @@ struct ProfileSection: View {
     @State private var image: UIImage? = nil
     @Binding var isShowingEditOshiView: Bool
     var onOshiUpdated: (() -> Void)? = nil
+    @State private var hasLoadedInitialData = false
     
     var body: some View {
         ZStack(alignment: .top) {
             // 背景画像 - 選択中の推しの背景画像に変更
-//            if isLoading {
-//                // ローディング状態の背景（既存コード）
-//                Rectangle()
-//                    .frame(height: profileSectionHeight)
-//                    .frame(maxWidth: .infinity)
-//                    .foregroundColor(Color.gray.opacity(0.1))
-//                    .shimmering(active: true)
-//                    .edgesIgnoringSafeArea(.all)
-//            } else {
+            if isLoading {
+                // ローディング状態の背景（既存コード）
+                Rectangle()
+                    .frame(height: profileSectionHeight)
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(Color.gray.opacity(0.1))
+                    .shimmering(active: true)
+                    .edgesIgnoringSafeArea(.all)
+            } else {
                 if let oshi = selectedOshi, let backgroundUrl = oshi.backgroundImageUrl, let url = URL(string: backgroundUrl) {
                     // 選択中の推しの背景画像を表示
                     AsyncImage(url: url) { phase in
@@ -284,7 +285,7 @@ struct ProfileSection: View {
 //                        .padding(12)
 //                        .background(Circle().fill(Color.black.opacity(0.5)))
 //                }
-//            }
+            }
         }
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(image: $image, onImagePicked: { pickedImage in
@@ -302,9 +303,12 @@ struct ProfileSection: View {
             )
         }
         .onAppear {
-            loadAllData()
-            print("onappear!!!!!!")
-            fetchOshiList()
+            if !hasLoadedInitialData {
+                loadAllData()
+                print("onappear!!!!!!")
+                fetchOshiList()
+                hasLoadedInitialData = true
+            }
         }
         .onChange(of: isOshiChange) { newOshi in
 //            loadAllData()

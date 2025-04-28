@@ -11,37 +11,69 @@ import FirebaseAuth
 
 struct TopView: View {
     @State private var selectedOshiId: String = "default"
+    @ObservedObject var tutorialManager = TutorialManager.shared
+    @State private var showWelcomeScreen = false
     
     var body: some View {
-        TabView {
-            HStack{
-                ContentView()
+        ZStack{
+            TabView {
+                HStack{
+                    ContentView()
+                }
+                
+                .tabItem {
+                    Image(systemName: "rectangle.split.2x2")
+                        .padding()
+                    Text("推しログ")
+                        .padding()
+                }
+                ZStack {
+                    MapView(oshiId: selectedOshiId)
+                }
+                .tabItem {
+                    Image(systemName: "mappin.and.ellipse")
+                    Text("聖地巡礼")
+                }
+                ZStack {
+                    TimelineView(oshiId: selectedOshiId)
+                }
+                .tabItem {
+                    Image(systemName: "calendar.day.timeline.left")
+                        .frame(width:1,height:1)
+                    Text("タイムライン")
+                }
+                ZStack {
+                    TimelineView(oshiId: selectedOshiId)
+                }
+                .tabItem {
+                    Image(systemName: "calendar.day.timeline.left")
+                        .frame(width:1,height:1)
+                    Text("設定")
+                }
             }
-            
-            .tabItem {
-                Image(systemName: "rectangle.split.2x2")
-                    .padding()
-                Text("推しコレ")
-                    .padding()
-            }
-            ZStack {
-                TimelineView(oshiId: selectedOshiId)
-            }
-            .tabItem {
-                Image(systemName: "calendar.day.timeline.left")
-                    .frame(width:1,height:1)
-                Text("年表")
-            }
-            ZStack {
-                MapView(oshiId: selectedOshiId)
-            }
-            .tabItem {
-                Image(systemName: "map")
-                Text("マップ")
+            // チュートリアルオーバーレイを条件付きで表示
+            if tutorialManager.isShowingTutorial {
+                TutorialOverlayView(closeAction: {
+                    withAnimation {
+                        tutorialManager.isShowingTutorial = false
+                    }
+                })
+                .zIndex(100) // 最前面に表示
             }
         }
         .onAppear{
             observeSelectedOshiId()
+            //            if !UserDefaults.standard.bool(forKey: "appLaunchedBefore") {
+            //                UserDefaults.standard.set(false, forKey: "tutorialCompleted")
+            //                UserDefaults.standard.set(true, forKey: "appLaunchedBefore")
+                            
+                            // アプリの起動アニメーションを待ってからチュートリアルを表示
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                withAnimation {
+                                    tutorialManager.startTutorial()
+                                }
+                            }
+            //            }
         }
     }
     

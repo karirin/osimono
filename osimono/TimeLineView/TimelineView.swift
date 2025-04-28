@@ -108,6 +108,7 @@ struct TimelineView: View {
         }
         .onAppear {
             viewModel.updateCurrentOshi(id: oshiId)
+            viewModel.fetchEvents(forOshiId: oshiId)
         }
         .onChange(of: oshiId) { newId in
             viewModel.updateCurrentOshi(id: newId)

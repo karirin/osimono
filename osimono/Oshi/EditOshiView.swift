@@ -69,33 +69,6 @@ struct EditOshiView: View {
                     VStack(spacing: 20) {
                         // 推しプロフィール画像とその編集セクション
                         VStack {
-                            // 推し変更ボタン（デザイン改善版）
-                            Button(action: {
-                                withAnimation(.spring()) {
-                                    isShowingOshiSelector = true
-                                }
-                                generateHapticFeedback()
-                            }) {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
-                                        .font(.system(size: 14))
-                                    Text("別の推しを選択")
-                                        .font(.system(size: 14, weight: .medium))
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(
-                                    Capsule()
-                                        .fill(primaryColor.opacity(0.15))
-                                        .overlay(
-                                            Capsule()
-                                                .stroke(primaryColor, lineWidth: 1)
-                                        )
-                                )
-                                .foregroundColor(primaryColor)
-                            }
-                            .padding(.top, 15)
-                            
                             // 推しプロフィール画像
                             Button(action: {
                                 currentEditType = .profile
@@ -169,6 +142,33 @@ struct EditOshiView: View {
                                 .font(.caption)
                                 .foregroundColor(.gray)
                                 .padding(.top, 8)
+                            
+                                // 推し変更ボタン（デザイン改善版）
+                                Button(action: {
+                                    withAnimation(.spring()) {
+                                        isShowingOshiSelector = true
+                                    }
+                                    generateHapticFeedback()
+                                }) {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                            .font(.system(size: 14))
+                                        Text("別の推しを選択")
+                                            .font(.system(size: 14, weight: .medium))
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        Capsule()
+                                            .fill(primaryColor.opacity(0.15))
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(primaryColor, lineWidth: 1)
+                                            )
+                                    )
+                                    .foregroundColor(primaryColor)
+                                }
+                                .padding(.top, 15)
                         }
                         
                         // 名前フィールド

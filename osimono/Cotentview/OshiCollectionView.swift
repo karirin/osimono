@@ -23,7 +23,7 @@ struct OshiCollectionView: View {
     @State private var selectedCategory: String = "すべて"
     @State private var searchText: String = ""
     @Binding var addFlag: Bool
-    @State var isLoading = false
+    @State var isLoading = true
     @State private var showingFilterMenu = false
     @State private var sortOption = "新しい順"
     @State private var showingItemTypeFilter = false
@@ -34,6 +34,7 @@ struct OshiCollectionView: View {
     @Binding var isEditingUsername: Bool
     @Binding var showChangeOshiButton: Bool
     @Binding var isShowingEditOshiView: Bool
+    @State private var hasLoadedInitialData = false
     
     // 色の定義 - 推し活向けカラー
     let primaryColor = Color(.systemPink) // ピンク
@@ -363,7 +364,8 @@ struct OshiCollectionView: View {
         .dismissKeyboardOnTap()
         .background(backgroundColor)
         .onAppear {
-//            fetchOshiItems()
+//            self.isLoading = true
+            fetchOshiItems()
         }
         .onChange(of: oshiId) { newOshiId in
             fetchOshiItems()
@@ -448,13 +450,10 @@ struct OshiCollectionView: View {
     func fetchOshiItems() {
             guard let userId = userId else { return }
 //            self.isLoading = true
-            
             // 変更：選択中の推しIDのパスから取得
             let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId)
-            
             ref.observeSingleEvent(of: .value) { snapshot in
                 var newItems: [OshiItem] = []
-                
                 for child in snapshot.children {
                     if let childSnapshot = child as? DataSnapshot {
                         if let value = childSnapshot.value as? [String: Any] {

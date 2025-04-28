@@ -93,7 +93,6 @@ struct EnhancedCalendarDayCell: View {
         )
         .contentShape(Rectangle())
         .onTapGesture {
-            print("tap!!!")
             onTap(date)
         }
     }

@@ -198,6 +198,7 @@ struct EnhancedMonthCalendarView: View {
     
     // Get events for the selected date
     private var eventsForSelectedDate: [TimelineEvent] {
+        print("viewModel.events     :\(viewModel.events)")
         let events = viewModel.events.filter { event in
             guard let date = dateFromString(event.time) else { return false }
             return isSameDay(date, selectedDate)
