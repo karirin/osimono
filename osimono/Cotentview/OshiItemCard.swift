@@ -10,15 +10,15 @@ import Shimmer
 
 struct OshiItemCard: View {
     let item: OshiItem
-    @State private var heartScale: CGFloat = 1.0
+    @State private var isPressed = false
     
-    // 色の定義
-    let primaryColor = Color("#FF4B8A") // ピンク
-    let cardColor = Color("#FFFFFF") // カード背景色
+    // カラーテーマ
+    let primaryColor = Color(.systemPink)
+    let cardColor = Color.white
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // 画像
+            // 画像部分
             ZStack(alignment: .topTrailing) {
                 if let imageUrl = item.imageUrl,
                    !imageUrl.isEmpty,
@@ -28,8 +28,7 @@ struct OshiItemCard: View {
                             image
                                 .resizable()
                                 .scaledToFill()
-//                                .frame(maxWidth: .infinity)
-                                .frame(width: 120,height: 120)
+                                .frame(width: 120, height: 120)
                                 .clipped()
                         } else {
                             placeholderImage
@@ -52,37 +51,22 @@ struct OshiItemCard: View {
                 
                 // アイテムタイプバッジ
                 if let itemType = item.itemType {
-                    Text(itemType)
-                        .font(.system(size: 10, weight: .semibold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(badgeColor(for: itemType))
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                        .padding(6)
-                }
-                
-                // お気に入りバッジ
-                if let favorite = item.favorite, favorite >= 4 {
-//                    HStack(spacing: 2) {
-//                        Image(systemName: "heart.fill")
-//                            .scaleEffect(heartScale)
-//                            .foregroundColor(.white)
-//                            .onAppear {
-//                                withAnimation(Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
-//                                    heartScale = 1.2
-//                                }
-//                            }
-//                            
-//                        Text("\(favorite)")
-//                            .font(.system(size: 10, weight: .bold))
-//                    }
-//                    .padding(.horizontal, 8)
-//                    .padding(.vertical, 4)
-//                    .background(Color.red.opacity(0.8))
-//                    .cornerRadius(12)
-//                    .padding(6)
-//                    .offset(x: -itemType != nil ? -80 : 0)
+                    HStack(spacing: 4) {
+                        Image(systemName: iconForItemType(itemType))
+                            .font(.system(size: 10))
+                        
+                        Text(itemType)
+                            .font(.system(size: 10, weight: .semibold))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(badgeColor(for: itemType))
+                            .shadow(color: Color.black.opacity(0.1), radius: 2)
+                    )
+                    .foregroundColor(.white)
+                    .padding(6)
                 }
             }
             
@@ -93,57 +77,44 @@ struct OshiItemCard: View {
                     .foregroundColor(.black)
                     .lineLimit(1)
                 
-//                if let tags = item.tags, !tags.isEmpty {
-//                    ScrollView(.horizontal, showsIndicators: false) {
-//                        HStack {
-//                            ForEach(tags.prefix(2), id: \.self) { tag in
-//                                Text(tag)
-//                                    .font(.system(size: 10))
-//                                    .padding(.horizontal, 6)
-//                                    .padding(.vertical, 2)
-//                                    .background(Color.gray.opacity(0.1))
-//                                    .cornerRadius(8)
-//                            }
-//                        }
-//                    }
-//                    .frame(height: 20)
-//                }
-                
                 HStack {
-//                    if let price = item.price, price > 0 {
-//                        Text("¥\(price)")
-//                            .font(.system(size: 12))
-//                            .foregroundColor(.gray)
-//                    }
-                    
-                    Spacer()
-                    
                     if let date = item.date {
                         Text(formatDate(date))
                             .font(.system(size: 10))
                             .foregroundColor(.gray)
                     }
+                    
+                    Spacer()
+                    
+                    // お気に入り表示
+                    if let favorite = item.favorite, favorite > 0 {
+                        HStack(spacing: 2) {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 10))
+                            Text("\(favorite)")
+                                .font(.system(size: 10))
+                        }
+                        .foregroundColor(primaryColor)
+                    }
                 }
             }
-            .padding(5)
-//            .background(.gray).opacity(0.3)
-//            .overlay(
-//                RoundedCorner(radius: 16, corners: [.bottomLeft, .bottomRight])
-//                    .stroke(Color.gray, lineWidth: 2)
-//            )
+            .padding(8)
+            .background(cardColor)
         }
         .frame(width: 120)
-        .cornerRadius(10)
+        .background(cardColor)
+        .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 2)
+        .scaleEffect(isPressed ? 0.95 : 1.0)
+        .animation(.spring(response: 0.3), value: isPressed)
     }
     
-    // プレースホルダー画像
+    // プレースホルダー画像（既存のコードから改善）
     var placeholderImage: some View {
         ZStack {
             Rectangle()
                 .foregroundColor(Color.gray.opacity(0.1))
-//                .frame(maxWidth: .infinity)
-                .frame(width: 120,height: 120)
+                .frame(width: 120, height: 120)
                 .shimmering(active: true)
             
             if let itemType = item.itemType {

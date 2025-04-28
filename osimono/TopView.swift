@@ -43,7 +43,6 @@ struct TopView: View {
                     Text("タイムライン")
                 }
                 ZStack {
-                    //                    TimelineView(oshiId: selectedOshiId)
                 SettingsView()
                 }
                 .tabItem {
@@ -53,7 +52,7 @@ struct TopView: View {
                 }
             }
             // チュートリアルオーバーレイを条件付きで表示
-            if !tutorialManager.isShowingTutorial {
+            if tutorialManager.isShowingTutorial {
                 TutorialOverlayView(closeAction: {
                     withAnimation {
                         tutorialManager.isShowingTutorial = false
@@ -64,9 +63,9 @@ struct TopView: View {
         }
         .onAppear{
             observeSelectedOshiId()
-            //            if !UserDefaults.standard.bool(forKey: "appLaunchedBefore") {
-            //                UserDefaults.standard.set(false, forKey: "tutorialCompleted")
-            //                UserDefaults.standard.set(true, forKey: "appLaunchedBefore")
+                        if !UserDefaults.standard.bool(forKey: "appLaunchedBefore") {
+                            UserDefaults.standard.set(false, forKey: "tutorialCompleted")
+                            UserDefaults.standard.set(true, forKey: "appLaunchedBefore")
                             
                             // アプリの起動アニメーションを待ってからチュートリアルを表示
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -74,7 +73,7 @@ struct TopView: View {
                                     tutorialManager.startTutorial()
                                 }
                             }
-            //            }
+                        }
         }
     }
     

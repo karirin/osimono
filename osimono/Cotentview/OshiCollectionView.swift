@@ -244,13 +244,7 @@ struct OshiCollectionView: View {
                 // ローディング表示
                 VStack {
                     Spacer()
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle())
-                        .scaleEffect(1.2)
-                    Text("読み込み中...")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                        .padding(.top, 8)
+                    BestLoadingView()
                     Spacer()
                 }
             } else if filteredItems.isEmpty {
