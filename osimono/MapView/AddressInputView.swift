@@ -115,5 +115,5 @@ struct AddressInputView: View {
             print("現在地が取得できません")
         }
     }
-
+    
 }

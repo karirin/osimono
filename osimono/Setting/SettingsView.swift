@@ -27,7 +27,7 @@ struct SettingsView: View {
     let backgroundColor = Color(.white) // 明るい背景色
     let cardColor = Color(.white) // カード背景色
     let textColor = Color(.black) // テキスト色
-
+    
     @State private var showingNotificationSettings = false
     @State private var showingPrivacySettings = false
     @State private var showingShareSettings = false
@@ -38,7 +38,7 @@ struct SettingsView: View {
     
     // URLスキームを開くための環境変数
     @Environment(\.openURL) private var openURL
-
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -106,9 +106,9 @@ struct SettingsView: View {
                                     // アプリアイコン画像
                                     ZStack {
                                         Image("ITクエスト")
-                                        .resizable()
-                                        .frame(width:60,height: 60)
-                                        .cornerRadius(10)
+                                            .resizable()
+                                            .frame(width:60,height: 60)
+                                            .cornerRadius(10)
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
@@ -141,9 +141,9 @@ struct SettingsView: View {
                                     // アプリアイコン画像
                                     ZStack {
                                         Image("ドリルクエスト")
-                                        .resizable()
-                                        .frame(width:60,height: 60)
-                                        .cornerRadius(10)
+                                            .resizable()
+                                            .frame(width:60,height: 60)
+                                            .cornerRadius(10)
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
@@ -176,9 +176,9 @@ struct SettingsView: View {
                                     // アプリアイコン画像
                                     ZStack {
                                         Image("メイクToDo")
-                                        .resizable()
-                                        .frame(width:60,height: 60)
-                                        .cornerRadius(10)
+                                            .resizable()
+                                            .frame(width:60,height: 60)
+                                            .cornerRadius(10)
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
@@ -212,9 +212,9 @@ struct SettingsView: View {
                                     // アプリアイコン画像
                                     ZStack {
                                         Image("サラリー｜お給料管理アプリ")
-                                        .resizable()
-                                        .frame(width:60,height: 60)
-                                        .cornerRadius(10)
+                                            .resizable()
+                                            .frame(width:60,height: 60)
+                                            .cornerRadius(10)
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
@@ -346,7 +346,7 @@ struct SettingsView: View {
     func logout() {
         do {
             try Auth.auth().signOut()
-//            authManager.isLoggedIn = false
+            //            authManager.isLoggedIn = false
         } catch {
             print("ログアウトエラー: \(error.localizedDescription)")
         }
@@ -355,27 +355,27 @@ struct SettingsView: View {
 
 struct WebView: UIViewRepresentable {
     let urlString: String
-
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-
+    
     func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
         return webView
     }
-
+    
     func updateUIView(_ uiView: WKWebView, context: Context) {
         if let url = URL(string: urlString) {
             let request = URLRequest(url: url)
             uiView.load(request)
         }
     }
-
+    
     class Coordinator: NSObject, WKNavigationDelegate {
         var parent: WebView
-
+        
         init(_ parent: WebView) {
             self.parent = parent
         }

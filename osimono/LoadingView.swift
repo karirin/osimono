@@ -355,80 +355,80 @@ struct LoadingView5: View {
                         .padding(.top, 30)
                         
                         // アプリ名
-                                                    Text("推し〜ず")
-                                                        .font(.system(size: 32, weight: .heavy, design: .rounded))
-                                                        .foregroundColor(.white)
-                                                        .shadow(color: Color(hex: "6A0572").opacity(0.5), radius: 4, x: 0, y: 2)
-                                                
-                                                    // ローディングプログレス
-                                                    VStack(spacing: 12) {
-                                                        Text("\(Int(progress * 100))%")
-                                                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                                                            .foregroundColor(.white)
-                                                        
-                                                        // グローエフェクト付きプログレスバー
-                                                        ZStack(alignment: .leading) {
-                                                            // バーの背景
-                                                            Capsule()
-                                                                .fill(Color.white.opacity(0.2))
-                                                                .frame(width: 200, height: 8)
-                                                            
-                                                            // プログレス部分
-                                                            Capsule()
-                                                                .fill(
-                                                                    LinearGradient(
-                                                                        gradient: Gradient(colors: [
-                                                                            Color(hex: "FF9190"),
-                                                                            Color(hex: "FFC371")
-                                                                        ]),
-                                                                        startPoint: .leading,
-                                                                        endPoint: .trailing
-                                                                    )
-                                                                )
-                                                                .frame(width: 200 * progress, height: 8)
-                                                                .shadow(color: Color(hex: "FF9190").opacity(0.6), radius: 8, x: 0, y: 0)
-                                                        }
-                                                    }
-                                                    
-                                                    // ステータステキスト
-                                                    Text("推し活データ同期中...")
-                                                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                                                        .foregroundColor(.white.opacity(0.8))
-                                                        .padding(.bottom, 30)
-                                                }
-                                                .padding(.horizontal)
-                                            }
-                                            .frame(width: 300, height: 350)
-                                            .scaleEffect(scale)
-                                        
-                                        // ガラスモーフィズムの小さなカード群
-                                        HStack(spacing: 20) {
-                                            ForEach(0..<3) { index in
-                                                GlassCard(index: index)
-                                                    .offset(y: index == 1 ? -15 : 0)
-                                            }
-                                        }
-                                        .offset(y: -30)
-                                        .scaleEffect(scale)
-                                    }
-                                }
-                                .onAppear {
-                                    // アニメーション開始
-                                    withAnimation(Animation.easeOut(duration: 1.0)) {
-                                        scale = 1.0
-                                        blurRadius = 0
-                                    }
-                                    
-                                    // 回転アニメーション
-                                    rotation = 360
-                                    
-                                    // プログレスバーのアニメーション
-                                    withAnimation(Animation.easeInOut(duration: 3.0)) {
-                                        progress = 1.0
-                                    }
-                                }
+                        Text("推し〜ず")
+                            .font(.system(size: 32, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                            .shadow(color: Color(hex: "6A0572").opacity(0.5), radius: 4, x: 0, y: 2)
+                        
+                        // ローディングプログレス
+                        VStack(spacing: 12) {
+                            Text("\(Int(progress * 100))%")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                            
+                            // グローエフェクト付きプログレスバー
+                            ZStack(alignment: .leading) {
+                                // バーの背景
+                                Capsule()
+                                    .fill(Color.white.opacity(0.2))
+                                    .frame(width: 200, height: 8)
+                                
+                                // プログレス部分
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                Color(hex: "FF9190"),
+                                                Color(hex: "FFC371")
+                                            ]),
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .frame(width: 200 * progress, height: 8)
+                                    .shadow(color: Color(hex: "FF9190").opacity(0.6), radius: 8, x: 0, y: 0)
                             }
                         }
+                        
+                        // ステータステキスト
+                        Text("推し活データ同期中...")
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
+                            .padding(.bottom, 30)
+                    }
+                    .padding(.horizontal)
+                }
+                .frame(width: 300, height: 350)
+                .scaleEffect(scale)
+                
+                // ガラスモーフィズムの小さなカード群
+                HStack(spacing: 20) {
+                    ForEach(0..<3) { index in
+                        GlassCard(index: index)
+                            .offset(y: index == 1 ? -15 : 0)
+                    }
+                }
+                .offset(y: -30)
+                .scaleEffect(scale)
+            }
+        }
+        .onAppear {
+            // アニメーション開始
+            withAnimation(Animation.easeOut(duration: 1.0)) {
+                scale = 1.0
+                blurRadius = 0
+            }
+            
+            // 回転アニメーション
+            rotation = 360
+            
+            // プログレスバーのアニメーション
+            withAnimation(Animation.easeInOut(duration: 3.0)) {
+                progress = 1.0
+            }
+        }
+    }
+}
 
 // ガラスのようなミニカード
 struct GlassCard: View {

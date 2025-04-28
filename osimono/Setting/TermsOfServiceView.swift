@@ -131,15 +131,15 @@ struct TermsOfServiceView: View {
                         Spacer()
                         VStack{
                             HStack{
-                            Spacer()
-                            Text("以上")
-                        }
+                                Spacer()
+                                Text("以上")
+                            }
                             HStack{
                                 Spacer()
                                 Text("(2023年4月27日更新)")
                             }
                         }
-                        }
+                    }
                 }
             }
             .padding()

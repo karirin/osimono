@@ -39,7 +39,7 @@ struct AddressConfirmationView: View {
                 .padding()
             
             if let coordinate = coordinate {
-//                .cornerRadius(10)
+                //                .cornerRadius(10)
                 Map(coordinateRegion: $region, annotationItems: [MapAnnotationItem(coordinate: coordinate)]) { item in
                     MapAnnotation(coordinate: item.coordinate, anchorPoint: CGPoint(x: 0.5, y: 1.0)) {
                         AddressMapPinView(image: image, isSelected: false)

@@ -68,18 +68,18 @@ enum TutorialStep: Int, CaseIterable {
     }
     
     var messagePosition: EdgeInsets {
-         switch self {
-         case .welcome, .completed:
-             return EdgeInsets(top: 0, leading: 24, bottom: 40, trailing: 24) // Bottom centered
-         case .selectOshi:
-             return EdgeInsets(top: 0, leading: 24, bottom: 40, trailing: 24) // Bottom centered
-         case .addOshi:
-             // Position message in the center of the screen, above the plus button
-             return EdgeInsets(top: 0, leading: 24, bottom: 150, trailing: 24)
-         case .createPost, .categories:
-             return EdgeInsets(top: 0, leading: 24, bottom: 80, trailing: 24) // Bottom centered
-         }
-     }
+        switch self {
+        case .welcome, .completed:
+            return EdgeInsets(top: 0, leading: 24, bottom: 40, trailing: 24) // Bottom centered
+        case .selectOshi:
+            return EdgeInsets(top: 0, leading: 24, bottom: 40, trailing: 24) // Bottom centered
+        case .addOshi:
+            // Position message in the center of the screen, above the plus button
+            return EdgeInsets(top: 0, leading: 24, bottom: 150, trailing: 24)
+        case .createPost, .categories:
+            return EdgeInsets(top: 0, leading: 24, bottom: 80, trailing: 24) // Bottom centered
+        }
+    }
     
     var highlightSize: CGFloat {
         switch self {
@@ -125,7 +125,7 @@ class TutorialManager: ObservableObject {
     func startTutorial() {
         isShowingTutorial = true
         currentStep = .welcome
-//        currentStep = .addOshi
+        //        currentStep = .addOshi
     }
     
     func completeTutorial() {
@@ -158,7 +158,7 @@ struct TutorialOverlayView: View {
                 .animation(.easeInOut, value: tutorialManager.currentStep)
                 .overlay {
                     if tutorialManager.currentStep != .welcome &&
-                       tutorialManager.currentStep != .completed {
+                        tutorialManager.currentStep != .completed {
                         Circle()
                             .frame(width: tutorialManager.currentStep.highlightSize,
                                    height: tutorialManager.currentStep.highlightSize)
@@ -294,17 +294,17 @@ struct ContentViewWithTutorial: View {
         }
         .onAppear {
             // 初回起動時のみチュートリアルを表示
-//            if !UserDefaults.standard.bool(forKey: "appLaunchedBefore") {
-//                UserDefaults.standard.set(false, forKey: "tutorialCompleted")
-//                UserDefaults.standard.set(true, forKey: "appLaunchedBefore")
-                
-                // アプリの起動アニメーションを待ってからチュートリアルを表示
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation {
-                        tutorialManager.startTutorial()
-                    }
+            //            if !UserDefaults.standard.bool(forKey: "appLaunchedBefore") {
+            //                UserDefaults.standard.set(false, forKey: "tutorialCompleted")
+            //                UserDefaults.standard.set(true, forKey: "appLaunchedBefore")
+            
+            // アプリの起動アニメーションを待ってからチュートリアルを表示
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                withAnimation {
+                    tutorialManager.startTutorial()
                 }
-//            }
+            }
+            //            }
         }
     }
 }

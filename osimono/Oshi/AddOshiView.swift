@@ -175,25 +175,6 @@ struct AddOshiView: View {
                                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                                     .padding(.horizontal)
                             }
-                            
-                            // メモフィールド
-                            //                            VStack(alignment: .leading) {
-                            //                                Text("メモ")
-                            //                                    .font(.headline)
-                            //                                    .padding(.horizontal)
-                            //
-                            //                                TextEditor(text: $oshiMemo)
-                            //                                    .frame(minHeight: 120)
-                            //                                    .padding(4)
-                            //                                    .background(Color.white)
-                            //                                    .cornerRadius(10)
-                            //                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                            //                                    .overlay(
-                            //                                        RoundedRectangle(cornerRadius: 10)
-                            //                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            //                                    )
-                            //                                    .padding(.horizontal)
-                            //                            }
                         }
                         
                         // 追加ボタン
@@ -223,8 +204,6 @@ struct AddOshiView: View {
                             .cornerRadius(15)
                             .shadow(color: primaryColor.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
-                        //                        .disabled(oshiName.isEmpty || isLoading)
-                        //                        .opacity(oshiName.isEmpty ? 0.6 : 1.0)
                         .padding(.horizontal, 30)
                         .padding(.vertical)
                     }

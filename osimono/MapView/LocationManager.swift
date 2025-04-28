@@ -223,14 +223,6 @@ class LocationViewModel: ObservableObject {
         )
         
         do {
-            // userRatingsの下にもユーザーID→推しID構造を作る
-//            let ref = db.child("userRatings").child(userId).child(oshiId).childByAutoId()
-//            let ratingDict = try userRating.asDictionary()
-//            ref.setValue(ratingDict) { error, _ in
-//                if let error = error {
-//                    print("Error saving user rating: \(error.localizedDescription)")
-//                }
-//            }
         } catch {
             print("Error converting user rating to dictionary: \(error.localizedDescription)")
         }
@@ -260,26 +252,6 @@ class LocationViewModel: ObservableObject {
             if let error = error {
                 print("Error updating rating: \(error.localizedDescription)")
             } else {
-                // userRatingsの更新も階層構造に対応
-//                self.db.child("userRatings").child(userId).child(oshiId)
-//                    .queryOrdered(byChild: "locationId")
-//                    .queryEqual(toValue: locationId)
-//                    .observeSingleEvent(of: .value) { snapshot in
-//                        var ratingFound = false
-//                        for child in snapshot.children {
-//                            if let childSnapshot = child as? DataSnapshot {
-//                                childSnapshot.ref.updateChildValues([
-//                                    "rating": newRating,
-//                                    "timestamp": Date().timeIntervalSince1970
-//                                ])
-//                                ratingFound = true
-//                                break
-//                            }
-//                        }
-//                        if !ratingFound {
-//                            self.saveUserRating(locationId: locationId, rating: newRating, userId: userId, oshiId: oshiId)
-//                        }
-//                    }
             }
         }
     }
@@ -290,53 +262,10 @@ class LocationViewModel: ObservableObject {
             completion(nil)
             return
         }
-        
-//        db.child("userRatings").child(userId).child(oshiId)
-//            .queryOrdered(byChild: "locationId")
-//            .queryEqual(toValue: locationId)
-//            .observeSingleEvent(of: .value) { snapshot in
-//                for child in snapshot.children {
-//                    if let childSnapshot = child as? DataSnapshot,
-//                       let dict = childSnapshot.value as? [String: Any],
-//                       let rating = dict["rating"] as? Int {
-//                        completion(rating)
-//                        return
-//                    }
-//                }
-//                completion(nil)
-//            }
     }
     
     func updateCurrentOshi(id: String) {
         currentOshiId = id
         fetchLocations(forOshiId: id)
     }
-
-//    func fetchLocations(forOshiId oshiId: String = "default") {
-//        db.child("locations").observe(.value) { snapshot in
-//            var newLocations: [EventLocation] = []
-//            for userChild in snapshot.children {
-//                if let userSnap = userChild as? DataSnapshot {
-//                    for locChild in userSnap.children {
-//                        if let locSnap = locChild as? DataSnapshot,
-//                           let dict = locSnap.value as? [String: Any] {
-//                            do {
-//                                let jsonData = try JSONSerialization.data(withJSONObject: dict)
-//                                var location = try JSONDecoder().decode(EventLocation.self, from: jsonData)
-//                                location.id = locSnap.key
-//                                
-//                                // 推しIDでフィルタリング
-//                                if location.oshiId == oshiId || location.oshiId == nil {
-//                                    newLocations.append(location)
-//                                }
-//                            } catch {
-//                                print("Error decoding location: \(error)")
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            self.locations = newLocations.sorted { $0.createdAt > $1.createdAt }
-//        }
-//    }
 }

@@ -12,7 +12,7 @@ import FirebaseAuth
 struct AddressMapPinView: View {
     var image: UIImage?
     var isSelected: Bool
-
+    
     var body: some View {
         VStack(spacing: -20) {
             ZStack {
@@ -38,7 +38,7 @@ struct AddressMapPinView: View {
                 } else {
                     Circle()
                         .frame(width: isSmallDevice() ? 65 : 85, height: isSmallDevice() ? 65 : 85)
-//                        .shimmer(true)
+                    //                        .shimmer(true)
                         .clipShape(Circle())
                 }
             }

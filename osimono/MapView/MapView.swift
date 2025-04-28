@@ -262,7 +262,7 @@ struct MapView: View {
         if let category = location.category as String? {
             switch category {
             case "ライブ会場": return .live
-//            case "ロケ地": return .sacred
+                //            case "ロケ地": return .sacred
             case "カフェ・飲食店": return .cafe
             case "グッズショップ": return .shop
             case "撮影スポット": return .photo
@@ -275,8 +275,8 @@ struct MapView: View {
         // Fallback to checking title
         if location.title.contains("ライブ") || location.title.contains("コンサート") {
             return .live
-//        } else if location.title.contains("ロケ") || location.title.contains("撮影地") {
-//            return .location
+            //        } else if location.title.contains("ロケ") || location.title.contains("撮影地") {
+            //            return .location
         } else if location.title.contains("カフェ") || location.title.contains("レストラン") || location.title.contains("cafe") {
             return .cafe
         } else if location.title.contains("ショップ") || location.title.contains("グッズ") || location.title.contains("shop") {
@@ -296,20 +296,3 @@ struct MapView_Previews: PreviewProvider {
         MapView(oshiId: "09073E24-E385-43AC-978E-33425C819285")
     }
 }
-
-// Extension for rounded corners on specific sides
-//extension View {
-//    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-//        clipShape(RoundedCorner(radius: radius, corners: corners))
-//    }
-//}
-//
-//struct RoundedCorner: Shape {
-//    var radius: CGFloat = .infinity
-//    var corners: UIRectCorner = .allCorners
-//
-//    func path(in rect: CGRect) -> Path {
-//        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-//        return Path(path.cgPath)
-//    }
-//}

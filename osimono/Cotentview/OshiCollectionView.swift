@@ -80,10 +80,10 @@ struct OshiCollectionView: View {
         if !searchText.isEmpty {
             result = result.filter { item in
                 return item.title?.lowercased().contains(searchText.lowercased()) ?? false ||
-                       item.memo?.lowercased().contains(searchText.lowercased()) ?? false ||
-                       item.eventName?.lowercased().contains(searchText.lowercased()) ?? false ||
-                       item.locationAddress?.lowercased().contains(searchText.lowercased()) ?? false ||
-                       (item.tags?.joined(separator: " ").lowercased().contains(searchText.lowercased()) ?? false)
+                item.memo?.lowercased().contains(searchText.lowercased()) ?? false ||
+                item.eventName?.lowercased().contains(searchText.lowercased()) ?? false ||
+                item.locationAddress?.lowercased().contains(searchText.lowercased()) ?? false ||
+                (item.tags?.joined(separator: " ").lowercased().contains(searchText.lowercased()) ?? false)
             }
         }
         
@@ -160,7 +160,7 @@ struct OshiCollectionView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
             
-             // フィルターメニュー - itemTypesに変更
+            // フィルターメニュー - itemTypesに変更
             if showingFilterMenu {
                 VStack(alignment: .leading, spacing: 12) {
                     // アイテムタイプ選択
@@ -186,12 +186,12 @@ struct OshiCollectionView: View {
                                         .background(
                                             RoundedRectangle(cornerRadius: 20)
                                                 .stroke(selectedItemType == itemType ? Color.white : Color.gray.opacity(0.3), lineWidth: 1)
-                                                                                            .background(
-                                                                                                RoundedRectangle(cornerRadius: 20)
-                                                .fill(selectedItemType == itemType ?
-                                                      (itemTypeColors[itemType] ?? accentColor) :
-                                                        (Color.white ?? Color.gray))
-                                                                                                )
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 20)
+                                                        .fill(selectedItemType == itemType ?
+                                                              (itemTypeColors[itemType] ?? accentColor) :
+                                                                (Color.white ?? Color.gray))
+                                                )
                                         )
                                         .foregroundColor(selectedItemType == itemType ? .white : .gray ?? .gray)
                                     }
@@ -200,7 +200,7 @@ struct OshiCollectionView: View {
                         }
                     }
                     
-//                    Divider()
+                    //                    Divider()
                     
                     // 並び替え
                     VStack(alignment: .leading, spacing: 10) {
@@ -358,7 +358,7 @@ struct OshiCollectionView: View {
         .dismissKeyboardOnTap()
         .background(backgroundColor)
         .onAppear {
-//            self.isLoading = true
+            //            self.isLoading = true
             fetchOshiItems()
         }
         .onChange(of: oshiId) { newOshiId in
@@ -442,32 +442,32 @@ struct OshiCollectionView: View {
     
     // データ取得
     func fetchOshiItems() {
-            guard let userId = userId else { return }
-//            self.isLoading = true
-            // 変更：選択中の推しIDのパスから取得
-            let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId)
-            ref.observeSingleEvent(of: .value) { snapshot in
-                var newItems: [OshiItem] = []
-                for child in snapshot.children {
-                    if let childSnapshot = child as? DataSnapshot {
-                        if let value = childSnapshot.value as? [String: Any] {
-                            do {
-                                let jsonData = try JSONSerialization.data(withJSONObject: value)
-                                let item = try JSONDecoder().decode(OshiItem.self, from: jsonData)
-                                newItems.append(item)
-                            } catch {
-                                print("デコードエラー: \(error.localizedDescription)")
-                            }
+        guard let userId = userId else { return }
+        //            self.isLoading = true
+        // 変更：選択中の推しIDのパスから取得
+        let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId)
+        ref.observeSingleEvent(of: .value) { snapshot in
+            var newItems: [OshiItem] = []
+            for child in snapshot.children {
+                if let childSnapshot = child as? DataSnapshot {
+                    if let value = childSnapshot.value as? [String: Any] {
+                        do {
+                            let jsonData = try JSONSerialization.data(withJSONObject: value)
+                            let item = try JSONDecoder().decode(OshiItem.self, from: jsonData)
+                            newItems.append(item)
+                        } catch {
+                            print("デコードエラー: \(error.localizedDescription)")
                         }
                     }
                 }
-                
-                DispatchQueue.main.async {
-                    self.oshiItems = newItems
-                    self.isLoading = false
-                }
+            }
+            
+            DispatchQueue.main.async {
+                self.oshiItems = newItems
+                self.isLoading = false
             }
         }
+    }
     
     // 触覚フィードバック
     func generateHapticFeedback() {

@@ -90,7 +90,7 @@ class AuthManager: ObservableObject {
             }
         }
     }
-
+    
     
     func updateUserFlag(userId: String, userFlag: Int, completion: @escaping (Bool) -> Void) {
         let userRef = Database.database().reference().child("users").child(userId)
@@ -108,7 +108,7 @@ class AuthManager: ObservableObject {
 
 struct AuthManager1: View {
     @ObservedObject var authManager = AuthManager()
-
+    
     var body: some View {
         VStack {
             Button(action: {

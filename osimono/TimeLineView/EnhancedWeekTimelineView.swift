@@ -193,8 +193,8 @@ struct EnhancedWeekTimelineView: View {
                             }
                         }
                     }.padding(.bottom, 70)
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 16)
+                        .padding(.vertical, 16)
+                        .padding(.horizontal, 16)
                 }
             }
         }
@@ -259,13 +259,7 @@ struct EnhancedWeekTimelineView: View {
     private func isSameDay(_ d1: Date, _ d2: Date) -> Bool {
         let cal = Calendar.current
         return cal.component(.year, from: d1) == cal.component(.year, from: d2)
-            && cal.component(.month, from: d1) == cal.component(.month, from: d2)
-            && cal.component(.day, from: d1) == cal.component(.day, from: d2)
+        && cal.component(.month, from: d1) == cal.component(.month, from: d2)
+        && cal.component(.day, from: d1) == cal.component(.day, from: d2)
     }
 }
-
-//struct EnhancedWeekTimelineView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        TimelineView()
-//    }
-//}

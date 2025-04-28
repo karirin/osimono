@@ -26,7 +26,7 @@ struct PrivacyView: View {
                         .font(.body)
                 }
                 Group {
-
+                    
                     
                     Text("広告について")
                         .font(.title3)
@@ -64,7 +64,7 @@ struct PrivacyView: View {
                         .font(.body)
                 }
             }
-                .padding()
+            .padding()
         }
         .navigationBarTitle("ライセンス", displayMode: .inline)
     }
@@ -75,11 +75,3 @@ struct PrivacyView_Previews: PreviewProvider {
         PrivacyView()
     }
 }
-
-//
-//  PrivacyView.swift
-//  osimono
-//
-//  Created by Apple on 2025/04/28.
-//
-

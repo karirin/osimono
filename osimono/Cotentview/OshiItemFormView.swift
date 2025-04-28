@@ -134,16 +134,16 @@ struct OshiItemFormView: View {
                                             Spacer()
                                             HStack {
                                                 Spacer()
-                                                    Text("画像を変更")
-                                                        .font(.system(size: 14))
-                                                        .padding(.vertical, 6)
-                                                        .padding(.horizontal, 12)
-                                                        .background(Color.black.opacity(0.6))
-                                                        .foregroundColor(.white)
-                                                        .cornerRadius(16)
-                                                }
-                                                .padding(12)
+                                                Text("画像を変更")
+                                                    .font(.system(size: 14))
+                                                    .padding(.vertical, 6)
+                                                    .padding(.horizontal, 12)
+                                                    .background(Color.black.opacity(0.6))
+                                                    .foregroundColor(.white)
+                                                    .cornerRadius(16)
                                             }
+                                            .padding(12)
+                                        }
                                     }
                                 } else {
                                     ZStack {
@@ -417,22 +417,22 @@ struct OshiItemFormView: View {
             }
             .navigationBarTitle("推しの投稿を追加", displayMode: .inline)
             .navigationBarItems(leading:
-                Button(action: {
+                                    Button(action: {
                 generateHapticFeedback()
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.gray)
-                }
+                presentationMode.wrappedValue.dismiss()
+            }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.gray)
+            }
             )
             .navigationBarItems(trailing:
-                Button(action: {
+                                    Button(action: {
                 generateHapticFeedback()
-                    saveItem()
-                }) {
-                    Text("投稿")
-                }
+                saveItem()
+            }) {
+                Text("投稿")
+            }
             )
         }
         .sheet(isPresented: $isShowingImagePicker) {
@@ -619,17 +619,17 @@ struct OshiItemFormView: View {
             data["purchaseDate"] = purchaseDate.timeIntervalSince1970
             data["memories"] = memo
         } else if itemType == "聖地巡礼" {
-//            data["locationAddress"] = locationAddress
-//            data["visitDate"] = purchaseDate.timeIntervalSince1970
-//            data["memories"] = memo
-//            
-//            // 位置情報が取得できている場合、locationViewModelにも保存
-//            if let locationCoord = locationCoordinate {
-//                saveToLocationsTable(coordinate: locationCoord)
-//            } else if !locationAddress.isEmpty {
-//                // 住所から座標を取得して保存
-//                geocodeAddressAndSaveLocation()
-//            }
+            //            data["locationAddress"] = locationAddress
+            //            data["visitDate"] = purchaseDate.timeIntervalSince1970
+            //            data["memories"] = memo
+            //            
+            //            // 位置情報が取得できている場合、locationViewModelにも保存
+            //            if let locationCoord = locationCoordinate {
+            //                saveToLocationsTable(coordinate: locationCoord)
+            //            } else if !locationAddress.isEmpty {
+            //                // 住所から座標を取得して保存
+            //                geocodeAddressAndSaveLocation()
+            //            }
             data["locationAddress"] = locationAddress
             data["visitDate"] = purchaseDate.timeIntervalSince1970
             data["memories"] = memo
@@ -769,7 +769,7 @@ struct OshiItemFormView: View {
             saveDataToFirebase(data)
         }
     }
-
+    
     func saveToLocationsTable(coordinate: CLLocationCoordinate2D, id: String, imageUrl: String?) {
         // LocationViewModelのcurrentOshiIdをoshiIdに設定
         locationViewModel.currentOshiId = oshiId
@@ -805,7 +805,7 @@ struct OshiItemFormView: View {
             }
         }
     }
-
+    
     // locationsテーブルに聖地巡礼データを保存する関数
     private func saveToLocationsTable2(coordinate: CLLocationCoordinate2D) {
         // OshiItemFormViewで使用するカテゴリーからEnhancedAddLocationViewの対応するカテゴリーに変換

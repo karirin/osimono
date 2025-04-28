@@ -71,54 +71,6 @@ struct ProfileSection: View {
                                     )
                                 )
                                 .clipped()
-//                                    ZStack {
-//                                        if !showChangeOshiButton {
-//                                            
-//                                                if !editFlag && selectedOshi != nil {
-//                                                    Button(action: {
-//                                                        isShowingEditOshiView = true
-//                                                        generateHapticFeedback()
-//                                                    }) {
-//                                                        HStack {
-//                                                            Image(systemName: "pencil")
-//                                                            Text("推しを編集")
-//                                                                .fontWeight(.medium)
-//                                                        }
-//                                                        .padding(.horizontal, 12)
-//                                                        .padding(.vertical, 6)
-//                                                        .background(
-//                                                            Capsule()
-//                                                                .fill(Color.white.opacity(0.7))
-//                                                                .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 2)
-//                                                        )
-//                                                        .foregroundColor(.black)
-//                                                    }
-//                                                    .padding(.top, 8)
-//                                                }
-//                                            Button(action: {
-//                                                withAnimation(.spring()) {
-//                                                    isShowingOshiSelector = true
-//                                                }
-//                                                generateHapticFeedback()
-//                                            }) {
-//                                                HStack {
-//                                                    Image(systemName: "arrow.triangle.2.circlepath")
-//                                                    Text("推し変更")
-//                                                        .fontWeight(.medium)
-//                                                }
-//                                                .padding(.horizontal, 8)
-//                                                .padding(.vertical, 5)
-//                                                .background(
-//                                                    Capsule()
-//                                                        .fill(Color.black.opacity(0.3))
-//                                                        .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
-//                                                )
-//                                                .foregroundColor(.white)
-//                                            }
-//                                            .position(x: UIScreen.main.bounds.width - 40, y: 200)
-//                                        }
-//                                    }
-//                                )
                                 .edgesIgnoringSafeArea(.all)
                         default:
                             Rectangle()
@@ -166,125 +118,124 @@ struct ProfileSection: View {
                     .frame(height: profileSectionHeight)
                     .edgesIgnoringSafeArea(.all)
                 }
-//            }
-            
-            // プロフィール情報とアバター
-            VStack(spacing: 8) {
-                // プロフィール画像 - 選択中の推しのプロフィール画像に変更
-                ZStack {
-                    if let oshi = selectedOshi, let imageUrlString = oshi.imageUrl, let imageUrl = URL(string: imageUrlString) {
-                        AsyncImage(url: imageUrl) { phase in
-                            switch phase {
-                            case .success(let image):
-                                ZStack {
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 100, height: 100)
-                                        .clipShape(Circle())
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color.white, lineWidth: 3)
-                                        )
-                                        .shadow(color: Color.black.opacity(0.2), radius: 5)
-                                        .onTapGesture {
-                                            withAnimation(.spring()) {
-                                                isProfileImageEnlarged = true
-                                            }
-                                            generateHapticFeedback()
-                                        }
-                                    
-                                    if editFlag {
-                                        Button(action: {
-                                            currentEditType = .profile
-                                            generateHapticFeedback()
-                                        }) {
-                                            ZStack {
+                
+                // プロフィール情報とアバター
+                VStack(spacing: 8) {
+                    // プロフィール画像 - 選択中の推しのプロフィール画像に変更
+                    ZStack {
+                        if let oshi = selectedOshi, let imageUrlString = oshi.imageUrl, let imageUrl = URL(string: imageUrlString) {
+                            AsyncImage(url: imageUrl) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    ZStack {
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 100, height: 100)
+                                            .clipShape(Circle())
+                                            .overlay(
                                                 Circle()
-                                                    .fill(Color.black.opacity(0.5))
-                                                    .frame(width: 100, height: 100)
-                                                
-                                                Image(systemName: "camera.fill")
-                                                    .foregroundColor(.white)
-                                                    .font(.system(size: 30))
+                                                    .stroke(Color.white, lineWidth: 3)
+                                            )
+                                            .shadow(color: Color.black.opacity(0.2), radius: 5)
+                                            .onTapGesture {
+                                                withAnimation(.spring()) {
+                                                    isProfileImageEnlarged = true
+                                                }
+                                                generateHapticFeedback()
+                                            }
+                                        
+                                        if editFlag {
+                                            Button(action: {
+                                                currentEditType = .profile
+                                                generateHapticFeedback()
+                                            }) {
+                                                ZStack {
+                                                    Circle()
+                                                        .fill(Color.black.opacity(0.5))
+                                                        .frame(width: 100, height: 100)
+                                                    
+                                                    Image(systemName: "camera.fill")
+                                                        .foregroundColor(.white)
+                                                        .font(.system(size: 30))
+                                                }
                                             }
                                         }
                                     }
+                                case .failure(_):
+                                    profilePlaceholder
+                                case .empty:
+                                    profilePlaceholder
+                                @unknown default:
+                                    profilePlaceholder
                                 }
-                            case .failure(_):
-                                profilePlaceholder
-                            case .empty:
-                                profilePlaceholder
-                            @unknown default:
+                            }
+                        } else {
+                            Button(action: {
+                                generateHapticFeedback()
+                                if let oshi = selectedOshi {
+                                    isShowingImagePicker = true
+                                } else {
+                                    showAddOshiForm = true
+                                }
+                            }) {
                                 profilePlaceholder
                             }
-                        }
-                    } else {
-                        Button(action: {
-                            generateHapticFeedback()
-                            if let oshi = selectedOshi {
-                                isShowingImagePicker = true
-                            } else {
-                                showAddOshiForm = true
-                            }
-                        }) {
-                            profilePlaceholder
                         }
                     }
-                }
-                .padding(.bottom, 4)
-                
-                // ユーザー名と詳細 - 推し情報表示
-                VStack(spacing: 4) {
-                    if isEditingUsername {
-                        HStack {
-                            TextField("推しの名前", text: $editingUsername)
+                    .padding(.bottom, 4)
+                    
+                    // ユーザー名と詳細 - 推し情報表示
+                    VStack(spacing: 4) {
+                        if isEditingUsername {
+                            HStack {
+                                TextField("推しの名前", text: $editingUsername)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.black)
+                                    .padding(2)
+                                    .background(Color.white)
+                                    .cornerRadius(8)
+                                    .multilineTextAlignment(.center)
+                                    .frame(width: 200)
+                                    .onAppear{
+                                        startEditing()
+                                    }
+                                    .onChange(of: editingUsername) { newValue in
+                                        saveOshiProfile()
+                                    }
+                            }
+                        } else {
+                            // 表示モード: 通常のテキスト表示
+                            Text(selectedOshi?.name ?? "推しを選択してください")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.black)
-                                .padding(2)
-                                .background(Color.white)
-                                .cornerRadius(8)
-                                .multilineTextAlignment(.center)
-                                .frame(width: 200)
-                                .onAppear{
-                                    startEditing()
-                                }
-                                .onChange(of: editingUsername) { newValue in
-                                    saveOshiProfile()
-                                }
+                                .foregroundColor(.white)
                         }
-                    } else {
-                        // 表示モード: 通常のテキスト表示
-                        Text(selectedOshi?.name ?? "推しを選択してください")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
                     }
+                    .padding(.bottom, 12)
+                    .zIndex(1) 
                 }
-                .padding(.bottom, 12)
-                .zIndex(1) 
-            }
-            .offset(y: 30)
-            
-//            Color.black.opacity(0.3)
-//                .edgesIgnoringSafeArea(.all)
-//            VStack {
-//                HStack {
-//                    Spacer()
-//                }
-//                Spacer()
-//            }
-//            HStack{
-//                Spacer()
-//                Button(action: {
-//                    currentEditType = .background
-//                    generateHapticFeedback()
-//                }) {
-//                    Image(systemName: "camera.fill")
-//                        .font(.system(size: 24))
-//                        .foregroundColor(.white)
-//                        .padding(12)
-//                        .background(Circle().fill(Color.black.opacity(0.5)))
-//                }
+                .offset(y: 30)
+                
+                //            Color.black.opacity(0.3)
+                //                .edgesIgnoringSafeArea(.all)
+                //            VStack {
+                //                HStack {
+                //                    Spacer()
+                //                }
+                //                Spacer()
+                //            }
+                //            HStack{
+                //                Spacer()
+                //                Button(action: {
+                //                    currentEditType = .background
+                //                    generateHapticFeedback()
+                //                }) {
+                //                    Image(systemName: "camera.fill")
+                //                        .font(.system(size: 24))
+                //                        .foregroundColor(.white)
+                //                        .padding(12)
+                //                        .background(Circle().fill(Color.black.opacity(0.5)))
+                //                }
             }
         }
         .sheet(isPresented: $isShowingImagePicker) {
@@ -314,7 +265,7 @@ struct ProfileSection: View {
             withAnimation {
                 loadAllData()
             }
-//            fetchOshiList()
+            //            fetchOshiList()
         }
         .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
             loadAllData()
@@ -334,58 +285,6 @@ struct ProfileSection: View {
                 }
             }
         }
-//        .overlay(
-//            ZStack {
-//                if showChangeOshiButton {
-//                    Color.black.opacity(0.3)
-//                        .edgesIgnoringSafeArea(.all)
-//                    VStack {
-//                        HStack {
-//                            Spacer()
-//                            Button(action: {
-//                                currentEditType = .background
-//                                generateHapticFeedback()
-//                            }) {
-//                                Image(systemName: "camera.fill")
-//                                    .font(.system(size: 24))
-//                                    .foregroundColor(.white)
-//                                    .padding(12)
-//                                    .background(Circle().fill(Color.black.opacity(0.5)))
-//                            }
-//                            .padding()
-//                        }
-//                        Spacer()
-//                    }
-//                }
-//            }
-//        )
-//        .overlay(
-//            ZStack {
-//                if !showChangeOshiButton {
-//                    Button(action: {
-//                        withAnimation(.spring()) {
-//                            isShowingOshiSelector = true
-//                        }
-//                        generateHapticFeedback()
-//                    }) {
-//                        HStack {
-//                            Image(systemName: "arrow.triangle.2.circlepath")
-//                            Text("推し変更")
-//                                .fontWeight(.medium)
-//                        }
-//                        .padding(.horizontal, 8)
-//                        .padding(.vertical, 5)
-//                        .background(
-//                            Capsule()
-//                                .fill(Color.black.opacity(0.3))
-//                                .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
-//                        )
-//                        .foregroundColor(.white)
-//                    }
-//                    .position(x: UIScreen.main.bounds.width - 40, y: 200)
-//                }
-//            }
-//        )
     }
     
     func uploadOshiImageToFirebase(_ image: UIImage, type: UploadImageType = .profile) {

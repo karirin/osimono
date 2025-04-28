@@ -43,7 +43,7 @@ struct TopView: View {
                     Text("タイムライン")
                 }
                 ZStack {
-                SettingsView()
+                    SettingsView()
                 }
                 .tabItem {
                     Image(systemName: "gear")
@@ -63,17 +63,17 @@ struct TopView: View {
         }
         .onAppear{
             observeSelectedOshiId()
-                        if !UserDefaults.standard.bool(forKey: "appLaunchedBefore") {
-                            UserDefaults.standard.set(false, forKey: "tutorialCompleted")
-                            UserDefaults.standard.set(true, forKey: "appLaunchedBefore")
-                            
-                            // アプリの起動アニメーションを待ってからチュートリアルを表示
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                withAnimation {
-                                    tutorialManager.startTutorial()
-                                }
-                            }
-                        }
+            if !UserDefaults.standard.bool(forKey: "appLaunchedBefore") {
+                UserDefaults.standard.set(false, forKey: "tutorialCompleted")
+                UserDefaults.standard.set(true, forKey: "appLaunchedBefore")
+                
+                // アプリの起動アニメーションを待ってからチュートリアルを表示
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    withAnimation {
+                        tutorialManager.startTutorial()
+                    }
+                }
+            }
         }
     }
     

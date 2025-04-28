@@ -132,28 +132,28 @@ struct EnhancedMonthCalendarView: View {
     
     private var emptyStateView: some View {
         VStack(spacing: 10) {
-                ForEach(Array(eventsForSelectedDate.enumerated()), id: \.element.id) { index, event in
-                }
-                Circle()
-                    .fill(cardBackgroundColor)
-                    .frame(width: 80, height: 80)
-                    .overlay(
-                        Image(systemName: "calendar.badge.clock")
-                            .font(.system(size: 32))
-                            .foregroundColor(brandColor.opacity(0.7))
-                    )
-                
-                Text("タイムラインがありません")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(secondaryTextColor)
-                
-                Text("この日はまだ登録されていません")
-                    .font(.system(size: 14))
-                    .foregroundColor(secondaryTextColor.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-            Spacer()
+            ForEach(Array(eventsForSelectedDate.enumerated()), id: \.element.id) { index, event in
             }
+            Circle()
+                .fill(cardBackgroundColor)
+                .frame(width: 80, height: 80)
+                .overlay(
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.system(size: 32))
+                        .foregroundColor(brandColor.opacity(0.7))
+                )
+            
+            Text("タイムラインがありません")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(secondaryTextColor)
+            
+            Text("この日はまだ登録されていません")
+                .font(.system(size: 14))
+                .foregroundColor(secondaryTextColor.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+            Spacer()
+        }
         .padding(.top, 30)
     }
     
@@ -234,12 +234,12 @@ struct EnhancedMonthCalendarView: View {
     private func isSameDay(_ d1: Date, _ d2: Date) -> Bool {
         let cal = Calendar.current
         return cal.component(.year, from: d1) == cal.component(.year, from: d2)
-            && cal.component(.month, from: d1) == cal.component(.month, from: d2)
-            && cal.component(.day, from: d1) == cal.component(.day, from: d2)
+        && cal.component(.month, from: d1) == cal.component(.month, from: d2)
+        && cal.component(.day, from: d1) == cal.component(.day, from: d2)
     }
 }
 
 #Preview {
     TimelineView(oshiId: "CDD84D85-B207-4DDE-B3F0-603461E64AA5")
-//    TopView()
+    //    TopView()
 }

@@ -42,14 +42,10 @@ struct EnhancedTimelineRow: View {
             
             // Timeline dot and line
             ZStack {
-                // Vertical line
-//                if !isLast {
-                    Rectangle()
-                        .fill(timelineColor)
-                        .frame(width: 2)
-                        .padding(.vertical, -10)
-//                        .padding(.top, 12) // Start line below the circle
-//                }
+                Rectangle()
+                    .fill(timelineColor)
+                    .frame(width: 2)
+                    .padding(.vertical, -10)
                 
                 // Dot
                 Circle()
@@ -57,7 +53,7 @@ struct EnhancedTimelineRow: View {
                     .frame(width: 12, height: 12)
                     .shadow(color: event.color.opacity(0.3), radius: 2, x: 0, y: 1)
             }
-//            .frame(height: selectedEventID == event.id ? 200 : 20)
+            //            .frame(height: selectedEventID == event.id ? 200 : 20)
             
             // Event content
             VStack(alignment: .leading, spacing: 8) {
@@ -137,9 +133,3 @@ struct EnhancedTimelineRow: View {
         }
     }
 }
-
-//struct EnhancedTimelineRow_Previews: PreviewProvider {
-//    static var previews: some View {
-//        TimelineView()
-//    }
-//}

@@ -11,7 +11,7 @@ import SwiftUI
 enum UploadImageType: Identifiable {
     case profile
     case background
-
+    
     var id: String {
         switch self {
         case .profile: return "profile"
@@ -34,7 +34,7 @@ struct UserProfile: Codable {
 struct NumberTextField: UIViewRepresentable {
     @Binding var text: String
     var placeholder: String = ""
-
+    
     func makeUIView(context: Context) -> UITextField {
         let textField = UITextField()
         textField.placeholder = placeholder
@@ -43,19 +43,19 @@ struct NumberTextField: UIViewRepresentable {
         textField.delegate = context.coordinator
         return textField
     }
-
+    
     func updateUIView(_ uiView: UITextField, context: Context) {
         uiView.text = text
     }
-
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text)
     }
-
+    
     class Coordinator: NSObject, UITextFieldDelegate {
         @Binding var text: String
         var toolbar: UIToolbar
-
+        
         init(text: Binding<String>) {
             _text = text
             toolbar = UIToolbar()
@@ -65,11 +65,11 @@ struct NumberTextField: UIViewRepresentable {
             let doneButton = UIBarButtonItem(title: "完了", style: .done, target: self, action: #selector(doneTapped))
             toolbar.items = [flexSpace, doneButton]
         }
-
+        
         @objc func doneTapped() {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
-
+        
         func textFieldDidChangeSelection(_ textField: UITextField) {
             self.text = textField.text ?? ""
         }
@@ -79,19 +79,19 @@ struct NumberTextField: UIViewRepresentable {
 struct ImageTimeLinePicker: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
     @Binding var selectedImage: UIImage?
-
+    
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
         return picker
     }
-
+    
     func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) { }
-
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-
+    
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         let parent: ImageTimeLinePicker
         init(_ parent: ImageTimeLinePicker) {

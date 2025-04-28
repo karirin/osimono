@@ -55,7 +55,7 @@ struct ContentView: View {
     var profileSectionHeight: CGFloat {
         isSmallDevice() ? 280 : 280
     }
-
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -111,7 +111,7 @@ struct ContentView: View {
                             }) {
                                 Text("登録")
                             }
-
+                            
                             Button(action: {
                                 generateHapticFeedback()
                                 withAnimation(.spring()) {
@@ -129,7 +129,7 @@ struct ContentView: View {
                         }
                     }
                 }
-                .animation(.easeInOut, value: isProfileImageEnlarged)
+                    .animation(.easeInOut, value: isProfileImageEnlarged)
             )
         }
         .accentColor(primaryColor)
@@ -173,162 +173,136 @@ struct ContentView: View {
     }
     
     var oshiSelectorOverlay: some View {
-           ZStack {
-               // 半透明の背景
-               Color.black.opacity(0.7)
-                   .edgesIgnoringSafeArea(.all)
-                   .onTapGesture {
-                       withAnimation(.spring()) {
-                           isShowingOshiSelector = false
-                       }
-                   }
-               
-               VStack(spacing: 20) {
-                   // ヘッダー
-                   HStack {
-                       Text("推しを選択")
-                           .font(.title2)
-                           .fontWeight(.bold)
-                           .foregroundColor(.white)
-                       
-                       Spacer()
-                       
-                       Button(action: {
-                           generateHapticFeedback()
-                           withAnimation(.spring()) {
-                               isShowingOshiSelector = false
-                           }
-                       }) {
-                           Image(systemName: "xmark.circle.fill")
-                               .font(.title2)
-                               .foregroundColor(.white)
-                       }
-                   }
-                   .padding()
-                   
-                   // 推しリスト - グリッドレイアウト
-                   LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
-                       // 新規追加ボタン
-                       Button(action: {
-                           generateHapticFeedback()
-                           showAddOshiForm = true
-                           isShowingOshiSelector = false
-                       }) {
-                           VStack {
-                               ZStack {
-                                   Circle()
-                                       .fill(primaryColor.opacity(0.2))
-                                       .frame(width: 80, height: 80)
-                                   
-                                   Image(systemName: "plus")
-                                       .font(.system(size: 30))
-                                       .foregroundColor(primaryColor)
-                               }
-                               
-                               Text("新規追加")
-                                   .font(.subheadline)
-                                   .foregroundColor(.white)
-                           }
-                       }
-                       
-                       // 推しリスト
-                       ForEach(oshiList) { oshi in
-                           Button(action: {
-                               selectedOshi = oshi
-                               saveSelectedOshiId(oshi.id)
-                               generateHapticFeedback()
-                               withAnimation(.spring()) {
-                                   isShowingOshiSelector = false
-                                   editFlag = false
-                                   isEditingUsername = false
-                                   showChangeOshiButton = false
-                               }
-                           }) {
-                               VStack {
-                                   ZStack {
-                                       // プロフィール画像またはプレースホルダー
-                                       if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
-                                           AsyncImage(url: url) { phase in
-                                               switch phase {
-                                               case .success(let image):
-                                                   image
-                                                       .resizable()
-                                                       .scaledToFill()
-                                                       .frame(width: 80, height: 80)
-                                                       .clipShape(Circle())
-                                               default:
-                                                   Circle()
-                                                       .fill(Color.gray.opacity(0.3))
-                                                       .frame(width: 80, height: 80)
-                                                       .overlay(
-                                                           Text(String(oshi.name.prefix(1)))
-                                                               .font(.system(size: 30, weight: .bold))
-                                                               .foregroundColor(.white)
-                                                       )
-                                               }
-                                           }
-                                       } else {
-                                           Circle()
-                                               .fill(Color.gray.opacity(0.3))
-                                               .frame(width: 80, height: 80)
-                                               .overlay(
-                                                   Text(String(oshi.name.prefix(1)))
-                                                       .font(.system(size: 30, weight: .bold))
-                                                       .foregroundColor(.white)
-                                               )
-                                       }
-                                       
-                                       // 選択インジケーター
-                                       if selectedOshi?.id == oshi.id {
-                                           Circle()
-                                               .stroke(primaryColor, lineWidth: 4)
-                                               .frame(width: 85, height: 85)
-                                       }
-                                   }
-                                   
-                                   Text(oshi.name)
-                                       .font(.subheadline)
-                                       .foregroundColor(.white)
-                                       .lineLimit(1)
-                               }
-                           }
-                       }
-                   }
-                   .padding()
-               }
-               .background(
-                   RoundedRectangle(cornerRadius: 20)
-                       .fill(Color.black.opacity(0.8))
-               )
-               .padding()
-           }
-       }
-    
-    // 背景編集オーバーレイ
-//    var editBackgroundOverlay: some View {
-//        ZStack {
-//            Color.black.opacity(0.3)
-//            
-//            VStack {
-//                HStack {
-//                    Spacer()
-//                    Button(action: {
-//                        currentEditType = .background
-//                        generateHapticFeedback()
-//                    }) {
-//                        Image(systemName: "camera.fill")
-//                            .font(.system(size: 24))
-//                            .foregroundColor(.white)
-//                            .padding(12)
-//                            .background(Circle().fill(Color.black.opacity(0.5)))
-//                    }
-//                    .padding()
-//                }
-//                Spacer()
-//            }
-//        }
-//    }
-    
+        ZStack {
+            // 半透明の背景
+            Color.black.opacity(0.7)
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    withAnimation(.spring()) {
+                        isShowingOshiSelector = false
+                    }
+                }
+            
+            VStack(spacing: 20) {
+                // ヘッダー
+                HStack {
+                    Text("推しを選択")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        generateHapticFeedback()
+                        withAnimation(.spring()) {
+                            isShowingOshiSelector = false
+                        }
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding()
+                
+                // 推しリスト - グリッドレイアウト
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
+                    // 新規追加ボタン
+                    Button(action: {
+                        generateHapticFeedback()
+                        showAddOshiForm = true
+                        isShowingOshiSelector = false
+                    }) {
+                        VStack {
+                            ZStack {
+                                Circle()
+                                    .fill(primaryColor.opacity(0.2))
+                                    .frame(width: 80, height: 80)
+                                
+                                Image(systemName: "plus")
+                                    .font(.system(size: 30))
+                                    .foregroundColor(primaryColor)
+                            }
+                            
+                            Text("新規追加")
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                        }
+                    }
+                    
+                    // 推しリスト
+                    ForEach(oshiList) { oshi in
+                        Button(action: {
+                            selectedOshi = oshi
+                            saveSelectedOshiId(oshi.id)
+                            generateHapticFeedback()
+                            withAnimation(.spring()) {
+                                isShowingOshiSelector = false
+                                editFlag = false
+                                isEditingUsername = false
+                                showChangeOshiButton = false
+                            }
+                        }) {
+                            VStack {
+                                ZStack {
+                                    // プロフィール画像またはプレースホルダー
+                                    if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                        AsyncImage(url: url) { phase in
+                                            switch phase {
+                                            case .success(let image):
+                                                image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 80, height: 80)
+                                                    .clipShape(Circle())
+                                            default:
+                                                Circle()
+                                                    .fill(Color.gray.opacity(0.3))
+                                                    .frame(width: 80, height: 80)
+                                                    .overlay(
+                                                        Text(String(oshi.name.prefix(1)))
+                                                            .font(.system(size: 30, weight: .bold))
+                                                            .foregroundColor(.white)
+                                                    )
+                                            }
+                                        }
+                                    } else {
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 80, height: 80)
+                                            .overlay(
+                                                Text(String(oshi.name.prefix(1)))
+                                                    .font(.system(size: 30, weight: .bold))
+                                                    .foregroundColor(.white)
+                                            )
+                                    }
+                                    
+                                    // 選択インジケーター
+                                    if selectedOshi?.id == oshi.id {
+                                        Circle()
+                                            .stroke(primaryColor, lineWidth: 4)
+                                            .frame(width: 85, height: 85)
+                                    }
+                                }
+                                
+                                Text(oshi.name)
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.black.opacity(0.8))
+            )
+            .padding()
+        }
+    }
     
     func saveSelectedOshiId(_ oshiId: String) {
         guard let userID = Auth.auth().currentUser?.uid else { return }
@@ -362,7 +336,7 @@ struct ContentView: View {
             editingUsername = oshi.name
         }
     }
-
+    
     // プロフィール保存関数 - ContentViewに追加
     func saveUserProfile() {
         guard let userID = Auth.auth().currentUser?.uid else { return }
@@ -384,9 +358,6 @@ struct ContentView: View {
                 }
             }
         }
-        
-        // 編集モードを終了
-//        isEditingUsername = false
     }
     
     // カスタムタブビュー - 推し活に特化したタブ
@@ -412,41 +383,10 @@ struct ContentView: View {
                 }
             }
         }
-//        .background(cardColor)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
-//        .padding(.top, isSmallDevice() ?   -20 : -50)
     }
-    
-    // プロフィール画像プレースホルダー
-//    var profilePlaceholder: some View {
-//        ZStack {
-//            Circle()
-//                .fill(Color.gray.opacity(0.3))
-//                .frame(width: 100, height: 100)
-//                .overlay(
-//                    Circle()
-//                        .stroke(Color.white, lineWidth: 3)
-//                )
-//                .shadow(color: Color.black.opacity(0.1), radius: 5)
-//            
-//            .shimmering(active: true)
-//            Image(systemName: "person.fill")
-//                .resizable()
-//                .scaledToFit()
-//                .frame(width: 50, height: 50)
-//                .foregroundColor(.white)
-//            
-//            if isShowingImagePicker == false {
-//                Image(systemName: "plus.circle.fill")
-//                    .font(.system(size: 24))
-//                    .foregroundColor(.white)
-//                    .background(Circle().fill(primaryColor))
-//                    .offset(x: 32, y: 32)
-//            }
-//        }
-//    }
     
     var oshiSelector: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -604,23 +544,23 @@ struct ContentView: View {
             print("ユーザーがログインしていないか、推しが選択されていません")
             return
         }
-
+        
         // アップロード中の表示
         withAnimation {
             isLoading = true
         }
-
+        
         let storageRef = Storage.storage().reference()
         let filename = type == .profile ? "profile.jpg" : "background.jpg"
         let imageRef = storageRef.child("oshis/\(userID)/\(oshi.id)/\(filename)")
-
+        
         // プロフィール画像と背景画像で圧縮率を調整
         let compressionQuality: CGFloat = type == .profile ? 0.8 : 0.7
         guard let imageData = image.jpegData(compressionQuality: compressionQuality) else { return }
-
+        
         let metadata = StorageMetadata()
         metadata.contentType = "image/jpeg"
-
+        
         imageRef.putData(imageData, metadata: metadata) { _, error in
             if let error = error {
                 print("アップロードエラー: \(error.localizedDescription)")
@@ -633,8 +573,8 @@ struct ContentView: View {
                         // DBにURLを保存
                         let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
                         let updates: [String: Any] = type == .profile
-                            ? ["imageUrl": url.absoluteString]
-                            : ["backgroundImageUrl": url.absoluteString]
+                        ? ["imageUrl": url.absoluteString]
+                        : ["backgroundImageUrl": url.absoluteString]
                         
                         dbRef.updateChildValues(updates) { error, _ in
                             if error == nil {
@@ -698,7 +638,7 @@ struct ContentView: View {
     // データ読み込み
     func loadAllData() {
         isLoading = true
-
+        
         let dispatchGroup = DispatchGroup()
         
         dispatchGroup.enter()
@@ -706,7 +646,7 @@ struct ContentView: View {
             self.imageUrl = url
             dispatchGroup.leave()
         }
-
+        
         dispatchGroup.enter()
         fetchUserImageURL(type: .background) { url in
             self.backgroundImageUrl = url
@@ -720,7 +660,7 @@ struct ContentView: View {
             }
             dispatchGroup.leave()
         }
-
+        
         dispatchGroup.notify(queue: .main) {
             withAnimation {
                 self.isLoading = false
@@ -762,15 +702,15 @@ struct ContentView: View {
             completion(nil)
             return
         }
-
+        
         let filename = type == .profile ? "profile.jpg" : "background.jpg"
         let storageRef = Storage.storage().reference().child("images/\(userID)/\(filename)")
-
+        
         storageRef.downloadURL { url, error in
             completion(url)
         }
     }
-
+    
     // プロフィール画像のURL取得
     func fetchUserImageURL(completion: @escaping (URL?) -> Void) {
         guard let userID = Auth.auth().currentUser?.uid else {
@@ -778,10 +718,10 @@ struct ContentView: View {
             completion(nil)
             return
         }
-
+        
         let storageRef = Storage.storage().reference()
         let imageRef = storageRef.child("images/\(userID)/profile.jpg")
-
+        
         imageRef.downloadURL { url, error in
             if let error = error {
                 print("画像URL取得エラー: \(error.localizedDescription)")
@@ -791,28 +731,28 @@ struct ContentView: View {
             }
         }
     }
-
+    
     // 画像アップロード
     func uploadImageToFirebase(_ image: UIImage, type: UploadImageType = .profile) {
         guard let userID = Auth.auth().currentUser?.uid else {
             print("ユーザーがログインしていません")
             return
         }
-
+        
         let storageRef = Storage.storage().reference()
         let filename = type == .profile ? "profile.jpg" : "background.jpg"
         let imageRef = storageRef.child("images/\(userID)/\(filename)")
-
+        
         guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
-
+        
         let metadata = StorageMetadata()
         metadata.contentType = "image/jpeg"
-
+        
         // アップロード中の表示
         withAnimation {
             isLoading = true
         }
-
+        
         imageRef.putData(imageData, metadata: metadata) { _, error in
             if let error = error {
                 print("アップロードエラー: \(error.localizedDescription)")
@@ -855,8 +795,8 @@ func isiPhone12Or13() -> Bool {
     // iPhone 12,13 の画面サイズは約幅390ポイント、高さ844ポイント
     return abs(width - 390) < 1 && abs(height - 844) < 1
 }
-      
+
 #Preview {
-//    ContentView()
+    //    ContentView()
     TopView()
 }

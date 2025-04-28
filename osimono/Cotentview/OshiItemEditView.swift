@@ -151,16 +151,16 @@ struct OshiItemEditView: View {
                                             Spacer()
                                             HStack {
                                                 Spacer()
-                                                    Text("画像を変更")
-                                                        .font(.system(size: 14))
-                                                        .padding(.vertical, 6)
-                                                        .padding(.horizontal, 12)
-                                                        .background(Color.black.opacity(0.6))
-                                                        .foregroundColor(.white)
-                                                        .cornerRadius(16)
-                                                }
-                                                .padding(12)
+                                                Text("画像を変更")
+                                                    .font(.system(size: 14))
+                                                    .padding(.vertical, 6)
+                                                    .padding(.horizontal, 12)
+                                                    .background(Color.black.opacity(0.6))
+                                                    .foregroundColor(.white)
+                                                    .cornerRadius(16)
                                             }
+                                            .padding(12)
+                                        }
                                     }
                                 } else if !imageUrl.isEmpty, let url = URL(string: imageUrl) {
                                     AsyncImage(url: url) { phase in
@@ -195,16 +195,16 @@ struct OshiItemEditView: View {
                                                     Spacer()
                                                     HStack {
                                                         Spacer()
-                                                            Text("画像を変更")
-                                                                .font(.system(size: 14))
-                                                                .padding(.vertical, 6)
-                                                                .padding(.horizontal, 12)
-                                                                .background(Color.black.opacity(0.6))
-                                                                .foregroundColor(.white)
-                                                                .cornerRadius(16)
-                                                        }
-                                                        .padding(12)
+                                                        Text("画像を変更")
+                                                            .font(.system(size: 14))
+                                                            .padding(.vertical, 6)
+                                                            .padding(.horizontal, 12)
+                                                            .background(Color.black.opacity(0.6))
+                                                            .foregroundColor(.white)
+                                                            .cornerRadius(16)
                                                     }
+                                                    .padding(12)
+                                                }
                                             }
                                         } else {
                                             imagePlaceholder
@@ -485,7 +485,7 @@ struct OshiItemEditView: View {
                     generateHapticFeedback()
                     saveItem()
                 }
-                .disabled(isLoading || title.isEmpty)
+                    .disabled(isLoading || title.isEmpty)
             )
             .alert(isPresented: $showAlert) {
                 Alert(
@@ -836,17 +836,6 @@ struct OshiItemEditView: View {
     }
 }
 
-// キーボードを非表示にする拡張
-//extension View {
-//    func dismissKeyboardOnTap() -> some View {
-//        self.onTapGesture {
-//            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-//        }
-//    }
-//}
-
-// OshiItemデータモデル（参照用）は省略
-
 struct OshiItem: Identifiable, Codable {
     var id: String = UUID().uuidString
     var title: String?
@@ -937,7 +926,7 @@ struct OshiItem: Identifiable, Codable {
         details: "ダミー詳細",
         createdAt: Date().timeIntervalSince1970
     )
-//    OshiItemEditView(item: dummyItem)
+    //    OshiItemEditView(item: dummyItem)
     TopView()
 }
 

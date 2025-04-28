@@ -36,7 +36,7 @@ struct EnhancedCalendarDayCell: View {
             return .white
         } else {
             return weekday == 1 ? Color(hex: "EF4444") :
-                  (weekday == 7 ? Color(hex: "3B82F6") : textColor)
+            (weekday == 7 ? Color(hex: "3B82F6") : textColor)
         }
     }
     
@@ -100,7 +100,7 @@ struct EnhancedCalendarDayCell: View {
     private func isSameDay(_ d1: Date, _ d2: Date) -> Bool {
         let cal = Calendar.current
         return cal.component(.year, from: d1) == cal.component(.year, from: d2)
-            && cal.component(.month, from: d1) == cal.component(.month, from: d2)
-            && cal.component(.day, from: d1) == cal.component(.day, from: d2)
+        && cal.component(.month, from: d1) == cal.component(.month, from: d2)
+        && cal.component(.day, from: d1) == cal.component(.day, from: d2)
     }
 }

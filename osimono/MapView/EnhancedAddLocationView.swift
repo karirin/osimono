@@ -33,8 +33,8 @@ struct EnhancedAddLocationView: View {
     )
     var onLocationAdded: (String) -> Void
     @State private var oshiItems: [String: Any] = [:]
-
-//    let categories = ["ライブ", "広告", "カフェ", "その他"]
+    
+    //    let categories = ["ライブ", "広告", "カフェ", "その他"]
     let categories = ["聖地巡礼", "撮影スポット", "カフェ・飲食店", "ライブ会場", "グッズショップ", "その他"]
     
     // Computed property for the current address
@@ -54,7 +54,7 @@ struct EnhancedAddLocationView: View {
         case "カフェ・飲食店": return Color(hex: "10B981") // エメラルド/緑
         case "グッズショップ": return Color(hex: "F59E0B") // アンバー/オレンジ
         case "撮影スポット": return Color(hex: "EC4899")  // ピンク
-//        case "聖地巡礼": return Color(hex: "EF4444")        // レッド/赤
+            //        case "聖地巡礼": return Color(hex: "EF4444")        // レッド/赤
         case "その他": return Color(hex: "6B7280")      // グレー
         default: return Color(hex: "6366F1")
         }
@@ -527,7 +527,7 @@ struct EnhancedAddLocationView: View {
             saveOshiItemToFirebase(oshiItemData)
         }
     }
-
+    
     // oshiItemsテーブルへの画像アップロード
     private func uploadImageForOshiItem(_ image: UIImage, completion: @escaping (String?) -> Void) {
         guard let userId = Auth.auth().currentUser?.uid else {
@@ -565,7 +565,7 @@ struct EnhancedAddLocationView: View {
             }
         }
     }
-
+    
     // oshiItemsテーブルにデータを保存
     private func saveOshiItemToFirebase(_ data: [String: Any]) {
         guard let userId = Auth.auth().currentUser?.uid,
@@ -637,7 +637,7 @@ struct EnhancedAddLocationView: View {
         case "カフェ・飲食店": return .cafe
         case "グッズショップ": return .shop
         case "撮影スポット": return .photo
-//        case "聖地巡礼": return .sacred
+            //        case "聖地巡礼": return .sacred
         case "その他": return .other
         default: return .other
         }
@@ -699,55 +699,3 @@ struct EnhancedAddLocationView: View {
         "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
     ]
 }
-
-// Helper function to check if the device is a smaller model
-//func isSmallDevice() -> Bool {
-//    return UIScreen.main.bounds.height <= 667
-//}
-//
-//// Helper struct for map annotation
-//struct MapAnnotationItem: Identifiable {
-//    let id = UUID()
-//    let coordinate: CLLocationCoordinate2D
-//}
-//
-//// Extension for hex colors
-//extension Color {
-//    init(hex: String) {
-//        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-//        var int: UInt64 = 0
-//        Scanner(string: hex).scanHexInt64(&int)
-//        let a, r, g, b: UInt64
-//        switch hex.count {
-//        case 3: // RGB (12-bit)
-//            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-//        case 6: // RGB (24-bit)
-//            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-//        case 8: // ARGB (32-bit)
-//            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-//        default:
-//            (a, r, g, b) = (1, 1, 1, 0)
-//        }
-//
-//        self.init(
-//            .sRGB,
-//            red: Double(r) / 255,
-//            green: Double(g) / 255,
-//            blue:  Double(b) / 255,
-//            opacity: Double(a) / 255
-//        )
-//    }
-//}
-
-// Extension to dismiss keyboard when tapping outside
-//extension View {
-//    func dismissKeyboardOnTap() -> some View {
-//        self.onTapGesture {
-//            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-//        }
-//    }
-//}
-
-//#Preview {
-//    EnhancedAddLocationView(viewModel: LocationViewModel())
-//}

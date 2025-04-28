@@ -129,16 +129,6 @@ struct OshiItemCard: View {
         }
     }
     
-    // アイテムタイプによってアイコンを変更
-//    func iconForItemType(_ type: String) -> String {
-//        switch type {
-//        case "グッズ": return "gift"
-//        case "SNS投稿": return "bubble.right"
-//        case "ライブ記録": return "music.note"
-//        default: return "photo"
-//        }
-//    }
-    
     func iconForItemType(_ type: String) -> String {
         switch type {
         case "すべて":
@@ -158,13 +148,6 @@ struct OshiItemCard: View {
         }
     }
     
-//    "すべて": Color(.systemBlue),
-//    "グッズ": Color(.systemPink),
-//    "聖地巡礼": Color(.systemGreen),
-//    "ライブ記録": Color(.systemOrange),
-//    "SNS投稿": Color(.systemPurple),
-//    "その他": Color(.systemGray)
-    // アイテムタイプによって背景色を変更
     func badgeColor(for type: String) -> Color {
         switch type {
         case "グッズ": return Color(.systemPink)

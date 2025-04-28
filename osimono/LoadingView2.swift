@@ -374,7 +374,7 @@ struct SparkleTrailLoadingView: View {
                     .fill(
                         LinearGradient(
                             gradient: Gradient(colors: [.blue.opacity(0.7 - (Double(i) * 0.1)),
-                                                         .purple.opacity(0.5 - (Double(i) * 0.1))]),
+                                                        .purple.opacity(0.5 - (Double(i) * 0.1))]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -405,10 +405,10 @@ struct SparkleTrailLoadingView: View {
 // 使用例
 struct BestLoadingView: View {
     var body: some View {
-            VStack {
-                
-                ParticleLoadingView1()
-            }
+        VStack {
+            
+            ParticleLoadingView1()
+        }
     }
 }
 

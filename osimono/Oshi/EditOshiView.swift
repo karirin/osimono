@@ -26,7 +26,7 @@ struct EditOshiView: View {
     @State private var isShowingOshiSelector = false
     @State private var selectedOshi: Oshi? // 編集対象の推し
     @State private var showAddOshiForm = false
-
+    
     // 色の定義
     let primaryColor = Color(.systemPink)
     let backgroundColor = Color(UIColor.systemGroupedBackground)
@@ -143,32 +143,32 @@ struct EditOshiView: View {
                                 .foregroundColor(.gray)
                                 .padding(.top, 8)
                             
-                                // 推し変更ボタン（デザイン改善版）
-                                Button(action: {
-                                    withAnimation(.spring()) {
-                                        isShowingOshiSelector = true
-                                    }
-                                    generateHapticFeedback()
-                                }) {
-                                    HStack(spacing: 10) {
-                                        Image(systemName: "arrow.triangle.2.circlepath")
-                                            .font(.system(size: 14))
-                                        Text("別の推しを選択")
-                                            .font(.system(size: 14, weight: .medium))
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Capsule()
-                                            .fill(primaryColor.opacity(0.15))
-                                            .overlay(
-                                                Capsule()
-                                                    .stroke(primaryColor, lineWidth: 1)
-                                            )
-                                    )
-                                    .foregroundColor(primaryColor)
+                            // 推し変更ボタン（デザイン改善版）
+                            Button(action: {
+                                withAnimation(.spring()) {
+                                    isShowingOshiSelector = true
                                 }
-                                .padding(.top, 15)
+                                generateHapticFeedback()
+                            }) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                        .font(.system(size: 14))
+                                    Text("別の推しを選択")
+                                        .font(.system(size: 14, weight: .medium))
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(primaryColor.opacity(0.15))
+                                        .overlay(
+                                            Capsule()
+                                                .stroke(primaryColor, lineWidth: 1)
+                                        )
+                                )
+                                .foregroundColor(primaryColor)
+                            }
+                            .padding(.top, 15)
                         }
                         
                         // 名前フィールド
@@ -285,7 +285,7 @@ struct EditOshiView: View {
                     }
                     
                     // アップロード処理
-//                    uploadImageToFirebase(pickedImage, type: type)
+                    //                    uploadImageToFirebase(pickedImage, type: type)
                 }
             )
         }
@@ -540,8 +540,8 @@ struct EditOshiView: View {
                 if let url = url {
                     let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
                     let updates: [String: Any] = type == .profile
-                        ? ["imageUrl": url.absoluteString]
-                        : ["backgroundImageUrl": url.absoluteString]
+                    ? ["imageUrl": url.absoluteString]
+                    : ["backgroundImageUrl": url.absoluteString]
                     
                     dbRef.updateChildValues(updates)
                 }

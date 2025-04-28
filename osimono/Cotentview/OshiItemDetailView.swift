@@ -253,16 +253,16 @@ struct OshiItemDetailView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarTitle("", displayMode: .inline)
         .navigationBarItems(leading:
-            Button(action: {
-                generateHapticFeedback()
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                HStack {
-                    Image(systemName: "chevron.left")
-                    Text("戻る")
-                }
-                .foregroundColor(primaryColor)
+                                Button(action: {
+            generateHapticFeedback()
+            presentationMode.wrappedValue.dismiss()
+        }) {
+            HStack {
+                Image(systemName: "chevron.left")
+                Text("戻る")
             }
+            .foregroundColor(primaryColor)
+        }
         )
         .navigationBarItems(
             trailing: Button(action: {
@@ -270,8 +270,8 @@ struct OshiItemDetailView: View {
                 isEditing = true
             }) {
                 Text("編集")
-                .foregroundColor(primaryColor)
-                .frame(maxWidth: .infinity)
+                    .foregroundColor(primaryColor)
+                    .frame(maxWidth: .infinity)
             }
         )
         .alert(isPresented: $showDeleteConfirmation) {
