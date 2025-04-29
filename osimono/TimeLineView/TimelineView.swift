@@ -18,6 +18,8 @@ struct TimelineView: View {
     private let cardBackgroundColor = Color(UIColor.secondarySystemBackground)
     private let textColor = Color(UIColor.label)
     private let secondaryTextColor = Color(UIColor.secondaryLabel)
+    @State private var showAddOshiForm = false
+    @State private var showingOshiAlert = false
     
     var oshiId: String
     
@@ -89,7 +91,13 @@ struct TimelineView: View {
                 HStack {
                     Spacer()
                     Button(action: {
-                        showNewEventView = true
+                        generateHapticFeedback()
+                        if oshiId == "default" {
+//                            showingOshiAlert = true
+                            showNewEventView = true
+                        } else {
+                            showNewEventView = true
+                        }
                     }) {
                         Image(systemName: "plus")
                             .font(.system(size: 20, weight: .semibold))
@@ -106,12 +114,32 @@ struct TimelineView: View {
                 }
             }
         }
+        .overlay(
+            ZStack{
+                if showingOshiAlert {
+                    OshiAlertView(
+                        title: "推しを登録しよう！",
+                        message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
+                        buttonText: "推しを登録する",
+                        action: {
+                            showAddOshiForm = true
+                        },
+                        isShowing: $showingOshiAlert
+                    )
+                    .transition(.opacity)
+                    .zIndex(1)
+                }
+            }
+        )
         .onAppear {
             viewModel.updateCurrentOshi(id: oshiId)
             viewModel.fetchEvents(forOshiId: oshiId)
         }
         .onChange(of: oshiId) { newId in
             viewModel.updateCurrentOshi(id: newId)
+        }
+        .fullScreenCover(isPresented: $showAddOshiForm) {
+            AddOshiView()
         }
         .fullScreenCover(isPresented: $showNewEventView) {
             // イベント作成ビューが閉じられた時にイベントリストを更新

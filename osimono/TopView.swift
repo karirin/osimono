@@ -28,14 +28,14 @@ struct TopView: View {
                         .padding()
                 }
                 ZStack {
-                    MapView(oshiId: selectedOshiId)
+                    MapView(oshiId: selectedOshiId ?? "default")
                 }
                 .tabItem {
                     Image(systemName: "mappin.and.ellipse")
                     Text("聖地巡礼")
                 }
                 ZStack {
-                    TimelineView(oshiId: selectedOshiId)
+                    TimelineView(oshiId: selectedOshiId ?? "default")
                 }
                 .tabItem {
                     Image(systemName: "calendar.day.timeline.left")

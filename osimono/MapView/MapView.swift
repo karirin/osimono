@@ -20,6 +20,8 @@ struct MapView: View {
     @State private var selectedCategories: Set<String> = ["ライブ会場", "ロケ地", "カフェ・飲食店", "グッズショップ", "撮影スポット", "聖地巡礼", "その他"]
     @State private var showUserProfile = false
     var oshiId: String
+    @State private var showAddOshiForm = false
+    @State private var showingOshiAlert = false
     
     var body: some View {
         NavigationView {
@@ -148,7 +150,12 @@ struct MapView: View {
                         // 追加ボタン
                         Button(action: {
                             generateHapticFeedback()
-                            showAddLocation = true
+                            if oshiId == "default" {
+                                showAddLocation = true
+//                                showingOshiAlert = true
+                            } else {
+                                showAddLocation = true
+                            }
                         }) {
                             ZStack {
                                 Circle()
@@ -169,6 +176,23 @@ struct MapView: View {
                         }
                         .padding(.trailing, 16)
                         .padding(.bottom, 190) // Position above the card list
+                    }
+                }
+            )
+            .overlay(
+                ZStack{
+                    if showingOshiAlert {
+                        OshiAlertView(
+                            title: "推しを登録しよう！",
+                            message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
+                            buttonText: "推しを登録する",
+                            action: {
+                                showAddOshiForm = true
+                            },
+                            isShowing: $showingOshiAlert
+                        )
+                        .transition(.opacity)
+                        .zIndex(1)
                     }
                 }
             )
@@ -202,6 +226,9 @@ struct MapView: View {
             .onChange(of: oshiId) { newId in
                 // 推しが変更されたら更新
                 viewModel.updateCurrentOshi(id: newId)
+            }
+            .fullScreenCover(isPresented: $showAddOshiForm) {
+                AddOshiView()
             }
             .fullScreenCover(isPresented: $showAddLocation) {
                 EnhancedAddLocationView(

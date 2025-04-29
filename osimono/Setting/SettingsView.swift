@@ -21,12 +21,14 @@ struct SettingsView: View {
     @State private var showingReviewConfirmation = false
     @Environment(\.requestReview) private var requestReview
     
-    // 色の定義
-    let primaryColor = Color(.systemPink) // 明るいピンク
-    let accentColor = Color(.purple) // 紫系
-    let backgroundColor = Color(.white) // 明るい背景色
-    let cardColor = Color(.white) // カード背景色
-    let textColor = Color(.black) // テキスト色
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // 色の定義を動的に変更
+    var primaryColor: Color { Color(.systemPink) } // そのまま使用可能
+    var accentColor: Color { Color(.purple) } // そのまま使用可能
+    var backgroundColor: Color { colorScheme == .dark ? Color(.systemBackground) : Color(.white) }
+    var cardColor: Color { colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.white) }
+    var textColor: Color { colorScheme == .dark ? Color(.white) : Color(.black) }
     
     @State private var showingNotificationSettings = false
     @State private var showingPrivacySettings = false

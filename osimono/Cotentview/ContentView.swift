@@ -33,6 +33,7 @@ struct ContentView: View {
     @State private var selectedOshi: Oshi? = nil
     @State private var oshiList: [Oshi] = []
     @State private var showAddOshiForm = false
+    @State private var showingOshiAlert = false
     
     // テーマカラーの定義 - アイドル/推し活向けに明るく元気なカラースキーム
     let primaryColor = Color(.systemPink) // 明るいピンク
@@ -72,7 +73,7 @@ struct ContentView: View {
                         }
                     )
                     
-                    OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger,editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton, isShowingEditOshiView: $isShowingEditOshiView)
+                    OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger, showingOshiAlert: $showingOshiAlert, editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton, isShowingEditOshiView: $isShowingEditOshiView)
                 }
             }
             .overlay(
@@ -140,6 +141,18 @@ struct ContentView: View {
             ZStack {
                 if isShowingOshiSelector {
                     oshiSelectorOverlay
+                }
+                if showingOshiAlert {
+                    OshiAlertView(
+                        title: "推しを登録しよう！",
+                        message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
+                        buttonText: "推しを登録する",
+                        action: {
+                            showAddOshiForm = true
+                        },
+                        isShowing: $showingOshiAlert
+                    )
+                    .transition(.opacity)
                 }
             }
         )
