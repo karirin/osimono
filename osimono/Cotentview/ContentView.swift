@@ -34,6 +34,8 @@ struct ContentView: View {
     @State private var oshiList: [Oshi] = []
     @State private var showAddOshiForm = false
     @State private var showingOshiAlert = false
+    @State private var showingAnniversaryAlert = false
+    @State private var anniversaryDays = 0
     
     // テーマカラーの定義 - アイドル/推し活向けに明るく元気なカラースキーム
     let primaryColor = Color(.systemPink) // 明るいピンク
@@ -136,6 +138,9 @@ struct ContentView: View {
         .accentColor(primaryColor)
         .onAppear {
             fetchOshiList()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                checkOshiAnniversary()
+            }
         }
         .overlay(
             ZStack {
@@ -151,6 +156,15 @@ struct ContentView: View {
                             showAddOshiForm = true
                         },
                         isShowing: $showingOshiAlert
+                    )
+                    .transition(.opacity)
+                }
+                if showingAnniversaryAlert {
+                    OshiAnniversaryView(
+                        isShowing: $showingAnniversaryAlert,
+                        days: anniversaryDays,
+                        oshiName: selectedOshi?.name ?? "推し",
+                        imageUrl: selectedOshi?.imageUrl
                     )
                     .transition(.opacity)
                 }
@@ -314,6 +328,37 @@ struct ContentView: View {
                     .fill(Color.black.opacity(0.8))
             )
             .padding()
+        }
+    }
+    
+    func checkOshiAnniversary() {
+        guard let selectedOshi = selectedOshi,
+              let createdAt = selectedOshi.createdAt else { return }
+        
+        // 登録日の日付を取得
+        let creationDate = Date(timeIntervalSince1970: createdAt)
+        let today = Date()
+        
+        // 経過日数を計算
+        let days = Date.daysBetween(start: creationDate, end: today)
+        
+        // 10日ごとの節目かどうかをチェック
+        if days > 0 && days % 10 == 0 {
+            // UserDefaultsを使って、既に表示済みの記念日を管理
+            let userDefaults = UserDefaults.standard
+            let anniversaryKey = "oshi_anniversary_\(selectedOshi.id)_\(days)"
+            
+            // まだ表示していない場合にのみ表示
+            if !userDefaults.bool(forKey: anniversaryKey) {
+                // 表示フラグをセット
+                userDefaults.set(true, forKey: anniversaryKey)
+                
+                // モーダル表示をトリガー
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.anniversaryDays = days
+                    self.showingAnniversaryAlert = true
+                }
+            }
         }
     }
     
