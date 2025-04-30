@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		180348852DC0CEFE00AD2922 /* Confetti in Frameworks */ = {isa = PBXBuildFile; productRef = 180348842DC0CEFE00AD2922 /* Confetti */; };
 		182AD6682D8F50B9006F9F09 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 182AD6672D8F50B9006F9F09 /* Lottie */; };
 		1870B01A2D8BD224004B827B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0192D8BD224004B827B /* FirebaseAnalytics */; };
 		1870B01C2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B01B2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion */; };
@@ -107,6 +108,7 @@
 				187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */,
 				18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */,
 				1870B0262D8BD224004B827B /* FirebaseAuthCombine-Community in Frameworks */,
+				180348852DC0CEFE00AD2922 /* Confetti in Frameworks */,
 				1870B02A2D8BD224004B827B /* FirebaseCrashlytics in Frameworks */,
 				1870B0282D8BD224004B827B /* FirebaseCore in Frameworks */,
 				1870B01C2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
@@ -199,6 +201,7 @@
 				182AD6672D8F50B9006F9F09 /* Lottie */,
 				18F429E72DB291EE007C198B /* CropViewController */,
 				18F429E92DB291EE007C198B /* TOCropViewController */,
+				180348842DC0CEFE00AD2922 /* Confetti */,
 			);
 			productName = osimono;
 			productReference = 1870AFB32D8BC85E004B827B /* osimono.app */;
@@ -288,6 +291,7 @@
 				187FE25B2D8F4AAF00D58928 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */,
 				182AD6662D8F50B9006F9F09 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 				18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */,
+				180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1870AFB42D8BC85E004B827B /* Products */;
@@ -658,6 +662,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ottijp/confetti-swiftui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.0;
+			};
+		};
 		182AD6662D8F50B9006F9F09 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
@@ -701,6 +713,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		180348842DC0CEFE00AD2922 /* Confetti */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */;
+			productName = Confetti;
+		};
 		182AD6672D8F50B9006F9F09 /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 182AD6662D8F50B9006F9F09 /* XCRemoteSwiftPackageReference "lottie-ios" */;
