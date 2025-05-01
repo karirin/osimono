@@ -771,5 +771,5 @@ struct LoadingView11: View {
 }
 
 #Preview {
-    LoadingView10()
+    LoadingView12()
 }

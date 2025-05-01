@@ -899,17 +899,17 @@ struct LoadingView2: View {
     var body: some View {
         ZStack {
             // 背景
-            Color(hex: "1A1A2E")
-                .edgesIgnoringSafeArea(.all)
+//            Color(hex: "1A1A2E")
+//                .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 50) {
                 // アプリ名
-                Text("推しラブ")
-                    .font(.system(size: 42, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
-                    .shadow(color: Color(hex: "FF2E63").opacity(0.5), radius: 10, x: 0, y: 0)
-                    .opacity(showTitle ? 1 : 0)
-                    .scaleEffect(showTitle ? 1 : 0.8)
+//                Text("推しラブ")
+//                    .font(.system(size: 42, weight: .black, design: .rounded))
+//                    .foregroundColor(.white)
+//                    .shadow(color: Color(hex: "FF2E63").opacity(0.5), radius: 10, x: 0, y: 0)
+//                    .opacity(showTitle ? 1 : 0)
+//                    .scaleEffect(showTitle ? 1 : 0.8)
                 
                 // アイコングリッドアニメーション
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 30) {
@@ -920,7 +920,8 @@ struct LoadingView2: View {
                             .frame(width: 60, height: 60)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(hex: "16213E"))
+//                                    .fill(Color(hex: "16213E"))
+                                    .fill(Color(.white))
                                     .shadow(color: Color(hex: "FF2E63").opacity(0.3), radius: 8, x: 0, y: 4)
                             )
                             .offset(y: animateIcons ? 0 : 50)
@@ -935,17 +936,18 @@ struct LoadingView2: View {
                 .padding(.horizontal)
                 
                 // ローディングテキスト
-                Text("推し活データを取得中...")
-                    .font(.system(.body, design: .rounded))
-                    .foregroundColor(Color(hex: "EEEEEE"))
-                    .opacity(showTitle ? 1 : 0)
-                    .animation(
-                        Animation.easeIn.delay(0.8),
-                        value: showTitle
-                    )
+//                Text("推し活データを取得中...")
+//                    .font(.system(.body, design: .rounded))
+//                    .foregroundColor(Color(hex: "EEEEEE"))
+//                    .opacity(showTitle ? 1 : 0)
+//                    .animation(
+//                        Animation.easeIn.delay(0.8),
+//                        value: showTitle
+//                    )
                 
                 // プログレスインジケーター
-                FancyProgressIndicator()
+//                FancyProgressIndicator()
+                DotPulseLoadingView()
                     .padding(.top, 20)
             }
             .padding()
@@ -1122,5 +1124,5 @@ struct LoadingDots: View {
 
 
 #Preview {
-    LoadingView4()
+    LoadingView2()
 }

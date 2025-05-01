@@ -270,6 +270,7 @@ struct ProfileSection: View {
         .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
             loadAllData()
             fetchOshiList()
+            showChangeOshiButton.toggle()
         }) {
             AddOshiView()
         }

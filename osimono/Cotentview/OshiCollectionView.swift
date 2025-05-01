@@ -244,7 +244,8 @@ struct OshiCollectionView: View {
                     // ローディング表示
                     VStack {
                         Spacer()
-                        BestLoadingView()
+//                        BestLoadingView()
+                        LoadingView2()
                         Spacer()
                     }
                 } else if filteredItems.isEmpty {
@@ -322,6 +323,7 @@ struct OshiCollectionView: View {
                     Button(action: {
                         withAnimation(.spring()) {
                             generateHapticFeedback()
+                            print("oshiid1       :\(oshiId)")
                             if oshiId == "default" {
                                 showingOshiAlert = true
                             } else {
@@ -346,6 +348,7 @@ struct OshiCollectionView: View {
                     Spacer()
                     Button(action: {
                         withAnimation(.spring()) {
+                            print("oshiid2       :\(oshiId)")
                             // ここで検証を追加
                             if oshiId == "default" {
                                 showingOshiAlert = true
@@ -478,7 +481,9 @@ struct OshiCollectionView: View {
             
             DispatchQueue.main.async {
                 self.oshiItems = newItems
-                self.isLoading = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.isLoading = false
+                }
             }
         }
     }
