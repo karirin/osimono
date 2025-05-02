@@ -21,7 +21,7 @@ struct EnhancedAddLocationView: View {
     @State private var selectedImage: UIImage? = nil
     @State private var isShowingImagePicker: Bool = false
     @State private var note: String = ""
-    @State private var selectedCategory: String = "ライブ会場"
+    @State private var selectedCategory: String = "聖地巡礼"
     @State private var isShowingCategoryPicker = false
     @State private var coordinate: CLLocationCoordinate2D?
     @StateObject private var locationManager = LocationManager()
@@ -33,6 +33,7 @@ struct EnhancedAddLocationView: View {
     )
     var onLocationAdded: (String) -> Void
     @State private var oshiItems: [String: Any] = [:]
+    @State private var isSaving: Bool = false
     
     //    let categories = ["ライブ", "広告", "カフェ", "その他"]
     let categories = ["聖地巡礼", "撮影スポット", "カフェ・飲食店", "ライブ会場", "グッズショップ", "その他"]
@@ -61,374 +62,394 @@ struct EnhancedAddLocationView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            ZStack {
-                Rectangle()
-                    .fill(LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "6366F1"), Color(hex: "A855F7")]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ))
-                    .edgesIgnoringSafeArea(.all)
-                
-                HStack {
-                    Button(action: {
-                        generateHapticFeedback()
-                        self.presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(8)
-                            .background(Color.black.opacity(0.2))
-                            .clipShape(Circle())
-                    }
+        ZStack{
+            VStack(spacing: 0) {
+                // Header
+                ZStack {
+                    Rectangle()
+                        .fill(LinearGradient(
+                            gradient: Gradient(colors: [Color(hex: "6366F1"), Color(hex: "A855F7")]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ))
+                        .edgesIgnoringSafeArea(.all)
                     
-                    Spacer()
-                    
-                    Text("推しスポット登録")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.leading,20)
-                    Spacer()
-                    
-                    Button(action: {
-                        generateHapticFeedback()
-                        // Save the location
-                        if let coordinate = coordinate {
-                            // 両方のテーブルに保存
-                            saveToLocationsAndOshiItems(coordinate: coordinate)
-                        } else {
-                            // Try to geocode the address if coordinate is nil
-                            let geocoder = CLGeocoder()
-                            geocoder.geocodeAddressString(currentAddress) { placemarks, error in
-                                if let coordinate = placemarks?.first?.location?.coordinate {
-                                    // 両方のテーブルに保存
-                                    self.saveToLocationsAndOshiItems(coordinate: coordinate)
-                                } else {
-                                    self.presentationMode.wrappedValue.dismiss()
-                                }
-                            }
+                    HStack {
+                        Button(action: {
+                            generateHapticFeedback()
+                            self.presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(8)
+                                .background(Color.black.opacity(0.2))
+                                .clipShape(Circle())
                         }
-                    }) {
-                        Text("保存")
-                            .font(.system(size: 16, weight: .bold))
+                        
+                        Spacer()
+                        
+                        Text("推しスポット登録")
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.white.opacity(0.2))
-                            .cornerRadius(16)
-                    }
-                }
-                .padding(.horizontal)
-            }
-            .padding(.top,isSmallDevice() ? 0 : 40)
-            .edgesIgnoringSafeArea(.all)
-            .frame(height: 50)
-            
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Image selector
-                    Button(action: {
-                        generateHapticFeedback()
-                        isShowingImagePicker = true
-                    }) {
-                        ZStack {
-                            if let image = selectedImage {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(height: 200)
-                                    .frame(maxWidth: .infinity)
-                                    .clipped()
-                                    .cornerRadius(16)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
+                            .padding(.leading,20)
+                        Spacer()
+                        
+                        Button(action: {
+                            generateHapticFeedback()
+                            isSaving = true
+                            // Save the location
+                            if let coordinate = coordinate {
+                                // 両方のテーブルに保存
+                                saveToLocationsAndOshiItems(coordinate: coordinate)
                             } else {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.1))
-                                    .frame(height: 200)
-                                    .frame(maxWidth: .infinity)
-                                    .cornerRadius(16)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
-                                    .overlay(
-                                        VStack(spacing: 8) {
-                                            Image(systemName: "photo")
-                                                .font(.system(size: 40))
-                                                .foregroundColor(.gray)
-                                            
-                                            Text("タップして画像を追加")
-                                                .font(.system(size: 16))
-                                                .foregroundColor(.gray)
-                                        }
-                                    )
-                            }
-                            if let image = selectedImage {
-                                // Edit button overlay
-                                VStack {
-                                    HStack {
-                                        Spacer()
-                                        Button(action: {
-                                            generateHapticFeedback()
-                                            selectedImage = nil
-                                        }) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.system(size: 22))
-                                                .foregroundColor(.white)
-                                                .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
-                                                .padding(12)
-                                        }
-                                    }
-                                    Spacer()
-                                    HStack {
-                                        Spacer()
-                                        
-                                        Button(action: {
-                                            generateHapticFeedback()
-                                            isShowingImagePicker = true
-                                        }) {
-                                            Text("画像を変更")
-                                                .font(.system(size: 14))
-                                                .padding(.vertical, 6)
-                                                .padding(.horizontal, 12)
-                                                .background(Color.black.opacity(0.6))
-                                                .foregroundColor(.white)
-                                                .cornerRadius(16)
-                                        }
-                                        .padding(12)
+                                // Try to geocode the address if coordinate is nil
+                                let geocoder = CLGeocoder()
+                                geocoder.geocodeAddressString(currentAddress) { placemarks, error in
+                                    if let coordinate = placemarks?.first?.location?.coordinate {
+                                        // 両方のテーブルに保存
+                                        self.saveToLocationsAndOshiItems(coordinate: coordinate)
+                                    } else {
+                                        self.isSaving = false
+                                        self.presentationMode.wrappedValue.dismiss()
                                     }
                                 }
                             }
+                        }) {
+                            Text("保存")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(16)
                         }
                     }
                     .padding(.horizontal)
-                    
-                    // Category Selector
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("カテゴリー")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.black)
-                        
-                        ScrollView(.horizontal, showsIndicators: false){
-                            HStack {
-                                ForEach(categories, id: \.self) { category in
-                                    Button(action: {
-                                        generateHapticFeedback()
-                                        selectedCategory = category
-                                    }) {
-                                        HStack {
-                                            Circle()
-                                                .fill(categoryColor(category))
-                                                .frame(width: 12, height: 12)
-                                            
-                                            Text(category)
-                                                .font(.system(size: 14))
-                                        }
-                                        .padding(.vertical, 8)
-                                        .padding(.horizontal, 12)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 16)
-                                                .fill(selectedCategory == category ?
-                                                      categoryColor(category).opacity(0.15) :
-                                                        Color.gray.opacity(0.1))
-                                        )
+                }
+                .padding(.top,isSmallDevice() ? 0 : 40)
+                .edgesIgnoringSafeArea(.all)
+                .frame(height: 50)
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Image selector
+                        Button(action: {
+                            generateHapticFeedback()
+                            isShowingImagePicker = true
+                        }) {
+                            ZStack {
+                                if let image = selectedImage {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(height: 200)
+                                        .frame(maxWidth: .infinity)
+                                        .clipped()
+                                        .cornerRadius(16)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 16)
-                                                .stroke(selectedCategory == category ?
-                                                        categoryColor(category) :
-                                                            Color.clear,
-                                                        lineWidth: 1)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                } else {
+                                    Rectangle()
+                                        .fill(Color.gray.opacity(0.1))
+                                        .frame(height: 200)
+                                        .frame(maxWidth: .infinity)
+                                        .cornerRadius(16)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                        .overlay(
+                                            VStack(spacing: 8) {
+                                                Image(systemName: "photo")
+                                                    .font(.system(size: 40))
+                                                    .foregroundColor(.gray)
+                                                
+                                                Text("タップして画像を追加")
+                                                    .font(.system(size: 16))
+                                                    .foregroundColor(.gray)
+                                            }
+                                        )
+                                }
+                                if let image = selectedImage {
+                                    // Edit button overlay
+                                    VStack {
+                                        HStack {
+                                            Spacer()
+                                            Button(action: {
+                                                generateHapticFeedback()
+                                                selectedImage = nil
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.system(size: 22))
+                                                    .foregroundColor(.white)
+                                                    .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                                    .padding(12)
+                                            }
+                                        }
+                                        Spacer()
+                                        HStack {
+                                            Spacer()
+                                            
+                                            Button(action: {
+                                                generateHapticFeedback()
+                                                isShowingImagePicker = true
+                                            }) {
+                                                Text("画像を変更")
+                                                    .font(.system(size: 14))
+                                                    .padding(.vertical, 6)
+                                                    .padding(.horizontal, 12)
+                                                    .background(Color.black.opacity(0.6))
+                                                    .foregroundColor(.white)
+                                                    .cornerRadius(16)
+                                            }
+                                            .padding(12)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        // Category Selector
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("カテゴリー")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.black)
+                            
+                            ScrollView(.horizontal, showsIndicators: false){
+                                HStack {
+                                    ForEach(categories, id: \.self) { category in
+                                        Button(action: {
+                                            generateHapticFeedback()
+                                            selectedCategory = category
+                                        }) {
+                                            HStack {
+                                                Circle()
+                                                    .fill(categoryColor(category))
+                                                    .frame(width: 12, height: 12)
+                                                
+                                                Text(category)
+                                                    .font(.system(size: 14))
+                                            }
+                                            .padding(.vertical, 8)
+                                            .padding(.horizontal, 12)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .fill(selectedCategory == category ?
+                                                          categoryColor(category).opacity(0.15) :
+                                                            Color.gray.opacity(0.1))
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .stroke(selectedCategory == category ?
+                                                            categoryColor(category) :
+                                                                Color.clear,
+                                                            lineWidth: 1)
+                                            )
+                                        }
+                                        .foregroundColor(selectedCategory == category ?
+                                                         categoryColor(category) : .gray)
+                                    }
+                                }
+                                .padding(3)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .padding(.horizontal)
+                        
+                        // Title Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("タイトル")
+                                    .font(.system(size: 16, weight: .medium))
+                                
+                                Spacer()
+                                
+                                Text("\(title.count) / 48")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gray)
+                            }
+                            
+                            TextField("例：XX推しライブ会場", text: $title)
+                                .padding()
+                                .background(Color(UIColor.systemGray6))
+                                .cornerRadius(12)
+                        }
+                        .padding(.horizontal)
+                        
+                        // New 5-Star Rating System
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack{
+                                Text("評価")
+                                    .font(.system(size: 16, weight: .medium))
+                                Spacer()
+                            }
+                            StarRatingView(rating: $userRating, size: 40)
+                        }
+                        .padding(.horizontal)
+                        
+                        // Address inputs
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("住所")
+                                    .font(.system(size: 16, weight: .medium))
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    generateHapticFeedback()
+                                    useCurrentLocation()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "location.fill")
+                                            .font(.system(size: 12))
+                                        
+                                        Text("現在地を使用")
+                                            .font(.system(size: 14))
+                                    }
+                                    .foregroundColor(Color(hex: "6366F1"))
+                                }
+                            }
+                            
+                            VStack(spacing: 12) {
+                                // Prefecture picker
+                                Menu {
+                                    Picker("", selection: $prefecture) {
+                                        ForEach(["都道府県"] + prefectures, id: \.self) { pref in
+                                            Text(pref).tag(pref)
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(prefecture)
+                                            .foregroundColor(prefecture == "都道府県" ? .gray : .black)
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "chevron.down")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding()
+                                    .background(Color(UIColor.systemGray6))
+                                    .cornerRadius(12)
+                                }
+                                
+                                // Street address
+                                TextField("市区町村・番地", text: $streetAddress)
+                                    .padding()
+                                    .background(Color(UIColor.systemGray6))
+                                    .cornerRadius(12)
+                                
+                                // Building name
+                                TextField("ビル名・階数（任意）", text: $buildingName)
+                                    .padding()
+                                    .background(Color(UIColor.systemGray6))
+                                    .cornerRadius(12)
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        // Map preview
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("場所の確認")
+                                .font(.system(size: 16, weight: .medium))
+                            
+                            if let coordinate = coordinate {
+                                Map(coordinateRegion: $region, annotationItems: [MapAnnotationItem(coordinate: coordinate)]) { item in
+                                    MapAnnotation(coordinate: item.coordinate, anchorPoint: CGPoint(x: 0.5, y: 0.5)) {
+                                        MapPinView(
+                                            imageName: localImageURL ?? "",
+                                            isSelected: true,
+                                            pinType: getPinType(for: selectedCategory)
                                         )
                                     }
-                                    .foregroundColor(selectedCategory == category ?
-                                                     categoryColor(category) : .gray)
                                 }
-                            }
-                            .padding(3)
-                        }
-                        .padding(.vertical, 4)
-                    }
-                    .padding(.horizontal)
-                    
-                    // Title Field
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("タイトル")
-                                .font(.system(size: 16, weight: .medium))
-                            
-                            Spacer()
-                            
-                            Text("\(title.count) / 48")
-                                .font(.system(size: 14))
-                                .foregroundColor(.gray)
-                        }
-                        
-                        TextField("例：XX推しライブ会場", text: $title)
-                            .padding()
-                            .background(Color(UIColor.systemGray6))
-                            .cornerRadius(12)
-                    }
-                    .padding(.horizontal)
-                    
-                    // New 5-Star Rating System
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack{
-                            Text("評価")
-                                .font(.system(size: 16, weight: .medium))
-                            Spacer()
-                        }
-                        StarRatingView(rating: $userRating, size: 40)
-                    }
-                    .padding(.horizontal)
-                    
-                    // Address inputs
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("住所")
-                                .font(.system(size: 16, weight: .medium))
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                generateHapticFeedback()
-                                useCurrentLocation()
-                            }) {
-                                HStack {
-                                    Image(systemName: "location.fill")
-                                        .font(.system(size: 12))
+                                .frame(height: 200)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                            } else {
+                                ZStack {
+                                    Rectangle()
+                                        .fill(Color.gray.opacity(0.1))
+                                        .frame(height: 200)
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
                                     
-                                    Text("現在地を使用")
-                                        .font(.system(size: 14))
-                                }
-                                .foregroundColor(Color(hex: "6366F1"))
-                            }
-                        }
-                        
-                        VStack(spacing: 12) {
-                            // Prefecture picker
-                            Menu {
-                                Picker("", selection: $prefecture) {
-                                    ForEach(["都道府県"] + prefectures, id: \.self) { pref in
-                                        Text(pref).tag(pref)
+                                    if currentAddress.isEmpty {
+                                        Text("住所を入力すると地図が表示されます")
+                                            .foregroundColor(.gray)
+                                    } else {
+                                        ProgressView("位置情報を検索中...")
                                     }
                                 }
-                            } label: {
-                                HStack {
-                                    Text(prefecture)
-                                        .foregroundColor(prefecture == "都道府県" ? .gray : .black)
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.down")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gray)
-                                }
-                                .padding()
-                                .background(Color(UIColor.systemGray6))
-                                .cornerRadius(12)
                             }
-                            
-                            // Street address
-                            TextField("市区町村・番地", text: $streetAddress)
-                                .padding()
-                                .background(Color(UIColor.systemGray6))
-                                .cornerRadius(12)
-                            
-                            // Building name
-                            TextField("ビル名・階数（任意）", text: $buildingName)
-                                .padding()
-                                .background(Color(UIColor.systemGray6))
-                                .cornerRadius(12)
                         }
-                    }
-                    .padding(.horizontal)
-                    
-                    // Map preview
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("場所の確認")
-                            .font(.system(size: 16, weight: .medium))
+                        .padding(.horizontal)
                         
-                        if let coordinate = coordinate {
-                            Map(coordinateRegion: $region, annotationItems: [MapAnnotationItem(coordinate: coordinate)]) { item in
-                                MapAnnotation(coordinate: item.coordinate, anchorPoint: CGPoint(x: 0.5, y: 0.5)) {
-                                    MapPinView(
-                                        imageName: localImageURL ?? "",
-                                        isSelected: true,
-                                        pinType: getPinType(for: selectedCategory)
-                                    )
-                                }
-                            }
-                            .frame(height: 200)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                        } else {
-                            ZStack {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.1))
-                                    .frame(height: 200)
-                                    .cornerRadius(12)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
+                        // Note Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("メモ")
+                                    .font(.system(size: 16, weight: .medium))
                                 
-                                if currentAddress.isEmpty {
-                                    Text("住所を入力すると地図が表示されます")
-                                        .foregroundColor(.gray)
-                                } else {
-                                    ProgressView("位置情報を検索中...")
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    // Note Field
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("メモ")
-                                .font(.system(size: 16, weight: .medium))
-                            
-                            Spacer()
-                            
-                            Text("\(note.count) / 200")
-                                .font(.system(size: 14))
-                                .foregroundColor(.gray)
-                        }
-                        
-                        ZStack(alignment: .topLeading) {
-                            if note.isEmpty {
-                                Text("どんな推しスポットか簡単に説明しましょう")
+                                Spacer()
+                                
+                                Text("\(note.count) / 200")
+                                    .font(.system(size: 14))
                                     .foregroundColor(.gray)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 12)
                             }
                             
-                            TextEditor(text: $note)
-                                .padding(4)
-                                .frame(height: 100)
-                                .background(Color(UIColor.systemGray6))
-                                .cornerRadius(12)
-                                .opacity(note.isEmpty ? 0.25 : 1)
+                            ZStack(alignment: .topLeading) {
+                                if note.isEmpty {
+                                    Text("どんな推しスポットか簡単に説明しましょう")
+                                        .foregroundColor(.gray)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 12)
+                                }
+                                
+                                TextEditor(text: $note)
+                                    .padding(4)
+                                    .frame(height: 100)
+                                    .background(Color(UIColor.systemGray6))
+                                    .cornerRadius(12)
+                                    .opacity(note.isEmpty ? 0.25 : 1)
+                            }
+                            .background(Color(UIColor.systemGray6))
+                            .cornerRadius(12)
                         }
-                        .background(Color(UIColor.systemGray6))
-                        .cornerRadius(12)
+                        .padding(.horizontal)
+                        
+                        Spacer(minLength: 40)
                     }
-                    .padding(.horizontal)
-                    
-                    Spacer(minLength: 40)
+                    .padding(.top, 16)
+                    .padding(.bottom, 80)
                 }
-                .padding(.top, 16)
-                .padding(.bottom, 80)
+            }
+            if isSaving {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .overlay(
+                        VStack {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                                .tint(.white)
+                            Text("保存中...")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding(.top, 10)
+                        }
+                    )
+                    .transition(.opacity)
             }
         }
         .dismissKeyboardOnTap()
@@ -609,7 +630,10 @@ struct EnhancedAddLocationView: View {
                 // Call the callback with the new location ID
                 onLocationAdded(newLocationId)
             }
-            self.presentationMode.wrappedValue.dismiss()
+            DispatchQueue.main.async {
+                self.isSaving = false
+                self.presentationMode.wrappedValue.dismiss()
+            }
         }
     }
     

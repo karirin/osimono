@@ -10,7 +10,7 @@ import FirebaseCore
 
 @main
 struct osimonoApp: App {
-    
+    @StateObject private var authManager = AuthManager()
     @State var isLoading = true
     init() {
         FirebaseApp.configure()
@@ -18,15 +18,12 @@ struct osimonoApp: App {
     var body: some Scene {
         
         WindowGroup {
-            //            ContentView1()
-            //            TimelineView()
-            //            MapView()
-            //            AuthManager1(authManager: AuthManager())
             Group {
                 if isLoading {
                     LoadingView4()
                 } else {
                     TopView()
+                        .environmentObject(authManager)
                 }
             }
             .onAppear{

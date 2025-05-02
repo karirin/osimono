@@ -16,14 +16,42 @@ class AuthManager: ObservableObject {
         }
     }
     var onLoginCompleted: (() -> Void)?
+    private var isSigningIn = false
     
     init() {
         user = Auth.auth().currentUser
+        if user == nil {
+            signInAnonymously()
+        } else {
+            print("既存の匿名ユーザーを使用します: \(user?.uid ?? "")")
+        }
     }
     
     var currentUserId: String? {
         print("user?.uid:\(user?.uid)")
         return user?.uid
+    }
+    
+    func signInAnonymously() {
+        if isSigningIn {
+            print("既にサインイン処理中です")
+            return
+        }
+        isSigningIn = true
+        Auth.auth().signInAnonymously { [weak self] authResult, error in
+            DispatchQueue.main.async {
+                self?.isSigningIn = false
+                if let error = error {
+                    print("匿名ログインエラー: \(error.localizedDescription)")
+                    return
+                }
+                
+                // ログイン成功
+                self?.user = authResult?.user
+                print("匿名ユーザーとしてログインしました: \(authResult?.user.uid ?? "")")
+                self?.onLoginCompleted?()
+            }
+        }
     }
     
     func anonymousSignIn(completion: @escaping () -> Void) {

@@ -1124,5 +1124,5 @@ struct LoadingDots: View {
 
 
 #Preview {
-    LoadingView2()
+    LoadingView4()
 }

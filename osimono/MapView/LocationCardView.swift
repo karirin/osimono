@@ -99,8 +99,8 @@ struct LocationCardView: View {
                     
                     // Rating display
                     Button(action: {
-                        generateHapticFeedback()
-                        showRatingModal = true
+//                        generateHapticFeedback()
+//                        showRatingModal = true
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: "heart.fill")
