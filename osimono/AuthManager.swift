@@ -54,6 +54,36 @@ class AuthManager: ObservableObject {
         }
     }
     
+    func fetchUserFlag(completion: @escaping (Int?, Error?) -> Void) {
+        guard let userId = user?.uid else {
+            // ユーザーIDがnilの場合、すなわちログインしていない場合
+            let error = NSError(domain: "AuthManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "ログインしていません。"])
+            completion(nil, error)
+            return
+        }
+
+        let userRef = Database.database().reference().child("users").child(userId)
+        // "userFlag"の値を取得する
+        userRef.child("userFlag").observeSingleEvent(of: .value) { snapshot in
+            if let userFlag = snapshot.value as? Int {
+                // userFlagが存在し、Int型として取得できた場合
+                DispatchQueue.main.async {
+                    completion(userFlag, nil)
+                }
+            } else {
+                // userFlagが存在しない場合は0を返す
+                DispatchQueue.main.async {
+                    completion(0, nil)
+                }
+            }
+        } withCancel: { error in
+            // データベースの読み取りに失敗した場合
+            DispatchQueue.main.async {
+                completion(nil, error)
+            }
+        }
+    }
+    
     func anonymousSignIn(completion: @escaping () -> Void) {
         Auth.auth().signInAnonymously { result, error in
             if let error = error {

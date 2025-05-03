@@ -322,32 +322,6 @@ struct OshiCollectionView: View {
                     Spacer()
                     Button(action: {
                         withAnimation(.spring()) {
-                            generateHapticFeedback()
-                            print("oshiid1       :\(oshiId)")
-                            if oshiId == "default" {
-                                showingOshiAlert = true
-                            } else {
-                                isShowingEditOshiView.toggle()
-                            }
-                        }
-                    }) {
-                        Image(systemName: "square.and.pencil")
-                            .font(.system(size: 22, weight: .medium))
-                            .padding(15)
-                            .background(
-                                Circle()
-                                    .fill(accentColor)
-                                    .shadow(color: accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
-                            )
-                            .foregroundColor(.white)
-                    }
-                    .padding(.trailing)
-                }
-                
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        withAnimation(.spring()) {
                             // ここで検証を追加
                             if oshiId == "default" {
                                 showingOshiAlert = true

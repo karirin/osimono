@@ -41,6 +41,8 @@ struct ProfileSection: View {
     var onOshiUpdated: (() -> Void)? = nil
     @State private var hasLoadedInitialData = false
     @Binding var firstOshiFlag: Bool
+    @Binding var showingOshiAlert: Bool
+    var oshiId: String
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -59,20 +61,56 @@ struct ProfileSection: View {
                     AsyncImage(url: url) { phase in
                         switch phase {
                         case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(maxWidth: .infinity)
-                                .frame(height: profileSectionHeight)
-                                .overlay(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [.clear, Color.black.opacity(0.6)]),
-                                        startPoint: .top,
-                                        endPoint: .bottom
+                            ZStack(alignment: .topLeading) { // ZStackを追加
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: profileSectionHeight)
+                                    .overlay(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [.clear, Color.black.opacity(0.6)]),
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
                                     )
-                                )
-                                .clipped()
-                                .edgesIgnoringSafeArea(.all)
+                                    .clipped()
+                                    .edgesIgnoringSafeArea(.all)
+                                
+                                // 編集ボタンを追加
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        generateHapticFeedback()
+                                        if oshiId == "default" {
+                                            showingOshiAlert = true
+                                        } else {
+                                            isShowingEditOshiView.toggle()
+                                        }
+                                    }
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [Color.white]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                            .frame(width: 34, height: 34)
+                                            .shadow(color: accentColor.opacity(0.5), radius: 8, x: 0, y: 4)
+                                        
+                                        Image(systemName: "pencil.circle")
+                                            .font(.system(size: 20, weight: .semibold))
+                                            .foregroundColor(.black)
+                                    }
+                                }
+                                .padding(.leading, 16)
+                                .scaleEffect(editFlag ? 1.1 : 1.0)
+                                .animation(.spring(response: 0.3), value: editFlag)
+                                .opacity(0)
+                            }
+                            
                         default:
                             Rectangle()
                                 .frame(height: profileSectionHeight)

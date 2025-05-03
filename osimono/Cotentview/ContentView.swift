@@ -54,6 +54,7 @@ struct ContentView: View {
     @State private var isShowingOshiSelector = false
     @State private var showChangeOshiButton = false
     @State private var isShowingEditOshiView = false
+    @State private var helpFlag: Bool = false
     
     // プロフィールセクションの高さ
     var profileSectionHeight: CGFloat {
@@ -73,10 +74,13 @@ struct ContentView: View {
                         isOshiChange: $isOshiChange,
                         isShowingEditOshiView: $isShowingEditOshiView, onOshiUpdated: {
                             self.refreshTrigger.toggle()
-                        }, firstOshiFlag: $firstOshiFlag
+                        }, firstOshiFlag: $firstOshiFlag ,showingOshiAlert: $showingOshiAlert, oshiId: selectedOshi?.id ?? "default"
                     )
                     
                     OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger, showingOshiAlert: $showingOshiAlert, editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton, isShowingEditOshiView: $isShowingEditOshiView)
+                }
+                if helpFlag {
+                    HelpModalView(isPresented: $helpFlag)
                 }
             }
             .overlay(
@@ -141,6 +145,17 @@ struct ContentView: View {
             fetchOshiList()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 checkOshiAnniversary()
+            }
+            authManager.fetchUserFlag { userFlag, error in
+                if let error = error {
+                    print(error.localizedDescription)
+                } else if let userFlag = userFlag {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        if userFlag == 0 {
+                            executeProcessEveryfifTimes()
+                        }
+                    }
+                }
             }
         }
         .overlay(
@@ -538,6 +553,18 @@ struct ContentView: View {
                 }
             }
             .padding(.horizontal)
+        }
+    }
+
+    func executeProcessEveryfifTimes() {
+        // UserDefaultsからカウンターを取得
+        let count = UserDefaults.standard.integer(forKey: "launchHelpCount") + 1
+        
+        // カウンターを更新
+        UserDefaults.standard.set(count, forKey: "launchHelpCount")
+        print("launchHelpCount      :\(count)")
+        if count % 15 == 0 {
+            helpFlag = true
         }
     }
     
