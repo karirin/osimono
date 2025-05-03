@@ -15,7 +15,7 @@ struct ProfileSection: View {
     @State private var isLoading = true
     @State private var selectedOshi: Oshi? = nil
     var profileSectionHeight: CGFloat {
-        isSmallDevice() ? 280 : 280
+        isSmallDevice() ? 250 : 260
     }
     let primaryColor = Color(.systemPink) // 明るいピンク
     let accentColor = Color(.purple) // 紫系

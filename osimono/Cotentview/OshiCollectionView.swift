@@ -260,7 +260,7 @@ struct OshiCollectionView: View {
                             .foregroundColor(primaryColor.opacity(0.3))
                         
                         VStack(spacing: 8) {
-                            Text("推しコレクションがありません")
+                            Text("推しの記録がありません")
                                 .font(.system(size: 20, weight: .medium))
                                 .foregroundColor(.gray)
                             
