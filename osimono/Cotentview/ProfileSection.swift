@@ -40,6 +40,7 @@ struct ProfileSection: View {
     @Binding var isShowingEditOshiView: Bool
     var onOshiUpdated: (() -> Void)? = nil
     @State private var hasLoadedInitialData = false
+    @Binding var firstOshiFlag: Bool
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -271,6 +272,14 @@ struct ProfileSection: View {
             loadAllData()
             fetchOshiList()
             showChangeOshiButton.toggle()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                let userDefaults = UserDefaults.standard
+                if !userDefaults.bool(forKey: "firstOshiFlag") {
+                    firstOshiFlag = true
+                }
+                userDefaults.set(true, forKey: "firstOshiFlag")
+                userDefaults.synchronize()
+            }
         }) {
             AddOshiView()
         }

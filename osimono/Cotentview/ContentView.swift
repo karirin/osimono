@@ -36,6 +36,7 @@ struct ContentView: View {
     @State private var showingOshiAlert = false
     @State private var showingAnniversaryAlert = false
     @State private var anniversaryDays = 0
+    @State private var firstOshiFlag = false
     
     // テーマカラーの定義 - アイドル/推し活向けに明るく元気なカラースキーム
     let primaryColor = Color(.systemPink) // 明るいピンク
@@ -72,7 +73,7 @@ struct ContentView: View {
                         isOshiChange: $isOshiChange,
                         isShowingEditOshiView: $isShowingEditOshiView, onOshiUpdated: {
                             self.refreshTrigger.toggle()
-                        }
+                        }, firstOshiFlag: $firstOshiFlag
                     )
                     
                     OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger, showingOshiAlert: $showingOshiAlert, editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton, isShowingEditOshiView: $isShowingEditOshiView)
@@ -165,6 +166,12 @@ struct ContentView: View {
                         days: anniversaryDays,
                         oshiName: selectedOshi?.name ?? "推し",
                         imageUrl: selectedOshi?.imageUrl
+                    )
+                    .transition(.opacity)
+                }
+                if firstOshiFlag {
+                    FirstOshiCongratsView(
+                        isShowing: $firstOshiFlag, imageUrl: selectedOshi?.imageUrl
                     )
                     .transition(.opacity)
                 }

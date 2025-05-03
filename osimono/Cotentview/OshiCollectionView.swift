@@ -348,7 +348,6 @@ struct OshiCollectionView: View {
                     Spacer()
                     Button(action: {
                         withAnimation(.spring()) {
-                            print("oshiid2       :\(oshiId)")
                             // ここで検証を追加
                             if oshiId == "default" {
                                 showingOshiAlert = true

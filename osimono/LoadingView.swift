@@ -500,7 +500,7 @@ struct GlassCard: View {
     }
 }
 
-struct LoadingView4: View {
+struct StartLoadingView1: View {
     @State private var animationAmount = 0.0
     @State private var textOpacity: [Double] = [0, 0, 0, 0, 0, 0, 0, 0]
     @State private var showSubtext = false
@@ -1124,5 +1124,5 @@ struct LoadingDots: View {
 
 
 #Preview {
-    LoadingView4()
+    LoadingView5()
 }

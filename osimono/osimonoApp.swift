@@ -20,7 +20,7 @@ struct osimonoApp: App {
         WindowGroup {
             Group {
                 if isLoading {
-                    LoadingView4()
+                    StartLoadingView()
                 } else {
                     TopView()
                         .environmentObject(authManager)
