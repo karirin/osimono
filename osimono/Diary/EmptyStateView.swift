@@ -11,15 +11,15 @@ struct EmptyStateView: View {
     let action: () -> Void
     
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: isSmallDevice() ? 15 : 24) {
             // アイラストレーション
             ZStack {
                 Circle()
                     .fill(Color.customPink.opacity(0.1))
-                    .frame(width: 120, height: 120)
+                    .frame(width: isSmallDevice() ? 80 : 120, height: isSmallDevice() ? 80 : 120)
                 
                 Image(systemName: "book.pages")
-                    .font(.system(size: 50, weight: .medium))
+                    .font(.system(size: isSmallDevice() ? 40 : 50, weight: .medium))
                     .foregroundColor(.customPink)
             }
             
@@ -49,4 +49,8 @@ struct EmptyStateView: View {
         .frame(maxHeight: .infinity)
         .padding(.horizontal, 30)
     }
+}
+
+#Preview {
+    EmptyStateView(action: {})
 }

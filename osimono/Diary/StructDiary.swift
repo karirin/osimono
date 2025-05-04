@@ -11,7 +11,6 @@ enum DiaryFilter: Equatable {
     case all
     case mood(DiaryMood)
     case tag(String)
-    case visibility(Bool) // true = private, false = public
     
     var displayText: String {
         switch self {
@@ -21,8 +20,6 @@ enum DiaryFilter: Equatable {
             return mood.icon
         case .tag(let tag):
             return "#\(tag)"
-        case .visibility(let isPrivate):
-            return isPrivate ? "🔒" : "👁"
         }
     }
 }

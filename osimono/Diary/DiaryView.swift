@@ -26,26 +26,28 @@ struct DiaryView: View {
     // Format dates
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
+        formatter.dateFormat = "yyyy/MM/dd"
+        formatter.locale = Locale(identifier: "ja_JP")  // 日本のロケールを設定（オプション）
         return formatter
     }()
     
     var body: some View {
         NavigationView {
             ZStack {
-                // 背景グラデーション
-//                LinearGradient(
-//                    gradient: Gradient(colors: [Color.gray, Color.white]),
-//                    startPoint: .topLeading,
-//                    endPoint: .bottomTrailing
-//                )
-//                .ignoresSafeArea()
-                
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.customPink.opacity(0.05),   // 情熱的だが控えめ
+                        Color.brown.opacity(0.02)         // 革の質感
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 VStack(spacing: 0) {
                     // ヘッダー
                     HStack {
                         Button(action: {
+                            generateHapticFeedback()
                             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                                 showCalendar.toggle()
                             }
@@ -72,6 +74,7 @@ struct DiaryView: View {
                         
                         // フィルターボタン
                         Button(action: {
+                            generateHapticFeedback()
                             withAnimation(.spring()) {
                                 showFilters.toggle()
                             }
@@ -81,7 +84,6 @@ struct DiaryView: View {
                                     .font(.system(size: 20))
                                     .foregroundColor(.customPink)
                                 
-                                // アクティブフィルター数
                                 if !appliedFilters.isEmpty {
                                     Text("\(appliedFilters.count)")
                                         .font(.system(size: 12, weight: .bold))
@@ -95,7 +97,7 @@ struct DiaryView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 12)
                     
                     // フィルターパネル
                     if showFilters {
@@ -104,6 +106,7 @@ struct DiaryView: View {
                             activeFilters: $activeFilters,
                             appliedFilters: $appliedFilters,
                             onClose: {
+                                generateHapticFeedback()
                                 withAnimation(.spring()) {
                                     showFilters = false
                                 }
@@ -114,20 +117,22 @@ struct DiaryView: View {
                             removal: .opacity.combined(with: .move(edge: .top))
                         ))
                     }
-                    
-                    // カレンダービュー
+
                     if showCalendar {
                         DiaryCalendarView(
                             selectedDate: $selectedDate,
                             diaryEntries: diaryEntries,
                             onDateSelected: { date in
+                                generateHapticFeedback()
                                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                                     showCalendar = false
                                 }
                                 loadEntriesForDate(date)
                             }
                         )
-                        .frame(height: 300)
+                        .frame(height: 220)
+                        .padding(.top, 38)
+                        .zIndex(1)
                         .transition(.asymmetric(
                             insertion: .opacity.combined(with: .move(edge: .top)),
                             removal: .opacity.combined(with: .move(edge: .top))
@@ -145,6 +150,7 @@ struct DiaryView: View {
                         }
                     } else if filteredEntries.isEmpty {
                         EmptyStateView {
+                            generateHapticFeedback()
                             showingNewEntrySheet = true
                         }
                     } else {
@@ -172,6 +178,7 @@ struct DiaryView: View {
                     HStack {
                         Spacer()
                         Button(action: {
+                            generateHapticFeedback()
                             showingNewEntrySheet = true
                         }) {
                             Image(systemName: "plus")
@@ -201,7 +208,7 @@ struct DiaryView: View {
             .onChange(of: selectedDate) { _ in
                 loadEntriesForDate(selectedDate)
             }
-            .sheet(isPresented: $showingNewEntrySheet) {
+            .fullScreenCover(isPresented: $showingNewEntrySheet) {
                 NewDiaryEntryView(oshiId: oshiId) { newEntry in
                     withAnimation(.spring()) {
                         diaryEntries.append(newEntry)
@@ -212,7 +219,7 @@ struct DiaryView: View {
                     }
                 }
             }
-            .sheet(item: $selectedEntry) { entry in
+            .fullScreenCover(item: $selectedEntry) { entry in
                 DiaryEntryDetailView(entry: entry) { updatedEntry in
                     if let index = diaryEntries.firstIndex(where: { $0.id == updatedEntry.id }) {
                         withAnimation(.spring()) {
@@ -237,8 +244,6 @@ struct DiaryView: View {
                 entries = entries.filter { $0.mood == mood.rawValue }
             case .tag(let tag):
                 entries = entries.filter { $0.tags?.contains(tag) ?? false }
-            case .visibility(let isPrivate):
-                entries = entries.filter { $0.isPrivate == isPrivate }
             }
         }
         
@@ -286,7 +291,6 @@ struct DiaryView: View {
                     let createdAt = value["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970
                     let updatedAt = value["updatedAt"] as? TimeInterval ?? Date().timeIntervalSince1970
                     let tags = value["tags"] as? [String]
-                    let isPrivate = value["isPrivate"] as? Bool ?? false
                     
                     var entry = DiaryEntry(
                         id: id,
@@ -295,8 +299,7 @@ struct DiaryView: View {
                         content: content,
                         mood: mood,
                         imageUrls: imageUrls,
-                        tags: tags,
-                        isPrivate: isPrivate
+                        tags: tags
                     )
                     
                     entry.createdAt = createdAt

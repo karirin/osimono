@@ -23,6 +23,7 @@ struct FilterPanelView: View {
                 Spacer()
                 
                 Button("クリア") {
+                    generateHapticFeedback()
                     withAnimation(.spring()) {
                         activeFilters = []
                     }
@@ -43,17 +44,18 @@ struct FilterPanelView: View {
                 HStack {
                     ForEach(DiaryMood.allCases, id: \.rawValue) { mood in
                         Button(action: {
+                            generateHapticFeedback()
                             toggleFilter(.mood(mood))
                         }) {
                             VStack(spacing: 4) {
                                 Text(mood.icon)
                                     .font(.system(size: 24))
                                 
-                                if isFilterActive(.mood(mood)) {
-                                    Circle()
-                                        .fill(mood.color)
-                                        .frame(width: 6, height: 6)
-                                }
+//                                if isFilterActive(.mood(mood)) {
+//                                    Circle()
+//                                        .fill(mood.color)
+//                                        .frame(width: 6, height: 6)
+//                                }
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -76,6 +78,7 @@ struct FilterPanelView: View {
                     HStack {
                         ForEach(availableTags, id: \.self) { tag in
                             Button(action: {
+                                generateHapticFeedback()
                                 toggleFilter(.tag(tag))
                             }) {
                                 Text("#\(tag)")
@@ -92,49 +95,9 @@ struct FilterPanelView: View {
                 }
             }
             
-            // 公開/非公開フィルター
-            VStack(alignment: .leading, spacing: 12) {
-                Text("公開設定")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 20)
-                
-                HStack(spacing: 12) {
-                    Button(action: {
-                        toggleFilter(.visibility(false))
-                    }) {
-                        HStack {
-                            Image(systemName: "eye")
-                            Text("公開")
-                        }
-                        .font(.subheadline)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(isFilterActive(.visibility(false)) ? Color.customPink.opacity(0.2) : Color.gray.opacity(0.2))
-                        .foregroundColor(isFilterActive(.visibility(false)) ? Color.customPink : Color.gray)
-                        .cornerRadius(8)
-                    }
-                    
-                    Button(action: {
-                        toggleFilter(.visibility(true))
-                    }) {
-                        HStack {
-                            Image(systemName: "eye.slash")
-                            Text("非公開")
-                        }
-                        .font(.subheadline)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(isFilterActive(.visibility(true)) ? Color.customPink.opacity(0.2) : Color.gray.opacity(0.2))
-                        .foregroundColor(isFilterActive(.visibility(true)) ? Color.customPink : Color.gray)
-                        .cornerRadius(8)
-                    }
-                }
-                .padding(.horizontal, 20)
-            }
-            
             // 適用ボタン
             Button(action: {
+                generateHapticFeedback()
                 withAnimation(.spring()) {
                     appliedFilters = activeFilters
                     onClose()
@@ -170,4 +133,22 @@ struct FilterPanelView: View {
     private func isFilterActive(_ filter: DiaryFilter) -> Bool {
         return activeFilters.contains(filter)
     }
+}
+
+#Preview {
+    struct PreviewWrapper: View {
+        @State private var activeFilters: [DiaryFilter] = []
+        @State private var appliedFilters: [DiaryFilter] = []
+        
+        var body: some View {
+            FilterPanelView(
+                availableTags: ["仕事", "プライベート", "運動", "読書", "友人", "家族"],
+                activeFilters: $activeFilters,
+                appliedFilters: $appliedFilters,
+                onClose: {}
+            )
+        }
+    }
+    
+    return PreviewWrapper()
 }

@@ -24,6 +24,7 @@ struct TagInputView: View {
                                     .font(.system(size: 15, weight: .medium))
                                 
                                 Button(action: {
+                                    generateHapticFeedback()
                                     withAnimation(.spring(response: 0.3)) {
                                         selectedTags.removeAll { $0 == tag }
                                     }
@@ -70,6 +71,7 @@ struct TagInputView: View {
                 HStack(spacing: 8) {
                     ForEach(suggestedTags.filter { !selectedTags.contains($0) }, id: \.self) { tag in
                         Button(action: {
+                            generateHapticFeedback()
                             withAnimation(.spring(response: 0.3)) {
                                 selectedTags.append(tag)
                             }
@@ -91,6 +93,7 @@ struct TagInputView: View {
     private func addTag() {
         let newTag = tagText.trimmingCharacters(in: .whitespacesAndNewlines)
         if !newTag.isEmpty && !selectedTags.contains(newTag) {
+            generateHapticFeedback()
             withAnimation(.spring(response: 0.3)) {
                 selectedTags.append(newTag)
             }

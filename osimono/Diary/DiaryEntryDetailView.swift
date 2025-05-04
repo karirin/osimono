@@ -20,7 +20,6 @@ struct DiaryEntryDetailView: View {
     @State private var editedContent: String
     @State private var editedMood: Int
     @State private var editedTags: [String]
-    @State private var isPrivate: Bool
     @State private var showDeleteConfirmation = false
     
     private let dateFormatter: DateFormatter = {
@@ -39,7 +38,6 @@ struct DiaryEntryDetailView: View {
         _editedContent = State(initialValue: entry.content)
         _editedMood = State(initialValue: entry.mood)
         _editedTags = State(initialValue: entry.tags ?? [])
-        _isPrivate = State(initialValue: entry.isPrivate)
     }
     
     var body: some View {
@@ -175,18 +173,10 @@ struct DiaryEntryDetailView: View {
                         }
                     }
                     
-                    // Privacy toggle
-                    if isEditing {
-                        Toggle(isOn: $isPrivate) {
-                            Text("プライベート投稿")
-                                .font(.headline)
-                        }
-                        .padding()
-                    }
-                    
                     // Delete button (only in edit mode)
                     if isEditing {
                         Button(action: {
+                            generateHapticFeedback()
                             showDeleteConfirmation = true
                         }) {
                             HStack {
@@ -210,13 +200,13 @@ struct DiaryEntryDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
+                        generateHapticFeedback()
                         if isEditing {
                             // Discard changes
                             editedTitle = entry.title
                             editedContent = entry.content
                             editedMood = entry.mood
                             editedTags = entry.tags ?? []
-                            isPrivate = entry.isPrivate
                             isEditing = false
                         } else {
                             presentationMode.wrappedValue.dismiss()
@@ -228,6 +218,7 @@ struct DiaryEntryDetailView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
+                        generateHapticFeedback()
                         if isEditing {
                             // Save changes
                             saveChanges()
@@ -245,6 +236,7 @@ struct DiaryEntryDetailView: View {
                     title: Text("この日記を削除しますか？"),
                     message: Text("この操作は取り消せません。"),
                     primaryButton: .destructive(Text("削除")) {
+                        generateHapticFeedback()
                         deleteEntry()
                     },
                     secondaryButton: .cancel(Text("キャンセル"))
@@ -263,7 +255,6 @@ struct DiaryEntryDetailView: View {
         updatedEntry.content = editedContent
         updatedEntry.mood = editedMood
         updatedEntry.tags = editedTags.isEmpty ? nil : editedTags
-        updatedEntry.isPrivate = isPrivate
         updatedEntry.updatedAt = Date().timeIntervalSince1970
         
         // Update in Firebase
@@ -275,8 +266,7 @@ struct DiaryEntryDetailView: View {
             "content": updatedEntry.content,
             "mood": updatedEntry.mood,
             "createdAt": updatedEntry.createdAt,
-            "updatedAt": updatedEntry.updatedAt,
-            "isPrivate": updatedEntry.isPrivate
+            "updatedAt": updatedEntry.updatedAt
         ]
         
         if let imageUrls = updatedEntry.imageUrls {

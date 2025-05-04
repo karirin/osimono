@@ -15,6 +15,7 @@ struct FirstDiaryEntryCongratsView: View {
             Color.black.opacity(0.4)
                 .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
+                    generateHapticFeedback()
                     withAnimation {
                         isShowing = false
                     }
@@ -33,6 +34,7 @@ struct FirstDiaryEntryCongratsView: View {
                     .multilineTextAlignment(.center)
                 
                 Button(action: {
+                    generateHapticFeedback()
                     withAnimation {
                         isShowing = false
                     }

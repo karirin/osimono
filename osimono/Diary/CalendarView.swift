@@ -32,22 +32,25 @@ struct CalendarView: View {
             // Month selector
             HStack {
                 Button(action: {
+                    generateHapticFeedback()
                     withAnimation {
                         currentMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
                     }
                 }) {
                     Image(systemName: "chevron.left")
+                        .font(.system(size: 14))  // フォントサイズを追加
                         .foregroundColor(Color(.systemPink))
                 }
                 
                 Spacer()
                 
                 Text(monthFormatter.string(from: currentMonth))
-                    .font(.headline)
+                    .font(.subheadline)
                 
                 Spacer()
                 
                 Button(action: {
+                    generateHapticFeedback()
                     withAnimation {
                         currentMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
                     }
@@ -56,7 +59,7 @@ struct CalendarView: View {
                         .foregroundColor(Color(.systemPink))
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 8)
             
             // Day of week headers
             HStack {
@@ -70,7 +73,7 @@ struct CalendarView: View {
             }
             
             // Calendar grid
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 10) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 6) {
                 ForEach(extractDates()) { dateItem in
                     CalendarCell(
                         date: dateItem.date,
@@ -79,6 +82,7 @@ struct CalendarView: View {
                         hasEntries: hasEntriesForDate(dateItem.date)
                     )
                     .onTapGesture {
+                        generateHapticFeedback()
                         withAnimation {
                             selectedDate = dateItem.date
                             onDateSelected(dateItem.date)
@@ -178,26 +182,27 @@ struct CalendarCell: View {
     }()
     
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 3) {
             Text(dayFormatter.string(from: date))
-                .font(.system(size: 16, weight: isSelected ? .bold : .medium))
+                .font(.system(size: 14, weight: isSelected ? .bold : .medium))
                 .foregroundColor(cellTextColor)
             
             if hasEntries {
                 Circle()
                     .fill(Color.customPink)
-                    .frame(width: 8, height: 8)
+                    .frame(width: 6, height: 6)
             } else {
                 Circle()
                     .fill(Color.clear)
-                    .frame(width: 8, height: 8)
+                    .frame(width: 6, height: 6)
             }
         }
-        .frame(height: 45)
+        .frame(height: 35)
+        .padding(5)
         .background(isSelected ? Color.customPink.opacity(0.15) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 8)
                 .stroke(isSelected ? Color.customPink : Color.clear, lineWidth: 2)
         )
     }
@@ -217,4 +222,8 @@ struct CalendarCell: View {
         
         return Color.primary
     }
+}
+
+#Preview{
+    CalendarCell(date: Date(), isSelected: true, isCurrentMonth: true, hasEntries: true)
 }

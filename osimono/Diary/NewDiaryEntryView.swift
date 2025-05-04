@@ -31,19 +31,43 @@ struct NewDiaryEntryView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-//                    // モダンなヘッダー
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("新しい日記")
-                            .font(.system(size: 28, weight: .bold))
+                    HStack {
+                        Button(action: {
+                            generateHapticFeedback()
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(width: 36, height: 36)
+                                .background(Color(UIColor.secondarySystemBackground))
+                                .clipShape(Circle())
+                        }
                         
-                        Text("今日の推し活を記録しましょう")
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
+                        Spacer()
+                        
+                        Text("日記登録")
+                            .font(.system(size: 18, weight: .bold))
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            generateHapticFeedback()
+                            saveEntry()
+                        }) {
+                            Text("保存")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.customPink)
+                                )
+                        }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
-                    .padding(.bottom, 10)
-//
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
                     VStack(spacing: 24) {
 //                        // タイトル入力
                         VStack(alignment: .leading, spacing: 8) {
@@ -135,6 +159,7 @@ struct NewDiaryEntryView: View {
                                                     .clipShape(RoundedRectangle(cornerRadius: 16))
                                                 
                                                 Button(action: {
+                                                    generateHapticFeedback()
                                                     images.remove(at: index)
                                                 }) {
                                                     Image(systemName: "xmark.circle.fill")
@@ -149,6 +174,7 @@ struct NewDiaryEntryView: View {
                                         
                                         // 追加ボタン
                                         Button(action: {
+                                            generateHapticFeedback()
                                             isShowingImagePicker = true
                                         }) {
                                             ZStack {
@@ -165,6 +191,7 @@ struct NewDiaryEntryView: View {
                                 }
                             } else {
                                 Button(action: {
+                                    generateHapticFeedback()
                                     isShowingImagePicker = true
                                 }) {
                                     HStack(spacing: 12) {
@@ -190,21 +217,6 @@ struct NewDiaryEntryView: View {
                             
                             TagInputView(selectedTags: $selectedTags, suggestedTags: suggestedTags)
                         }
-//
-//                        // プライベートトグル
-                        HStack {
-                            Text("プライベート投稿")
-                                .font(.system(size: 16, weight: .medium))
-                            
-                            Spacer()
-                            
-                            Toggle("", isOn: $isPrivate)
-//                                .tintColor(.customPink)
-                        }
-                        .padding()
-                        .background(Color.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
                     }
                     .padding(.horizontal, 20)
 //
@@ -223,13 +235,6 @@ struct NewDiaryEntryView: View {
                     .opacity(title.isEmpty || isUploading ? 0.6 : 1)
                 }
             }
-            .navigationTitle("")
-            .navigationBarItems(
-                leading: Button("キャンセル") {
-                    presentationMode.wrappedValue.dismiss()
-                },
-                trailing: EmptyView()
-            )
             .sheet(isPresented: $isShowingImagePicker) {
                 ImageDiaryPicker(image: .constant(nil), onImagePicked: { pickedImage in
                     images.append(pickedImage)
@@ -328,8 +333,7 @@ struct NewDiaryEntryView: View {
             content: content,
             mood: mood,
             imageUrls: imageUrls,
-            tags: selectedTags.isEmpty ? nil : selectedTags,
-            isPrivate: isPrivate
+            tags: selectedTags.isEmpty ? nil : selectedTags
         )
         
         // Convert to dictionary
@@ -339,8 +343,7 @@ struct NewDiaryEntryView: View {
             "content": newEntry.content,
             "mood": newEntry.mood,
             "createdAt": newEntry.createdAt,
-            "updatedAt": newEntry.updatedAt,
-            "isPrivate": newEntry.isPrivate
+            "updatedAt": newEntry.updatedAt
         ]
         
         if let imageUrls = newEntry.imageUrls {

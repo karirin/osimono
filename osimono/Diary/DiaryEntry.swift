@@ -17,7 +17,6 @@ struct DiaryEntry: Identifiable, Codable {
     var createdAt: TimeInterval
     var updatedAt: TimeInterval
     var tags: [String]?
-    var isPrivate: Bool
     
     init(id: String = UUID().uuidString,
          oshiId: String,
@@ -25,8 +24,7 @@ struct DiaryEntry: Identifiable, Codable {
          content: String,
          mood: Int = 3,
          imageUrls: [String]? = nil,
-         tags: [String]? = nil,
-         isPrivate: Bool = false) {
+         tags: [String]? = nil) {
         self.id = id
         self.oshiId = oshiId
         self.title = title
@@ -36,6 +34,5 @@ struct DiaryEntry: Identifiable, Codable {
         self.createdAt = Date().timeIntervalSince1970
         self.updatedAt = Date().timeIntervalSince1970
         self.tags = tags
-        self.isPrivate = isPrivate
     }
 }

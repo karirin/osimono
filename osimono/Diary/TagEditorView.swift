@@ -24,6 +24,7 @@ struct TagEditorView: View {
                                     .font(.subheadline)
                                 
                                 Button(action: {
+                                    generateHapticFeedback()
                                     removeTag(tag)
                                 }) {
                                     Image(systemName: "xmark.circle.fill")
@@ -47,6 +48,7 @@ struct TagEditorView: View {
                     }
                 
                 Button(action: {
+                    generateHapticFeedback()
                     addNewTag()
                 }) {
                     Image(systemName: "plus.circle.fill")
@@ -58,6 +60,7 @@ struct TagEditorView: View {
                 HStack {
                     ForEach(suggestedTags.filter { !tags.contains($0) }, id: \.self) { tag in
                         Button(action: {
+                            generateHapticFeedback()
                             tags.append(tag)
                         }) {
                             Text("#\(tag)")

@@ -127,7 +127,7 @@ struct EnhancedAddLocationView: View {
                     }
                     .padding(.horizontal)
                 }
-                .padding(.top,isSmallDevice() ? 0 : 40)
+                .padding(.top,isSmallDevice() ? 20 : 40)
                 .edgesIgnoringSafeArea(.all)
                 .frame(height: 50)
                 
@@ -722,4 +722,15 @@ struct EnhancedAddLocationView: View {
         "徳島県", "香川県", "愛媛県", "高知県",
         "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
     ]
+}
+
+#Preview {
+    let mockViewModel = LocationViewModel()
+    
+    return EnhancedAddLocationView(
+        viewModel: mockViewModel,
+        onLocationAdded: { locationId in
+            print("追加された場所のID: \(locationId)")
+        }
+    )
 }
