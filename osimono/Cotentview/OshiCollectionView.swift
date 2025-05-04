@@ -332,14 +332,16 @@ struct OshiCollectionView: View {
                         generateHapticFeedback()
                     }) {
                         Image(systemName: "plus")
-                            .font(.system(size: 22, weight: .medium))
-                            .padding(18)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 56, height: 56)
                             .background(
                                 Circle()
                                     .fill(primaryColor)
                                     .shadow(color: primaryColor.opacity(0.3), radius: 5, x: 0, y: 3)
                             )
-                            .foregroundColor(.white)
+                            .clipShape(Circle())
+                            .shadow(color: Color.customPink.opacity(0.3), radius: 15, x: 0, y: 8)
                     }
                     .padding()
                 }

@@ -1,33 +1,42 @@
 //
-//  TopView.swift
+//  ModifiedTopView.swift
 //  osimono
 //
-//  Created by Apple on 2025/03/23.
+//  Created by Apple on 2025/05/04.
 //
 
 import SwiftUI
 import Firebase
 import FirebaseAuth
+import FirebaseStorage
 
-struct TopView: View {
+struct ModifiedTopView: View {
     @State private var selectedOshiId: String = "default"
     @ObservedObject var tutorialManager = TutorialManager.shared
     @State private var showWelcomeScreen = false
+    @State private var helpFlag: Bool = false
     
     var body: some View {
         ZStack{
             TabView {
                 HStack{
-//                    DiaryView(oshiId: selectedOshiId ?? "default")
                     ContentView()
                 }
-
                 .tabItem {
                     Image(systemName: "rectangle.split.2x2")
                         .padding()
                     Text("推しログ")
                         .padding()
                 }
+                
+                ZStack {
+                    DiaryTabView()
+                }
+                .tabItem {
+                    Image(systemName: "book.fill")
+                    Text("推し日記")
+                }
+                
                 ZStack {
                     MapView(oshiId: selectedOshiId ?? "default")
                 }
@@ -35,6 +44,7 @@ struct TopView: View {
                     Image(systemName: "mappin.and.ellipse")
                     Text("聖地巡礼")
                 }
+                
                 ZStack {
                     TimelineView(oshiId: selectedOshiId ?? "default")
                 }
@@ -43,17 +53,7 @@ struct TopView: View {
                         .frame(width:1,height:1)
                     Text("タイムライン")
                 }
-                HStack{
-                    DiaryView(oshiId: selectedOshiId ?? "default")
-//                    ContentView()
-                }
-
-                .tabItem {
-                    Image(systemName: "book.pages")
-                        .padding()
-                    Text("日記")
-                        .padding()
-                }
+                
                 ZStack {
                     SettingsView()
                 }
@@ -62,6 +62,9 @@ struct TopView: View {
                         .frame(width:1,height:1)
                     Text("設定")
                 }
+            }
+            if helpFlag {
+                HelpModalView(isPresented: $helpFlag)
             }
             // チュートリアルオーバーレイを条件付きで表示
             if tutorialManager.isShowingTutorial {
@@ -86,6 +89,29 @@ struct TopView: View {
                     }
                 }
             }
+            AuthManager().fetchUserFlag { userFlag, error in
+                if let error = error {
+                    print(error.localizedDescription)
+                } else if let userFlag = userFlag {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        if userFlag == 0 {
+                            executeProcessEveryfifTimes()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    func executeProcessEveryfifTimes() {
+        // UserDefaultsからカウンターを取得
+        let count = UserDefaults.standard.integer(forKey: "launchHelpCount") + 1
+        
+        // カウンターを更新
+        UserDefaults.standard.set(count, forKey: "launchHelpCount")
+        
+        if count % 15 == 0 {
+            helpFlag = true
         }
     }
     
@@ -103,8 +129,4 @@ struct TopView: View {
             }
         }
     }
-}
-
-#Preview {
-    TopView()
 }

@@ -86,7 +86,36 @@ struct TimelineView: View {
             }
             
             // Floating action button
-            VStack {
+//            VStack {
+//                Spacer()
+//                HStack {
+//                    Spacer()
+//                    Button(action: {
+//                        generateHapticFeedback()
+//                        if oshiId == "default" {
+////                            showingOshiAlert = true
+//                            showNewEventView = true
+//                        } else {
+//                            showNewEventView = true
+//                        }
+//                    }) {
+//                        Image(systemName: "plus")
+//                            .font(.system(size: 20, weight: .semibold))
+//                            .foregroundColor(.white)
+//                            .frame(width: 56, height: 56)
+//                            .background(
+//                                Circle()
+//                                    .fill(brandColor)
+//                                    .shadow(color: brandColor.opacity(0.4), radius: 8, x: 0, y: 4)
+//                            )
+//                    }
+//                    .padding([.bottom, .trailing], 24)
+//                    .transition(.scale)
+//                }
+//            }
+        }
+        .overlay(
+            VStack(spacing: -5) {
                 Spacer()
                 HStack {
                     Spacer()
@@ -109,11 +138,11 @@ struct TimelineView: View {
                                     .shadow(color: brandColor.opacity(0.4), radius: 8, x: 0, y: 4)
                             )
                     }
-                    .padding([.bottom, .trailing], 24)
+                    .padding([.bottom, .trailing], 18)
                     .transition(.scale)
                 }
             }
-        }
+        )
         .overlay(
             ZStack{
                 if showingOshiAlert {
@@ -152,6 +181,7 @@ struct TimelineView: View {
 
 struct TimelineView_Previews: PreviewProvider {
     static var previews: some View {
-        TimelineView(oshiId: "C1B81ED5-7388-407A-9302-8DF67A1F55FC")
+//        TimelineView(oshiId: "C1B81ED5-7388-407A-9302-8DF67A1F55FC")
+        TopView()
     }
 }
