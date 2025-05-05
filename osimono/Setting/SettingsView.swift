@@ -3,11 +3,20 @@ import Firebase
 import FirebaseAuth
 import WebKit
 import StoreKit
+import SwiftyCrop
+import FirebaseStorage
 
 func generateHapticFeedback() {
     let generator = UIImpactFeedbackGenerator(style: .medium)
     generator.impactOccurred()
 }
+
+//enum UploadImageType: Identifiable {
+//    case profile
+//    case background
+//    
+//    var id: Self { self }
+//}
 
 struct SettingsView: View {
     @State private var username: String = "推し活ユーザー"
@@ -15,6 +24,7 @@ struct SettingsView: View {
     @State private var isShowingImagePicker = false
     @State private var isShowingLogoutAlert = false
     @ObservedObject var authManager = AuthManager()
+    @State private var selectedOshi: Oshi? = nil
     
     // For bug reporting and App Store review
     @State private var showingBugReportForm = false
@@ -38,6 +48,14 @@ struct SettingsView: View {
     @State private var showingRecommendedApp1 = false
     @State private var showingRecommendedApp2 = false
     
+    @State private var isShowingEditOshiView = false
+    
+    @State private var profileImage: UIImage?
+    @State private var backgroundImage: UIImage?
+    @State private var currentEditType: UploadImageType? = nil
+    @State private var showImagePicker = false
+    
+    @State private var oshiList: [Oshi] = []
     // URLスキームを開くための環境変数
     @Environment(\.openURL) private var openURL
     
@@ -52,6 +70,70 @@ struct SettingsView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal)
                         .padding(.top)
+                    
+                    VStack(spacing: 10) {
+                        HStack {
+                            Text("推しを編集")
+                                .foregroundColor(.secondary)
+                                .frame(alignment: .leading)
+                            Spacer()
+                        }.padding(.leading)
+                        
+                        VStack(spacing: 15) {
+                            HStack {
+                                // プロフィール画像
+//                                Button(action: {
+//                                    generateHapticFeedback()
+//                                    isShowingEditOshiView = true
+//                                }) {
+                                    if let image = profileImage {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 60, height: 60)
+                                            .clipShape(Circle())
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(primaryColor, lineWidth: 2)
+                                            )
+                                    } else {
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.2))
+                                            .frame(width: 60, height: 60)
+                                            .overlay(
+                                                Image(systemName: "person.circle.fill")
+                                                    .resizable()
+                                                    .scaledToFit()
+                                                    .frame(width: 30)
+                                                    .foregroundColor(primaryColor)
+                                            )
+                                    }
+//                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(username)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    
+                                    Text("アイコンをタップして変更")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding(.vertical, 8)
+                        }
+                        .padding()
+                        .background(cardColor)
+                        .cornerRadius(16)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        .padding(.horizontal)
+                        .onTapGesture{
+                            generateHapticFeedback()
+                            isShowingEditOshiView = true
+                        }
+                    }
                     
                     VStack(spacing:10){
                         HStack{
@@ -303,6 +385,22 @@ struct SettingsView: View {
                 BugReportView()
             }
         }
+        .onAppear {
+            fetchOshiList()
+            loadSelectedOshi()
+            loadUserProfile()
+        }
+        .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
+            fetchOshiList()
+            loadSelectedOshi()
+            loadUserProfile()
+        }) {
+            if let oshi = selectedOshi {
+                EditOshiView(oshi: oshi) {
+                    loadUserProfile()
+                }
+            }
+        }
         .alert(isPresented: $isShowingLogoutAlert) {
             Alert(
                 title: Text("ログアウト"),
@@ -331,19 +429,143 @@ struct SettingsView: View {
         }
     }
     
-    // プロフィール保存
-    func saveProfile() {
+//    func fetchOshiList() {
+//        guard let userId = Auth.auth().currentUser?.uid else { return }
+//        let ref = Database.database().reference().child("oshis").child(userId)
+//        
+//        ref.observeSingleEvent(of: .value) { snapshot in
+//            var newOshis: [Oshi] = []
+//            
+//            for child in snapshot.children {
+//                if let childSnapshot = child as? DataSnapshot {
+//                    if let value = childSnapshot.value as? [String: Any] {
+//                        let id = childSnapshot.key
+//                        let name = value["name"] as? String ?? "名前なし"
+//                        let imageUrl = value["imageUrl"] as? String
+//                        let backgroundImageUrl = value["backgroundImageUrl"] as? String
+//                        let memo = value["memo"] as? String
+//                        let createdAt = value["createdAt"] as? TimeInterval
+//                        
+//                        let oshi = Oshi(
+//                            id: id,
+//                            name: name,
+//                            imageUrl: imageUrl,
+//                            backgroundImageUrl: backgroundImageUrl,
+//                            memo: memo,
+//                            createdAt: createdAt
+//                        )
+//                        newOshis.append(oshi)
+//                    }
+//                }
+//            }
+//            
+//            DispatchQueue.main.async {
+//                self.oshiList = newOshis
+//            }
+//        }
+//    }
+    
+    func fetchOshiList() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
+        let ref = Database.database().reference().child("oshis").child(userId)
         
-        let userData = [
-            "username": username,
-            "favoriteOshi": favoriteOshi
-        ]
-        
-        let ref = Database.database().reference().child("users").child(userId)
-        ref.updateChildValues(userData)
+        ref.observeSingleEvent(of: .value) { snapshot in
+            var newOshis: [Oshi] = []
+            
+            for child in snapshot.children {
+                if let childSnapshot = child as? DataSnapshot {
+                    if let value = childSnapshot.value as? [String: Any] {
+                        let id = childSnapshot.key
+                        let name = value["name"] as? String ?? "名前なし"
+                        let imageUrl = value["imageUrl"] as? String
+                        let backgroundImageUrl = value["backgroundImageUrl"] as? String
+                        let memo = value["memo"] as? String
+                        let createdAt = value["createdAt"] as? TimeInterval
+                        
+                        let oshi = Oshi(
+                            id: id,
+                            name: name,
+                            imageUrl: imageUrl,
+                            backgroundImageUrl: backgroundImageUrl, // ここで追加
+                            memo: memo,
+                            createdAt: createdAt
+                        )
+                        print("fetchOshiList!!!!!!!")
+                        newOshis.append(oshi)
+                    }
+                }
+            }
+            
+            DispatchQueue.main.async {
+                self.oshiList = newOshis
+                self.loadSelectedOshi()
+                // 初期表示用に最初の推しを選択
+                if let firstOshi = newOshis.first, self.selectedOshi == nil {
+                    self.selectedOshi = firstOshi
+                }
+            }
+        }
     }
     
+    func loadSelectedOshi() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.observeSingleEvent(of: .value) { snapshot in
+            guard let value = snapshot.value as? [String: Any] else { return }
+            
+            if let selectedOshiId = value["selectedOshiId"] as? String {
+                // 選択中の推しIDが存在する場合、oshiListから該当する推しを検索して設定
+                if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
+                    self.selectedOshi = oshi
+                }
+            }
+        }
+    }
+    
+    func loadUserProfile() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        let ref = Database.database().reference().child("oshis").child(userId)
+        ref.observeSingleEvent(of: .value) { snapshot in
+            if let userData = snapshot.value as? [String: [String: Any]],
+            let firstOshi = userData.values.first {
+                  
+            if let loadedUsername = firstOshi["name"] as? String {
+                      self.username = loadedUsername
+                print("username     :\(username)")
+                  }
+                  
+            if let profileImageUrl = firstOshi["imageUrl"] as? String,
+                    let url = URL(string: profileImageUrl) {
+                        loadImage(from: url) { image in
+                            profileImage = image
+                        }
+                  }
+             }
+        }
+    }
+
+    func loadImage(from url: URL, completion: @escaping (UIImage?) -> Void) {
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("画像読み込みエラー: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            if let data = data, let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    completion(image)
+                }
+            } else {
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            }
+        }.resume()
+    }
     // ログアウト
     func logout() {
         do {
