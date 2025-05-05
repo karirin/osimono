@@ -101,7 +101,7 @@ struct ImageTimeLinePicker: UIViewControllerRepresentable {
             if let image = info[.originalImage] as? UIImage {
                 parent.selectedImage = image
             }
-            parent.presentationMode.wrappedValue.dismiss()
+//            parent.presentationMode.wrappedValue.dismiss()
         }
     }
 }

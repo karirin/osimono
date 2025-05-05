@@ -25,6 +25,7 @@
 		1870B0342D8BD224004B827B /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0332D8BD224004B827B /* FirebaseFunctions */; };
 		1870B0362D8BD224004B827B /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0352D8BD224004B827B /* FirebaseStorage */; };
 		1870B0382D8BD224004B827B /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0372D8BD224004B827B /* FirebaseStorageCombine-Community */; };
+		1879BDA72DC7BDBC0016ACA3 /* SwiftyCrop in Frameworks */ = {isa = PBXBuildFile; productRef = 1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */; };
 		187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE2592D8EFEE100D58928 /* ShimmerEffect */; };
 		187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE25C2D8F4AAF00D58928 /* Shimmer */; };
 		18F429E82DB291EE007C198B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E72DB291EE007C198B /* CropViewController */; };
@@ -108,6 +109,7 @@
 				187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */,
 				18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */,
 				1870B0262D8BD224004B827B /* FirebaseAuthCombine-Community in Frameworks */,
+				1879BDA72DC7BDBC0016ACA3 /* SwiftyCrop in Frameworks */,
 				180348852DC0CEFE00AD2922 /* Confetti in Frameworks */,
 				1870B02A2D8BD224004B827B /* FirebaseCrashlytics in Frameworks */,
 				1870B0282D8BD224004B827B /* FirebaseCore in Frameworks */,
@@ -202,6 +204,7 @@
 				18F429E72DB291EE007C198B /* CropViewController */,
 				18F429E92DB291EE007C198B /* TOCropViewController */,
 				180348842DC0CEFE00AD2922 /* Confetti */,
+				1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */,
 			);
 			productName = osimono;
 			productReference = 1870AFB32D8BC85E004B827B /* osimono.app */;
@@ -292,6 +295,7 @@
 				182AD6662D8F50B9006F9F09 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 				18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */,
 				180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */,
+				1879BDA52DC7BDBC0016ACA3 /* XCRemoteSwiftPackageReference "SwiftyCrop" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1870AFB42D8BC85E004B827B /* Products */;
@@ -690,6 +694,14 @@
 				minimumVersion = 11.10.0;
 			};
 		};
+		1879BDA52DC7BDBC0016ACA3 /* XCRemoteSwiftPackageReference "SwiftyCrop" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/benedom/SwiftyCrop";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 		187FE2582D8EFEE100D58928 /* XCRemoteSwiftPackageReference "Shimmer-SwiftUI-Modifier" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/0xYanis/Shimmer-SwiftUI-Modifier.git";
@@ -790,6 +802,11 @@
 		1870B0372D8BD224004B827B /* FirebaseStorageCombine-Community */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = "FirebaseStorageCombine-Community";
+		};
+		1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1879BDA52DC7BDBC0016ACA3 /* XCRemoteSwiftPackageReference "SwiftyCrop" */;
+			productName = SwiftyCrop;
 		};
 		187FE2592D8EFEE100D58928 /* ShimmerEffect */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -108,7 +108,6 @@ struct ProfileSection: View {
                                 .padding(.leading, 16)
                                 .scaleEffect(editFlag ? 1.1 : 1.0)
                                 .animation(.spring(response: 0.3), value: editFlag)
-                                .opacity(0)
                             }
                             
                         default:
@@ -312,11 +311,11 @@ struct ProfileSection: View {
             showChangeOshiButton.toggle()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 let userDefaults = UserDefaults.standard
-                if !userDefaults.bool(forKey: "firstOshiFlag") {
+                if !userDefaults.bool(forKey: "firstOshiFlag") && !oshiList.isEmpty {
                     firstOshiFlag = true
+                    userDefaults.set(true, forKey: "firstOshiFlag")
+                    userDefaults.synchronize()
                 }
-                userDefaults.set(true, forKey: "firstOshiFlag")
-                userDefaults.synchronize()
             }
         }) {
             AddOshiView()

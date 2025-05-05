@@ -1,6 +1,7 @@
 import SwiftUI
 import Firebase
 import FirebaseAuth
+import SwiftyCrop
 
 struct EnhancedNewEventView: View {
     @Binding var isPresented: Bool
@@ -21,6 +22,29 @@ struct EnhancedNewEventView: View {
     private let cardBackgroundColor = Color(UIColor.secondarySystemBackground)
     private let textColor = Color(UIColor.label)
     private let secondaryTextColor = Color(UIColor.secondaryLabel)
+    
+    @State private var selectedImageForCropping: UIImage?
+    @State private var croppingImage: UIImage?
+    
+    var cfg = SwiftyCropConfiguration(
+        texts: .init(
+            cancelButton: "キャンセル",
+            interactionInstructions: "",
+            saveButton: "適用"
+        )
+    )
+    
+    private var cropConfig: SwiftyCropConfiguration {
+        var cfg = SwiftyCropConfiguration(
+            texts: .init(
+                cancelButton: "キャンセル",
+                interactionInstructions: "",
+                saveButton: "適用"
+            )
+        )
+        
+        return cfg
+    }
     
     init(isPresented: Binding<Bool>, viewModel: TimelineViewModel, initialDate: Date) {
         self._isPresented = isPresented
@@ -113,8 +137,31 @@ struct EnhancedNewEventView: View {
         }
         .dismissKeyboardOnTap()
         .sheet(isPresented: $isShowingImagePicker) {
-            ImageTimeLinePicker(selectedImage: $selectedImage)
+//               ImageTimeLinePicker(selectedImage: $selectedImageForCropping)
+            ImagePickerView { pickedImage in
+                self.selectedImageForCropping = pickedImage
+            }
         }
+        .onChange(of: selectedImageForCropping) { img in
+            guard let img else { return }
+            croppingImage = img            // シートを開くトリガ
+        }
+        .fullScreenCover(item: $croppingImage) { img in
+            NavigationView {
+                SwiftyCropView(
+                    imageToCrop: img,
+                    maskShape: .rectangle,        // ← マスク形状
+                    configuration: cropConfig  // ← 上で作った設定
+                ) { cropped in
+                    if let cropped { selectedImage = cropped }
+                    croppingImage = nil
+                }
+            }
+            .navigationBarHidden(true)        // 画面上部の「キャンセル」を消す
+        }
+//        .sheet(isPresented: $isShowingImagePicker) {
+//            ImageTimeLinePicker(selectedImage: $selectedImage)
+//        }
         .onAppear {
             isTitleFocused = true
         }

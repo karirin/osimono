@@ -3,6 +3,7 @@ import Firebase
 import FirebaseAuth
 import FirebaseStorage
 import CoreLocation
+import SwiftyCrop
 
 struct OshiItemFormView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -39,6 +40,27 @@ struct OshiItemFormView: View {
     let accentColor = Color(.systemPurple) // 紫
     let backgroundColor = Color(.white) // 明るい背景色
     let cardColor = Color(.white) // カード背景色
+    
+    @State private var selectedImageForCropping: UIImage?
+    @State private var croppingImage: UIImage?
+    
+    public struct Texts {
+        public var cancelButton: String         // 左下ボタン
+        public var interactionInstructions: String // “Move and scale”
+        public var saveButton: String           // 右下ボタン
+    }
+    
+    private var cropConfig: SwiftyCropConfiguration {
+        var cfg = SwiftyCropConfiguration(
+            texts: .init(
+                cancelButton: "キャンセル",
+                interactionInstructions: "",
+                saveButton: "適用"
+            )
+        )
+        
+        return cfg
+    }
     
     // カテゴリーリスト
     let categories = ["グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
@@ -436,7 +458,27 @@ struct OshiItemFormView: View {
             )
         }
         .sheet(isPresented: $isShowingImagePicker) {
-            ImageTimeLinePicker(selectedImage: $selectedImage)
+//               ImageTimeLinePicker(selectedImage: $selectedImageForCropping)
+            ImagePickerView { pickedImage in
+                self.selectedImageForCropping = pickedImage
+            }
+        }
+        .onChange(of: selectedImageForCropping) { img in
+            guard let img else { return }
+            croppingImage = img            // シートを開くトリガ
+        }
+        .fullScreenCover(item: $croppingImage) { img in
+            NavigationView {
+                SwiftyCropView(
+                    imageToCrop: img,
+                    maskShape: .square,        // ← マスク形状
+                    configuration: cropConfig  // ← 上で作った設定
+                ) { cropped in
+                    if let cropped { selectedImage = cropped }
+                    croppingImage = nil
+                }
+            }
+            .navigationBarHidden(true)        // 画面上部の「キャンセル」を消す
         }
         .alert(isPresented: $showAlert) {
             Alert(title: Text("通知"), message: Text(alertMessage), dismissButton: .default(Text("OK")))

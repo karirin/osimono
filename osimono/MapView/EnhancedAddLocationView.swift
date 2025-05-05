@@ -10,6 +10,7 @@ import Firebase
 import FirebaseAuth
 import MapKit
 import FirebaseStorage
+import SwiftyCrop
 
 struct EnhancedAddLocationView: View {
     @ObservedObject var viewModel: LocationViewModel
@@ -34,6 +35,29 @@ struct EnhancedAddLocationView: View {
     var onLocationAdded: (String) -> Void
     @State private var oshiItems: [String: Any] = [:]
     @State private var isSaving: Bool = false
+    
+    @State private var selectedImageForCropping: UIImage?
+    @State private var croppingImage: UIImage?
+    
+    var cfg = SwiftyCropConfiguration(
+        texts: .init(
+            cancelButton: "キャンセル",
+            interactionInstructions: "",
+            saveButton: "適用"
+        )
+    )
+    
+    private var cropConfig: SwiftyCropConfiguration {
+        var cfg = SwiftyCropConfiguration(
+            texts: .init(
+                cancelButton: "キャンセル",
+                interactionInstructions: "",
+                saveButton: "適用"
+            )
+        )
+        
+        return cfg
+    }
     
     //    let categories = ["ライブ", "広告", "カフェ", "その他"]
     let categories = ["聖地巡礼", "撮影スポット", "カフェ・飲食店", "ライブ会場", "グッズショップ", "その他"]
@@ -464,8 +488,27 @@ struct EnhancedAddLocationView: View {
             geocodeAddress()
         }
         .sheet(isPresented: $isShowingImagePicker) {
-            // Use your image picker implementation here
-            ImageTimeLinePicker(selectedImage: $selectedImage)
+//               ImageTimeLinePicker(selectedImage: $selectedImageForCropping)
+            ImagePickerView { pickedImage in
+                self.selectedImageForCropping = pickedImage
+            }
+        }
+        .onChange(of: selectedImageForCropping) { img in
+            guard let img else { return }
+            croppingImage = img            // シートを開くトリガ
+        }
+        .fullScreenCover(item: $croppingImage) { img in
+            NavigationView {
+                SwiftyCropView(
+                    imageToCrop: img,
+                    maskShape: .square,        // ← マスク形状
+                    configuration: cropConfig  // ← 上で作った設定
+                ) { cropped in
+                    if let cropped { selectedImage = cropped }
+                    croppingImage = nil
+                }
+            }
+            .navigationBarHidden(true)        // 画面上部の「キャンセル」を消す
         }
         .onAppear {
             // If we have a current location, use it initially

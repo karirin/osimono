@@ -9,6 +9,7 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import FirebaseStorage
+import SwiftyCrop
 
 struct NewDiaryEntryView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -26,11 +27,26 @@ struct NewDiaryEntryView: View {
     @State private var isUploading = false
     @State private var tagText = ""
     @State private var suggestedTags = ["ライブ", "握手会", "CD購入", "グッズ", "SNS更新", "イベント"]
+    @State private var selectedImageForCropping: UIImage?
+    @State private var croppingImage: UIImage?
+    @State private var selectedImage: UIImage?
     
+    private var cropConfig: SwiftyCropConfiguration {
+        var cfg = SwiftyCropConfiguration(
+            texts: .init(
+                cancelButton: "キャンセル",
+                interactionInstructions: "",
+                saveButton: "適用"
+            )
+        )
+        
+        return cfg
+    }
+
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
+            VStack(spacing: 20) {
+                
                     HStack {
                         Button(action: {
                             generateHapticFeedback()
@@ -68,6 +84,7 @@ struct NewDiaryEntryView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .padding(.bottom, 8)
+            ScrollView {
                     VStack(spacing: 24) {
 //                        // タイトル入力
                         VStack(alignment: .leading, spacing: 8) {
@@ -231,14 +248,45 @@ struct NewDiaryEntryView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .padding(20)
-                    .disabled(title.isEmpty || isUploading)
-                    .opacity(title.isEmpty || isUploading ? 0.6 : 1)
                 }
             }
             .sheet(isPresented: $isShowingImagePicker) {
-                ImageDiaryPicker(image: .constant(nil), onImagePicked: { pickedImage in
-                    images.append(pickedImage)
-                })
+                ImageDiaryPicker(image: .constant(nil)) { pickedImage in
+                    // 直接追加せずクロップへ
+                    selectedImageForCropping = pickedImage
+                }
+            }
+            .onChange(of: selectedImageForCropping) { img in
+                guard let img else { return }
+                croppingImage = img          // シートを開くトリガ
+            }
+//            .fullScreenCover(item: $croppingImage) { img in
+//                NavigationView {
+//                    SwiftyCropView(
+//                        imageToCrop: img,
+//                        maskShape: .square,        // ← マスク形状
+//                        configuration: cropConfig  // ← 上で作った設定
+//                    ) { cropped in
+//                        if let cropped { selectedImage = cropped }
+//                        croppingImage = nil
+//                    }
+//                }
+//                .navigationBarHidden(true)        // 画面上部の「キャンセル」を消す
+//            }
+            .fullScreenCover(item: $croppingImage) { img in
+                NavigationView {
+                    SwiftyCropView(
+                        imageToCrop: img,
+                        maskShape: .square,        // ← マスク形状
+                        configuration: cropConfig  // ← 上で作った設定
+                    ) { cropped in
+                        if let cropped {
+                            images.append(cropped)  // クロップ後に追加
+                        }
+                        croppingImage = nil
+                    }
+                    .navigationBarHidden(true)
+                }
             }
         }
     }

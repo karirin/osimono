@@ -9,6 +9,11 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import FirebaseStorage
+import SwiftyCrop
+
+extension UIImage: Identifiable {
+    public var id: UUID { UUID() }   // 任意の一意IDを返す
+}
 
 struct AddOshiView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -16,14 +21,32 @@ struct AddOshiView: View {
     @State private var oshiMemo: String = ""
     @State private var selectedImage: UIImage?
     @State private var selectedBackgroundImage: UIImage?
-    @State private var isShowingImagePicker = false
-    @State private var isShowingBackgroundPicker = false
-    @State private var isImagePickerForProfile = true
     @State private var isLoading = false
     @State private var currentEditType: UploadImageType? = nil
     @State private var image: UIImage? = nil
     @State private var imageUrl: URL? = nil
     @State var backgroundImageUrl: URL?
+    @State private var selectedImageForCropping: UIImage?
+    @State private var showImagePicker = false
+    @State private var croppingImage: UIImage?
+    
+    public struct Texts {
+        public var cancelButton: String         // 左下ボタン
+        public var interactionInstructions: String // “Move and scale”
+        public var saveButton: String           // 右下ボタン
+    }
+    
+    private var cropConfig: SwiftyCropConfiguration {
+        var cfg = SwiftyCropConfiguration(
+            texts: .init(
+                cancelButton: "キャンセル",
+                interactionInstructions: "",
+                saveButton: "適用"
+            )
+        )
+        
+        return cfg
+    }
     
     // 色の定義
     let primaryColor = Color(UIColor(red: 0.3, green: 0.6, blue: 0.9, alpha: 1.0))
@@ -70,6 +93,7 @@ struct AddOshiView: View {
                         VStack {
                             Button(action: {
                                 currentEditType = .profile
+                                showImagePicker = true
                                 generateHapticFeedback()
                             }) {
                                 ZStack {
@@ -124,6 +148,7 @@ struct AddOshiView: View {
                             
                             Button(action: {
                                 currentEditType = .background
+                                showImagePicker = true
                                 generateHapticFeedback()
                             }) {
                                 if let image = selectedBackgroundImage {
@@ -211,29 +236,49 @@ struct AddOshiView: View {
                 }
             }
         }
-        .sheet(item: $currentEditType) { type in
-            ImageAddOshiPicker(
-                image: $image,
-                onImagePicked: { pickedImage in
-                    self.image = pickedImage
-                    
-                    // この部分が重要: 選択した画像をUIに表示するために更新
-                    if type == .profile {
-                        self.selectedImage = pickedImage
-                    } else {
-                        self.selectedBackgroundImage = pickedImage
-                    }
-                    
-                    // アップロード処理
-                    //                    uploadImageToFirebase(pickedImage, type: type)
-                }
-            )
+        // 画像選択用のシート
+        .sheet(isPresented: $showImagePicker) {
+            ImagePickerView { pickedImage in
+                self.selectedImageForCropping = pickedImage
+            }
         }
+        .onChange(of: selectedImageForCropping) { newImage in
+            guard let img = newImage else { return }
+            croppingImage = img
+        }
+        .fullScreenCover(item: $croppingImage) { img in
+            NavigationView {
+                SwiftyCropView(
+                    imageToCrop: img,
+                    maskShape: (currentEditType == .profile) ? .circle : .rectangle,
+                    configuration: cropConfig
+                ) { cropped in
+                    // ⬇︎ ここを修正
+                    handleCroppedImage(cropped)   // 種別に応じて振り分ける共通関数へ
+                    croppingImage = nil
+                }
+            }
+            .navigationBarHidden(true)
+        }
+
         .onTapGesture {
             hideKeyboard()
         }
     }
-    
+    // クロップ完了後の処理
+    private func handleCroppedImage(_ croppedImage: UIImage?) {
+        guard let image = croppedImage,
+              let editType = currentEditType else { return }
+
+        if editType == .profile {
+            selectedImage = image
+        } else {
+            selectedBackgroundImage = image     // ← 背景用に保存
+        }
+
+        uploadImageToFirebase(image, type: editType) // 種別に合わせてアップロード
+    }
+    // (続き: 既存のメソッドはそのまま維持)
     func fetchUserImageURL(type: UploadImageType, completion: @escaping (URL?) -> Void) {
         guard let userID = Auth.auth().currentUser?.uid else {
             completion(nil)
@@ -414,6 +459,43 @@ struct AddOshiView: View {
                     print("推しID保存エラー: \(error!.localizedDescription)")
                 }
             }
+        }
+    }
+}
+
+// ImagePickerViewの実装
+struct ImagePickerView: UIViewControllerRepresentable {
+    let onImagePicked: (UIImage) -> Void
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        picker.sourceType = .photoLibrary
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: ImagePickerView
+        
+        init(_ parent: ImagePickerView) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.onImagePicked(image)
+            }
+            picker.dismiss(animated: true)
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            picker.dismiss(animated: true)
         }
     }
 }

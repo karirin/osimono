@@ -9,6 +9,7 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import FirebaseStorage
+import SwiftyCrop
 
 // EditOshiView.swift として新規作成
 struct EditOshiView: View {
@@ -26,6 +27,19 @@ struct EditOshiView: View {
     @State private var isShowingOshiSelector = false
     @State private var selectedOshi: Oshi? // 編集対象の推し
     @State private var showAddOshiForm = false
+    
+    @State private var selectedImageForCropping: UIImage?   // 追加
+    @State private var showImagePicker = false              // 追加
+    @State private var croppingImage: UIImage?
+    
+    private var cropConfig: SwiftyCropConfiguration {
+        var cfg = SwiftyCropConfiguration(
+            texts: .init(cancelButton: "キャンセル",
+                         interactionInstructions: "",
+                         saveButton:   "適用")
+        )
+        return cfg
+    }
     
     // 色の定義
     let primaryColor = Color(.systemPink)
@@ -72,6 +86,7 @@ struct EditOshiView: View {
                             // 推しプロフィール画像
                             Button(action: {
                                 currentEditType = .profile
+                                showImagePicker = true
                                 generateHapticFeedback()
                             }) {
                                 ZStack {
@@ -196,6 +211,7 @@ struct EditOshiView: View {
                             
                             Button(action: {
                                 currentEditType = .background
+                                showImagePicker = true
                                 generateHapticFeedback()
                             }) {
                                 if let image = selectedBackgroundImage {
@@ -271,24 +287,24 @@ struct EditOshiView: View {
                 }
             }
         }
-        .sheet(item: $currentEditType) { type in
-            ImageAddOshiPicker(
-                image: $image,
-                onImagePicked: { pickedImage in
-                    self.image = pickedImage
-                    
-                    // この部分が重要: 選択した画像をUIに表示するために更新
-                    if type == .profile {
-                        self.selectedImage = pickedImage
-                    } else {
-                        self.selectedBackgroundImage = pickedImage
-                    }
-                    
-                    // アップロード処理
-                    //                    uploadImageToFirebase(pickedImage, type: type)
-                }
-            )
-        }
+//        .sheet(item: $currentEditType) { type in
+//            ImageAddOshiPicker(
+//                image: $image,
+//                onImagePicked: { pickedImage in
+//                    self.image = pickedImage
+//                    
+//                    // この部分が重要: 選択した画像をUIに表示するために更新
+//                    if type == .profile {
+//                        self.selectedImage = pickedImage
+//                    } else {
+//                        self.selectedBackgroundImage = pickedImage
+//                    }
+//                    
+//                    // アップロード処理
+//                    //                    uploadImageToFirebase(pickedImage, type: type)
+//                }
+//            )
+//        }
         .onAppear {
             // 初期値をセット
             self.oshiName = oshi.name
@@ -309,6 +325,27 @@ struct EditOshiView: View {
                 }
             }
         )
+        .sheet(isPresented: $showImagePicker) {
+            ImagePickerView { picked in
+                selectedImageForCropping = picked
+            }
+        }
+        .onChange(of: selectedImageForCropping) { newImage in
+            if let img = newImage { croppingImage = img }
+        }
+        .fullScreenCover(item: $croppingImage) { img in
+            NavigationView {
+                SwiftyCropView(
+                    imageToCrop: img,
+                    maskShape: (currentEditType == .profile) ? .circle : .rectangle,
+                    configuration: cropConfig
+                ) { cropped in
+                    handleCroppedImage(cropped)   // ↓ ❺ で定義
+                    croppingImage = nil
+                }
+            }
+            .navigationBarHidden(true)
+        }
     }
     
     var oshiSelectorOverlay: some View {
@@ -466,6 +503,16 @@ struct EditOshiView: View {
                 print("推しID保存エラー: \(error.localizedDescription)")
             }
         }
+    }
+    
+    private func handleCroppedImage(_ cropped: UIImage?) {
+        guard let image = cropped, let type = currentEditType else { return }
+        if type == .profile {
+            selectedImage = image
+        } else {
+            selectedBackgroundImage = image
+        }
+        uploadImageToFirebase(image, type: type)
     }
     
     func fetchOshiList() {
