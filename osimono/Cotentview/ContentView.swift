@@ -56,6 +56,8 @@ struct ContentView: View {
     @State private var isShowingEditOshiView = false
     @State private var helpFlag: Bool = false
     
+    @Binding var oshiChange: Bool
+    
     // プロフィールセクションの高さ
     var profileSectionHeight: CGFloat {
         isSmallDevice() ? 280 : 280
@@ -66,7 +68,7 @@ struct ContentView: View {
             ZStack {
                 VStack(spacing: -60) {
                     ProfileSection(
-                        editFlag: $editFlag,
+                        editFlag: $editFlag, oshiChange: $oshiChange,
                         showAddOshiForm: $showAddOshiForm,
                         isEditingUsername: $isEditingUsername,
                         isShowingOshiSelector: $isShowingOshiSelector,

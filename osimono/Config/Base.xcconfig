@@ -1,0 +1,8 @@
+//
+//  Base.xcconfig
+//  osimono
+//
+//  Created by Apple on 2025/05/07.
+//
+
+#include? "Secrets.xcconfig"

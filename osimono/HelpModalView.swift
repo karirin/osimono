@@ -15,17 +15,13 @@ struct HelpModalView: View {
     @State private var showAlert: Bool = false
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
+    @FocusState private var isFocused: Bool
     
     var body: some View {
         ZStack {
             // 背景オーバーレイ - より滑らかなトランジション用にアニメーション追加
             Color.black.opacity(0.5)
                 .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    withAnimation(.easeOut(duration: 0.2)) {
-//                        isPresented = false
-                    }
-                }
             
             // メインモーダルコンテンツ
             VStack(spacing: 10) {
@@ -48,14 +44,18 @@ struct HelpModalView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    TextField(
-                        "例）推しの記録が登録できない ",
-                        text: $text,
-                        axis: .vertical
-                    )
-                    .padding()
-                    .frame(minHeight: 120,alignment: .top)
-                    .background(Color(.systemGray6))
+                    ZStack(alignment: .topLeading) {
+                        TextEditor(text: $text)
+                            .focused($isFocused)
+                            .padding(.horizontal, 4) // 編集時の余白
+                        if text.isEmpty && !isFocused {
+                            Text("例）推しの記録が登録できない")
+                                .foregroundColor(Color(.placeholderText))
+                        }
+                    }
+                    .padding(10)
+                    .frame(height: 120,alignment: .top)
+//                    .background(Color(.systemGray6))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -128,6 +128,7 @@ struct HelpModalView: View {
                 alignment: .topTrailing
             )
         }
+        .dismissKeyboardOnTap()
         .alert(isPresented: $showAlert) { // アラートを表示する
             Alert(
                 title: Text("送信されました"),

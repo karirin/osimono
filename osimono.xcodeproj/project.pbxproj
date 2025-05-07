@@ -28,6 +28,7 @@
 		1879BDA72DC7BDBC0016ACA3 /* SwiftyCrop in Frameworks */ = {isa = PBXBuildFile; productRef = 1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */; };
 		187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE2592D8EFEE100D58928 /* ShimmerEffect */; };
 		187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE25C2D8F4AAF00D58928 /* Shimmer */; };
+		189878432DC9084E000F68FB /* OpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 189878422DC9084E000F68FB /* OpenAI */; };
 		18F429E82DB291EE007C198B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E72DB291EE007C198B /* CropViewController */; };
 		18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E92DB291EE007C198B /* TOCropViewController */; };
 /* End PBXBuildFile section */
@@ -59,6 +60,7 @@
 		18AB0D5D2DA244880047BB3B /* Exceptions for "osimono" folder in "osimono" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Info.plist,
 				TimeLineView/TimelineMockupView.swift,
 			);
 			target = 1870AFB22D8BC85E004B827B /* osimono */;
@@ -101,6 +103,7 @@
 				182AD6682D8F50B9006F9F09 /* Lottie in Frameworks */,
 				1870B0302D8BD224004B827B /* FirebaseFirestore in Frameworks */,
 				1870B0362D8BD224004B827B /* FirebaseStorage in Frameworks */,
+				189878432DC9084E000F68FB /* OpenAI in Frameworks */,
 				1870B0222D8BD224004B827B /* FirebaseAppDistribution-Beta in Frameworks */,
 				1870B0382D8BD224004B827B /* FirebaseStorageCombine-Community in Frameworks */,
 				1870B01E2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
@@ -205,6 +208,7 @@
 				18F429E92DB291EE007C198B /* TOCropViewController */,
 				180348842DC0CEFE00AD2922 /* Confetti */,
 				1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */,
+				189878422DC9084E000F68FB /* OpenAI */,
 			);
 			productName = osimono;
 			productReference = 1870AFB32D8BC85E004B827B /* osimono.app */;
@@ -296,6 +300,7 @@
 				18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */,
 				180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */,
 				1879BDA52DC7BDBC0016ACA3 /* XCRemoteSwiftPackageReference "SwiftyCrop" */,
+				189878412DC9084E000F68FB /* XCRemoteSwiftPackageReference "OpenAI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1870AFB42D8BC85E004B827B /* Products */;
@@ -373,6 +378,8 @@
 /* Begin XCBuildConfiguration section */
 		1870AFD52D8BC860004B827B /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 1870AFB52D8BC85E004B827B /* osimono */;
+			baseConfigurationReferenceRelativePath = Config/Base.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -436,6 +443,8 @@
 		};
 		1870AFD62D8BC860004B827B /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 1870AFB52D8BC85E004B827B /* osimono */;
+			baseConfigurationReferenceRelativePath = Config/Base.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -501,6 +510,7 @@
 				DEVELOPMENT_TEAM = F3XS565TSX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = osimono/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "推しログ";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "このアプリでは、現在地を取得して地図表示やサービスの提供に利用します。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "日記に写真を追加するために写真ライブラリへのアクセスが必要です";
@@ -534,6 +544,7 @@
 				DEVELOPMENT_TEAM = F3XS565TSX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = osimono/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "推しログ";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "このアプリでは、現在地を取得して地図表示やサービスの提供に利用します。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "日記に写真を追加するために写真ライブラリへのアクセスが必要です";
@@ -718,6 +729,14 @@
 				minimumVersion = 1.5.1;
 			};
 		};
+		189878412DC9084E000F68FB /* XCRemoteSwiftPackageReference "OpenAI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/MacPaw/OpenAI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.4.2;
+			};
+		};
 		18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/TimOliver/TOCropViewController.git";
@@ -817,6 +836,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 187FE25B2D8F4AAF00D58928 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */;
 			productName = Shimmer;
+		};
+		189878422DC9084E000F68FB /* OpenAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 189878412DC9084E000F68FB /* XCRemoteSwiftPackageReference "OpenAI" */;
+			productName = OpenAI;
 		};
 		18F429E72DB291EE007C198B /* CropViewController */ = {
 			isa = XCSwiftPackageProductDependency;

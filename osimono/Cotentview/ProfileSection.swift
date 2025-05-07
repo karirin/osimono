@@ -23,6 +23,7 @@ struct ProfileSection: View {
     let cardColor = Color(.black) // カード背景色
     let textColor = Color(.black) // テキスト色
     @Binding var editFlag: Bool
+    @Binding var oshiChange: Bool
     @State private var currentEditType: UploadImageType? = nil
     @State private var isProfileImageEnlarged = false
     @State private var isShowingImagePicker = false
@@ -78,36 +79,36 @@ struct ProfileSection: View {
                                     .edgesIgnoringSafeArea(.all)
                                 
                                 // 編集ボタンを追加
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        generateHapticFeedback()
-                                        if oshiId == "default" {
-                                            showingOshiAlert = true
-                                        } else {
-                                            isShowingEditOshiView.toggle()
-                                        }
-                                    }
-                                }) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(
-                                                LinearGradient(
-                                                    gradient: Gradient(colors: [Color.white]),
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                )
-                                            )
-                                            .frame(width: 34, height: 34)
-                                            .shadow(color: accentColor.opacity(0.5), radius: 8, x: 0, y: 4)
-                                        
-                                        Image(systemName: "pencil.circle")
-                                            .font(.system(size: 20, weight: .semibold))
-                                            .foregroundColor(.black)
-                                    }
-                                }
-                                .padding(.leading, 16)
-                                .scaleEffect(editFlag ? 1.1 : 1.0)
-                                .animation(.spring(response: 0.3), value: editFlag)
+//                                Button(action: {
+//                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+//                                        generateHapticFeedback()
+//                                        if oshiId == "default" {
+//                                            showingOshiAlert = true
+//                                        } else {
+//                                            isShowingEditOshiView.toggle()
+//                                        }
+//                                    }
+//                                }) {
+//                                    ZStack {
+//                                        Circle()
+//                                            .fill(
+//                                                LinearGradient(
+//                                                    gradient: Gradient(colors: [Color.white]),
+//                                                    startPoint: .topLeading,
+//                                                    endPoint: .bottomTrailing
+//                                                )
+//                                            )
+//                                            .frame(width: 34, height: 34)
+//                                            .shadow(color: accentColor.opacity(0.5), radius: 8, x: 0, y: 4)
+//                                        
+//                                        Image(systemName: "pencil.circle")
+//                                            .font(.system(size: 20, weight: .semibold))
+//                                            .foregroundColor(.black)
+//                                    }
+//                                }
+//                                .padding(.leading, 16)
+//                                .scaleEffect(editFlag ? 1.1 : 1.0)
+//                                .animation(.spring(response: 0.3), value: editFlag)
                             }
                             
                         default:
@@ -303,7 +304,12 @@ struct ProfileSection: View {
             withAnimation {
                 loadAllData()
             }
-            //            fetchOshiList()
+        }
+        .onChange(of: oshiChange) { newOshi in
+            withAnimation {
+                loadSettingAllData()
+                fetchOshiList()
+            }
         }
         .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
             loadAllData()
@@ -638,12 +644,14 @@ struct ProfileSection: View {
         
         dispatchGroup.enter()
         fetchUserImageURL(type: .profile) { url in
+            print("fetchUserImageURL(type: .profile) { url in")
             self.imageUrl = url
             dispatchGroup.leave()
         }
         
         dispatchGroup.enter()
         fetchUserImageURL(type: .background) { url in
+            print("fetchUserImageURL(type: .background) { url in")
             self.backgroundImageUrl = url
             dispatchGroup.leave()
         }
@@ -651,6 +659,7 @@ struct ProfileSection: View {
         dispatchGroup.enter()
         fetchUserProfile { profile in
             if let profile = profile {
+                print("fetchUserProfile { profile in")
                 self.userProfile = profile
             }
             dispatchGroup.leave()
@@ -658,6 +667,41 @@ struct ProfileSection: View {
         
         dispatchGroup.notify(queue: .main) {
             withAnimation {
+                print("self.isLoading = false")
+                self.isLoading = false
+            }
+        }
+    }
+    
+    func loadSettingAllData() {
+        let dispatchGroup = DispatchGroup()
+        
+        dispatchGroup.enter()
+        fetchUserImageURL(type: .profile) { url in
+            print("fetchUserImageURL(type: .profile) { url in")
+            self.imageUrl = url
+            dispatchGroup.leave()
+        }
+        
+        dispatchGroup.enter()
+        fetchUserImageURL(type: .background) { url in
+            print("fetchUserImageURL(type: .background) { url in")
+            self.backgroundImageUrl = url
+            dispatchGroup.leave()
+        }
+        
+        dispatchGroup.enter()
+        fetchUserProfile { profile in
+            if let profile = profile {
+                print("fetchUserProfile { profile in")
+                self.userProfile = profile
+            }
+            dispatchGroup.leave()
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            withAnimation {
+                print("self.isLoading = false")
                 self.isLoading = false
             }
         }

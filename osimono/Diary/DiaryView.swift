@@ -50,6 +50,7 @@ struct DiaryView: View {
                             generateHapticFeedback()
                             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                                 showCalendar.toggle()
+                                showFilters = false
                             }
                         }) {
                             HStack(spacing: 8) {
@@ -77,11 +78,12 @@ struct DiaryView: View {
                             generateHapticFeedback()
                             withAnimation(.spring()) {
                                 showFilters.toggle()
+                                showCalendar = false
                             }
                         }) {
                             ZStack(alignment: .topTrailing) {
                                 Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                                    .font(.system(size: 20))
+                                    .font(.system(size: 26))
                                     .foregroundColor(.customPink)
                                 
                                 if !appliedFilters.isEmpty {

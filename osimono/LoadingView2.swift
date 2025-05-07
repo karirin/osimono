@@ -649,16 +649,22 @@ struct LoadingView13: View {
 struct DotPulseLoadingView: View {
     @State private var isAnimating = false
     let dotCount = 3
-    let dotSize: CGFloat = 12
-    let dotSpacing: CGFloat = 8
+    let dotSize: CGFloat = 20
+    let dotSpacing: CGFloat = 30
     
     var body: some View {
         HStack(spacing: dotSpacing) {
             ForEach(0..<dotCount, id: \.self) { index in
                 Circle()
+//                    .background(
+//                        RoundedRectangle(cornerRadius: 16)
+////                                    .fill(Color(hex: "16213E"))
+//                            .fill(Color(.white))
+//                            .shadow(color: Color(hex: "FF2E63").opacity(0.3), radius: 8, x: 0, y: 4)
+//                    )
                     .fill(
                         LinearGradient(
-                            gradient: Gradient(colors: [.blue, .purple]),
+                            gradient: Gradient(colors: [.white, .white]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -666,6 +672,7 @@ struct DotPulseLoadingView: View {
                     .frame(width: dotSize, height: dotSize)
                     .scaleEffect(isAnimating ? 1.2 : 0.8)
                     .opacity(isAnimating ? 1 : 0.3)
+                    .shadow(color: Color(hex: "FF2E63").opacity(0.3), radius: 8, x: 0, y: 4)
                     .animation(
                         Animation.easeInOut(duration: 0.6)
                             .repeatForever()

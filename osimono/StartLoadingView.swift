@@ -87,7 +87,7 @@ struct StartLoadingView: View {
             BackgroundPatterns()
                 .opacity(0.3)
             
-            VStack(spacing: 40) {
+            VStack(spacing: -90) {
                 
                 // より可愛いアニメーションテキスト
                 HStack(spacing: 5) {
@@ -104,9 +104,7 @@ struct StartLoadingView: View {
                 }
                 
                 // 改良されたローディングインジケーター
-                ModernSpinner()
-                    .frame(width: 100, height: 100)
-                    .padding(.top, 10)
+                TestView()
                 
                 VStack{
                     HStack(spacing: 2) {

@@ -13,13 +13,14 @@ struct TopView: View {
     @State private var selectedOshiId: String = "default"
     @ObservedObject var tutorialManager = TutorialManager.shared
     @State private var showWelcomeScreen = false
+    @State private var oshiChange: Bool = false
     
     var body: some View {
         ZStack{
             TabView {
                 HStack{
 //                    DiaryView(oshiId: selectedOshiId ?? "default")
-                    ContentView()
+                    ContentView(oshiChange: $oshiChange)
                 }
 
                 .tabItem {
@@ -55,7 +56,7 @@ struct TopView: View {
                         .padding()
                 }
                 ZStack {
-                    SettingsView()
+                    SettingsView(oshiChange: $oshiChange)
                 }
                 .tabItem {
                     Image(systemName: "gear")

@@ -20,7 +20,7 @@ struct ModifiedTopView: View {
         ZStack{
             TabView {
                 HStack{
-                    ContentView()
+//                    ContentView(oshiChange: <#Binding<Bool>#>)
                 }
                 .tabItem {
                     Image(systemName: "rectangle.split.2x2")
@@ -55,7 +55,7 @@ struct ModifiedTopView: View {
                 }
                 
                 ZStack {
-                    SettingsView()
+//                    SettingsView()
                 }
                 .tabItem {
                     Image(systemName: "gear")

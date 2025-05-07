@@ -59,6 +59,8 @@ struct SettingsView: View {
     // URLスキームを開くための環境変数
     @Environment(\.openURL) private var openURL
     
+    @Binding var oshiChange: Bool
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -388,16 +390,16 @@ struct SettingsView: View {
         .onAppear {
             fetchOshiList()
             loadSelectedOshi()
-            loadUserProfile()
         }
         .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
             fetchOshiList()
             loadSelectedOshi()
-            loadUserProfile()
+            oshiChange.toggle()
         }) {
             if let oshi = selectedOshi {
                 EditOshiView(oshi: oshi) {
-                    loadUserProfile()
+                    fetchOshiList()
+                    loadSelectedOshi()
                 }
             }
         }
@@ -499,10 +501,6 @@ struct SettingsView: View {
             DispatchQueue.main.async {
                 self.oshiList = newOshis
                 self.loadSelectedOshi()
-                // 初期表示用に最初の推しを選択
-                if let firstOshi = newOshis.first, self.selectedOshi == nil {
-                    self.selectedOshi = firstOshi
-                }
             }
         }
     }
@@ -518,30 +516,15 @@ struct SettingsView: View {
                 // 選択中の推しIDが存在する場合、oshiListから該当する推しを検索して設定
                 if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
                     self.selectedOshi = oshi
+                    self.username = oshi.name
+                    if let profileImageUrl = oshi.imageUrl as? String,
+                        let url = URL(string: profileImageUrl) {
+                            loadImage(from: url) { image in
+                                profileImage = image
+                            }
+                      }
                 }
             }
-        }
-    }
-    
-    func loadUserProfile() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        let ref = Database.database().reference().child("oshis").child(userId)
-        ref.observeSingleEvent(of: .value) { snapshot in
-            if let userData = snapshot.value as? [String: [String: Any]],
-            let firstOshi = userData.values.first {
-                  
-            if let loadedUsername = firstOshi["name"] as? String {
-                      self.username = loadedUsername
-                print("username     :\(username)")
-                  }
-                  
-            if let profileImageUrl = firstOshi["imageUrl"] as? String,
-                    let url = URL(string: profileImageUrl) {
-                        loadImage(from: url) { image in
-                            profileImage = image
-                        }
-                  }
-             }
         }
     }
 
@@ -638,5 +621,5 @@ struct SettingRow: View {
 }
 
 #Preview{
-    SettingsView()
+    SettingsView(oshiChange: .constant(false))
 }

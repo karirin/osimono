@@ -20,8 +20,8 @@ struct ContentView1: View {
         VStack(spacing: 0) {
             // メインコンテンツエリア
             TabView(selection: $selectedTab) {
-                ContentView()
-                    .tag(0)
+//                ContentView()
+//                    .tag(0)
                 
                 MapView(oshiId: "default")
                     .tag(1)
@@ -32,8 +32,8 @@ struct ContentView1: View {
                 DiaryView(oshiId: "default")
                     .tag(3)
                 
-                SettingsView()
-                    .tag(4)
+//                SettingsView()
+//                    .tag(4)
             }
             .animation(.easeInOut, value: selectedTab)
             

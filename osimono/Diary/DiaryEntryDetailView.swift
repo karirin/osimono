@@ -26,6 +26,7 @@ struct DiaryEntryDetailView: View {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
         formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: "ja_JP") 
         return formatter
     }()
     
