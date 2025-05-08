@@ -14,13 +14,21 @@ struct TopView: View {
     @ObservedObject var tutorialManager = TutorialManager.shared
     @State private var showWelcomeScreen = false
     @State private var oshiChange: Bool = false
-    
+    let dummyOshi = Oshi(
+        id: "1",
+        name: "テストの推し",
+        imageUrl: nil,
+        backgroundImageUrl: nil,
+        memo: nil,
+        createdAt: Date().timeIntervalSince1970
+    )
     var body: some View {
         ZStack{
             TabView {
                 HStack{
 //                    DiaryView(oshiId: selectedOshiId ?? "default")
                     ContentView(oshiChange: $oshiChange)
+//                    OshiAIChatView(selectedOshi: dummyOshi, oshiItem: nil)
                 }
 
                 .tabItem {

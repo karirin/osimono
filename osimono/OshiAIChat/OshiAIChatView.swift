@@ -6,29 +6,54 @@
 //
 
 import SwiftUI
-import OpenAI // OpenAI SDKをインストールする必要があります
+import OpenAI            // OpenAI SDK をインストールしておくこと
 
+// MARK: - 共通クライアント
+struct AIClient {
+    /// プレビュー中・APIキー未設定時は `nil`
+    static let shared: OpenAI? = {
+//        #if DEBUG && targetEnvironment(simulator)
+//        return nil                                 // ← プレビューでは無効化
+//        #else
+        let envKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"]
+        let plistKey = Bundle.main.infoDictionary?["OPENAI_API_KEY"] as? String
+        guard let key = (envKey?.isEmpty == false ? envKey : nil) ??
+                        (plistKey?.isEmpty == false ? plistKey : nil) else {
+            #if DEBUG
+            print("⚠️ OPENAI_API_KEY が取得できませんでした")
+            #endif
+            return nil
+        }
+        return OpenAI(apiToken: key)
+//        #endif
+    }()
+}
+
+// MARK: - メインビュー
 struct OshiAIChatView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.presentationMode) private var presentationMode
+
     @State private var messages: [ChatMessage] = []
     @State private var inputText: String = "こんにちは"
-    @State private var isLoading: Bool = false
+    @State private var isLoading  = false
+
     let selectedOshi: Oshi
-    let oshiItem: OshiItem? // チャットのきっかけとなったアイテム
-    
-    let primaryColor = Color(.systemPink)
-    
-    private let openAI = OpenAI(apiToken: ProcessInfo.processInfo.environment["OPENAI_API_KEY"]!)
-    
+    let oshiItem: OshiItem?            // チャットのきっかけになったアイテム
+
+    private let openAI  = AIClient.shared
+    private let primary = Color(.systemPink)
+
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // チャットメッセージリスト
+
+                // ── チャットメッセージ一覧 ───────────────────────────────
                 ScrollViewReader { proxy in
                     ScrollView {
                         VStack(spacing: 12) {
                             ForEach(messages) { message in
-                                ChatBubble(message: message, oshiName: selectedOshi.name)
+                                ChatBubble(message: message,
+                                           oshiName: selectedOshi.name)
                                     .id(message.id)
                             }
                         }
@@ -40,20 +65,21 @@ struct OshiAIChatView: View {
                         }
                     }
                 }
-                
-                // 入力エリア
+
+                // ── 入力エリア ───────────────────────────────────────
                 HStack(spacing: 12) {
-                    TextField("\(selectedOshi.name)に話しかけてみよう", text: $inputText)
+                    TextField("\(selectedOshi.name)に話しかけてみよう",
+                              text: $inputText)
                         .padding(12)
                         .background(Color.gray.opacity(0.1))
                         .cornerRadius(25)
-                    
+
                     Button(action: sendMessage) {
                         Image(systemName: "paperplane.fill")
                             .font(.system(size: 18))
                             .foregroundColor(.white)
                             .frame(width: 44, height: 44)
-                            .background(primaryColor)
+                            .background(primary)
                             .clipShape(Circle())
                     }
                     .disabled(inputText.isEmpty || isLoading)
@@ -66,7 +92,6 @@ struct OshiAIChatView: View {
             })
         }
         .onAppear {
-            // 初期メッセージを設定
             if let item = oshiItem {
                 addInitialMessage(for: item)
             } else {
@@ -74,111 +99,103 @@ struct OshiAIChatView: View {
             }
         }
     }
-    
-    // 初期メッセージ（アイテムについて）
+
+    // MARK: - 初期メッセージ
     private func addInitialMessage(for item: OshiItem) {
-        var messageText = ""
-        
+        let text: String
         switch item.itemType {
         case "グッズ":
-            if let title = item.title {
-                messageText = "\(title)を買ってくれてありがとう！とても嬉しいよ🥰"
-            }
+            text = "\(item.title ?? "グッズ")を買ってくれてありがとう！とても嬉しいよ🥰"
         case "ライブ記録":
-            if let eventName = item.eventName {
-                messageText = "\(eventName)に来てくれてありがとう！一緒にステージを盛り上げてくれて最高だったよ✨"
-            }
+            text = "\(item.eventName ?? "ライブ")に来てくれてありがとう！最高だったね✨"
         case "聖地巡礼":
-            messageText = "聖地巡礼してくれたんだね！私の大切な場所を訪れてくれて幸せだよ💕"
+            text = "聖地巡礼してくれたんだね！私の大切な場所を訪れてくれて幸せだよ💕"
         case "SNS投稿":
-            messageText = "投稿してくれてありがとう！たくさんの人に私のことを知ってもらえて嬉しいよ😊"
+            text = "投稿してくれてありがとう！たくさんの人に私のことを知ってもらえて嬉しいよ😊"
         default:
-            messageText = "私のことを思い出してくれてありがとう！"
+            text = "私のことを思い出してくれてありがとう！"
         }
-        
-        let message = ChatMessage(
-            id: UUID(),
-            content: messageText,
-            isUser: false,
-            timestamp: Date()
-        )
-        messages.append(message)
+        appendAIMessage(text)
     }
-    
-    // ウェルカムメッセージ
+
     private func addWelcomeMessage() {
-        let message = ChatMessage(
-            id: UUID(),
-            content: "こんにちは！\(selectedOshi.name)だよ！いつも応援してくれてありがとう✨",
-            isUser: false,
-            timestamp: Date()
-        )
-        messages.append(message)
+        appendAIMessage("こんにちは！\(selectedOshi.name)だよ！いつも応援してくれてありがとう✨")
     }
-    
-    // メッセージ送信
+
+    // MARK: - 送信処理
     private func sendMessage() {
         guard !inputText.isEmpty else { return }
-        
-        let userMessage = ChatMessage(
-            id: UUID(),
-            content: inputText,
-            isUser: true,
-            timestamp: Date()
-        )
-        messages.append(userMessage)
-        
+
+        messages.append(.init(id: .init(),
+                              content: inputText,
+                              isUser: true,
+                              timestamp: .now))
+
         let userInput = inputText
         inputText = ""
-        
+
         generateAIResponse(for: userInput)
     }
-    
-    // AIレスポンスの生成（修正版）
+
+    // MARK: - OpenAI 呼び出し
     private func generateAIResponse(for userInput: String) {
+        guard let openAI else {
+            appendSystemMessage("⚠️ APIキーが設定されていないため返信できません")
+            return
+        }
+
+        guard
+            let system = ChatQuery.ChatCompletionMessageParam(
+                role: .system,
+                content: createSystemPrompt()
+            ),
+            let user   = ChatQuery.ChatCompletionMessageParam(
+                role: .user,
+                content: userInput
+            )
+        else {
+            appendSystemMessage("⚠️ メッセージ生成に失敗しました")
+            return
+        }
+
+        let query = ChatQuery(messages: [system, user],
+                              model: .gpt4_1_nano,
+                              temperature: 0.8)
+
         isLoading = true
-        
-        let query = ChatQuery(
-            messages: [
-                .init(role: .system, content: createSystemPrompt())!,  // !で強制的にアンラップ
-                .init(role: .user, content: userInput)!  // !で強制的にアンラップ
-            ], model: .gpt4_1_nano,
-            temperature: 0.8
-        )
-        
         openAI.chats(query: query) { result in
             DispatchQueue.main.async {
                 isLoading = false
-                
                 switch result {
-                case .success(let result):
-                    if let content = result.choices.first?.message.content {
-                        let aiMessage = ChatMessage(
-                            id: UUID(),
-                            content: content,
-                            isUser: false,
-                            timestamp: Date()
-                        )
-                        messages.append(aiMessage)
-                    }
-                case .failure(let error):
-                    print("AIエラー: \(error)")
+                case .success(let res):
+                    let reply = res.choices.first?.message.content ?? "(空の返答)"
+                    appendAIMessage(reply)
+                case .failure(let err):
+                    appendSystemMessage("AIエラー: \(err.localizedDescription)")
                 }
             }
         }
     }
-    
-    // システムプロンプトの作成
+
+    // MARK: - メッセージ追加ユーティリティ
+    private func appendAIMessage(_ text: String) {
+        messages.append(.init(id: .init(), content: text,
+                              isUser: false, timestamp: .now))
+    }
+    private func appendSystemMessage(_ text: String) {
+        appendAIMessage(text)
+    }
+
+    // MARK: - システムプロンプト
     private func createSystemPrompt() -> String {
         var prompt = """
         あなたは\(selectedOshi.name)として振る舞います。
         ファンの応援に対して感謝を示し、親しみやすく、優しい口調で応答してください。
         絵文字を適度に使い、ファンを喜ばせる返答を心がけてください。
-        
+
         ファンの推し活の内容：
         """
-        
-        // グッズ情報
+
         if let item = oshiItem {
             prompt += "\n- 最近購入した商品: \(item.title ?? "")"
             if item.itemType == "グッズ", let price = item.price {
@@ -188,12 +205,12 @@ struct OshiAIChatView: View {
                 prompt += "\n- メモ: \(memo)"
             }
         }
-        
+
         return prompt
     }
 }
 
-// チャットメッセージモデル
+// MARK: - サブビュー・モデル
 struct ChatMessage: Identifiable {
     let id: UUID
     let content: String
@@ -201,11 +218,10 @@ struct ChatMessage: Identifiable {
     let timestamp: Date
 }
 
-// チャットバブル
 struct ChatBubble: View {
     let message: ChatMessage
     let oshiName: String
-    
+
     var body: some View {
         HStack {
             if message.isUser {
@@ -232,7 +248,7 @@ struct ChatBubble: View {
     }
 }
 
-// Previewを修正
+// MARK: - プレビュー
 #Preview {
     let dummyOshi = Oshi(
         id: "1",
@@ -242,6 +258,5 @@ struct ChatBubble: View {
         memo: nil,
         createdAt: Date().timeIntervalSince1970
     )
-    
     return OshiAIChatView(selectedOshi: dummyOshi, oshiItem: nil)
 }
