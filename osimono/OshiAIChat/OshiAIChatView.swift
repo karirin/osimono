@@ -14,9 +14,6 @@ import FirebaseDatabase
 struct AIClient {
     /// プレビュー中・APIキー未設定時は `nil`
     static let shared: OpenAI? = {
-//        #if DEBUG && targetEnvironment(simulator)
-//        return nil                                 // ← プレビューでは無効化
-//        #else
         let envKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"]
         let plistKey = Bundle.main.infoDictionary?["OPENAI_API_KEY"] as? String
         guard let key = (envKey?.isEmpty == false ? envKey : nil) ??
@@ -27,7 +24,6 @@ struct AIClient {
             return nil
         }
         return OpenAI(apiToken: key)
-//        #endif
     }()
 }
 
