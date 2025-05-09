@@ -2,6 +2,7 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import FirebaseStorage
+import FirebaseDatabase
 import CoreLocation
 import SwiftyCrop
 
@@ -631,10 +632,10 @@ struct OshiItemFormView: View {
     // データ保存
     func saveItem() {
         isLoading = true
-        print("saveItem1")
-        // アイテムデータの準備
+        
+        let itemId = UUID().uuidString
         var data: [String: Any] = [
-            "id": UUID().uuidString,
+            "id": itemId,
             "title": title,
             "memo": memo,
             "favorite": favorite,
@@ -649,7 +650,6 @@ struct OshiItemFormView: View {
         
         // アイテムタイプ別のデータ追加
         if itemType == "グッズ" {
-            print("saveItem2")
             data["category"] = category
             if let priceInt = Int(price) {
                 data["price"] = priceInt
@@ -661,17 +661,6 @@ struct OshiItemFormView: View {
             data["purchaseDate"] = purchaseDate.timeIntervalSince1970
             data["memories"] = memo
         } else if itemType == "聖地巡礼" {
-            //            data["locationAddress"] = locationAddress
-            //            data["visitDate"] = purchaseDate.timeIntervalSince1970
-            //            data["memories"] = memo
-            //            
-            //            // 位置情報が取得できている場合、locationViewModelにも保存
-            //            if let locationCoord = locationCoordinate {
-            //                saveToLocationsTable(coordinate: locationCoord)
-            //            } else if !locationAddress.isEmpty {
-            //                // 住所から座標を取得して保存
-            //                geocodeAddressAndSaveLocation()
-            //            }
             data["locationAddress"] = locationAddress
             data["visitDate"] = purchaseDate.timeIntervalSince1970
             data["memories"] = memo
@@ -715,11 +704,12 @@ struct OshiItemFormView: View {
                     )
                     self.saveDataToFirebase(data)
                 }
+                return // 処理が完了したのでここで終了
             } else if !locationAddress.isEmpty {
                 // 住所から座標を取得して保存
                 let sharedId = UUID().uuidString
                 data["id"] = sharedId
-                print("saveItem3")
+                
                 // ジオコーディング処理を改善
                 let geocoder = CLGeocoder()
                 geocoder.geocodeAddressString(locationAddress) { placemarks, error in
@@ -740,7 +730,7 @@ struct OshiItemFormView: View {
                                     data["imageUrl"] = url
                                     
                                     // locationsテーブルに保存
-                                    saveToLocationsTable(
+                                    self.saveToLocationsTable(
                                         coordinate: location.coordinate,
                                         id: sharedId,
                                         imageUrl: url
@@ -750,7 +740,7 @@ struct OshiItemFormView: View {
                                     self.saveDataToFirebase(data)
                                 } else {
                                     // 画像アップロードに失敗してもデータは保存
-                                    saveToLocationsTable(
+                                    self.saveToLocationsTable(
                                         coordinate: location.coordinate,
                                         id: sharedId,
                                         imageUrl: nil
@@ -760,7 +750,7 @@ struct OshiItemFormView: View {
                             }
                         } else {
                             // 画像なしで保存
-                            saveToLocationsTable(
+                            self.saveToLocationsTable(
                                 coordinate: location.coordinate,
                                 id: sharedId,
                                 imageUrl: nil
@@ -773,19 +763,6 @@ struct OshiItemFormView: View {
                     }
                 }
                 return // 非同期処理なのでここで終了
-            } else {
-                // 住所も座標もない場合はoshiItemsのみ保存
-                if let image = selectedImage {
-                    uploadImage(image) { imageUrl in
-                        if let url = imageUrl {
-                            data["imageUrl"] = url
-                        }
-                        self.saveDataToFirebase(data)
-                    }
-                } else {
-                    self.saveDataToFirebase(data)
-                }
-                return // ここで終了
             }
         } else if itemType == "その他" {
             data["recordDate"] = purchaseDate.timeIntervalSince1970
@@ -793,7 +770,7 @@ struct OshiItemFormView: View {
         } else {
             data["publishDate"] = purchaseDate.timeIntervalSince1970
         }
-        print("saveItem3")
+        
         // 画像がある場合はアップロード
         if let image = selectedImage {
             uploadImage(image) { imageUrl in
@@ -809,6 +786,101 @@ struct OshiItemFormView: View {
         } else {
             // 画像なしで保存
             saveDataToFirebase(data)
+        }
+    }
+    
+    func saveDataToFirebase(_ data: [String: Any]) {
+        guard let userId = userId, let itemId = data["id"] as? String else {
+            isLoading = false
+            alertMessage = "保存に失敗しました"
+            showAlert = true
+            return
+        }
+        
+        let oshiId = data["oshiId"] as? String ?? "default"
+        let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(itemId)
+        
+        ref.setValue(data) { error, _ in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self.isLoading = false
+                    self.alertMessage = "保存に失敗しました: \(error.localizedDescription)"
+                    self.showAlert = true
+                } else {
+                    // 保存成功したら、AIチャットメッセージを生成
+                    self.createAIChatMessage(for: itemId, data: data)
+                }
+            }
+        }
+    }
+    
+    func createAIChatMessage(for itemId: String, data: [String: Any]) {
+        // OshiItem オブジェクトを作成
+        let oshiItem = OshiItem(
+            id: itemId,
+            title: self.title,
+            category: self.itemType == "グッズ" ? self.category : nil,
+            memo: self.memo,
+            imageUrl: data["imageUrl"] as? String,
+            price: self.itemType == "グッズ" ? Int(self.price) : nil,
+            eventName: self.itemType == "ライブ記録" ? self.eventName : nil,
+            favorite: self.favorite,
+            tags: self.tags.isEmpty ? nil : self.tags,
+            itemType: self.itemType,
+            locationAddress: self.itemType == "聖地巡礼" ? self.locationAddress : nil,
+            createdAt: Date().timeIntervalSince1970,
+            oshiId: self.oshiId
+        )
+        
+        // 推しの情報を取得
+        OshiChatCoordinator.shared.fetchOshiDetails(oshiId: self.oshiId) { oshi in
+            guard let oshi = oshi else {
+                self.isLoading = false
+                self.alertMessage = "推し情報の取得に失敗しました"
+                self.showAlert = true
+                return
+            }
+            
+            // AIに初期メッセージを生成させる
+            AIMessageGenerator.shared.generateInitialMessage(for: oshi, item: oshiItem) { content, error in
+                if let error = error {
+                    print("AIメッセージ生成エラー: \(error.localizedDescription)")
+                    self.isLoading = false
+                    self.presentationMode.wrappedValue.dismiss()
+                    return
+                }
+                
+                guard let content = content else {
+                    self.isLoading = false
+                    self.presentationMode.wrappedValue.dismiss()
+                    return
+                }
+                
+                // AIからのメッセージを作成
+                let messageId = UUID().uuidString
+                let message = ChatMessage(
+                    id: messageId,
+                    content: content,
+                    isUser: false,
+                    timestamp: Date().timeIntervalSince1970,
+                    oshiId: self.oshiId,
+                    itemId: itemId // 同じitemIdを使用して関連付け
+                )
+                
+                // メッセージをデータベースに保存
+                ChatDatabaseManager.shared.saveMessage(message) { error in
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        
+                        if let error = error {
+                            print("チャットメッセージ保存エラー: \(error.localizedDescription)")
+                        }
+                        
+                        // 保存成功後、画面を閉じる
+                        self.presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
         }
     }
     
@@ -909,33 +981,30 @@ struct OshiItemFormView: View {
         }
     }
     
-    // Firebaseにデータを保存
-    func saveDataToFirebase(_ data: [String: Any]) {
-        guard let userId = userId, let itemId = data["id"] as? String else {
-            isLoading = false
-            alertMessage = "保存に失敗しました"
-            showAlert = true
-            return
-        }
-        print("saveDataToFirebase1")
-        // ここを変更：oshiIdを含めたパスに保存
-        let oshiId = data["oshiId"] as? String ?? "default"
-        let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(itemId)
-        
-        ref.setValue(data) { error, _ in
-            DispatchQueue.main.async {
-                self.isLoading = false
-                print("saveDataToFirebase2")
-                if let error = error {
-                    self.alertMessage = "保存に失敗しました: \(error.localizedDescription)"
-                    self.showAlert = true
-                } else {
-                    // 保存成功
-                    self.presentationMode.wrappedValue.dismiss()
-                }
-            }
-        }
-    }
+//    func saveDataToFirebase(_ data: [String: Any]) {
+//        guard let userId = userId, let itemId = data["id"] as? String else {
+//            isLoading = false
+//            alertMessage = "保存に失敗しました"
+//            showAlert = true
+//            return
+//        }
+//        
+//        let oshiId = data["oshiId"] as? String ?? "default"
+//        let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(itemId)
+//        
+//        ref.setValue(data) { error, _ in
+//            DispatchQueue.main.async {
+//                if let error = error {
+//                    self.isLoading = false
+//                    self.alertMessage = "保存に失敗しました: \(error.localizedDescription)"
+//                    self.showAlert = true
+//                } else {
+//                    // 保存成功したら、AIチャットメッセージを生成
+//                    self.createAIChatMessage(for: itemId, data: data)
+//                }
+//            }
+//        }
+//    }
 }
 
 #Preview {

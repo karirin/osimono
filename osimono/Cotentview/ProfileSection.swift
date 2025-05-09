@@ -44,6 +44,15 @@ struct ProfileSection: View {
     @Binding var firstOshiFlag: Bool
     @Binding var showingOshiAlert: Bool
     var oshiId: String
+    @State private var unreadMessageCount: Int = 0
+    @State private var hasNewMessages: Bool = false
+    
+    @State private var unreadPostCount: Int = 0
+    @State private var hasUnreadPosts: Bool = false
+    
+    @State private var isAnimatingBadge: Bool = false
+    @State private var badgeBounce: Bool = false
+    @State private var showChatView: Bool = false
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -78,37 +87,16 @@ struct ProfileSection: View {
                                     .clipped()
                                     .edgesIgnoringSafeArea(.all)
                                 
-                                // 編集ボタンを追加
-//                                Button(action: {
-//                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-//                                        generateHapticFeedback()
-//                                        if oshiId == "default" {
-//                                            showingOshiAlert = true
-//                                        } else {
-//                                            isShowingEditOshiView.toggle()
-//                                        }
-//                                    }
-//                                }) {
-//                                    ZStack {
-//                                        Circle()
-//                                            .fill(
-//                                                LinearGradient(
-//                                                    gradient: Gradient(colors: [Color.white]),
-//                                                    startPoint: .topLeading,
-//                                                    endPoint: .bottomTrailing
-//                                                )
-//                                            )
-//                                            .frame(width: 34, height: 34)
-//                                            .shadow(color: accentColor.opacity(0.5), radius: 8, x: 0, y: 4)
-//                                        
-//                                        Image(systemName: "pencil.circle")
-//                                            .font(.system(size: 20, weight: .semibold))
-//                                            .foregroundColor(.black)
-//                                    }
-//                                }
-//                                .padding(.leading, 16)
-//                                .scaleEffect(editFlag ? 1.1 : 1.0)
-//                                .animation(.spring(response: 0.3), value: editFlag)
+                                HStack {
+                                    Spacer()
+                                    
+                                    // チャットボタン（バッジ付き）
+                                    chatButtonWithBadge
+                                        .scaleEffect(badgeBounce ? 1.2 : 1.0)
+                                        .offset(y: badgeBounce ? -5 : 0)
+                                }
+                                .padding(.top, 8)
+                                .zIndex(2) // 他の要素より前面に表示
                             }
                             
                         default:
@@ -254,27 +242,6 @@ struct ProfileSection: View {
                     .zIndex(1) 
                 }
                 .offset(y: 30)
-                
-                //            Color.black.opacity(0.3)
-                //                .edgesIgnoringSafeArea(.all)
-                //            VStack {
-                //                HStack {
-                //                    Spacer()
-                //                }
-                //                Spacer()
-                //            }
-                //            HStack{
-                //                Spacer()
-                //                Button(action: {
-                //                    currentEditType = .background
-                //                    generateHapticFeedback()
-                //                }) {
-                //                    Image(systemName: "camera.fill")
-                //                        .font(.system(size: 24))
-                //                        .foregroundColor(.white)
-                //                        .padding(12)
-                //                        .background(Circle().fill(Color.black.opacity(0.5)))
-                //                }
             }
         }
         .sheet(isPresented: $isShowingImagePicker) {
@@ -298,6 +265,25 @@ struct ProfileSection: View {
                 print("onappear!!!!!!")
                 fetchOshiList()
                 hasLoadedInitialData = true
+                
+                // 未読メッセージと未読投稿を一度にチェック
+                checkForAllUnreadItems()
+                
+                // 定期的にチェックするタイマー
+                startUnreadItemsCheckTimer()
+                
+                if let oshiId = selectedOshi?.id {
+                    UnreadPostTracker.shared.markPostsAsRead(for: oshiId) { error in
+                        if let error = error {
+                            print("投稿を既読にできませんでした: \(error.localizedDescription)")
+                        }
+                    }
+                }
+            }
+        }
+        .onChange(of: selectedOshi) { newOshi in
+            if newOshi != nil {
+                checkForAllUnreadItems()
             }
         }
         .onChange(of: isOshiChange) { newOshi in
@@ -326,6 +312,17 @@ struct ProfileSection: View {
         }) {
             AddOshiView()
         }
+        .fullScreenCover(isPresented: $showChatView) {
+            if let oshi = selectedOshi {
+                OshiAIChatView(selectedOshi: oshi, oshiItem: nil)
+                    .onDisappear {
+                        // チャットビューが閉じられたら再度チェック
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            checkForUnreadMessages()
+                        }
+                    }
+            }
+        }
         .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
             loadAllData()
             fetchOshiList()
@@ -337,6 +334,98 @@ struct ProfileSection: View {
                     fetchOshiList()
                 }
             }
+        }
+    }
+    
+    func startUnreadItemsCheckTimer() {
+        // 1分ごとに未読メッセージと未読投稿をチェック
+        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+            checkForAllUnreadItems()
+        }
+    }
+
+    // showChatAIView関数を更新して投稿の既読も処理
+    func showChatAIView() {
+        // チャットを開いたら既読にマーク
+        if let oshiId = selectedOshi?.id {
+            // メッセージを既読にマーク
+            ChatDatabaseManager.shared.markMessagesAsRead(for: oshiId) { error in
+                if let error = error {
+                    print("メッセージを既読にできませんでした: \(error.localizedDescription)")
+                } else {
+                    // 投稿も既読にマーク（推しの投稿を見る画面を開くことで既読になるケースも考慮）
+                    UnreadPostTracker.shared.markPostsAsRead(for: oshiId) { error in
+                        if let error = error {
+                            print("投稿を既読にできませんでした: \(error.localizedDescription)")
+                        }
+                        
+                        // 既読にしたので、バッジをリセット
+                        DispatchQueue.main.async {
+                            self.hasNewMessages = false
+                            self.unreadMessageCount = 0
+                            self.hasUnreadPosts = false
+                            self.unreadPostCount = 0
+                        }
+                    }
+                }
+            }
+        }
+        
+        // チャットビューを表示
+        showChatView = true
+    }
+
+    // 投稿を既読にするメソッドを追加（推し投稿一覧画面に遷移する時に呼び出す）
+    func markPostsAsRead() {
+        if let oshiId = selectedOshi?.id {
+            UnreadPostTracker.shared.markPostsAsRead(for: oshiId) { error in
+                if let error = error {
+                    print("投稿を既読にできませんでした: \(error.localizedDescription)")
+                } else {
+                    DispatchQueue.main.async {
+                        self.hasUnreadPosts = false
+                        self.unreadPostCount = 0
+                        self.updateBadgeStatus()
+                    }
+                }
+            }
+        }
+    }
+    
+    // 未読メッセージをチェックする関数
+    func checkForUnreadMessages() {
+        guard let oshi = selectedOshi else { return }
+        
+        // ローディング状態を表示しない方が良いかもしれませんが、
+        // 長時間かかる場合は以下のコメントを解除して使用してください
+        // withAnimation { isLoading = true }
+        
+        ChatDatabaseManager.shared.fetchUnreadMessageCount(for: oshi.id) { count, error in
+            if let error = error {
+                print("未読メッセージの取得に失敗しました: \(error.localizedDescription)")
+                // withAnimation { isLoading = false }
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.unreadMessageCount = count
+                self.hasNewMessages = count > 0
+                // withAnimation { isLoading = false }
+                
+                // 新規メッセージがある場合、バッジをアニメーション
+                if self.hasNewMessages && !self.isAnimatingBadge {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        self.startBadgeAnimation()
+                    }
+                }
+            }
+        }
+    }
+    
+    func startMessageCheckTimer() {
+        // 1分ごとに未読メッセージをチェック
+        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+            checkForUnreadMessages()
         }
     }
     
@@ -407,6 +496,84 @@ struct ProfileSection: View {
                 isLoading = false
             }
         }
+    }
+    
+    func checkForUnreadPosts() {
+        guard let oshi = selectedOshi else { return }
+        
+        UnreadPostTracker.shared.fetchUnreadPostCount(for: oshi.id) { count, error in
+            if let error = error {
+                print("未読投稿の取得に失敗しました: \(error.localizedDescription)")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.unreadPostCount = count
+                self.hasUnreadPosts = count > 0
+                
+                // 未読メッセージまたは未読投稿があれば、バッジを表示
+                self.updateBadgeStatus()
+            }
+        }
+    }
+    
+    // バッジの状態を更新する関数
+    func updateBadgeStatus() {
+        // 未読メッセージまたは未読投稿があるかどうかを確認
+        let hasAnyUnread = self.hasNewMessages || self.hasUnreadPosts
+        let totalUnreadCount = self.unreadMessageCount + self.unreadPostCount
+        
+        // バッジの表示状態を更新
+        if hasAnyUnread != self.hasNewMessages || totalUnreadCount != self.unreadMessageCount {
+            self.hasNewMessages = hasAnyUnread
+            self.unreadMessageCount = totalUnreadCount
+            
+            // 新しい未読アイテムがある場合のみアニメーション
+            if hasAnyUnread && !self.isAnimatingBadge {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    self.startBadgeAnimation()
+                }
+            }
+        }
+    }
+    
+    // チェック関数を統合（メッセージと投稿の両方をチェック）
+    func checkForAllUnreadItems() {
+        checkForUnreadMessages()
+        checkForUnreadPosts()
+    }
+    
+    func startBadgeAnimation() {
+        // すでにアニメーション中なら何もしない
+        if isAnimatingBadge {
+            return
+        }
+        
+        isAnimatingBadge = true
+        
+        // バウンスエフェクトのアニメーション
+        withAnimation(Animation.spring(response: 0.3, dampingFraction: 0.6).repeatCount(3)) {
+            badgeBounce = true
+        }
+        
+        // アニメーション終了後のリセット
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation {
+                self.badgeBounce = false
+                self.isAnimatingBadge = false
+            }
+        }
+    }
+    
+    var chatButtonWithBadge: some View {
+        Button(action: {
+            showChatAIView()
+            generateHapticFeedback()
+        }) {
+            ChatBadgeView(count: unreadMessageCount, hasNewMessages: hasNewMessages)
+        }
+        .padding(.trailing, 16)
+        .padding(.top, 8)
     }
     
     var oshiSelectorOverlay: some View {

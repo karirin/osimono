@@ -386,7 +386,7 @@ struct AddOshiView: View {
         }
         
         dispatchGroup.notify(queue: .main) {
-            self.saveDataToFirebase(oshiId, data)
+            self.saveDataToFirebase(data)
         }
     }
     
@@ -421,8 +421,8 @@ struct AddOshiView: View {
         }
     }
     
-    func saveDataToFirebase(_ oshiId: String, _ data: [String: Any]) {
-        guard let userId = Auth.auth().currentUser?.uid else {
+    func saveDataToFirebase(_ data: [String: Any]) {
+        guard let userId = Auth.auth().currentUser?.uid, let oshiId = data["id"] as? String else {
             isLoading = false
             return
         }
@@ -431,16 +431,110 @@ struct AddOshiView: View {
         
         ref.setValue(data) { error, _ in
             DispatchQueue.main.async {
-                self.isLoading = false
-                
                 if error == nil {
+                    // 保存に成功したら、選択されたOshiIDとして保存
                     self.saveSelectedOshiId(oshiId)
-                    self.presentationMode.wrappedValue.dismiss()
+                } else {
+                    self.isLoading = false
+                    print("データ保存エラー: \(error!.localizedDescription)")
                 }
             }
         }
     }
     
+    // アイテム保存後に自動的にAIコメントを生成して保存するメソッド
+    func generateAndSaveAIComment(for oshiId: String, item: [String: Any], itemId: String) {
+        // 投稿されたアイテムをOshiItemオブジェクトに変換
+        let oshiItem = OshiItem(
+            id: itemId,
+            title: item["title"] as? String,
+            category: item["category"] as? String,
+            memo: item["memo"] as? String,
+            imageUrl: item["imageUrl"] as? String,  // ← 正しい位置に移動（priceの前）
+            price: item["price"] as? Int,
+            purchaseDate: item["purchaseDate"] as? TimeInterval,
+            eventName: item["eventName"] as? String,
+            favorite: item["favorite"] as? Int,
+            memories: item["memories"] as? String,
+            tags: item["tags"] as? [String],
+            location: item["location"] as? String,  // locationも追加
+            itemType: item["itemType"] as? String,
+            locationAddress: item["locationAddress"] as? String,
+            visitDate: item["visitDate"] as? TimeInterval,  // visitDateも追加
+            recordDate: item["recordDate"] as? TimeInterval,  // recordDateも追加
+            details: item["details"] as? String,  // detailsも追加
+            createdAt: item["createdAt"] as? TimeInterval,
+            oshiId: oshiId
+        )
+        
+        // 対応する推しの情報を取得
+        fetchOshiDetails(oshiId: oshiId) { oshi in
+            guard let oshi = oshi else {
+                print("推し情報の取得に失敗しました")
+                return
+            }
+            
+            // AIメッセージを生成
+            AIMessageGenerator.shared.generateInitialMessage(for: oshi, item: oshiItem) { messageContent, error in
+                if let error = error {
+                    print("AIメッセージ生成エラー: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let messageContent = messageContent else {
+                    print("AIメッセージが生成されませんでした")
+                    return
+                }
+                
+                // メッセージをデータベースに保存
+                let chatMessage = ChatMessage(
+                    id: UUID().uuidString,
+                    content: messageContent,
+                    isUser: false,  // AIからのメッセージ
+                    timestamp: Date().timeIntervalSince1970,
+                    oshiId: oshiId,
+                    itemId: itemId  // 関連するアイテムのID
+                )
+                
+                ChatDatabaseManager.shared.saveMessage(chatMessage) { error in
+                    if let error = error {
+                        print("AIメッセージの保存に失敗: \(error.localizedDescription)")
+                    } else {
+                        print("AIメッセージを保存しました: \(messageContent)")
+                    }
+                }
+            }
+        }
+    }
+    
+    // 推し情報の取得メソッド
+    func fetchOshiDetails(oshiId: String, completion: @escaping (Oshi?) -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion(nil)
+            return
+        }
+        
+        let ref = Database.database().reference().child("oshis").child(userId).child(oshiId)
+        
+        ref.observeSingleEvent(of: .value) { snapshot in
+            guard let data = snapshot.value as? [String: Any] else {
+                completion(nil)
+                return
+            }
+            
+            let oshi = Oshi(
+                id: oshiId,
+                name: data["name"] as? String ?? "名前なし",
+                imageUrl: data["imageUrl"] as? String,
+                backgroundImageUrl: data["backgroundImageUrl"] as? String,
+                memo: data["memo"] as? String,
+                createdAt: data["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970
+            )
+            
+            completion(oshi)
+        }
+    }
+
     func saveSelectedOshiId(_ oshiId: String) {
         guard let userID = Auth.auth().currentUser?.uid else {
             isLoading = false
