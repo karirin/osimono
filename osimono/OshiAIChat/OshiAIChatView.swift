@@ -34,6 +34,8 @@ struct OshiAIChatView: View {
     @State private var inputText: String = ""
     @State private var isLoading: Bool = false
     @State private var isFetchingMessages: Bool = true
+    @State private var isInitialScrollComplete: Bool = false // スクロール完了フラグ
+    @State private var shouldScrollToBottom: Bool = false
     let selectedOshi: Oshi
     let oshiItem: OshiItem? // チャットのきっかけとなったアイテム
     
@@ -48,10 +50,7 @@ struct OshiAIChatView: View {
                     ScrollViewReader { proxy in
                         ScrollView {
                             VStack(spacing: 12) {
-                                if isFetchingMessages {
-                                    ProgressView("メッセージを読み込み中...")
-                                        .padding()
-                                } else if messages.isEmpty {
+                                if messages.isEmpty {
                                     Text("会話を始めましょう！")
                                         .foregroundColor(.gray)
                                         .padding(.top, 40)
@@ -60,15 +59,34 @@ struct OshiAIChatView: View {
                                         ChatBubble(message: message, oshiName: selectedOshi.name)
                                             .id(message.id)
                                     }
+                                    // スクロール位置特定用のマーカー
+                                    Color.clear
+                                        .frame(height: 1)
+                                        .id("bottomMarker")
                                 }
                             }
                             .padding()
+                            .opacity(isInitialScrollComplete ? 1 : 0) // スクロール完了まで非表示
                         }
+                        // メッセージ初回ロード後に一度だけ実行
                         .onChange(of: messages.count) { _ in
-                            if !messages.isEmpty {
-                                withAnimation {
-                                    proxy.scrollTo(messages.last?.id, anchor: .bottom)
+                            if !isFetchingMessages && !messages.isEmpty && !isInitialScrollComplete {
+                                // メッセージロードが完了したらすぐに最下部にスクロール（アニメーションなし）
+                                proxy.scrollTo("bottomMarker", anchor: .bottom)
+                                
+                                // 短い遅延の後でビューを表示し、スクロール完了フラグを立てる
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                    isInitialScrollComplete = true
                                 }
+                            }
+                        }
+                        // メッセージ送信時のスクロール（アニメーション付き）
+                        .onChange(of: shouldScrollToBottom) { shouldScroll in
+                            if shouldScroll && !messages.isEmpty {
+                                withAnimation {
+                                    proxy.scrollTo("bottomMarker", anchor: .bottom)
+                                }
+                                shouldScrollToBottom = false
                             }
                         }
                     }
@@ -91,17 +109,19 @@ struct OshiAIChatView: View {
                         .disabled(inputText.isEmpty || isLoading)
                     }
                     .padding()
+                    .opacity(isInitialScrollComplete ? 1 : 0) // スクロール完了まで非表示
                 }
                 
-                if isLoading {
-                    Color.black.opacity(0.3)
+                // ローディングオーバーレイ - 初期スクロールが完了するまで表示
+                if !isInitialScrollComplete || isLoading {
+                    Color.black.opacity(0.5)
                         .ignoresSafeArea()
                         .overlay(
                             VStack {
                                 ProgressView()
                                     .scaleEffect(1.5)
                                     .tint(.white)
-                                Text("返信を作成中...")
+                                Text(!isInitialScrollComplete ? "チャットを読み込み中..." : "返信を作成中...")
                                     .foregroundColor(.white)
                                     .padding(.top, 10)
                             }
@@ -135,51 +155,71 @@ struct OshiAIChatView: View {
     
     // Firebaseからメッセージを読み込む
     private func loadMessages() {
-        isFetchingMessages = true
-        
-        // 特定のアイテムに関連するチャットを読み込む場合
-        if let item = oshiItem {
-            // itemのidが存在することを確認
-            let itemId = item.id
-            
-            ChatDatabaseManager.shared.fetchMessages(for: selectedOshi.id, itemId: itemId) { fetchedMessages, error in
-                DispatchQueue.main.async {
-                    isFetchingMessages = false
-                    
-                    if let error = error {
-                        print("メッセージ読み込みエラー: \(error.localizedDescription)")
-                        return
-                    }
-                    
-                    if let messages = fetchedMessages, !messages.isEmpty {
-                        self.messages = messages
-                    } else {
-                        // 関連するメッセージがない場合、初期メッセージを追加
-                        addInitialMessage(for: item)
-                    }
-                }
-            }
-        } else {
-            // 推し全体のチャット履歴を読み込む
-            ChatDatabaseManager.shared.fetchMessages(for: selectedOshi.id) { fetchedMessages, error in
-                DispatchQueue.main.async {
-                    isFetchingMessages = false
-                    
-                    if let error = error {
-                        print("メッセージ読み込みエラー: \(error.localizedDescription)")
-                        return
-                    }
-                    
-                    if let messages = fetchedMessages, !messages.isEmpty {
-                        self.messages = messages
-                    } else {
-                        // チャット履歴がない場合、ウェルカムメッセージを追加
-                        addWelcomeMessage()
-                    }
-                }
-            }
-        }
-    }
+         isFetchingMessages = true
+         isInitialScrollComplete = false // 読み込み開始時にリセット
+         
+         // 特定のアイテムに関連するチャットを読み込む場合
+         if let item = oshiItem {
+             // itemのidが存在することを確認
+             let itemId = item.id
+             
+             ChatDatabaseManager.shared.fetchMessages(for: selectedOshi.id, itemId: itemId) { fetchedMessages, error in
+                 DispatchQueue.main.async {
+                     if let error = error {
+                         print("メッセージ読み込みエラー: \(error.localizedDescription)")
+                         isFetchingMessages = false
+                         // エラー時にはローディング解除
+                         if messages.isEmpty {
+                             isInitialScrollComplete = true
+                         }
+                         return
+                     }
+                     
+                     if let messages = fetchedMessages, !messages.isEmpty {
+                         self.messages = messages
+                         isFetchingMessages = false
+                         // メッセージが存在するが空の場合は即座にローディング解除
+                         if messages.isEmpty {
+                             isInitialScrollComplete = true
+                         }
+                     } else {
+                         // 関連するメッセージがない場合、初期メッセージを追加
+                         addInitialMessage(for: item)
+                         // 注意: addInitialMessageの中でisFetchingMessagesがfalseに設定される
+                     }
+                 }
+             }
+         } else {
+             // 推し全体のチャット履歴を読み込む
+             ChatDatabaseManager.shared.fetchMessages(for: selectedOshi.id) { fetchedMessages, error in
+                 DispatchQueue.main.async {
+                     if let error = error {
+                         print("メッセージ読み込みエラー: \(error.localizedDescription)")
+                         isFetchingMessages = false
+                         // エラー時にはローディング解除
+                         if messages.isEmpty {
+                             isInitialScrollComplete = true
+                         }
+                         return
+                     }
+                     
+                     if let messages = fetchedMessages, !messages.isEmpty {
+                         self.messages = messages
+                         isFetchingMessages = false
+                         // メッセージが空の場合は即座にローディング解除
+                         if messages.isEmpty {
+                             isInitialScrollComplete = true
+                         }
+                     } else {
+                         // チャット履歴がない場合、ウェルカムメッセージを追加
+                         addWelcomeMessage()
+                         isFetchingMessages = false
+                         // isInitialScrollComplete はonChange内で更新される
+                     }
+                 }
+             }
+         }
+     }
     
     // 初期メッセージ（アイテムについて）
     private func addInitialMessage(for item: OshiItem) {
@@ -222,6 +262,7 @@ struct OshiAIChatView: View {
                 
                 // 画面に表示
                 messages.append(message)
+                isFetchingMessages = false  // ここでフェッチ完了を設定
             }
         }
     }
@@ -284,8 +325,15 @@ struct OshiAIChatView: View {
             itemId: oshiItem?.id
         )
         
+        // 入力フィールドをクリア（メッセージ追加前に行う）
+        let userInput = inputText
+        inputText = ""
+        
         // メッセージをUIに追加
         messages.append(userMessage)
+        
+        // 送信後にスクロールするようフラグをセット
+        shouldScrollToBottom = true
         
         // メッセージをデータベースに保存
         ChatDatabaseManager.shared.saveMessage(userMessage) { error in
@@ -293,10 +341,6 @@ struct OshiAIChatView: View {
                 print("ユーザーメッセージ保存エラー: \(error.localizedDescription)")
             }
         }
-        
-        // 入力フィールドをクリア
-        let userInput = inputText
-        inputText = ""
         
         // AIの返信を生成
         isLoading = true
@@ -328,6 +372,9 @@ struct OshiAIChatView: View {
                 
                 // メッセージをUIに追加
                 messages.append(aiMessage)
+                
+                // AI返信後にもスクロールするようフラグをセット
+                shouldScrollToBottom = true
                 
                 // メッセージをデータベースに保存
                 ChatDatabaseManager.shared.saveMessage(aiMessage) { error in
@@ -389,7 +436,7 @@ struct ChatBubble: View {
 // MARK: - プレビュー
 #Preview {
     let dummyOshi = Oshi(
-        id: "1",
+        id: "2E5C7468-E2AB-41D6-B7CE-901674CB2973",
         name: "テストの推し",
         imageUrl: nil,
         backgroundImageUrl: nil,

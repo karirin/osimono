@@ -167,33 +167,41 @@ class ChatDatabaseManager {
             return
         }
         
+        print("DEBUG-BADGE-DB: 未読メッセージ取得開始 - ユーザーID: \(userId), 推しID: \(oshiId)")
+        
         // ユーザーが最後に読んだタイムスタンプを取得
         let userRef = Database.database().reference().child("users").child(userId)
         userRef.child("lastReadTimestamps").child(oshiId).observeSingleEvent(of: .value) { snapshot in
             let lastReadTimestamp = snapshot.value as? TimeInterval ?? 0
+            print("DEBUG-BADGE-DB: 最終既読タイムスタンプ: \(lastReadTimestamp)")
             
-            // 指定された推しの最新メッセージを取得
-            let messagesRef = Database.database().reference().child("messages").child(userId).child(oshiId)
-            messagesRef.queryOrdered(byChild: "timestamp")
-                .queryEnding(atValue: false, childKey: "isUser") // ユーザー以外（AI/推し）からのメッセージのみ
-                .observeSingleEvent(of: .value) { snapshot in
-                    
-                    var unreadCount = 0
-                    
-                    for child in snapshot.children {
-                        guard let childSnapshot = child as? DataSnapshot,
-                              let messageData = childSnapshot.value as? [String: Any],
-                              let timestamp = messageData["timestamp"] as? TimeInterval,
-                              let isUser = messageData["isUser"] as? Bool,
-                              !isUser, // ユーザー以外（AI/推し）からのメッセージのみカウント
-                              timestamp > lastReadTimestamp // 最後に読んだ時間より後のメッセージ
-                        else { continue }
-                        
-                        unreadCount += 1
+            // ここを修正: messages → oshiChats に変更
+            let messagesRef = Database.database().reference().child("oshiChats").child(userId).child(oshiId)
+            
+            // クエリ修正: queryEnding は使わず、単純に timestamp でソートして全件取得
+            messagesRef.queryOrdered(byChild: "timestamp").observeSingleEvent(of: .value) { snapshot in
+                print("DEBUG-BADGE-DB: メッセージクエリ結果 - エントリ数: \(snapshot.childrenCount)")
+                
+                var unreadCount = 0
+                
+                for child in snapshot.children {
+                    guard let childSnapshot = child as? DataSnapshot,
+                          let messageData = childSnapshot.value as? [String: Any],
+                          let timestamp = messageData["timestamp"] as? TimeInterval,
+                          let isUser = messageData["isUser"] as? Bool,
+                          !isUser, // ユーザー以外（AI/推し）からのメッセージのみカウント
+                          timestamp > lastReadTimestamp // 最後に読んだ時間より後のメッセージ
+                    else {
+                        continue
                     }
                     
-                    completion(unreadCount, nil)
+                    unreadCount += 1
+                    print("DEBUG-BADGE-DB: 未読としてカウントされたメッセージID: \(childSnapshot.key)")
                 }
+                
+                print("DEBUG-BADGE-DB: 最終未読カウント結果: \(unreadCount)")
+                completion(unreadCount, nil)
+            }
         }
     }
     
