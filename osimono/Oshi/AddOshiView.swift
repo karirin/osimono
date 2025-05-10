@@ -12,7 +12,7 @@ import FirebaseStorage
 import SwiftyCrop
 
 extension UIImage: Identifiable {
-    public var id: UUID { UUID() }   // 任意の一意IDを返す
+    public var id: UUID { UUID() }
 }
 
 struct AddOshiView: View {
@@ -30,10 +30,15 @@ struct AddOshiView: View {
     @State private var showImagePicker = false
     @State private var croppingImage: UIImage?
     
+    // 性格関連の新しい属性
+    @State private var personality: String = ""
+    @State private var speakingStyle: String = ""
+    @State private var showAdvancedOptions: Bool = false // 詳細設定表示トグル
+    
     public struct Texts {
-        public var cancelButton: String         // 左下ボタン
-        public var interactionInstructions: String // “Move and scale”
-        public var saveButton: String           // 右下ボタン
+        public var cancelButton: String
+        public var interactionInstructions: String
+        public var saveButton: String
     }
     
     private var cropConfig: SwiftyCropConfiguration {
@@ -200,6 +205,45 @@ struct AddOshiView: View {
                                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                                     .padding(.horizontal)
                             }
+                            
+                            // 性格入力フィールド（新規追加）
+                            VStack(alignment: .leading) {
+                                Text("推しの性格 (オプション)")
+                                    .font(.headline)
+                                    .padding(.horizontal)
+                                
+                                TextField("明るい、優しい、クール など", text: $personality)
+                                    .padding()
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                                    .padding(.horizontal)
+                            }
+                            
+                            // 話し方の特徴入力フィールド（新規追加）
+                            VStack(alignment: .leading) {
+                                Text("話し方の特徴 (オプション)")
+                                    .font(.headline)
+                                    .padding(.horizontal)
+                                
+                                TextField("敬語、タメ口、絵文字多用 など", text: $speakingStyle)
+                                    .padding()
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                                    .padding(.horizontal)
+                            }
+                            
+                            // 詳細設定への案内（新規追加）
+                            HStack {
+                                Spacer()
+                                Text("詳細な性格設定は登録後に編集画面から設定できます")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                                Spacer()
+                            }
                         }
                         
                         // 追加ボタン
@@ -253,18 +297,17 @@ struct AddOshiView: View {
                     maskShape: (currentEditType == .profile) ? .circle : .rectangle,
                     configuration: cropConfig
                 ) { cropped in
-                    // ⬇︎ ここを修正
-                    handleCroppedImage(cropped)   // 種別に応じて振り分ける共通関数へ
+                    handleCroppedImage(cropped)
                     croppingImage = nil
                 }
             }
             .navigationBarHidden(true)
         }
-
         .onTapGesture {
             hideKeyboard()
         }
     }
+    
     // クロップ完了後の処理
     private func handleCroppedImage(_ croppedImage: UIImage?) {
         guard let image = croppedImage,
@@ -273,12 +316,12 @@ struct AddOshiView: View {
         if editType == .profile {
             selectedImage = image
         } else {
-            selectedBackgroundImage = image     // ← 背景用に保存
+            selectedBackgroundImage = image
         }
 
-        uploadImageToFirebase(image, type: editType) // 種別に合わせてアップロード
+        uploadImageToFirebase(image, type: editType)
     }
-    // (続き: 既存のメソッドはそのまま維持)
+    
     func fetchUserImageURL(type: UploadImageType, completion: @escaping (URL?) -> Void) {
         guard let userID = Auth.auth().currentUser?.uid else {
             completion(nil)
@@ -343,12 +386,13 @@ struct AddOshiView: View {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
-    // ハプティックフィードバックを生成する関数（未定義だったので追加）
+    // ハプティックフィードバックを生成する
     private func generateHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
     }
     
+    // 推しを保存する処理（性格情報を追加）
     func saveOshi() {
         guard let userId = Auth.auth().currentUser?.uid, !oshiName.isEmpty else { return }
         isLoading = true
@@ -360,6 +404,16 @@ struct AddOshiView: View {
             "memo": oshiMemo,
             "createdAt": Date().timeIntervalSince1970
         ]
+        
+        // 性格情報が入力されていれば追加
+        if !personality.isEmpty {
+            data["personality"] = personality
+        }
+        
+        // 話し方の特徴が入力されていれば追加
+        if !speakingStyle.isEmpty {
+            data["speaking_style"] = speakingStyle
+        }
         
         let dispatchGroup = DispatchGroup()
         
@@ -442,99 +496,6 @@ struct AddOshiView: View {
         }
     }
     
-    // アイテム保存後に自動的にAIコメントを生成して保存するメソッド
-    func generateAndSaveAIComment(for oshiId: String, item: [String: Any], itemId: String) {
-        // 投稿されたアイテムをOshiItemオブジェクトに変換
-        let oshiItem = OshiItem(
-            id: itemId,
-            title: item["title"] as? String,
-            category: item["category"] as? String,
-            memo: item["memo"] as? String,
-            imageUrl: item["imageUrl"] as? String,  // ← 正しい位置に移動（priceの前）
-            price: item["price"] as? Int,
-            purchaseDate: item["purchaseDate"] as? TimeInterval,
-            eventName: item["eventName"] as? String,
-            favorite: item["favorite"] as? Int,
-            memories: item["memories"] as? String,
-            tags: item["tags"] as? [String],
-            location: item["location"] as? String,  // locationも追加
-            itemType: item["itemType"] as? String,
-            locationAddress: item["locationAddress"] as? String,
-            visitDate: item["visitDate"] as? TimeInterval,  // visitDateも追加
-            recordDate: item["recordDate"] as? TimeInterval,  // recordDateも追加
-            details: item["details"] as? String,  // detailsも追加
-            createdAt: item["createdAt"] as? TimeInterval,
-            oshiId: oshiId
-        )
-        
-        // 対応する推しの情報を取得
-        fetchOshiDetails(oshiId: oshiId) { oshi in
-            guard let oshi = oshi else {
-                print("推し情報の取得に失敗しました")
-                return
-            }
-            
-            // AIメッセージを生成
-            AIMessageGenerator.shared.generateInitialMessage(for: oshi, item: oshiItem) { messageContent, error in
-                if let error = error {
-                    print("AIメッセージ生成エラー: \(error.localizedDescription)")
-                    return
-                }
-                
-                guard let messageContent = messageContent else {
-                    print("AIメッセージが生成されませんでした")
-                    return
-                }
-                
-                // メッセージをデータベースに保存
-                let chatMessage = ChatMessage(
-                    id: UUID().uuidString,
-                    content: messageContent,
-                    isUser: false,  // AIからのメッセージ
-                    timestamp: Date().timeIntervalSince1970,
-                    oshiId: oshiId,
-                    itemId: itemId  // 関連するアイテムのID
-                )
-                
-                ChatDatabaseManager.shared.saveMessage(chatMessage) { error in
-                    if let error = error {
-                        print("AIメッセージの保存に失敗: \(error.localizedDescription)")
-                    } else {
-                        print("AIメッセージを保存しました: \(messageContent)")
-                    }
-                }
-            }
-        }
-    }
-    
-    // 推し情報の取得メソッド
-    func fetchOshiDetails(oshiId: String, completion: @escaping (Oshi?) -> Void) {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            completion(nil)
-            return
-        }
-        
-        let ref = Database.database().reference().child("oshis").child(userId).child(oshiId)
-        
-        ref.observeSingleEvent(of: .value) { snapshot in
-            guard let data = snapshot.value as? [String: Any] else {
-                completion(nil)
-                return
-            }
-            
-            let oshi = Oshi(
-                id: oshiId,
-                name: data["name"] as? String ?? "名前なし",
-                imageUrl: data["imageUrl"] as? String,
-                backgroundImageUrl: data["backgroundImageUrl"] as? String,
-                memo: data["memo"] as? String,
-                createdAt: data["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970
-            )
-            
-            completion(oshi)
-        }
-    }
-
     func saveSelectedOshiId(_ oshiId: String) {
         guard let userID = Auth.auth().currentUser?.uid else {
             isLoading = false
@@ -556,7 +517,6 @@ struct AddOshiView: View {
         }
     }
 }
-
 // ImagePickerViewの実装
 struct ImagePickerView: UIViewControllerRepresentable {
     let onImagePicked: (UIImage) -> Void

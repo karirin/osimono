@@ -22,7 +22,7 @@ struct ChatBadgeView: View {
             ZStack(alignment: .topTrailing) {
                 // チャットアイコン
                 Image(systemName: "bubble.left.fill")
-                    .font(.system(size: 34))
+                    .font(.system(size: 30))
                     .foregroundColor(.white)
                     .padding(8)
                     .background(

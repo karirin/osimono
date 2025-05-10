@@ -46,6 +46,75 @@ struct OshiAIChatView: View {
         NavigationView {
             ZStack {
                 VStack(spacing: 0) {
+                    HStack {
+                        Button(action: {
+                            generateHapticFeedback()
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text("閉じる")
+                        }
+                        Spacer()
+                        Text("\(selectedOshi.name)とチャット")
+                        Spacer()
+                        Button(action: {
+                            generateHapticFeedback()
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text("閉じる")
+                        }.opacity(0)
+                    }
+                    .padding(.horizontal)
+                    ZStack {
+//                        if let image = selectedImage {
+//                            Image(uiImage: image)
+//                                .resizable()
+//                                .scaledToFill()
+//                                .frame(width: 120, height: 120)
+//                                .clipShape(Circle())
+//                                .overlay(
+//                                    Circle()
+//                                        .stroke(primaryColor, lineWidth: 3)
+//                                )
+//                        } else
+                        if let imageUrl = selectedOshi.imageUrl, let url = URL(string: imageUrl) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 100, height: 100)
+                                        .clipShape(Circle())
+                                        .overlay(
+                                            Circle()
+                                                .stroke(primaryColor, lineWidth: 3)
+                                        )
+                                default:
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.2))
+                                        .frame(width: 1200, height: 100)
+                                        .overlay(
+                                            Image(systemName: "person.crop.circle")
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 40)
+                                                .foregroundColor(primaryColor)
+                                        )
+                                }
+                            }
+                        } else {
+                            Circle()
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(width: 100, height: 100)
+                                .overlay(
+                                    Image(systemName: "person.crop.circle")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 40)
+                                        .foregroundColor(primaryColor)
+                                )
+                        }
+                    }.padding(.vertical)
                     // チャットメッセージリスト
                     ScrollViewReader { proxy in
                         ScrollView {
@@ -128,10 +197,6 @@ struct OshiAIChatView: View {
                         )
                 }
             }
-            .navigationTitle("\(selectedOshi.name)とチャット")
-            .navigationBarItems(trailing: Button("閉じる") {
-                presentationMode.wrappedValue.dismiss()
-            })
         }
         .onAppear {
             loadMessages()

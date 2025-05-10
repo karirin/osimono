@@ -2,7 +2,7 @@
 //  EditOshiView.swift
 //  osimono
 //
-//  Created by Apple on 2025/04/20.
+//  Updated to add personality editing
 //
 
 import SwiftUI
@@ -11,7 +11,7 @@ import FirebaseAuth
 import FirebaseStorage
 import SwiftyCrop
 
-// EditOshiView.swift として新規作成
+// EditOshiView.swift として更新
 struct EditOshiView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var oshiName: String = ""
@@ -27,6 +27,7 @@ struct EditOshiView: View {
     @State private var isShowingOshiSelector = false
     @State private var selectedOshi: Oshi? // 編集対象の推し
     @State private var showAddOshiForm = false
+    @State private var showPersonalityEditor = false // 性格編集画面表示フラグ
     
     @State private var selectedImageForCropping: UIImage?   // 追加
     @State private var showImagePicker = false              // 追加
@@ -253,6 +254,51 @@ struct EditOshiView: View {
                         }
                         .padding(.top, 10)
                         
+                        // 性格・特徴編集ボタン (新規追加)
+                        Button(action: {
+                            generateHapticFeedback()
+                            showPersonalityEditor = true
+                        }) {
+                            HStack {
+                                Image(systemName: "person.fill.questionmark")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.white)
+                                    .padding(12)
+                                    .background(
+                                        Circle()
+                                            .fill(primaryColor)
+                                    )
+                                
+                                VStack(alignment: .leading) {
+                                    Text("性格・特徴を編集")
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    
+                                    Text("推しの性格や好みを設定してチャットを個性的に")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 10)
+                        
+                        // 現在の性格設定プレビュー (新規追加)
+                        if hasPersonalitySettings() {
+                            personalityPreview
+                                .padding(.horizontal)
+                                .padding(.top, 5)
+                        }
+                        
                         // 保存ボタン
                         Button(action: {
                             generateHapticFeedback()
@@ -287,24 +333,6 @@ struct EditOshiView: View {
                 }
             }
         }
-//        .sheet(item: $currentEditType) { type in
-//            ImageAddOshiPicker(
-//                image: $image,
-//                onImagePicked: { pickedImage in
-//                    self.image = pickedImage
-//                    
-//                    // この部分が重要: 選択した画像をUIに表示するために更新
-//                    if type == .profile {
-//                        self.selectedImage = pickedImage
-//                    } else {
-//                        self.selectedBackgroundImage = pickedImage
-//                    }
-//                    
-//                    // アップロード処理
-//                    //                    uploadImageToFirebase(pickedImage, type: type)
-//                }
-//            )
-//        }
         .onAppear {
             // 初期値をセット
             self.oshiName = oshi.name
@@ -317,6 +345,13 @@ struct EditOshiView: View {
             fetchOshiList() // 新しい推しが追加されたら一覧を更新
         }) {
             AddOshiView()
+        }
+        .sheet(isPresented: $showPersonalityEditor) {
+            // 性格編集画面
+            EditOshiPersonalityView(oshi: oshi) {
+                // 編集完了後のコールバック
+                onUpdate()
+            }
         }
         .overlay(
             ZStack {
@@ -340,11 +375,87 @@ struct EditOshiView: View {
                     maskShape: (currentEditType == .profile) ? .circle : .rectangle,
                     configuration: cropConfig
                 ) { cropped in
-                    handleCroppedImage(cropped)   // ↓ ❺ で定義
+                    handleCroppedImage(cropped)
                     croppingImage = nil
                 }
             }
             .navigationBarHidden(true)
+        }
+    }
+    
+    // 性格設定があるかチェック
+    private func hasPersonalitySettings() -> Bool {
+        return oshi.personality != nil || oshi.speaking_style != nil ||
+               oshi.birthday != nil || oshi.height != nil ||
+               oshi.hometown != nil || oshi.favorite_color != nil ||
+               oshi.favorite_food != nil || oshi.disliked_food != nil ||
+               (oshi.interests != nil && !oshi.interests!.isEmpty)
+    }
+    
+    // 性格設定プレビュー
+    var personalityPreview: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("現在の設定")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                if let personality = oshi.personality, !personality.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 12))
+                            .foregroundColor(primaryColor.opacity(0.8))
+                        
+                        Text("性格: \(personality)")
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                    }
+                }
+                
+                if let speakingStyle = oshi.speaking_style, !speakingStyle.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "bubble.left")
+                            .font(.system(size: 12))
+                            .foregroundColor(primaryColor.opacity(0.8))
+                        
+                        Text("話し方: \(speakingStyle)")
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                    }
+                }
+                
+                if let birthday = oshi.birthday, !birthday.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "gift")
+                            .font(.system(size: 12))
+                            .foregroundColor(primaryColor.opacity(0.8))
+                        
+                        Text("誕生日: \(birthday)")
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                    }
+                }
+                
+                if let interests = oshi.interests, !interests.isEmpty {
+                    HStack(alignment: .top, spacing: 4) {
+                        Image(systemName: "heart")
+                            .font(.system(size: 12))
+                            .foregroundColor(primaryColor.opacity(0.8))
+                        
+                        Text("趣味: \(interests.joined(separator: "、"))")
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                    }
+                }
+            }
+            .padding(12)
+            .background(Color.white)
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+            )
         }
     }
     
@@ -532,13 +643,33 @@ struct EditOshiView: View {
                         let memo = value["memo"] as? String
                         let createdAt = value["createdAt"] as? TimeInterval
                         
+                        // 性格関連の属性を追加
+                        let personality = value["personality"] as? String
+                        let speakingStyle = value["speaking_style"] as? String
+                        let birthday = value["birthday"] as? String
+                        let height = value["height"] as? Int
+                        let favoriteColor = value["favorite_color"] as? String
+                        let favoriteFood = value["favorite_food"] as? String
+                        let dislikedFood = value["disliked_food"] as? String
+                        let hometown = value["hometown"] as? String
+                        let interests = value["interests"] as? [String]
+                        
                         let oshi = Oshi(
                             id: id,
                             name: name,
                             imageUrl: imageUrl,
                             backgroundImageUrl: backgroundImageUrl,
                             memo: memo,
-                            createdAt: createdAt
+                            createdAt: createdAt,
+                            personality: personality,
+                            interests: interests,
+                            speaking_style: speakingStyle,
+                            birthday: birthday,
+                            height: height,
+                            favorite_color: favoriteColor,
+                            favorite_food: favoriteFood,
+                            disliked_food: dislikedFood,
+                            hometown: hometown
                         )
                         newOshis.append(oshi)
                     }
@@ -739,7 +870,10 @@ struct EditOshiView: View {
         imageUrl: nil,
         backgroundImageUrl: nil,
         memo: "サンプルメモ",
-        createdAt: Date().timeIntervalSince1970
+        createdAt: Date().timeIntervalSince1970,
+        personality: "明るく元気",
+        interests: ["音楽", "ダンス"],
+        speaking_style: "タメ口、絵文字多用"
     )
     
     // プレビュー用のクロージャ
