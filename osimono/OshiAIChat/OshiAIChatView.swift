@@ -34,168 +34,158 @@ struct OshiAIChatView: View {
     @State private var inputText: String = ""
     @State private var isLoading: Bool = false
     @State private var isFetchingMessages: Bool = true
-    @State private var isInitialScrollComplete: Bool = false // スクロール完了フラグ
+    @State private var isInitialScrollComplete: Bool = false
     @State private var shouldScrollToBottom: Bool = false
+    @State private var showEditPersonality = false
     let selectedOshi: Oshi
-    let oshiItem: OshiItem? // チャットのきっかけとなったアイテム
+    let oshiItem: OshiItem?
     
-    let primaryColor = Color(.systemPink)
+    // LINE風カラー設定
+    let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
+    let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
+    let lineHeaderColor = Color(UIColor(red: 0.18, green: 0.18, blue: 0.18, alpha: 1.0))
+    
     @State private var hasMarkedAsRead: Bool = false
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                VStack(spacing: 0) {
-                    HStack {
-                        Button(action: {
-                            generateHapticFeedback()
-                            presentationMode.wrappedValue.dismiss()
-                        }) {
-                            Text("閉じる")
-                        }
-                        Spacer()
-                        Text("\(selectedOshi.name)とチャット")
-                        Spacer()
-                        Button(action: {
-                            generateHapticFeedback()
-                            presentationMode.wrappedValue.dismiss()
-                        }) {
-                            Text("閉じる")
-                        }.opacity(0)
-                    }
-                    .padding(.horizontal)
-                    ZStack {
-//                        if let image = selectedImage {
-//                            Image(uiImage: image)
-//                                .resizable()
-//                                .scaledToFill()
-//                                .frame(width: 120, height: 120)
-//                                .clipShape(Circle())
-//                                .overlay(
-//                                    Circle()
-//                                        .stroke(primaryColor, lineWidth: 3)
-//                                )
-//                        } else
-                        if let imageUrl = selectedOshi.imageUrl, let url = URL(string: imageUrl) {
-                            AsyncImage(url: url) { phase in
-                                switch phase {
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 100, height: 100)
-                                        .clipShape(Circle())
-                                        .overlay(
-                                            Circle()
-                                                .stroke(primaryColor, lineWidth: 3)
-                                        )
-                                default:
-                                    Circle()
-                                        .fill(Color.gray.opacity(0.2))
-                                        .frame(width: 1200, height: 100)
-                                        .overlay(
-                                            Image(systemName: "person.crop.circle")
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: 40)
-                                                .foregroundColor(primaryColor)
-                                        )
-                                }
-                            }
-                        } else {
-                            Circle()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(width: 100, height: 100)
-                                .overlay(
-                                    Image(systemName: "person.crop.circle")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 40)
-                                        .foregroundColor(primaryColor)
-                                )
-                        }
-                    }.padding(.vertical)
-                    // チャットメッセージリスト
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            VStack(spacing: 12) {
-                                if messages.isEmpty {
-                                    Text("会話を始めましょう！")
-                                        .foregroundColor(.gray)
-                                        .padding(.top, 40)
-                                } else {
-                                    ForEach(messages, id: \.id) { message in
-                                        ChatBubble(message: message, oshiName: selectedOshi.name)
-                                            .id(message.id)
-                                    }
-                                    // スクロール位置特定用のマーカー
-                                    Color.clear
-                                        .frame(height: 1)
-                                        .id("bottomMarker")
-                                }
-                            }
-                            .padding()
-                            .opacity(isInitialScrollComplete ? 1 : 0) // スクロール完了まで非表示
-                        }
-                        // メッセージ初回ロード後に一度だけ実行
-                        .onChange(of: messages.count) { _ in
-                            if !isFetchingMessages && !messages.isEmpty && !isInitialScrollComplete {
-                                // メッセージロードが完了したらすぐに最下部にスクロール（アニメーションなし）
-                                proxy.scrollTo("bottomMarker", anchor: .bottom)
-                                
-                                // 短い遅延の後でビューを表示し、スクロール完了フラグを立てる
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                    isInitialScrollComplete = true
-                                }
-                            }
-                        }
-                        // メッセージ送信時のスクロール（アニメーション付き）
-                        .onChange(of: shouldScrollToBottom) { shouldScroll in
-                            if shouldScroll && !messages.isEmpty {
-                                withAnimation {
-                                    proxy.scrollTo("bottomMarker", anchor: .bottom)
-                                }
-                                shouldScrollToBottom = false
-                            }
-                        }
+        ZStack {
+            // 背景色をLINE風に
+            lineBgColor.edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 0) {
+                // LINE風ヘッダー
+                HStack(spacing: 10) {
+                    Button(action: {
+                        generateHapticFeedback()
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.blue)
                     }
                     
-                    // 入力エリア
-                    HStack(spacing: 12) {
-                        TextField("\(selectedOshi.name)に話しかけてみよう", text: $inputText)
-                            .padding(12)
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(25)
+                    // プロフィール画像（小さく表示）
+                    profileImage
+                        .frame(width: 36, height: 36)
+                    
+                    Text(selectedOshi.name)
+                        .font(.system(size: 17, weight: .medium))
+                    
+                    Spacer()
+                    
+                    // LINE風メニューボタン
+                    Button(action: {
+                        generateHapticFeedback()
+                        showEditPersonality = true
+                    }) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 20))
+                            .foregroundColor(.black)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(Color.white)
+                .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
+                
+                // チャットメッセージリスト
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            if messages.isEmpty {
+                                Text("会話を始めましょう！")
+                                    .foregroundColor(.gray)
+                                    .padding(.top, 40)
+                            } else {
+                                ForEach(messages, id: \.id) { message in
+                                    LineChatBubble(message: message, oshiName: selectedOshi.name, oshiImageURL: selectedOshi.imageUrl!)
+                                        .id(message.id)
+                                }
+                                Color.clear
+                                    .frame(height: 1)
+                                    .id("bottomMarker")
+                            }
+                        }
+                        .padding()
+                        .opacity(isInitialScrollComplete ? 1 : 0)
+                    }
+                    .onChange(of: messages.count) { _ in
+                        if !isFetchingMessages && !messages.isEmpty && !isInitialScrollComplete {
+                            proxy.scrollTo("bottomMarker", anchor: .bottom)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                isInitialScrollComplete = true
+                            }
+                        }
+                    }
+                    .onChange(of: shouldScrollToBottom) { shouldScroll in
+                        if shouldScroll && !messages.isEmpty {
+                            withAnimation {
+                                proxy.scrollTo("bottomMarker", anchor: .bottom)
+                            }
+                            shouldScrollToBottom = false
+                        }
+                    }
+                }
+                
+                // LINE風入力エリア
+                VStack(spacing: 0) {
+                    Divider()
+                    HStack(spacing: 10) {
+                        // プラスボタン（LINE風）
+                        Button(action: {}) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 22))
+                                .foregroundColor(.gray)
+                                .frame(width: 36, height: 36)
+                        }
                         
+                        // 入力フィールド
+                        TextField("\(selectedOshi.name)に話しかけてみよう", text: $inputText)
+                            .padding(10)
+                            .background(Color.white)
+                            .cornerRadius(18)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
+                        
+                        // 絵文字ボタン
+                        Button(action: {}) {
+                            Image(systemName: "face.smiling")
+                                .font(.system(size: 22))
+                                .foregroundColor(.gray)
+                                .frame(width: 36, height: 36)
+                        }
+                        
+                        // 送信ボタン（LINE風）
                         Button(action: sendMessage) {
-                            Image(systemName: "paperplane.fill")
-                                .font(.system(size: 18))
-                                .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(inputText.isEmpty || isLoading ? Color.gray : primaryColor)
-                                .clipShape(Circle())
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 32))
+                                .foregroundColor(inputText.isEmpty || isLoading ? Color.gray.opacity(0.5) : lineGreen)
                         }
                         .disabled(inputText.isEmpty || isLoading)
                     }
-                    .padding()
-                    .opacity(isInitialScrollComplete ? 1 : 0) // スクロール完了まで非表示
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 10)
+                    .background(Color.white)
                 }
-                
-                // ローディングオーバーレイ - 初期スクロールが完了するまで表示
-                if !isInitialScrollComplete || isLoading {
-                    Color.black.opacity(0.5)
-                        .ignoresSafeArea()
-                        .overlay(
-                            VStack {
-                                ProgressView()
-                                    .scaleEffect(1.5)
-                                    .tint(.white)
-                                Text(!isInitialScrollComplete ? "チャットを読み込み中..." : "返信を作成中...")
-                                    .foregroundColor(.white)
-                                    .padding(.top, 10)
-                            }
-                        )
-                }
+                .opacity(isInitialScrollComplete ? 1 : 0)
+            }
+            
+            // ローディングオーバーレイ
+            if !isInitialScrollComplete || isLoading {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .overlay(
+                        VStack {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                                .tint(.white)
+                            Text(!isInitialScrollComplete ? "チャットを読み込み中..." : "返信を作成中...")
+                                .foregroundColor(.white)
+                                .padding(.top, 10)
+                        }
+                    )
             }
         }
         .onAppear {
@@ -203,8 +193,51 @@ struct OshiAIChatView: View {
             markMessagesAsRead()
         }
         .onDisappear {
-            // チャットを閉じる際にも最新状態を既読にマーク
             markMessagesAsRead()
+        }
+        .fullScreenCover(isPresented: $showEditPersonality) {
+            EditOshiPersonalityView(oshi: selectedOshi, onUpdate: {
+                // 必要に応じて更新時の処理を追加
+                // 例えば、推しの情報を再読み込みするなど
+            })
+        }
+        .navigationBarHidden(true) // ネイティブナビゲーションバーを非表示
+    }
+    
+    // プロフィール画像コンポーネント
+    private var profileImage: some View {
+        Group {
+            if let imageUrl = selectedOshi.imageUrl, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .clipShape(Circle())
+                    default:
+                        Circle()
+                            .fill(Color.gray.opacity(0.2))
+                            .overlay(
+                                Image(systemName: "person.crop.circle")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 16)
+                                    .foregroundColor(.gray)
+                            )
+                    }
+                }
+            } else {
+                Circle()
+                    .fill(Color.gray.opacity(0.2))
+                    .overlay(
+                        Image(systemName: "person.crop.circle")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 16)
+                            .foregroundColor(.gray)
+                    )
+            }
         }
     }
     
@@ -456,6 +489,119 @@ struct OshiAIChatView: View {
     }
 }
 
+struct LineChatBubble: View {
+    let message: ChatMessage
+    let oshiName: String
+    let oshiImageURL: String?
+    
+    // LINE風カラー
+    let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
+    
+    var body: some View {
+        VStack(alignment: message.isUser ? .trailing : .leading, spacing: 2) {
+            HStack(alignment: .bottom, spacing: 8) {
+                // 相手のメッセージの場合、アイコンを表示（オプション）
+                if !message.isUser {
+                    Group {
+                        if let imageUrl = oshiImageURL, let url = URL(string: imageUrl) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .clipShape(Circle())
+                                default:
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.2))
+                                        .overlay(
+                                            Image(systemName: "person.crop.circle")
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 16)
+                                                .foregroundColor(.gray)
+                                        )
+                                }
+                            }
+                        } else {
+                            Circle()
+                                .fill(Color.gray.opacity(0.2))
+                                .overlay(
+                                    Image(systemName: "person.crop.circle")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 16)
+                                        .foregroundColor(.gray)
+                                )
+                        }
+                    }
+                        .frame(width: 30, height: 30)
+                }
+                
+                // メッセージ本文
+                Text(message.content)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(
+                        message.isUser
+                        ? lineGreen  // 自分のメッセージは緑色
+                        : Color.white // 相手のメッセージは白色
+                    )
+                    .foregroundColor(message.isUser ? .white : .black)
+                    .cornerRadius(18)
+                    // LINE風のバブル形状を作る
+                    .overlay(
+                        GeometryReader { geometry in
+                            if !message.isUser {
+                                Path { path in
+                                    let width = geometry.size.width
+                                    let height = geometry.size.height
+                                    
+                                    // 左上の小さな三角形を描画
+                                    path.move(to: CGPoint(x: 0, y: 15))
+                                    path.addLine(to: CGPoint(x: -8, y: 20))
+                                    path.addLine(to: CGPoint(x: 0, y: 25))
+                                    path.closeSubpath()
+                                }
+                                .fill(Color.white)
+                                .offset(x: -1)
+                            }
+                        }
+                    )
+                
+                // 自分のメッセージの場合、右側にスペースを確保
+                if message.isUser {
+                    Spacer().frame(width: 30)
+                }
+            }
+            
+            // タイムスタンプ
+            Text(formatDate(timestamp: message.timestamp))
+                .font(.system(size: 10))
+                .foregroundColor(.gray)
+                .padding(.horizontal, message.isUser ? 0 : 38)
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+    }
+    
+    // タイムスタンプのフォーマット
+    private func formatDate(timestamp: TimeInterval) -> String {
+        let date = Date(timeIntervalSince1970: timestamp)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        
+        // 今日の日付と比較
+        if Calendar.current.isDateInToday(date) {
+            formatter.dateFormat = "HH:mm"
+        } else {
+            formatter.dateFormat = "MM/dd HH:mm"
+        }
+        
+        return formatter.string(from: date)
+    }
+}
+
 struct ChatBubble: View {
     let message: ChatMessage
     let oshiName: String
@@ -508,5 +654,6 @@ struct ChatBubble: View {
         memo: nil,
         createdAt: Date().timeIntervalSince1970
     )
-    return OshiAIChatView(selectedOshi: dummyOshi, oshiItem: nil)
+//    return OshiAIChatView(selectedOshi: dummyOshi, oshiItem: nil)
+    TopView()
 }
