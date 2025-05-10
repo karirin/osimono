@@ -167,20 +167,16 @@ class ChatDatabaseManager {
             return
         }
         
-        print("DEBUG-BADGE-DB: 未読メッセージ取得開始 - ユーザーID: \(userId), 推しID: \(oshiId)")
-        
         // ユーザーが最後に読んだタイムスタンプを取得
         let userRef = Database.database().reference().child("users").child(userId)
         userRef.child("lastReadTimestamps").child(oshiId).observeSingleEvent(of: .value) { snapshot in
             let lastReadTimestamp = snapshot.value as? TimeInterval ?? 0
-            print("DEBUG-BADGE-DB: 最終既読タイムスタンプ: \(lastReadTimestamp)")
             
             // ここを修正: messages → oshiChats に変更
             let messagesRef = Database.database().reference().child("oshiChats").child(userId).child(oshiId)
             
             // クエリ修正: queryEnding は使わず、単純に timestamp でソートして全件取得
             messagesRef.queryOrdered(byChild: "timestamp").observeSingleEvent(of: .value) { snapshot in
-                print("DEBUG-BADGE-DB: メッセージクエリ結果 - エントリ数: \(snapshot.childrenCount)")
                 
                 var unreadCount = 0
                 
@@ -196,10 +192,8 @@ class ChatDatabaseManager {
                     }
                     
                     unreadCount += 1
-                    print("DEBUG-BADGE-DB: 未読としてカウントされたメッセージID: \(childSnapshot.key)")
                 }
                 
-                print("DEBUG-BADGE-DB: 最終未読カウント結果: \(unreadCount)")
                 completion(unreadCount, nil)
             }
         }

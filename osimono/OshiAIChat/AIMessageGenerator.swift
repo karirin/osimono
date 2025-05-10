@@ -5,6 +5,7 @@
 //  Created by Apple on 2025/05/08.
 //
 
+import SwiftUI
 import Foundation
 import OpenAI
 
@@ -20,9 +21,10 @@ class AIMessageGenerator {
     // システムプロンプトの作成
     private func createSystemPrompt(oshi: Oshi, item: OshiItem? = nil) -> String {
         var prompt = """
-        あなたは\(oshi.name)として振る舞います。
-        ファンの応援に対して感謝を示し、親しみやすく、優しい口調で応答してください。
-        絵文字を適度に使い、ファンを喜ばせる返答を心がけてください。
+        あなたは\(oshi.name)という名前の会話相手の推しです。
+        簡潔で、親しみやすく、温かみのある文体でファンと会話します。
+        絵文字を使うけど、少なめで。
+        返信は必ず3文以内に収め、自然な会話の流れを作ります。
         
         ファンの推し活の内容：
         """
@@ -49,7 +51,7 @@ class AIMessageGenerator {
             }
             
             if let favorite = item.favorite {
-                prompt += "\n- お気に入り度: \(favorite)/5"
+//                prompt += "\n- お気に入り度: \(favorite)/5"
             }
             
             if let tags = item.tags, !tags.isEmpty {
@@ -63,6 +65,7 @@ class AIMessageGenerator {
     // APIキーが未設定の場合の応答生成
     private func generateSimulatedResponse(for oshi: Oshi, item: OshiItem?) -> String {
         // プレビューモードやAPIキーがない場合のシミュレートされた応答
+        print("generateSimulatedResponse")
         if let item = item {
             switch item.itemType {
             case "グッズ":
@@ -181,4 +184,17 @@ class AIMessageGenerator {
             }
         }
     }
+}
+
+#Preview {
+    let dummyOshi = Oshi(
+        id: "2E5C7468-E2AB-41D6-B7CE-901674CB2973",
+        name: "テストの推し",
+        imageUrl: nil,
+        backgroundImageUrl: nil,
+        memo: nil,
+        createdAt: Date().timeIntervalSince1970
+    )
+//    return OshiAIChatView(selectedOshi: dummyOshi, oshiItem: nil)
+    TopView()
 }

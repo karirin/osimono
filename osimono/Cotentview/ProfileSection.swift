@@ -224,12 +224,9 @@ struct ProfileSection: View {
         .onAppear {
             if !hasLoadedInitialData {
                 loadAllData()
-                print("DEBUG-BADGE: onAppear - 初期データ読み込み開始")
                 fetchOshiList()
                 hasLoadedInitialData = true
                 
-                // 未読メッセージと未読投稿を一度にチェック
-                print("DEBUG-BADGE: onAppear - 未読チェック開始")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     // 少し遅らせて未読チェックを実行（データ読み込み完了後）
                     checkForAllUnreadItems()
@@ -239,19 +236,14 @@ struct ProfileSection: View {
                 startUnreadItemsCheckTimer()
                 
                 if let oshiId = selectedOshi?.id {
-                    print("DEBUG-BADGE: onAppear - 投稿既読処理 oshiId: \(oshiId)")
                     UnreadPostTracker.shared.markPostsAsRead(for: oshiId) { error in
                         if let error = error {
-                            print("DEBUG-BADGE: 投稿を既読にできませんでした: \(error.localizedDescription)")
                         } else {
-                            print("DEBUG-BADGE: 投稿を既読にしました")
                         }
                     }
                 } else {
-                    print("DEBUG-BADGE: onAppear - selectedOshi.idがnilのため投稿既読処理をスキップ")
                 }
             } else {
-                print("DEBUG-BADGE: onAppear - 既にデータが読み込まれているためスキップ")
                 // 画面が再表示される場合も、最新の未読状態をチェック
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     checkForAllUnreadItems()
@@ -372,34 +364,25 @@ struct ProfileSection: View {
     // 未読メッセージをチェックする関数
     func checkForUnreadMessages() {
         guard let oshi = selectedOshi else {
-            print("DEBUG-BADGE: selectedOshiがnilのため未読チェックをスキップ")
             return
         }
         
-        print("DEBUG-BADGE: 未読メッセージをチェック開始 - oshiId: \(oshi.id)")
         
         ChatDatabaseManager.shared.fetchUnreadMessageCount(for: oshi.id) { count, error in
             if let error = error {
-                print("DEBUG-BADGE: 未読メッセージの取得に失敗: \(error.localizedDescription)")
                 return
             }
-            
-            print("DEBUG-BADGE: 未読メッセージ数: \(count), hasNewMessages変更前の状態: \(self.hasNewMessages)")
             
             DispatchQueue.main.async {
                 self.unreadMessageCount = count
                 self.hasNewMessages = count > 0
                 
-                print("DEBUG-BADGE: hasNewMessages変更後の状態: \(self.hasNewMessages), isAnimatingBadge: \(self.isAnimatingBadge)")
-                
                 // 新規メッセージがある場合、バッジをアニメーション
                 if self.hasNewMessages && !self.isAnimatingBadge {
-                    print("DEBUG-BADGE: バッジアニメーション開始")
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                         self.startBadgeAnimation()
                     }
                 } else {
-                    print("DEBUG-BADGE: バッジアニメーション条件を満たさず - hasNewMessages: \(self.hasNewMessages), isAnimatingBadge: \(self.isAnimatingBadge)")
                 }
             }
         }
