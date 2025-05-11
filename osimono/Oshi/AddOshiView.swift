@@ -16,6 +16,7 @@ extension UIImage: Identifiable {
 }
 
 struct AddOshiView: View {
+    // 既存の状態変数
     @Environment(\.presentationMode) var presentationMode
     @State private var oshiName: String = ""
     @State private var oshiMemo: String = ""
@@ -30,7 +31,7 @@ struct AddOshiView: View {
     @State private var showImagePicker = false
     @State private var croppingImage: UIImage?
     
-    // 性格関連の新しい属性
+    // 性格関連の属性
     @State private var personality: String = ""
     @State private var speakingStyle: String = ""
     @State private var showAdvancedOptions: Bool = false // 詳細設定表示トグル
@@ -52,6 +53,13 @@ struct AddOshiView: View {
         
         return cfg
     }
+    
+    // 性別選択用の状態変数
+    @State private var gender: String = "男性"  // デフォルトは「男性」
+    @State private var genderDetail: String = "" // 「その他」の場合の詳細
+    
+    // 性別選択肢
+    let genderOptions = ["男性", "女性", "その他"]
     
     // 色の定義
     let primaryColor = Color(UIColor(red: 0.3, green: 0.6, blue: 0.9, alpha: 1.0))
@@ -204,6 +212,31 @@ struct AddOshiView: View {
                                     .cornerRadius(10)
                                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                                     .padding(.horizontal)
+                            }
+                            
+                            VStack(alignment: .leading) {
+                                Text("性別")
+                                    .font(.headline)
+                                    .padding(.horizontal)
+                                
+                                Picker("性別", selection: $gender) {
+                                    ForEach(genderOptions, id: \.self) { option in
+                                        Text(option).tag(option)
+                                    }
+                                }
+                                .pickerStyle(SegmentedPickerStyle())
+                                .padding(.horizontal)
+                                if gender == "その他" {
+                                       TextField("詳細を入力（例：犬、ロボット、橋など）", text: $genderDetail)
+                                           .padding()
+                                           .background(Color.white)
+                                           .cornerRadius(10)
+                                           .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                                           .padding(.horizontal)
+                                           .padding(.top, 5)
+                                           .transition(.opacity.combined(with: .slide))
+                                           .animation(.easeInOut, value: gender)
+                                   }
                             }
                             
                             // 性格入力フィールド（新規追加）
@@ -404,6 +437,13 @@ struct AddOshiView: View {
             "memo": oshiMemo,
             "createdAt": Date().timeIntervalSince1970
         ]
+        
+        // 性別情報の追加（「その他」の場合は詳細を含める）
+        if gender == "その他" && !genderDetail.isEmpty {
+            data["gender"] = "\(gender)：\(genderDetail)"
+        } else {
+            data["gender"] = gender
+        }
         
         // 性格情報が入力されていれば追加
         if !personality.isEmpty {

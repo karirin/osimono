@@ -731,6 +731,7 @@ struct ProfileSection: View {
                         let favorite_food = value["favorite_food"] as? String
                         let disliked_food = value["disliked_food"] as? String
                         let interests = value["interests"] as? [String]
+                        let gender = value["gender"] as? String ?? "男性" // 性別情報を追加（デフォルトは男性）
                         
                         let oshi = Oshi(
                             id: id,
@@ -739,11 +740,13 @@ struct ProfileSection: View {
                             backgroundImageUrl: backgroundImageUrl,
                             memo: memo,
                             createdAt: createdAt,
-                            // 新しい属性を設定
+                            // 属性を設定
                             personality: personality,
-                            interests: interests, speaking_style: speaking_style,
+                            interests: interests,
+                            speaking_style: speaking_style,
                             favorite_food: favorite_food,
-                            disliked_food: disliked_food
+                            disliked_food: disliked_food,
+                            gender: gender // 性別情報を追加
                         )
                         
                         newOshis.append(oshi)

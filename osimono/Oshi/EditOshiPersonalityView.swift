@@ -24,6 +24,12 @@ struct EditOshiPersonalityView: View {
     @State private var interests: [String] = []
     @State private var newInterest: String = ""
     
+    // 性別選択用の状態変数を追加
+    @State private var gender: String = "男性"
+    @State private var genderDetail: String = ""
+    // 性別選択肢
+    let genderOptions = ["男性", "女性", "その他"]
+    
     @State private var isLoading = false
     var onUpdate: () -> Void
     
@@ -63,7 +69,6 @@ struct EditOshiPersonalityView: View {
                     }
                     .padding()
                 }
-//                .padding(.top, 8)
                 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -112,6 +117,38 @@ struct EditOshiPersonalityView: View {
                             .font(.headline)
                             .padding(.bottom, 10)
                         
+                        VStack(alignment: .leading, spacing: 15) {
+                            SectionHeader(title: "基本情報", icon: "person.fill")
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("性別")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                
+                                Picker("性別", selection: $gender) {
+                                    ForEach(genderOptions, id: \.self) { option in
+                                        Text(option).tag(option)
+                                    }
+                                }
+                                .pickerStyle(SegmentedPickerStyle())
+                                
+                                if gender == "その他" {
+                                     TextField("詳細を入力（例：犬、ロボット、橋など）", text: $genderDetail)
+                                         .padding(10)
+                                         .background(Color.gray.opacity(0.1))
+                                         .cornerRadius(8)
+                                         .padding(.top, 5)
+                                         .transition(.opacity.combined(with: .slide))
+                                         .animation(.easeInOut, value: gender)
+                                 }
+                            }
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        .padding(.horizontal)
+                        
                         // 性格入力セクション
                         personalitySection
                         
@@ -152,9 +189,7 @@ struct EditOshiPersonalityView: View {
                             .shadow(color: primaryColor.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                         .padding(.horizontal, 30)
-//                        .padding(.vertical, 30)
                     }
-//                    .padding(.bottom, 30)
                 }
             }
         }
@@ -318,6 +353,19 @@ struct EditOshiPersonalityView: View {
         dislikedFood = oshi.disliked_food ?? ""
         hometown = oshi.hometown ?? ""
         interests = oshi.interests ?? []
+        
+        // 性別情報の処理
+        let genderValue = oshi.gender ?? "男性"
+        
+        // 「その他：詳細」形式の場合を処理
+        if genderValue.hasPrefix("その他：") {
+            gender = "その他"
+            let detailStartIndex = genderValue.index(genderValue.startIndex, offsetBy: 4)
+            genderDetail = String(genderValue[detailStartIndex...])
+        } else {
+            gender = genderValue
+            genderDetail = ""
+        }
     }
     
     // データの保存
@@ -330,6 +378,14 @@ struct EditOshiPersonalityView: View {
         
         let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
         
+        // 性別情報を準備（「その他」の場合は詳細を含める）
+        let genderValue: String
+        if gender == "その他" && !genderDetail.isEmpty {
+            genderValue = "その他：\(genderDetail)"
+        } else {
+            genderValue = gender
+        }
+        
         var updates: [String: Any] = [
             "personality": personality,
             "speaking_style": speakingStyle,
@@ -338,7 +394,8 @@ struct EditOshiPersonalityView: View {
             "favorite_color": favoriteColor,
             "favorite_food": favoriteFood,
             "disliked_food": dislikedFood,
-            "interests": interests
+            "interests": interests,
+            "gender": genderValue  // 性別情報を更新
         ]
         
         // 身長を数値に変換
@@ -360,6 +417,7 @@ struct EditOshiPersonalityView: View {
                     oshi.favorite_food = favoriteFood
                     oshi.disliked_food = dislikedFood
                     oshi.interests = interests
+                    oshi.gender = genderValue  // 性別情報を更新
                     
                     if let heightValue = Int(height) {
                         oshi.height = heightValue
@@ -373,7 +431,7 @@ struct EditOshiPersonalityView: View {
             }
         }
     }
-    
+
     // キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

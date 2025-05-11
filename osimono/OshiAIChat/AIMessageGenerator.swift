@@ -28,6 +28,17 @@ class AIMessageGenerator {
         
         """
         
+        // 性別情報の追加（詳細対応）
+        if let gender = oshi.gender {
+            if gender.hasPrefix("その他：") {
+                let detailStartIndex = gender.index(gender.startIndex, offsetBy: 4)
+                let genderDetail = String(gender[detailStartIndex...])
+                prompt += "あなたの性別（種類）: \(genderDetail)\n"
+            } else {
+                prompt += "あなたの性別: \(gender)\n"
+            }
+        }
+        
         // 性格設定の追加
         var hasPersonalityInfo = false
         
@@ -40,9 +51,7 @@ class AIMessageGenerator {
             prompt += "あなたの話し方の特徴: \(speakingStyle)\n"
             hasPersonalityInfo = true
         }
-        
-     
-        
+       
         if let favoriteFood = oshi.favorite_food, !favoriteFood.isEmpty {
             prompt += "あなたの好きな食べ物: \(favoriteFood)\n"
             hasPersonalityInfo = true
@@ -64,6 +73,7 @@ class AIMessageGenerator {
             
             上記の性格設定や特徴に沿った口調や内容で会話してください。
             特に話し方の特徴がある場合は、その特徴を反映させて返信を作成してください。
+            性別・種類に合わせた表現や口調を心がけてください。
             ただし、過度に演技的にならないよう自然な会話を心がけてください。
             
             """

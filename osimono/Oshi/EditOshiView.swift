@@ -400,6 +400,28 @@ struct EditOshiView: View {
                 .foregroundColor(.gray)
             
             VStack(alignment: .leading, spacing: 8) {
+                // 性別情報を表示（新規追加）
+                if let gender = oshi.gender, !gender.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(primaryColor.opacity(0.8))
+                        
+                        // 「その他：詳細」形式に対応
+                        if gender.hasPrefix("その他：") {
+                            let detailStartIndex = gender.index(gender.startIndex, offsetBy: 4)
+                            let genderDetail = String(gender[detailStartIndex...])
+                            Text("性別：\(genderDetail)")
+                                .font(.system(size: 14))
+                                .foregroundColor(.primary)
+                        } else {
+                            Text("性別：\(gender)")
+                                .font(.system(size: 14))
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
+                
                 if let personality = oshi.personality, !personality.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "sparkles")
@@ -653,6 +675,7 @@ struct EditOshiView: View {
                         let dislikedFood = value["disliked_food"] as? String
                         let hometown = value["hometown"] as? String
                         let interests = value["interests"] as? [String]
+                        let gender = value["gender"] as? String ?? "男性" // 性別情報を追加（デフォルトは男性）
                         
                         let oshi = Oshi(
                             id: id,
@@ -669,7 +692,8 @@ struct EditOshiView: View {
                             favorite_color: favoriteColor,
                             favorite_food: favoriteFood,
                             disliked_food: dislikedFood,
-                            hometown: hometown
+                            hometown: hometown,
+                            gender: gender // 性別情報を追加
                         )
                         newOshis.append(oshi)
                     }
