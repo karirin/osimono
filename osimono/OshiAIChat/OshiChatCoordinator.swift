@@ -107,7 +107,12 @@ class OshiChatCoordinator: ObservableObject {
                 imageUrl: data["imageUrl"] as? String,
                 backgroundImageUrl: data["backgroundImageUrl"] as? String,
                 memo: data["memo"] as? String,
-                createdAt: data["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970
+                createdAt: data["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970,
+                // 新しい属性を追加
+                personality: data["personality"] as? String,
+                interests: data["interests"] as? [String], speaking_style: data["speaking_style"] as? String,
+                favorite_food: data["favorite_food"] as? String,
+                disliked_food: data["disliked_food"] as? String
             )
             
             completion(oshi)

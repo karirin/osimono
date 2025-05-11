@@ -26,8 +26,50 @@ class AIMessageGenerator {
         絵文字を使うけど、少なめで。
         返信は必ず3文以内に収め、自然な会話の流れを作ります。
         
-        ファンの推し活の内容：
         """
+        
+        // 性格設定の追加
+        var hasPersonalityInfo = false
+        
+        if let personality = oshi.personality, !personality.isEmpty {
+            prompt += "あなたの性格: \(personality)\n"
+            hasPersonalityInfo = true
+        }
+        
+        if let speakingStyle = oshi.speaking_style, !speakingStyle.isEmpty {
+            prompt += "あなたの話し方の特徴: \(speakingStyle)\n"
+            hasPersonalityInfo = true
+        }
+        
+     
+        
+        if let favoriteFood = oshi.favorite_food, !favoriteFood.isEmpty {
+            prompt += "あなたの好きな食べ物: \(favoriteFood)\n"
+            hasPersonalityInfo = true
+        }
+        
+        if let dislikedFood = oshi.disliked_food, !dislikedFood.isEmpty {
+            prompt += "あなたの苦手な食べ物: \(dislikedFood)\n"
+            hasPersonalityInfo = true
+        }
+        
+        if let interests = oshi.interests, !interests.isEmpty {
+            prompt += "あなたの趣味・興味: \(interests.joined(separator: "、"))\n"
+            hasPersonalityInfo = true
+        }
+        
+        // 性格情報が設定されている場合、AIへの追加指示を含める
+        if hasPersonalityInfo {
+            prompt += """
+            
+            上記の性格設定や特徴に沿った口調や内容で会話してください。
+            特に話し方の特徴がある場合は、その特徴を反映させて返信を作成してください。
+            ただし、過度に演技的にならないよう自然な会話を心がけてください。
+            
+            """
+        }
+        
+        prompt += "\nファンの推し活の内容："
         
         // アイテム情報があれば追加
         if let item = item {
@@ -50,14 +92,14 @@ class AIMessageGenerator {
                 prompt += "\n- メモ: \(memo)"
             }
             
-            if let favorite = item.favorite {
-//                prompt += "\n- お気に入り度: \(favorite)/5"
-            }
-            
             if let tags = item.tags, !tags.isEmpty {
                 prompt += "\n- タグ: \(tags.joined(separator: ", "))"
             }
         }
+        
+        print("=========== システムプロンプト ===========")
+        print(prompt)
+        print("=========================================")
         
         return prompt
     }

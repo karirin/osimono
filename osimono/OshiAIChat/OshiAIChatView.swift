@@ -98,7 +98,7 @@ struct OshiAIChatView: View {
                                     .padding(.top, 40)
                             } else {
                                 ForEach(messages, id: \.id) { message in
-                                    LineChatBubble(message: message, oshiName: selectedOshi.name, oshiImageURL: selectedOshi.imageUrl!)
+                                    LineChatBubble(message: message, oshiName: selectedOshi.name, oshiImageURL: selectedOshi.imageUrl)
                                         .id(message.id)
                                 }
                                 Color.clear
@@ -131,13 +131,6 @@ struct OshiAIChatView: View {
                 VStack(spacing: 0) {
                     Divider()
                     HStack(spacing: 10) {
-                        // プラスボタン（LINE風）
-                        Button(action: {}) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 22))
-                                .foregroundColor(.gray)
-                                .frame(width: 36, height: 36)
-                        }
                         
                         // 入力フィールド
                         TextField("\(selectedOshi.name)に話しかけてみよう", text: $inputText)
@@ -148,14 +141,6 @@ struct OshiAIChatView: View {
                                 RoundedRectangle(cornerRadius: 18)
                                     .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                             )
-                        
-                        // 絵文字ボタン
-                        Button(action: {}) {
-                            Image(systemName: "face.smiling")
-                                .font(.system(size: 22))
-                                .foregroundColor(.gray)
-                                .frame(width: 36, height: 36)
-                        }
                         
                         // 送信ボタン（LINE風）
                         Button(action: sendMessage) {
@@ -499,7 +484,7 @@ struct LineChatBubble: View {
     
     var body: some View {
         VStack(alignment: message.isUser ? .trailing : .leading, spacing: 2) {
-            HStack(alignment: .bottom, spacing: 8) {
+            HStack(alignment: .top, spacing: 4) {
                 // 相手のメッセージの場合、アイコンを表示（オプション）
                 if !message.isUser {
                     Group {
@@ -536,8 +521,13 @@ struct LineChatBubble: View {
                         }
                     }
                         .frame(width: 30, height: 30)
+                        .padding(.top,5)
                 }
                 
+            
+            if message.isUser {
+                Spacer()
+            }
                 // メッセージ本文
                 Text(message.content)
                     .padding(.horizontal, 14)
@@ -549,29 +539,8 @@ struct LineChatBubble: View {
                     )
                     .foregroundColor(message.isUser ? .white : .black)
                     .cornerRadius(18)
-                    // LINE風のバブル形状を作る
-                    .overlay(
-                        GeometryReader { geometry in
-                            if !message.isUser {
-                                Path { path in
-                                    let width = geometry.size.width
-                                    let height = geometry.size.height
-                                    
-                                    // 左上の小さな三角形を描画
-                                    path.move(to: CGPoint(x: 0, y: 15))
-                                    path.addLine(to: CGPoint(x: -8, y: 20))
-                                    path.addLine(to: CGPoint(x: 0, y: 25))
-                                    path.closeSubpath()
-                                }
-                                .fill(Color.white)
-                                .offset(x: -1)
-                            }
-                        }
-                    )
-                
-                // 自分のメッセージの場合、右側にスペースを確保
-                if message.isUser {
-                    Spacer().frame(width: 30)
+                if !message.isUser {
+                    Spacer()
                 }
             }
             
@@ -581,7 +550,7 @@ struct LineChatBubble: View {
                 .foregroundColor(.gray)
                 .padding(.horizontal, message.isUser ? 0 : 38)
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 0)
         .padding(.vertical, 2)
     }
     
@@ -649,11 +618,11 @@ struct ChatBubble: View {
     let dummyOshi = Oshi(
         id: "2E5C7468-E2AB-41D6-B7CE-901674CB2973",
         name: "テストの推し",
-        imageUrl: nil,
+        imageUrl: "https://firebasestorage.googleapis.com:443/v0/b/osimono.firebasestorage.app/o/oshis%2FbZwehJdm4RTQ7JWjl20yaxTWS7l2%2F2E5C7468-E2AB-41D6-B7CE-901674CB2973%2Fprofile.jpg?alt=media&token=37b4ccb5-430b-4db7-94b9-d5e2c389c402",
         backgroundImageUrl: nil,
         memo: nil,
         createdAt: Date().timeIntervalSince1970
     )
-//    return OshiAIChatView(selectedOshi: dummyOshi, oshiItem: nil)
-    TopView()
+    return OshiAIChatView(selectedOshi: dummyOshi, oshiItem: nil)
+//    TopView()
 }

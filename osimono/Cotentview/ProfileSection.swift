@@ -15,7 +15,7 @@ struct ProfileSection: View {
     @State private var isLoading = true
     @State private var selectedOshi: Oshi? = nil
     var profileSectionHeight: CGFloat {
-        isSmallDevice() ? 250 : 260
+        isSmallDevice() ? 220 : 210
     }
     let primaryColor = Color(.systemPink) // 明るいピンク
     let accentColor = Color(.purple) // 紫系
@@ -145,7 +145,7 @@ struct ProfileSection: View {
                                                 chatButtonWithBadge
                                                     .scaleEffect(badgeBounce ? 1.2 : 1.0)
                                                     .offset(y: badgeBounce ? -5 : 0)
-                                                    .offset(x: 55, y: -30)
+                                                    .offset(x: 50, y: -10)
                                             }
                                             Spacer()
                                         }
@@ -203,7 +203,7 @@ struct ProfileSection: View {
                     .padding(.bottom, 12)
                     .zIndex(1) 
                 }
-                .offset(y: 30)
+                .offset(y: 0)
             }
         }
         .sheet(isPresented: $isShowingImagePicker) {
@@ -725,15 +725,27 @@ struct ProfileSection: View {
                         let memo = value["memo"] as? String
                         let createdAt = value["createdAt"] as? TimeInterval
                         
+                        // 新しい属性を取得
+                        let personality = value["personality"] as? String
+                        let speaking_style = value["speaking_style"] as? String
+                        let favorite_food = value["favorite_food"] as? String
+                        let disliked_food = value["disliked_food"] as? String
+                        let interests = value["interests"] as? [String]
+                        
                         let oshi = Oshi(
                             id: id,
                             name: name,
                             imageUrl: imageUrl,
-                            backgroundImageUrl: backgroundImageUrl, // ここで追加
+                            backgroundImageUrl: backgroundImageUrl,
                             memo: memo,
-                            createdAt: createdAt
+                            createdAt: createdAt,
+                            // 新しい属性を設定
+                            personality: personality,
+                            interests: interests, speaking_style: speaking_style,
+                            favorite_food: favorite_food,
+                            disliked_food: disliked_food
                         )
-                        print("fetchOshiList!!!!!!!")
+                        
                         newOshis.append(oshi)
                     }
                 }

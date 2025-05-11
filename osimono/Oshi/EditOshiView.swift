@@ -78,7 +78,7 @@ struct EditOshiView: View {
                     }
                     .padding()
                 }
-                .padding(.top, 8)
+//                .padding(.top, 8)
                 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -327,9 +327,9 @@ struct EditOshiView: View {
                             .shadow(color: primaryColor.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                         .padding(.horizontal, 30)
-                        .padding(.vertical, 30)
+//                        .padding(.top, 30)
                     }
-                    .padding(.bottom, 30)
+//                    .padding(.bottom, 30)
                 }
             }
         }
