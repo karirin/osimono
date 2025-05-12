@@ -340,7 +340,7 @@ struct OshiCollectionView: View {
                                 .frame(width: 56, height: 56)
                                 .background(
                                     LinearGradient(
-                                        gradient: Gradient(colors: [primaryColor.opacity(0.7), accentColor.opacity(0.3)]),
+                                        gradient: Gradient(colors: [primaryColor.opacity(0.7), accentColor.opacity(0.7)]),
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )

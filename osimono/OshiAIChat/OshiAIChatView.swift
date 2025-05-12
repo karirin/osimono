@@ -7,6 +7,7 @@
 
 import SwiftUI
 import OpenAI
+import Firebase
 import FirebaseAuth
 import FirebaseDatabase
 
@@ -37,7 +38,7 @@ struct OshiAIChatView: View {
     @State private var isInitialScrollComplete: Bool = false
     @State private var shouldScrollToBottom: Bool = false
     @State private var showEditPersonality = false
-    let selectedOshi: Oshi
+    @Binding var selectedOshi: Oshi
     let oshiItem: OshiItem?
     
     // LINE風カラー設定
@@ -181,14 +182,69 @@ struct OshiAIChatView: View {
             markMessagesAsRead()
         }
         .fullScreenCover(isPresented: $showEditPersonality) {
-            EditOshiPersonalityView(oshi: selectedOshi, onUpdate: {
-                // 必要に応じて更新時の処理を追加
-                // 例えば、推しの情報を再読み込みするなど
-            })
+            // 閉じた後の処理
+            loadOshiData()
+        } content: {
+            EditOshiPersonalityView(
+                oshi: selectedOshi,  // 値として渡す
+                onSave: { updatedOshi in
+                    // 明示的に更新
+                    self.selectedOshi = updatedOshi
+                },
+                onUpdate: {
+                    self.loadOshiData()
+                }
+            )
         }
         .navigationBarHidden(true) // ネイティブナビゲーションバーを非表示
     }
-    
+
+    private func loadOshiData() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("oshis").child(userID).child(selectedOshi.id)
+        dbRef.observeSingleEvent(of: .value) { snapshot in
+            guard let data = snapshot.value as? [String: Any] else {
+                print("データが取得できませんでした")
+                return
+            }
+            
+            // 完全に新しいOshiオブジェクトを作成
+            var newOshi = Oshi(
+                id: self.selectedOshi.id,
+                name: self.selectedOshi.name,
+                imageUrl: self.selectedOshi.imageUrl,
+                backgroundImageUrl: self.selectedOshi.backgroundImageUrl,
+                memo: self.selectedOshi.memo,
+                createdAt: self.selectedOshi.createdAt
+            )
+            
+            // 新しく取得したデータで更新
+            newOshi.personality = data["personality"] as? String
+            newOshi.speaking_style = data["speaking_style"] as? String
+            newOshi.birthday = data["birthday"] as? String
+            newOshi.hometown = data["hometown"] as? String
+            newOshi.favorite_color = data["favorite_color"] as? String
+            newOshi.favorite_food = data["favorite_food"] as? String
+            newOshi.disliked_food = data["disliked_food"] as? String
+            newOshi.interests = data["interests"] as? [String]
+            newOshi.gender = data["gender"] as? String
+            newOshi.height = data["height"] as? Int
+            
+            // メインスレッドで完全に新しいオブジェクトに置き換える
+            DispatchQueue.main.async {
+                print("更新前: \(self.selectedOshi.personality ?? "なし")")
+                print("更新データ: \(newOshi.personality ?? "なし")")
+                
+                // 完全に新しいオブジェクトを割り当てる
+                self.selectedOshi = newOshi
+                
+                // 確認のため
+                print("更新後: \(self.selectedOshi.personality ?? "なし")")
+            }
+        }
+    }
+
     // プロフィール画像コンポーネント
     private var profileImage: some View {
         Group {
@@ -266,9 +322,7 @@ struct OshiAIChatView: View {
                              isInitialScrollComplete = true
                          }
                      } else {
-                         // 関連するメッセージがない場合、初期メッセージを追加
                          addInitialMessage(for: item)
-                         // 注意: addInitialMessageの中でisFetchingMessagesがfalseに設定される
                      }
                  }
              }
@@ -478,6 +532,8 @@ struct LineChatBubble: View {
     let message: ChatMessage
     let oshiName: String
     let oshiImageURL: String?
+    let primaryColor = Color(.systemPink) // ピンク
+    let accentColor = Color(.purple) // 紫
     
     // LINE風カラー
     let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
@@ -533,9 +589,12 @@ struct LineChatBubble: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(
-                        message.isUser
-                        ? lineGreen  // 自分のメッセージは緑色
-                        : Color.white // 相手のメッセージは白色
+                        (message.isUser
+                         ? AnyShapeStyle(primaryColor.opacity(0.8))
+//                         AnyShapeStyle(LinearGradient(gradient: Gradient(colors: [primaryColor.opacity(1), accentColor.opacity(1)]),
+//                                                         startPoint: .topLeading,
+//                                                         endPoint: .bottomTrailing))
+                         : AnyShapeStyle(Color.white))
                     )
                     .foregroundColor(message.isUser ? .white : .black)
                     .cornerRadius(18)
@@ -623,6 +682,6 @@ struct ChatBubble: View {
         memo: nil,
         createdAt: Date().timeIntervalSince1970
     )
-    return OshiAIChatView(selectedOshi: dummyOshi, oshiItem: nil)
-//    TopView()
+//    OshiAIChatView(selectedOshi: .constant(dummyOshi), oshiItem: nil)
+    TopView()
 }

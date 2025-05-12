@@ -195,11 +195,7 @@ struct ContentView: View {
             }
         )
         .onChange(of: selectedOshi?.id) { newOshi in
-            print("onchange selectedOshi?.id1")
-            // 選択中の推しが変わったとき、投稿を再取得するためにリフレッシュトリガーを変更する
             if newOshi != nil {
-                // refreshTriggerの値を反転させることで変更を通知
-                print("onchange selectedOshi?.id2")
                 refreshTrigger.toggle()
             }
         }
@@ -408,11 +404,9 @@ struct ContentView: View {
         let dbRef = Database.database().reference().child("users").child(userID)
         dbRef.observeSingleEvent(of: .value) { snapshot in
             guard let value = snapshot.value as? [String: Any] else { return }
-            print("loadSelectedOshi1()   :\(value["selectedOshiId"])")
             if let selectedOshiId = value["selectedOshiId"] as? String {
                 // 選択中の推しIDが存在する場合、oshiListから該当する推しを検索して設定
                 if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
-                    print("loadSelectedOshi2()   :\(oshi)")
                     self.selectedOshi = oshi
                 }
             }
@@ -564,7 +558,6 @@ struct ContentView: View {
         
         // カウンターを更新
         UserDefaults.standard.set(count, forKey: "launchHelpCount")
-        print("launchHelpCount      :\(count)")
         if count % 15 == 0 {
             helpFlag = true
         }

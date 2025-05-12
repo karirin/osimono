@@ -128,7 +128,7 @@ struct TimelineView: View {
                             showNewEventView = true
                         }
                     }) {
-                        Image(systemName: "plus")
+                        Image(systemName: "calendar.badge.plus")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(width: 56, height: 56)

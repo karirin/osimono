@@ -13,14 +13,18 @@ struct ChatBadgeView: View {
     @State private var animateScale: Bool = false
     @State private var showTooltip: Bool = true
     
+    @State private var isAnimating = false
+    @State private var isAnimatingFlag = true
+    
     // カスタムカラー - より明確な色を使用
     let badgeColor = Color(.systemRed)
     let pulsatingColor = Color(.systemRed)
     let tooltipColor = Color(.systemIndigo)
     
     var body: some View {
-            ZStack(alignment: .topTrailing) {
-                // チャットアイコン
+        ZStack(alignment: .topTrailing) {
+            // チャットアイコン
+            ZStack{
                 Image(systemName: "bubble.left.fill")
                     .font(.system(size: 30))
                     .foregroundColor(.white)
@@ -36,78 +40,94 @@ struct ChatBadgeView: View {
                             )
                             .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
                     )
+                    .overlay(
+                        Group{
+                            if hasNewMessages {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [badgeColor, Color.red]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 20, height: 20)
+                                    .shadow(color: badgeColor.opacity(0.4), radius: 3, x: 0, y: 1)
+                                    .offset(x: 15,y: -15)
+                                if isAnimatingFlag {
+                                    ForEach(0..<3) { index in
+                                        Circle()
+                                            .stroke(lineWidth: 2)
+                                            .foregroundColor(Color.purple.opacity(0.8))
+                                            .scaleEffect(isAnimating ? 2 + CGFloat(index) * 0.5 : 1)
+                                            .opacity(isAnimating ? 0 : 0.7)
+                                            .animation(
+                                                Animation.easeOut(duration: 1.5)
+                                                    .repeatForever(autoreverses: false)
+                                                    .delay(0.3 * Double(index)),
+                                                value: isAnimating
+                                            )
+                                    }
+                                }
+                            }
+                        }
+                )
+            }
+            .onAppear {
+                // アニメーションを開始
+                withAnimation(Animation.easeInOut(duration: 1.0)) {
+                    isAnimating = true
+                }
                 
-                // 未読メッセージがある場合にバッジを表示
-                if hasNewMessages {
-                    ZStack {
-                        // 背景の波紋エフェクト（改良版）
-                        if animateScale {
-                            Circle()
-                                .fill(pulsatingColor.opacity(0.6))
-                                .frame(width: 30, height: 30)
-                                .scaleEffect(animateScale ? 1.4 : 1.0)
-                                .opacity(animateScale ? 0 : 0.6)
-                        }
-                        
-                        // バッジの背景
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [badgeColor, Color.red]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 30, height: 30)
-                            .shadow(color: badgeColor.opacity(0.4), radius: 3, x: 0, y: 1)
-                            .scaleEffect(animateScale ? 1.1 : 1.0)
-                        
-                        // カウント表示を改良
-                        if count > 0 {
-                            Text("\(count > 99 ? "99+" : "\(count)")")
-                                .font(.system(size: count > 99 ? 12 : 16, weight: .bold))
-                                .foregroundColor(.white)
-                        } else {
-                            // カウントが0の場合は白い点を大きくして視認性を向上
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 8, height: 8)
-                        }
-                    }
-                    .offset(x: 10, y: -10) // 少し外側に配置して視認性向上
-                    .onAppear {
-                        // よりはっきりしたアニメーション
-                        withAnimation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                            animateScale = true
-                        }
+                // 1秒後にアニメーションを停止
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    withAnimation {
+                        isAnimatingFlag = false
                     }
                 }
             }
-            .overlay(
-                Group {
-                    // ツールチップ改良版
-                    if hasNewMessages {
-                        TooltipView(
-                            isVisible: showTooltip,
-                            text: "推しからメッセージが届いています",
-                            tooltipColor: tooltipColor
-                        )
-                        .transition(.opacity.combined(with: .scale(scale: 0.8)))
-//                        .animation(.spring(), value: showTooltip)
-                        .offset(x: 50,y: 60)
-                        .zIndex(1) // 確実に前面に表示
+            // 未読メッセージがある場合にバッジを表示
+            if hasNewMessages {
+                ZStack {
+//                            .offset(x: -10,y: 10)
                         
-                        // 自動的に消える
-                        .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                withAnimation {
-                                    showTooltip = false
-                                }
+                    // カウント表示を改良
+//                    if count > 0 {
+//                        Text("\(count > 99 ? "99+" : "\(count)")")
+//                            .font(.system(size: count > 99 ? 12 : 16, weight: .bold))
+//                            .foregroundColor(.white)
+//                    } else {
+//                        // カウントが0の場合は白い点を大きくして視認性を向上
+//                        Circle()
+//                            .fill(Color.white)
+//                            .frame(width: 8, height: 8)
+//                    }
+                }
+            }
+        }
+        .overlay(
+            Group {
+                // ツールチップ改良版
+                if hasNewMessages {
+                    TooltipView(
+                        isVisible: showTooltip,
+                        text: "推しからメッセージが届いています",
+                        tooltipColor: tooltipColor
+                    )
+                    .offset(x: 50,y: 60)
+                    .zIndex(1) // 確実に前面に表示
+                    
+                    // 自動的に消える
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation {
+                                showTooltip = false
                             }
                         }
                     }
                 }
-            )
+            }
+        )
     }
 }
 

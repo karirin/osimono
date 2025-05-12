@@ -143,8 +143,7 @@ struct ProfileSection: View {
                                             HStack {
                                                 Spacer()
                                                 chatButtonWithBadge
-                                                    .scaleEffect(badgeBounce ? 1.2 : 1.0)
-                                                    .offset(y: badgeBounce ? -5 : 0)
+                                                    .scaleEffect(1.0)
                                                     .offset(x: 50, y: -10)
                                             }
                                             Spacer()
@@ -172,6 +171,7 @@ struct ProfileSection: View {
                             }
                         }
                     }
+                    .padding(.top,10)
                     .padding(.bottom, 4)
                     
                     // ユーザー名と詳細 - 推し情報表示
@@ -238,10 +238,8 @@ struct ProfileSection: View {
                 if let oshiId = selectedOshi?.id {
                     UnreadPostTracker.shared.markPostsAsRead(for: oshiId) { error in
                         if let error = error {
-                        } else {
                         }
                     }
-                } else {
                 }
             } else {
                 // 画面が再表示される場合も、最新の未読状態をチェック
@@ -282,10 +280,9 @@ struct ProfileSection: View {
             AddOshiView()
         }
         .fullScreenCover(isPresented: $showChatView) {
-            if let oshi = selectedOshi {
-                OshiAIChatView(selectedOshi: oshi, oshiItem: nil)
+            if selectedOshi != nil {
+                OshiAIChatView(selectedOshi: Binding($selectedOshi)!, oshiItem: nil)
                     .onDisappear {
-                        // チャットビューが閉じられたら再度チェック
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             checkForUnreadMessages()
                         }
@@ -748,7 +745,7 @@ struct ProfileSection: View {
                             disliked_food: disliked_food,
                             gender: gender // 性別情報を追加
                         )
-                        
+                        print("fetchOshiList    oshi        :\(oshi)")
                         newOshis.append(oshi)
                     }
                 }
@@ -776,6 +773,7 @@ struct ProfileSection: View {
                 // 選択中の推しIDが存在する場合、oshiListから該当する推しを検索して設定
                 if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
                     self.selectedOshi = oshi
+                    print("self.selectedOshi        :\(self.selectedOshi)")
                 }
             }
         }
@@ -826,14 +824,12 @@ struct ProfileSection: View {
         
         dispatchGroup.enter()
         fetchUserImageURL(type: .profile) { url in
-            print("fetchUserImageURL(type: .profile) { url in")
             self.imageUrl = url
             dispatchGroup.leave()
         }
         
         dispatchGroup.enter()
         fetchUserImageURL(type: .background) { url in
-            print("fetchUserImageURL(type: .background) { url in")
             self.backgroundImageUrl = url
             dispatchGroup.leave()
         }
@@ -841,7 +837,6 @@ struct ProfileSection: View {
         dispatchGroup.enter()
         fetchUserProfile { profile in
             if let profile = profile {
-                print("fetchUserProfile { profile in")
                 self.userProfile = profile
             }
             dispatchGroup.leave()
@@ -860,7 +855,6 @@ struct ProfileSection: View {
         
         dispatchGroup.enter()
         fetchUserImageURL(type: .profile) { url in
-            print("fetchUserImageURL(type: .profile) { url in")
             self.imageUrl = url
             dispatchGroup.leave()
         }
@@ -875,7 +869,6 @@ struct ProfileSection: View {
         dispatchGroup.enter()
         fetchUserProfile { profile in
             if let profile = profile {
-                print("fetchUserProfile { profile in")
                 self.userProfile = profile
             }
             dispatchGroup.leave()

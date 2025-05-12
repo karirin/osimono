@@ -23,7 +23,6 @@ class AuthManager: ObservableObject {
         if user == nil {
             signInAnonymously()
         } else {
-            print("既存の匿名ユーザーを使用します: \(user?.uid ?? "")")
         }
     }
     

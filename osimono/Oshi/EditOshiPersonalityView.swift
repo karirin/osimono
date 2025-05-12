@@ -12,7 +12,8 @@ import FirebaseStorage
 
 struct EditOshiPersonalityView: View {
     @Environment(\.presentationMode) var presentationMode
-    @State var oshi: Oshi
+    var oshi: Oshi
+    let onSave: (Oshi) -> Void
     @State private var personality: String = ""
     @State private var speakingStyle: String = ""
     @State private var birthday: String = ""
@@ -353,10 +354,9 @@ struct EditOshiPersonalityView: View {
         dislikedFood = oshi.disliked_food ?? ""
         hometown = oshi.hometown ?? ""
         interests = oshi.interests ?? []
-        
         // 性別情報の処理
         let genderValue = oshi.gender ?? "男性"
-        
+        print("loadCurrentData oshi:    :\(oshi)")
         // 「その他：詳細」形式の場合を処理
         if genderValue.hasPrefix("その他：") {
             gender = "その他"
@@ -378,13 +378,8 @@ struct EditOshiPersonalityView: View {
         
         let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
         
-        // 性別情報を準備（「その他」の場合は詳細を含める）
-        let genderValue: String
-        if gender == "その他" && !genderDetail.isEmpty {
-            genderValue = "その他：\(genderDetail)"
-        } else {
-            genderValue = gender
-        }
+        // 性別情報を準備
+        let genderValue = gender == "その他" && !genderDetail.isEmpty ? "その他：\(genderDetail)" : gender
         
         var updates: [String: Any] = [
             "personality": personality,
@@ -395,10 +390,9 @@ struct EditOshiPersonalityView: View {
             "favorite_food": favoriteFood,
             "disliked_food": dislikedFood,
             "interests": interests,
-            "gender": genderValue  // 性別情報を更新
+            "gender": genderValue
         ]
         
-        // 身長を数値に変換
         if let heightValue = Int(height) {
             updates["height"] = heightValue
         }
@@ -409,21 +403,22 @@ struct EditOshiPersonalityView: View {
                 
                 if error == nil {
                     // データを更新
-                    oshi.personality = personality
-                    oshi.speaking_style = speakingStyle
-                    oshi.birthday = birthday
-                    oshi.hometown = hometown
-                    oshi.favorite_color = favoriteColor
-                    oshi.favorite_food = favoriteFood
-                    oshi.disliked_food = dislikedFood
-                    oshi.interests = interests
-                    oshi.gender = genderValue  // 性別情報を更新
+                    var updatedOshi = Oshi(
+                        id: oshi.id,
+                        name: oshi.name,
+                        imageUrl: oshi.imageUrl,
+                        backgroundImageUrl: oshi.backgroundImageUrl,
+                        memo: oshi.memo,
+                        createdAt: oshi.createdAt
+                    )
                     
-                    if let heightValue = Int(height) {
-                        oshi.height = heightValue
-                    }
+                    // 新しいデータを設定
+                    updatedOshi.personality = personality
+                    updatedOshi.speaking_style = speakingStyle
                     
-                    // 更新コールバックを呼び出し
+                    // Binding変数を明示的に更新
+                    onSave(updatedOshi)
+                    // 更新コールバックも呼び出し
                     onUpdate()
                     // ビューを閉じる
                     presentationMode.wrappedValue.dismiss()
@@ -601,7 +596,8 @@ struct FlowLayout<T: Hashable, V: View>: View {
     // プレビュー用のクロージャ
     let updateAction = {}
     
-    return EditOshiPersonalityView(oshi: sampleOshi, onUpdate: updateAction)
-        .preferredColorScheme(.light)
+//    EditOshiPersonalityView(oshi: $sampleOshi, onUpdate: updateAction)
+//        .preferredColorScheme(.light)
+    TopView()
 }
 

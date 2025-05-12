@@ -707,16 +707,16 @@ struct RippleLoadingView: View {
                     )
             }
             
-            Circle()
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(colors: [.blue, .purple]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 30, height: 30)
-                .shadow(color: .purple.opacity(0.5), radius: 10, x: 0, y: 0)
+//            Circle()
+//                .fill(
+//                    LinearGradient(
+//                        gradient: Gradient(colors: [.blue, .purple]),
+//                        startPoint: .topLeading,
+//                        endPoint: .bottomTrailing
+//                    )
+//                )
+//                .frame(width: 30, height: 30)
+//                .shadow(color: .purple.opacity(0.5), radius: 10, x: 0, y: 0)
         }
         .frame(width: 100, height: 100)
         .onAppear {
@@ -778,5 +778,7 @@ struct LoadingView11: View {
 }
 
 #Preview {
-    LoadingView12()
+    RippleLoadingView()
+//    LoadingView12()
+//    DotPulseLoadingView()
 }

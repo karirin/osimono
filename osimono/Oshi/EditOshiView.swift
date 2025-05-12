@@ -20,7 +20,8 @@ struct EditOshiView: View {
     @State private var isLoading = false
     @State private var currentEditType: UploadImageType? = nil
     @State private var image: UIImage? = nil
-    @State var oshi: Oshi
+    var oshi: Oshi
+    var onSave: ((Oshi) -> Void)?
     var onUpdate: () -> Void // 更新後のコールバック
     
     @State private var oshiList: [Oshi] = []
@@ -347,11 +348,16 @@ struct EditOshiView: View {
             AddOshiView()
         }
         .sheet(isPresented: $showPersonalityEditor) {
-            // 性格編集画面
-            EditOshiPersonalityView(oshi: oshi) {
-                // 編集完了後のコールバック
-                onUpdate()
-            }
+            EditOshiPersonalityView(
+                oshi: oshi,
+                onSave: { updatedOshi in
+                    // 親ビューに更新を通知
+                    self.onSave?(updatedOshi)
+                },
+                onUpdate: {
+                    onUpdate()
+                }
+            )
         }
         .overlay(
             ZStack {

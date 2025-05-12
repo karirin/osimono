@@ -183,8 +183,8 @@ struct DiaryView: View {
                             generateHapticFeedback()
                             showingNewEntrySheet = true
                         }) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 20, weight: .semibold))
+                            Image(systemName: "pencil")
+                                .font(.system(size: 26, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
                                 .background(
