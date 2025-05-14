@@ -38,7 +38,7 @@ struct OshiAIChatView: View {
     @State private var isInitialScrollComplete: Bool = false
     @State private var shouldScrollToBottom: Bool = false
     @State private var showEditPersonality = false
-    @Binding var selectedOshi: Oshi
+    @State private var selectedOshi: Oshi
     let oshiItem: OshiItem?
     
     // LINE風カラー設定
@@ -48,6 +48,11 @@ struct OshiAIChatView: View {
     
     @State private var hasMarkedAsRead: Bool = false
     
+    init(selectedOshi: Oshi, oshiItem: OshiItem?) {
+         _selectedOshi = State(initialValue: selectedOshi)
+         self.oshiItem  = oshiItem
+     }
+
     var body: some View {
         ZStack {
             // 背景色をLINE風に
@@ -182,19 +187,20 @@ struct OshiAIChatView: View {
             markMessagesAsRead()
         }
         .fullScreenCover(isPresented: $showEditPersonality) {
-            // 閉じた後の処理
+            // 閉じた後に確実に最新データを取得
             loadOshiData()
         } content: {
             EditOshiPersonalityView(
-                oshi: selectedOshi,  // 値として渡す
+                oshi: selectedOshi,
                 onSave: { updatedOshi in
-                    // 明示的に更新
+                    // onSave時に即座にselectedOshiを更新
                     self.selectedOshi = updatedOshi
                 },
                 onUpdate: {
-                    self.loadOshiData()
+                    // 遅延処理を取り除き、即座にloadOshiDataを呼び出す
+                    loadOshiData()
                 }
-            )
+            ) .id(UUID())
         }
         .navigationBarHidden(true) // ネイティブナビゲーションバーを非表示
     }
@@ -209,17 +215,17 @@ struct OshiAIChatView: View {
                 return
             }
             
-            // 完全に新しいOshiオブジェクトを作成
+            // 完全に新しいオブジェクトを作成（letからvarに変更）
             var newOshi = Oshi(
                 id: self.selectedOshi.id,
-                name: self.selectedOshi.name,
-                imageUrl: self.selectedOshi.imageUrl,
-                backgroundImageUrl: self.selectedOshi.backgroundImageUrl,
-                memo: self.selectedOshi.memo,
-                createdAt: self.selectedOshi.createdAt
+                name: data["name"] as? String ?? self.selectedOshi.name,
+                imageUrl: data["imageUrl"] as? String ?? self.selectedOshi.imageUrl,
+                backgroundImageUrl: data["backgroundImageUrl"] as? String ?? self.selectedOshi.backgroundImageUrl,
+                memo: data["memo"] as? String ?? self.selectedOshi.memo,
+                createdAt: data["createdAt"] as? TimeInterval ?? self.selectedOshi.createdAt
             )
             
-            // 新しく取得したデータで更新
+            // すべてのプロパティを設定
             newOshi.personality = data["personality"] as? String
             newOshi.speaking_style = data["speaking_style"] as? String
             newOshi.birthday = data["birthday"] as? String
@@ -231,15 +237,10 @@ struct OshiAIChatView: View {
             newOshi.gender = data["gender"] as? String
             newOshi.height = data["height"] as? Int
             
-            // メインスレッドで完全に新しいオブジェクトに置き換える
             DispatchQueue.main.async {
                 print("更新前: \(self.selectedOshi.personality ?? "なし")")
                 print("更新データ: \(newOshi.personality ?? "なし")")
-                
-                // 完全に新しいオブジェクトを割り当てる
                 self.selectedOshi = newOshi
-                
-                // 確認のため
                 print("更新後: \(self.selectedOshi.personality ?? "なし")")
             }
         }

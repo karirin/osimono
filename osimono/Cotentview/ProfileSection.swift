@@ -281,7 +281,7 @@ struct ProfileSection: View {
         }
         .fullScreenCover(isPresented: $showChatView) {
             if selectedOshi != nil {
-                OshiAIChatView(selectedOshi: Binding($selectedOshi)!, oshiItem: nil)
+                OshiAIChatView(selectedOshi: selectedOshi!, oshiItem: nil)
                     .onDisappear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             checkForUnreadMessages()

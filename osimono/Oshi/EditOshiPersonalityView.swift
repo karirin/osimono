@@ -415,6 +415,16 @@ struct EditOshiPersonalityView: View {
                     // 新しいデータを設定
                     updatedOshi.personality = personality
                     updatedOshi.speaking_style = speakingStyle
+                    updatedOshi.birthday = birthday
+                    updatedOshi.hometown = hometown
+                    updatedOshi.favorite_color = favoriteColor
+                    updatedOshi.favorite_food = favoriteFood
+                    updatedOshi.disliked_food = dislikedFood
+                    updatedOshi.interests = interests
+                    if let heightInt = Int(height) {
+                        updatedOshi.height = heightInt
+                    }
+                    updatedOshi.gender = gender
                     
                     // Binding変数を明示的に更新
                     onSave(updatedOshi)

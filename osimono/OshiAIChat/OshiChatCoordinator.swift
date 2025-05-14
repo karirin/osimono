@@ -221,7 +221,7 @@ struct OshiChatListView: View {
                     } else {
                         List {
                             ForEach(filteredChats) { session in
-                                NavigationLink(destination: OshiAIChatView(selectedOshi: .constant(session.oshi), oshiItem: nil)) {
+                                NavigationLink(destination: OshiAIChatView(selectedOshi: session.oshi, oshiItem: nil)) {
                                     ChatSessionRow(session: session)
                                 }
                             }
