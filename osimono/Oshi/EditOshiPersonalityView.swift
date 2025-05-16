@@ -32,11 +32,41 @@ struct EditOshiPersonalityView: View {
     let genderOptions = ["男性", "女性", "その他"]
     
     @State private var isLoading = false
+    @ObservedObject var viewModel: OshiViewModel
     var onUpdate: () -> Void
     
     // 色の定義
     let primaryColor = Color(.systemPink)
     let backgroundColor = Color(UIColor.systemGroupedBackground)
+    
+    init(viewModel: OshiViewModel, onSave: @escaping (Oshi) -> Void, onUpdate: @escaping () -> Void) {
+        self.viewModel = viewModel
+        self.oshi = viewModel.selectedOshi
+        self.onSave = onSave
+        self.onUpdate = onUpdate
+        
+        // 初期値の設定
+        _personality = State(initialValue: viewModel.selectedOshi.personality ?? "")
+        _speakingStyle = State(initialValue: viewModel.selectedOshi.speaking_style ?? "")
+        _birthday = State(initialValue: viewModel.selectedOshi.birthday ?? "")
+        _height = State(initialValue: viewModel.selectedOshi.height != nil ? "\(viewModel.selectedOshi.height!)" : "")
+        _favoriteColor = State(initialValue: viewModel.selectedOshi.favorite_color ?? "")
+        _favoriteFood = State(initialValue: viewModel.selectedOshi.favorite_food ?? "")
+        _dislikedFood = State(initialValue: viewModel.selectedOshi.disliked_food ?? "")
+        _hometown = State(initialValue: viewModel.selectedOshi.hometown ?? "")
+        _interests = State(initialValue: viewModel.selectedOshi.interests ?? [])
+        
+        // 性別情報の処理
+        let genderValue = viewModel.selectedOshi.gender ?? "男性"
+        if genderValue.hasPrefix("その他：") {
+            _gender = State(initialValue: "その他")
+            let detailStartIndex = genderValue.index(genderValue.startIndex, offsetBy: 4)
+            _genderDetail = State(initialValue: String(genderValue[detailStartIndex...]))
+        } else {
+            _gender = State(initialValue: genderValue)
+            _genderDetail = State(initialValue: "")
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -403,14 +433,8 @@ struct EditOshiPersonalityView: View {
                 
                 if error == nil {
                     // データを更新
-                    var updatedOshi = Oshi(
-                        id: oshi.id,
-                        name: oshi.name,
-                        imageUrl: oshi.imageUrl,
-                        backgroundImageUrl: oshi.backgroundImageUrl,
-                        memo: oshi.memo,
-                        createdAt: oshi.createdAt
-                    )
+                    
+                    var updatedOshi = viewModel.selectedOshi
                     
                     // 新しいデータを設定
                     updatedOshi.personality = personality
@@ -425,7 +449,7 @@ struct EditOshiPersonalityView: View {
                         updatedOshi.height = heightInt
                     }
                     updatedOshi.gender = gender
-                    
+                    viewModel.selectedOshi = updatedOshi
                     // Binding変数を明示的に更新
                     onSave(updatedOshi)
                     // 更新コールバックも呼び出し

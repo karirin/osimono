@@ -891,5 +891,13 @@ func isiPhone12Or13() -> Bool {
 
 #Preview {
     //    ContentView()
+    let dummyOshi = Oshi(
+        id: "2E5C7468-E2AB-41D6-B7CE-901674CB2973",
+        name: "テストの推し",
+        imageUrl: nil,
+        backgroundImageUrl: nil,
+        memo: nil,
+        createdAt: Date().timeIntervalSince1970
+    )
     TopView()
 }

@@ -13,7 +13,7 @@ import FirebaseDatabase
 // グローバルに共有できるビューモデル
 class OshiViewModel: ObservableObject {
     @Published var selectedOshi: Oshi
-    
+    static let placeholder = OshiViewModel(oshi: Oshi(id: "placeholder", name: "", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil))
     init(oshi: Oshi) {
         self.selectedOshi = oshi
     }
@@ -74,6 +74,7 @@ class OshiViewModel: ObservableObject {
         // メインスレッドでモデルを更新
         DispatchQueue.main.async {
             self.selectedOshi = updatedOshi
+            self.saveOshiData(updatedOshi) { _ in }
         }
     }
     

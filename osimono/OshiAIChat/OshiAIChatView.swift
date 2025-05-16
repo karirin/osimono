@@ -38,7 +38,6 @@ struct OshiAIChatView: View {
     @State private var isInitialScrollComplete: Bool = false
     @State private var shouldScrollToBottom: Bool = false
     @State private var showEditPersonality = false
-    @State private var selectedOshi: Oshi
     let oshiItem: OshiItem?
     
     // LINE風カラー設定
@@ -47,9 +46,10 @@ struct OshiAIChatView: View {
     let lineHeaderColor = Color(UIColor(red: 0.18, green: 0.18, blue: 0.18, alpha: 1.0))
     
     @State private var hasMarkedAsRead: Bool = false
+    @ObservedObject var viewModel: OshiViewModel
     
     init(selectedOshi: Oshi, oshiItem: OshiItem?) {
-         _selectedOshi = State(initialValue: selectedOshi)
+         self.viewModel = OshiViewModel(oshi: selectedOshi)
          self.oshiItem  = oshiItem
      }
 
@@ -74,7 +74,7 @@ struct OshiAIChatView: View {
                     profileImage
                         .frame(width: 36, height: 36)
                     
-                    Text(selectedOshi.name)
+                    Text(viewModel.selectedOshi.name)
                         .font(.system(size: 17, weight: .medium))
                     
                     Spacer()
@@ -104,7 +104,7 @@ struct OshiAIChatView: View {
                                     .padding(.top, 40)
                             } else {
                                 ForEach(messages, id: \.id) { message in
-                                    LineChatBubble(message: message, oshiName: selectedOshi.name, oshiImageURL: selectedOshi.imageUrl)
+                                    LineChatBubble(message: message, oshiName: viewModel.selectedOshi.name, oshiImageURL: viewModel.selectedOshi.imageUrl)
                                         .id(message.id)
                                 }
                                 Color.clear
@@ -139,7 +139,7 @@ struct OshiAIChatView: View {
                     HStack(spacing: 10) {
                         
                         // 入力フィールド
-                        TextField("\(selectedOshi.name)に話しかけてみよう", text: $inputText)
+                        TextField("\(viewModel.selectedOshi.name)に話しかけてみよう", text: $inputText)
                             .padding(10)
                             .background(Color.white)
                             .cornerRadius(18)
@@ -180,6 +180,7 @@ struct OshiAIChatView: View {
             }
         }
         .onAppear {
+            print("viewModel.selectedOshi     :\(viewModel.selectedOshi)")
             loadMessages()
             markMessagesAsRead()
         }
@@ -191,10 +192,10 @@ struct OshiAIChatView: View {
             loadOshiData()
         } content: {
             EditOshiPersonalityView(
-                oshi: selectedOshi,
+                viewModel: viewModel,
                 onSave: { updatedOshi in
                     // onSave時に即座にselectedOshiを更新
-                    self.selectedOshi = updatedOshi
+                    self.viewModel.selectedOshi = updatedOshi
                 },
                 onUpdate: {
                     // 遅延処理を取り除き、即座にloadOshiDataを呼び出す
@@ -208,7 +209,7 @@ struct OshiAIChatView: View {
     private func loadOshiData() {
         guard let userID = Auth.auth().currentUser?.uid else { return }
         
-        let dbRef = Database.database().reference().child("oshis").child(userID).child(selectedOshi.id)
+        let dbRef = Database.database().reference().child("oshis").child(userID).child(viewModel.selectedOshi.id)
         dbRef.observeSingleEvent(of: .value) { snapshot in
             guard let data = snapshot.value as? [String: Any] else {
                 print("データが取得できませんでした")
@@ -217,12 +218,12 @@ struct OshiAIChatView: View {
             
             // 完全に新しいオブジェクトを作成（letからvarに変更）
             var newOshi = Oshi(
-                id: self.selectedOshi.id,
-                name: data["name"] as? String ?? self.selectedOshi.name,
-                imageUrl: data["imageUrl"] as? String ?? self.selectedOshi.imageUrl,
-                backgroundImageUrl: data["backgroundImageUrl"] as? String ?? self.selectedOshi.backgroundImageUrl,
-                memo: data["memo"] as? String ?? self.selectedOshi.memo,
-                createdAt: data["createdAt"] as? TimeInterval ?? self.selectedOshi.createdAt
+                id: self.viewModel.selectedOshi.id,
+                name: data["name"] as? String ?? self.viewModel.selectedOshi.name,
+                imageUrl: data["imageUrl"] as? String ?? self.viewModel.selectedOshi.imageUrl,
+                backgroundImageUrl: data["backgroundImageUrl"] as? String ?? self.viewModel.selectedOshi.backgroundImageUrl,
+                memo: data["memo"] as? String ?? self.viewModel.selectedOshi.memo,
+                createdAt: data["createdAt"] as? TimeInterval ?? self.viewModel.selectedOshi.createdAt
             )
             
             // すべてのプロパティを設定
@@ -238,10 +239,10 @@ struct OshiAIChatView: View {
             newOshi.height = data["height"] as? Int
             
             DispatchQueue.main.async {
-                print("更新前: \(self.selectedOshi.personality ?? "なし")")
+                print("更新前: \(self.viewModel.selectedOshi.personality ?? "なし")")
                 print("更新データ: \(newOshi.personality ?? "なし")")
-                self.selectedOshi = newOshi
-                print("更新後: \(self.selectedOshi.personality ?? "なし")")
+                self.viewModel.selectedOshi = newOshi
+                print("更新後: \(self.viewModel.selectedOshi.personality ?? "なし")")
             }
         }
     }
@@ -249,7 +250,7 @@ struct OshiAIChatView: View {
     // プロフィール画像コンポーネント
     private var profileImage: some View {
         Group {
-            if let imageUrl = selectedOshi.imageUrl, let url = URL(string: imageUrl) {
+            if let imageUrl = viewModel.selectedOshi.imageUrl, let url = URL(string: imageUrl) {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .success(let image):
@@ -284,7 +285,7 @@ struct OshiAIChatView: View {
     }
     
     private func markMessagesAsRead() {
-        ChatDatabaseManager.shared.markMessagesAsRead(for: selectedOshi.id) { error in
+        ChatDatabaseManager.shared.markMessagesAsRead(for: viewModel.selectedOshi.id) { error in
             if let error = error {
                 print("メッセージを既読にできませんでした: \(error.localizedDescription)")
             } else {
@@ -303,7 +304,7 @@ struct OshiAIChatView: View {
              // itemのidが存在することを確認
              let itemId = item.id
              
-             ChatDatabaseManager.shared.fetchMessages(for: selectedOshi.id, itemId: itemId) { fetchedMessages, error in
+             ChatDatabaseManager.shared.fetchMessages(for: viewModel.selectedOshi.id, itemId: itemId) { fetchedMessages, error in
                  DispatchQueue.main.async {
                      if let error = error {
                          print("メッセージ読み込みエラー: \(error.localizedDescription)")
@@ -329,7 +330,7 @@ struct OshiAIChatView: View {
              }
          } else {
              // 推し全体のチャット履歴を読み込む
-             ChatDatabaseManager.shared.fetchMessages(for: selectedOshi.id) { fetchedMessages, error in
+             ChatDatabaseManager.shared.fetchMessages(for: viewModel.selectedOshi.id) { fetchedMessages, error in
                  DispatchQueue.main.async {
                      if let error = error {
                          print("メッセージ読み込みエラー: \(error.localizedDescription)")
@@ -363,7 +364,7 @@ struct OshiAIChatView: View {
     private func addInitialMessage(for item: OshiItem) {
         isLoading = true
         
-        AIMessageGenerator.shared.generateInitialMessage(for: selectedOshi, item: item) { content, error in
+        AIMessageGenerator.shared.generateInitialMessage(for: viewModel.selectedOshi, item: item) { content, error in
             DispatchQueue.main.async {
                 isLoading = false
                 
@@ -387,7 +388,7 @@ struct OshiAIChatView: View {
                     content: content,
                     isUser: false,
                     timestamp: Date().timeIntervalSince1970,
-                    oshiId: selectedOshi.id,
+                    oshiId: viewModel.selectedOshi.id,
                     itemId: item.id
                 )
                 
@@ -410,10 +411,10 @@ struct OshiAIChatView: View {
         let messageId = UUID().uuidString
         let message = ChatMessage(
             id: messageId,
-            content: "こんにちは！\(selectedOshi.name)だよ！いつも応援してくれてありがとう✨\n何か質問があれば話しかけてね！",
+            content: "こんにちは！\(viewModel.selectedOshi.name)だよ！いつも応援してくれてありがとう✨\n何か質問があれば話しかけてね！",
             isUser: false,
             timestamp: Date().timeIntervalSince1970,
-            oshiId: selectedOshi.id
+            oshiId: viewModel.selectedOshi.id
         )
         
         // メッセージをデータベースに保存
@@ -432,10 +433,10 @@ struct OshiAIChatView: View {
         let messageId = UUID().uuidString
         let message = ChatMessage(
             id: messageId,
-            content: "こんにちは！\(selectedOshi.name)だよ！何か聞きたいことがあれば教えてね💕",
+            content: "こんにちは！\(viewModel.selectedOshi.name)だよ！何か聞きたいことがあれば教えてね💕",
             isUser: false,
             timestamp: Date().timeIntervalSince1970,
-            oshiId: selectedOshi.id
+            oshiId: viewModel.selectedOshi.id
         )
         
         messages.append(message)
@@ -459,7 +460,7 @@ struct OshiAIChatView: View {
             content: inputText,
             isUser: true,
             timestamp: Date().timeIntervalSince1970,
-            oshiId: selectedOshi.id,
+            oshiId: viewModel.selectedOshi.id,
             itemId: oshiItem?.id
         )
         
@@ -483,7 +484,7 @@ struct OshiAIChatView: View {
         // AIの返信を生成
         isLoading = true
         
-        AIMessageGenerator.shared.generateResponse(for: userInput, oshi: selectedOshi, chatHistory: messages) { content, error in
+        AIMessageGenerator.shared.generateResponse(for: userInput, oshi: viewModel.selectedOshi, chatHistory: messages) { content, error in
             DispatchQueue.main.async {
                 isLoading = false
                 
@@ -504,7 +505,7 @@ struct OshiAIChatView: View {
                     content: content,
                     isUser: false,
                     timestamp: Date().timeIntervalSince1970,
-                    oshiId: selectedOshi.id,
+                    oshiId: viewModel.selectedOshi.id,
                     itemId: oshiItem?.id
                 )
                 
@@ -683,6 +684,6 @@ struct ChatBubble: View {
         memo: nil,
         createdAt: Date().timeIntervalSince1970
     )
-//    OshiAIChatView(selectedOshi: .constant(dummyOshi), oshiItem: nil)
+//    OshiAIChatView(viewModel.selectedOshi: .constant(dummyOshi), oshiItem: nil)
     TopView()
 }
