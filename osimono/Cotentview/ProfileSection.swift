@@ -284,6 +284,13 @@ struct ProfileSection: View {
                 loadAllData()
             }
         }
+        .onChange(of: oshiId) { newOshiId in
+            if newOshiId != viewModel?.selectedOshi.id {
+                // 強制的にデータ更新
+                loadAllData()
+                fetchOshiList()
+            }
+        }
         .onChange(of: oshiChange) { newOshi in
             withAnimation {
                 loadSettingAllData()
@@ -779,6 +786,7 @@ struct ProfileSection: View {
             
             DispatchQueue.main.async {
                 self.oshiList = newOshis
+                self.imageCache = [:]
                 
                 // oshiIdに一致する推しを検索
                 if let matchingOshi = newOshis.first(where: { $0.id == self.oshiId }) {

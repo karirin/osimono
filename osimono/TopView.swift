@@ -35,6 +35,7 @@ struct TopView: View {
             TabView {
                 HStack{
                     ContentView(oshiChange: $oshiChange)
+                        .id(selectedOshiId)
                 }
 
                 .tabItem {
@@ -270,8 +271,9 @@ struct TopView: View {
                         // 選択された推しでviewModelを更新
                         self.viewModel = OshiViewModel(oshi: oshi)
                         
-                        // 推し変更をトリガー
-                        self.oshiChange = !self.oshiChange
+                        DispatchQueue.main.async {
+                            self.oshiChange = !self.oshiChange
+                        }
                     } else {
                         // 対応する推しが見つからない場合は再取得
                         self.fetchOshiList()
