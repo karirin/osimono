@@ -13,9 +13,8 @@ import FirebaseStorage
 
 struct ProfileSection: View {
     @State private var isLoading = true
-    @State private var selectedOshi: Oshi? = nil
     var profileSectionHeight: CGFloat {
-        isSmallDevice() ? 220 : 210
+        isSmallDevice() ? 230 : 230
     }
     let primaryColor = Color(.systemPink) // 明るいピンク
     let accentColor = Color(.purple) // 紫系
@@ -54,6 +53,30 @@ struct ProfileSection: View {
     @State private var badgeBounce: Bool = false
     @State private var showChatView: Bool = false
     
+    @State private var imageCache: [String: URL] = [:]
+    @State private var needsFullReload = false
+    
+    @State private var viewModel: OshiViewModel?
+    
+    init(editFlag: Binding<Bool>, oshiChange: Binding<Bool>, showAddOshiForm: Binding<Bool>, isEditingUsername: Binding<Bool>, isShowingOshiSelector: Binding<Bool>, showChangeOshiButton: Binding<Bool>, isOshiChange: Binding<Bool>, isShowingEditOshiView: Binding<Bool>, onOshiUpdated: (() -> Void)? = nil, firstOshiFlag: Binding<Bool>, showingOshiAlert: Binding<Bool>, oshiId: String) {
+        self._editFlag = editFlag
+        self._oshiChange = oshiChange
+        self._showAddOshiForm = showAddOshiForm
+        self._isEditingUsername = isEditingUsername
+        self._isShowingOshiSelector = isShowingOshiSelector
+        self._showChangeOshiButton = showChangeOshiButton
+        self._isOshiChange = isOshiChange
+        self._isShowingEditOshiView = isShowingEditOshiView
+        self.onOshiUpdated = onOshiUpdated
+        self._firstOshiFlag = firstOshiFlag
+        self._showingOshiAlert = showingOshiAlert
+        self.oshiId = oshiId
+        
+        // 初期Oshiオブジェクトを作成してViewModelを初期化
+        let initialOshi = Oshi(id: oshiId, name: "推しを選択してください", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil)
+        self._viewModel = State(initialValue: OshiViewModel(oshi: initialOshi))
+    }
+    
     var body: some View {
         ZStack(alignment: .top) {
             // 背景画像 - 選択中の推しの背景画像に変更
@@ -66,7 +89,7 @@ struct ProfileSection: View {
                     .shimmering(active: true)
                     .edgesIgnoringSafeArea(.all)
             } else {
-                if let oshi = selectedOshi, let backgroundUrl = oshi.backgroundImageUrl, let url = URL(string: backgroundUrl) {
+                if let oshi = viewModel?.selectedOshi, let backgroundUrl = oshi.backgroundImageUrl, let url = URL(string: backgroundUrl) {
                     // 選択中の推しの背景画像を表示
                     AsyncImage(url: url) { phase in
                         switch phase {
@@ -112,10 +135,10 @@ struct ProfileSection: View {
                 }
                 
                 // プロフィール情報とアバター
-                VStack(spacing: 8) {
+                VStack(spacing: viewModel?.selectedOshi.name == "" ? 0 : 8) {
                     // プロフィール画像 - 選択中の推しのプロフィール画像に変更
                     ZStack {
-                        if let oshi = selectedOshi, let imageUrlString = oshi.imageUrl, let imageUrl = URL(string: imageUrlString) {
+                        if let oshi = viewModel?.selectedOshi, let imageUrlString = oshi.imageUrl, let imageUrl = URL(string: imageUrlString) {
                             AsyncImage(url: imageUrl) { phase in
                                 switch phase {
                                 case .success(let image):
@@ -161,9 +184,12 @@ struct ProfileSection: View {
                         } else {
                             Button(action: {
                                 generateHapticFeedback()
-                                if let oshi = selectedOshi {
-                                    isShowingImagePicker = true
+                                print("profilePlaceholder button tapped")
+                                if viewModel?.selectedOshi != nil {
+                                    print("profilePlaceholder button tapped1")
+                                    showAddOshiForm = true
                                 } else {
+                                    print("profilePlaceholder button tapped2")
                                     showAddOshiForm = true
                                 }
                             }) {
@@ -195,13 +221,13 @@ struct ProfileSection: View {
                             }
                         } else {
                             // 表示モード: 通常のテキスト表示
-                            Text(selectedOshi?.name ?? "推しを選択してください")
+                            Text(viewModel?.selectedOshi.name ?? "推しを選択してください")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
                         }
                     }
                     .padding(.bottom, 12)
-                    .zIndex(1) 
+                    .zIndex(1)
                 }
                 .offset(y: 0)
             }
@@ -235,12 +261,12 @@ struct ProfileSection: View {
                 // 定期的にチェックするタイマー
                 startUnreadItemsCheckTimer()
                 
-                if let oshiId = selectedOshi?.id {
-                    UnreadPostTracker.shared.markPostsAsRead(for: oshiId) { error in
-                        if let error = error {
-                        }
-                    }
-                }
+//                if let oshiId = selectedOshi?.id {
+//                    UnreadPostTracker.shared.markPostsAsRead(for: oshiId) { error in
+//                        if let error = error {
+//                        }
+//                    }
+//                }
             } else {
                 // 画面が再表示される場合も、最新の未読状態をチェック
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -248,7 +274,7 @@ struct ProfileSection: View {
                 }
             }
         }
-        .onChange(of: selectedOshi) { newOshi in
+        .onChange(of: viewModel?.selectedOshi) { newOshi in
             if newOshi != nil {
                 checkForAllUnreadItems()
             }
@@ -280,20 +306,21 @@ struct ProfileSection: View {
             AddOshiView()
         }
         .fullScreenCover(isPresented: $showChatView) {
-            if selectedOshi != nil {
-                OshiAIChatView(selectedOshi: selectedOshi!, oshiItem: nil)
-                    .onDisappear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            checkForUnreadMessages()
-                        }
+            if viewModel != nil {
+                OshiAIChatView(viewModel: viewModel!, oshiItem: nil)
+                .onDisappear {
+                    fetchOshiList()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        checkForUnreadMessages()
                     }
+                }
             }
         }
         .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
             loadAllData()
             fetchOshiList()
         }) {
-            if let oshi = selectedOshi {
+            if let oshi = viewModel?.selectedOshi {
                 EditOshiView(oshi: oshi) {
                     // 推しが更新されたときのコールバック
                     loadAllData()
@@ -313,7 +340,7 @@ struct ProfileSection: View {
     // showChatAIView関数を更新して投稿の既読も処理
     func showChatAIView() {
         // チャットを開いたら既読にマーク
-        if let oshiId = selectedOshi?.id {
+        if let oshiId = viewModel?.selectedOshi.id {
             // メッセージを既読にマーク
             ChatDatabaseManager.shared.markMessagesAsRead(for: oshiId) { error in
                 if let error = error {
@@ -343,7 +370,7 @@ struct ProfileSection: View {
 
     // 投稿を既読にするメソッドを追加（推し投稿一覧画面に遷移する時に呼び出す）
     func markPostsAsRead() {
-        if let oshiId = selectedOshi?.id {
+        if let oshiId = viewModel?.selectedOshi.id {
             UnreadPostTracker.shared.markPostsAsRead(for: oshiId) { error in
                 if let error = error {
                     print("投稿を既読にできませんでした: \(error.localizedDescription)")
@@ -360,7 +387,7 @@ struct ProfileSection: View {
     
     // 未読メッセージをチェックする関数
     func checkForUnreadMessages() {
-        guard let oshi = selectedOshi else {
+        guard let oshi = viewModel?.selectedOshi else {
             return
         }
         
@@ -393,7 +420,7 @@ struct ProfileSection: View {
     }
     
     func uploadOshiImageToFirebase(_ image: UIImage, type: UploadImageType = .profile) {
-        guard let userID = Auth.auth().currentUser?.uid, let oshi = selectedOshi else {
+        guard let userID = Auth.auth().currentUser?.uid, let oshi = viewModel?.selectedOshi else {
             print("ユーザーがログインしていないか、推しが選択されていません")
             return
         }
@@ -431,14 +458,14 @@ struct ProfileSection: View {
                         
                         dbRef.updateChildValues(updates) { error, _ in
                             if error == nil {
-                                // ローカルのselectedOshiを更新
-                                var updatedOshi = self.selectedOshi!
+                                // ローカルのviewModel?.selectedOshiを更新
+                                var updatedOshi = self.viewModel?.selectedOshi
                                 if type == .profile {
-                                    updatedOshi.imageUrl = url.absoluteString
+                                    updatedOshi?.imageUrl = url.absoluteString
                                 } else {
-                                    updatedOshi.backgroundImageUrl = url.absoluteString
+                                    updatedOshi?.backgroundImageUrl = url.absoluteString
                                 }
-                                self.selectedOshi = updatedOshi
+                                self.viewModel?.selectedOshi = updatedOshi!
                                 
                                 // oshiListも更新
                                 if let index = self.oshiList.firstIndex(where: { $0.id == oshi.id }) {
@@ -462,7 +489,7 @@ struct ProfileSection: View {
     }
     
     func checkForUnreadPosts() {
-        guard let oshi = selectedOshi else { return }
+        guard let oshi = viewModel?.selectedOshi else { return }
         
         UnreadPostTracker.shared.fetchUnreadPostCount(for: oshi.id) { count, error in
             if let error = error {
@@ -512,7 +539,7 @@ struct ProfileSection: View {
     }
     
     func forceCheckUnreadMessages() {
-        guard let oshi = selectedOshi else {
+        guard let oshi = viewModel?.selectedOshi else {
             return
         }
         
@@ -635,7 +662,7 @@ struct ProfileSection: View {
                     // 推しリスト
                     ForEach(oshiList) { oshi in
                         Button(action: {
-                            selectedOshi = oshi
+                            viewModel?.selectedOshi = oshi
                             saveSelectedOshiId(oshi.id)
                             generateHapticFeedback()
                             withAnimation(.spring()) {
@@ -680,7 +707,7 @@ struct ProfileSection: View {
                                     }
                                     
                                     // 選択インジケーター
-                                    if selectedOshi?.id == oshi.id {
+                                    if viewModel?.selectedOshi.id == oshi.id {
                                         Circle()
                                             .stroke(primaryColor, lineWidth: 4)
                                             .frame(width: 85, height: 85)
@@ -728,7 +755,7 @@ struct ProfileSection: View {
                         let favorite_food = value["favorite_food"] as? String
                         let disliked_food = value["disliked_food"] as? String
                         let interests = value["interests"] as? [String]
-                        let gender = value["gender"] as? String ?? "男性" // 性別情報を追加（デフォルトは男性）
+                        let gender = value["gender"] as? String ?? "男性"
                         
                         let oshi = Oshi(
                             id: id,
@@ -743,9 +770,8 @@ struct ProfileSection: View {
                             speaking_style: speaking_style,
                             favorite_food: favorite_food,
                             disliked_food: disliked_food,
-                            gender: gender // 性別情報を追加
+                            gender: gender
                         )
-                        print("fetchOshiList    oshi        :\(oshi)")
                         newOshis.append(oshi)
                     }
                 }
@@ -753,10 +779,14 @@ struct ProfileSection: View {
             
             DispatchQueue.main.async {
                 self.oshiList = newOshis
-                self.loadSelectedOshi()
-                // 初期表示用に最初の推しを選択
-                if let firstOshi = newOshis.first, self.selectedOshi == nil {
-                    self.selectedOshi = firstOshi
+                
+                // oshiIdに一致する推しを検索
+                if let matchingOshi = newOshis.first(where: { $0.id == self.oshiId }) {
+                    self.viewModel?.selectedOshi = matchingOshi
+                    print("推しのデータを更新: \(matchingOshi.name), ID: \(matchingOshi.id)")
+                } else {
+                    // 選択中の推しIDから推しを設定
+                    self.loadSelectedOshi()
                 }
             }
         }
@@ -772,8 +802,22 @@ struct ProfileSection: View {
             if let selectedOshiId = value["selectedOshiId"] as? String {
                 // 選択中の推しIDが存在する場合、oshiListから該当する推しを検索して設定
                 if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
-                    self.selectedOshi = oshi
-                    print("self.selectedOshi        :\(self.selectedOshi)")
+                    DispatchQueue.main.async {
+                        self.viewModel?.selectedOshi = oshi
+                        print("loadSelectedOshi: 推しを設定 - \(oshi.name), ID: \(oshi.id)")
+                    }
+                } else if !self.oshiList.isEmpty {
+                    // selectedOshiIdに該当する推しが見つからない場合は最初の推しを設定
+                    DispatchQueue.main.async {
+                        self.viewModel?.selectedOshi = self.oshiList[0]
+                        print("loadSelectedOshi: 最初の推しを設定 - \(self.oshiList[0].name)")
+                    }
+                }
+            } else if !self.oshiList.isEmpty {
+                // selectedOshiIdがない場合も最初の推しを設定
+                DispatchQueue.main.async {
+                    self.viewModel?.selectedOshi = self.oshiList[0]
+                    print("loadSelectedOshi: selectedOshiIdなし、最初の推しを設定")
                 }
             }
         }
@@ -791,7 +835,7 @@ struct ProfileSection: View {
     }
     
     func saveOshiProfile() {
-        guard let userID = Auth.auth().currentUser?.uid, let oshi = selectedOshi else { return }
+        guard let userID = Auth.auth().currentUser?.uid, let oshi = viewModel?.selectedOshi else { return }
         
         let updatedName = editingUsername.trimmingCharacters(in: .whitespacesAndNewlines)
         if !updatedName.isEmpty {
@@ -804,9 +848,9 @@ struct ProfileSection: View {
             dbRef.updateChildValues(updates) { error, _ in
                 if error == nil {
                     // ローカルのselectedOshiを更新
-                    var updatedOshi = self.selectedOshi!
-                    updatedOshi.name = updatedName
-                    self.selectedOshi = updatedOshi
+                    var updatedOshi = self.viewModel?.selectedOshi
+                    updatedOshi?.name = updatedName
+                    self.viewModel?.selectedOshi = updatedOshi!
                     
                     // oshiListも更新
                     if let index = self.oshiList.firstIndex(where: { $0.id == oshi.id }) {
@@ -925,7 +969,7 @@ struct ProfileSection: View {
     }
     
     func startEditing() {
-        if let oshi = selectedOshi {
+        if let oshi = viewModel?.selectedOshi {
             editingUsername = oshi.name
         }
     }

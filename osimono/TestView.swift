@@ -15,6 +15,7 @@ enum TutorialStep: Int, CaseIterable {
     case addOshi
     case createPost
     case categories
+    case message
     case completed
     
     var title: String {
@@ -24,6 +25,7 @@ enum TutorialStep: Int, CaseIterable {
         case .addOshi: return "推しを追加"
         case .createPost: return "聖地巡礼"
         case .categories: return "タイムライン"
+        case .message: return "メッセージ"
         case .completed: return "完了"
         }
     }
@@ -33,13 +35,15 @@ enum TutorialStep: Int, CaseIterable {
         case .welcome:
             return "「推しログ」へようこそ！\nあなたの推し活を記録するアプリです。\n基本的な使い方を説明します。"
         case .selectOshi:
-            return "画面上部から推しを登録できます。\nアイコン、背景、名前を保存しましょう。"
+            return "こちらから推しを登録できます。\nアイコン、背景、名前を保存しましょう。"
         case .addOshi:
-            return "プラスボタンから推しに関する「グッズ」「聖地巡礼」などを記録することができます。"
+            return "プラスボタンで推しに関する「グッズ」「聖地巡礼」を記録することができます。"
         case .createPost:
-            return "登録した推しの「聖地巡礼」をマップで見ることができます。"
+            return "登録した推しの聖地巡礼をマップで見ることができます。"
         case .categories:
-            return "推しや自分の活動を「タイムライン」形式で記録・確認できます。"
+            return "推しや自分の活動をタイムライン形式で記録・確認できます。"
+        case .message:
+            return "推しとチャットでやり取りすることができます。記録した内容にメッセージを送ってきてくれることも！"
         case .completed:
             return "これでチュートリアルは完了です！\nあなたの推し活ライフをお楽しみください！"
         }
@@ -52,6 +56,7 @@ enum TutorialStep: Int, CaseIterable {
         case .addOshi: return "plus.circle.fill"
         case .createPost: return "mappin.and.ellipse"
         case .categories: return "calendar.day.timeline.left"
+        case .message: return "message.fill"
         case .completed: return "checkmark.circle.fill"
         }
     }
@@ -59,10 +64,11 @@ enum TutorialStep: Int, CaseIterable {
     var highlightPosition: CGPoint {
         switch self {
         case .welcome: return CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
-        case .selectOshi: return CGPoint(x: UIScreen.main.bounds.midX, y: isSmallDevice() ? 105 : isiPhone12Or13() ? 130 : 145)
-        case .addOshi: return CGPoint(x: UIScreen.main.bounds.width - 46, y: isSmallDevice() ? UIScreen.main.bounds.height - 95 : UIScreen.main.bounds.height - 128) // Updated to bottom right
-        case .createPost: return CGPoint(x: UIScreen.main.bounds.width * 0.375, y: isSmallDevice() ? UIScreen.main.bounds.height - 25 : UIScreen.main.bounds.height - 55)
-        case .categories: return CGPoint(x: UIScreen.main.bounds.width * 0.625, y: isSmallDevice() ? UIScreen.main.bounds.height - 25 : UIScreen.main.bounds.height - 55)
+        case .selectOshi: return CGPoint(x: UIScreen.main.bounds.midX, y: isSmallDevice() ? 85 : isiPhone12Or13() ? 110 : 125)
+        case .addOshi: return CGPoint(x: UIScreen.main.bounds.width - 44, y: isSmallDevice() ? UIScreen.main.bounds.height - 94 : UIScreen.main.bounds.height - 128) // Updated to bottom right
+        case .createPost: return CGPoint(x: UIScreen.main.bounds.width * 0.3, y: isSmallDevice() ? UIScreen.main.bounds.height - 25 : UIScreen.main.bounds.height - 55)
+        case .categories: return CGPoint(x: UIScreen.main.bounds.width * 0.5, y: isSmallDevice() ? UIScreen.main.bounds.height - 25 : UIScreen.main.bounds.height - 55)
+        case .message: return CGPoint(x: UIScreen.main.bounds.width * 0.7, y: isSmallDevice() ? UIScreen.main.bounds.height - 25 : UIScreen.main.bounds.height - 55)
         case .completed: return CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
         }
     }
@@ -76,7 +82,7 @@ enum TutorialStep: Int, CaseIterable {
         case .addOshi:
             // Position message in the center of the screen, above the plus button
             return EdgeInsets(top: 0, leading: 24, bottom: 150, trailing: 24)
-        case .createPost, .categories:
+        case .createPost, .categories, .message:
             return EdgeInsets(top: 0, leading: 24, bottom: 80, trailing: 24) // Bottom centered
         }
     }
@@ -88,6 +94,7 @@ enum TutorialStep: Int, CaseIterable {
         case .addOshi: return 80
         case .createPost: return 80
         case .categories: return 80
+        case .message: return 80
         case .completed: return 0 // 全画面ハイライト
         }
     }
@@ -97,6 +104,7 @@ enum TutorialStep: Int, CaseIterable {
 class TutorialManager: ObservableObject {
     @Published var isShowingTutorial: Bool = false
     @Published var currentStep: TutorialStep = .welcome
+//    @Published var currentStep: TutorialStep = .message
     
     static let shared = TutorialManager()
     
@@ -153,7 +161,7 @@ struct TutorialOverlayView: View {
     var body: some View {
         ZStack {
             // Semi-transparent background
-            Color.black.opacity(0.4)
+            Color.black.opacity(0.6)
                 .edgesIgnoringSafeArea(.all)
                 .animation(.easeInOut, value: tutorialManager.currentStep)
                 .overlay {
@@ -384,5 +392,6 @@ struct WelcomeScreen: View {
 }
 
 #Preview{
-    ContentViewWithTutorial()
+//    ContentViewWithTutorial()
+    TopView()
 }

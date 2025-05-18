@@ -142,6 +142,7 @@ struct ContentView: View {
                     .animation(.easeInOut, value: isProfileImageEnlarged)
             )
         }
+        .navigationViewStyle(StackNavigationViewStyle())
         .accentColor(primaryColor)
         .onAppear {
             fetchOshiList()
@@ -159,6 +160,9 @@ struct ContentView: View {
                     }
                 }
             }
+            
+            // 画面表示時に常にデータを更新
+            loadAllData()
         }
         .overlay(
             ZStack {
@@ -200,8 +204,12 @@ struct ContentView: View {
             }
         }
         .onChange(of: isOshiChange) { newFlag in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                loadAllData()
+            // 即座にデータを更新
+            loadAllData()
+            
+            // 少し遅らせて再度取得（非同期処理の完了を待つため）
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                fetchOshiList()
             }
         }
         .onChange(of: showChangeOshiButton) { newFlag in
@@ -594,38 +602,61 @@ struct ContentView: View {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let ref = Database.database().reference().child("oshis").child(userId)
         
-        ref.observeSingleEvent(of: .value) { snapshot in
-            var newOshis: [Oshi] = []
+        // 先にselectedOshiIdを取得
+        let userRef = Database.database().reference().child("users").child(userId)
+        userRef.observeSingleEvent(of: .value) { snapshot in
+            var currentSelectedOshiId: String? = nil
             
-            for child in snapshot.children {
-                if let childSnapshot = child as? DataSnapshot {
-                    if let value = childSnapshot.value as? [String: Any] {
-                        let id = childSnapshot.key
-                        let name = value["name"] as? String ?? "名前なし"
-                        let imageUrl = value["imageUrl"] as? String
-                        let backgroundImageUrl = value["backgroundImageUrl"] as? String
-                        let memo = value["memo"] as? String
-                        let createdAt = value["createdAt"] as? TimeInterval
-                        
-                        let oshi = Oshi(
-                            id: id,
-                            name: name,
-                            imageUrl: imageUrl,
-                            backgroundImageUrl: backgroundImageUrl, // ここで追加
-                            memo: memo,
-                            createdAt: createdAt
-                        )
-                        newOshis.append(oshi)
-                    }
-                }
+            if let userData = snapshot.value as? [String: Any],
+               let selectedId = userData["selectedOshiId"] as? String,
+               selectedId != "default" {
+                currentSelectedOshiId = selectedId
             }
             
-            DispatchQueue.main.async {
-                self.oshiList = newOshis
-                self.loadSelectedOshi()
-                // 初期表示用に最初の推しを選択
-                if let firstOshi = newOshis.first, self.selectedOshi == nil {
-                    self.selectedOshi = firstOshi
+            // 次に推しリストを取得
+            ref.observeSingleEvent(of: .value) { snapshot in
+                var newOshis: [Oshi] = []
+                
+                for child in snapshot.children {
+                    if let childSnapshot = child as? DataSnapshot {
+                        if let value = childSnapshot.value as? [String: Any] {
+                            let id = childSnapshot.key
+                            let name = value["name"] as? String ?? "名前なし"
+                            let imageUrl = value["imageUrl"] as? String
+                            let backgroundImageUrl = value["backgroundImageUrl"] as? String
+                            let memo = value["memo"] as? String
+                            let createdAt = value["createdAt"] as? TimeInterval
+                            
+                            let oshi = Oshi(
+                                id: id,
+                                name: name,
+                                imageUrl: imageUrl,
+                                backgroundImageUrl: backgroundImageUrl,
+                                memo: memo,
+                                createdAt: createdAt
+                            )
+                            newOshis.append(oshi)
+                        }
+                    }
+                }
+                
+                DispatchQueue.main.async {
+                    self.oshiList = newOshis
+                    
+                    // 選択中の推しを設定
+                    if let selectedId = currentSelectedOshiId,
+                       let oshi = newOshis.first(where: { $0.id == selectedId }) {
+                        self.selectedOshi = oshi
+                        print("ContentView: 現在の推しを設定 - \(oshi.name), ID: \(oshi.id)")
+                    } else if let firstOshi = newOshis.first, self.selectedOshi == nil {
+                        self.selectedOshi = firstOshi
+                        
+                        // ユーザーのselectedOshiIdも更新しておく
+                        if let userId = Auth.auth().currentUser?.uid {
+                            let userRef = Database.database().reference().child("users").child(userId)
+                            userRef.updateChildValues(["selectedOshiId": firstOshi.id])
+                        }
+                    }
                 }
             }
         }

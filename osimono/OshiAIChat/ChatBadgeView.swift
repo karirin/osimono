@@ -121,7 +121,7 @@ struct ChatBadgeView: View {
                     .onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                             withAnimation {
-                                showTooltip = false
+//                                showTooltip = false
                             }
                         }
                     }

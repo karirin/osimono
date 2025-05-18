@@ -47,11 +47,18 @@ struct OshiAIChatView: View {
     
     @State private var hasMarkedAsRead: Bool = false
     @ObservedObject var viewModel: OshiViewModel
+    @State private var currentOshiId: String = ""
+    @State private var loadCompleteOshiData: Bool = false
+    var showBackButton: Bool = true
     
-    init(selectedOshi: Oshi, oshiItem: OshiItem?) {
-         self.viewModel = OshiViewModel(oshi: selectedOshi)
-         self.oshiItem  = oshiItem
-     }
+    init(viewModel: OshiViewModel, oshiItem: OshiItem?, showBackButton: Bool = true) {
+        self.viewModel = viewModel
+        self.oshiItem = oshiItem
+        self.showBackButton = showBackButton
+        
+        // 初期化時に完全なデータを取得
+        _loadCompleteOshiData = State(initialValue: true)
+    }
 
     var body: some View {
         ZStack {
@@ -61,38 +68,41 @@ struct OshiAIChatView: View {
             VStack(spacing: 0) {
                 // LINE風ヘッダー
                 HStack(spacing: 10) {
-                    Button(action: {
-                        generateHapticFeedback()
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.blue)
-                    }
-                    
-                    // プロフィール画像（小さく表示）
-                    profileImage
-                        .frame(width: 36, height: 36)
-                    
-                    Text(viewModel.selectedOshi.name)
-                        .font(.system(size: 17, weight: .medium))
-                    
-                    Spacer()
-                    
-                    // LINE風メニューボタン
-                    Button(action: {
-                        generateHapticFeedback()
-                        showEditPersonality = true
-                    }) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 20))
-                            .foregroundColor(.black)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(Color.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
+                     // 戻るボタンを条件付きで表示
+                     if showBackButton {
+                         Button(action: {
+                             generateHapticFeedback()
+                             presentationMode.wrappedValue.dismiss()
+                         }) {
+                             Image(systemName: "chevron.left")
+                                 .font(.system(size: 18, weight: .semibold))
+                                 .foregroundColor(.blue)
+                         }
+                     }
+                     
+                     // プロフィール画像（小さく表示）
+                     profileImage
+                         .frame(width: 36, height: 36)
+                     
+                     Text(viewModel.selectedOshi.name)
+                         .font(.system(size: 17, weight: .medium))
+                     
+                     Spacer()
+                     
+                     // LINE風メニューボタン
+                     Button(action: {
+                         generateHapticFeedback()
+                         showEditPersonality = true
+                     }) {
+                         Image(systemName: "pencil")
+                             .font(.system(size: 20))
+                             .foregroundColor(.black)
+                     }
+                 }
+                 .padding(.horizontal)
+                 .padding(.vertical, 10)
+                 .background(Color.white)
+                 .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
                 
                 // チャットメッセージリスト
                 ScrollViewReader { proxy in
@@ -180,9 +190,25 @@ struct OshiAIChatView: View {
             }
         }
         .onAppear {
-            print("viewModel.selectedOshi     :\(viewModel.selectedOshi)")
-            loadMessages()
-            markMessagesAsRead()
+            // データを完全に取得
+            if loadCompleteOshiData {
+                loadCompleteOshiData = false
+                loadFullOshiData()
+            } else if viewModel.selectedOshi.id == "1" {
+                loadActualOshiData()
+            } else {
+                currentOshiId = viewModel.selectedOshi.id
+                resetViewState()
+                loadMessages()
+                markMessagesAsRead()
+            }
+        }
+        .onChange(of: viewModel.selectedOshi.id) { newId in
+            if currentOshiId != newId {
+                currentOshiId = newId
+                resetViewState()
+                loadMessages()
+            }
         }
         .onDisappear {
             markMessagesAsRead()
@@ -191,19 +217,240 @@ struct OshiAIChatView: View {
             // 閉じた後に確実に最新データを取得
             loadOshiData()
         } content: {
-            EditOshiPersonalityView(
-                viewModel: viewModel,
-                onSave: { updatedOshi in
-                    // onSave時に即座にselectedOshiを更新
-                    self.viewModel.selectedOshi = updatedOshi
-                },
-                onUpdate: {
-                    // 遅延処理を取り除き、即座にloadOshiDataを呼び出す
-                    loadOshiData()
-                }
-            ) .id(UUID())
+            // この部分でFirebaseから直接データを取得
+            FirebaseDataLoader(oshiId: viewModel.selectedOshi.id) { loadedOshi in
+                EditOshiPersonalityView(
+                    viewModel: OshiViewModel(oshi: loadedOshi ?? viewModel.selectedOshi),
+                    onSave: { updatedOshi in
+                        self.viewModel.selectedOshi = updatedOshi
+                        print("編集後の推しデータ: \(updatedOshi.personality ?? "なし")")
+                    },
+                    onUpdate: {
+                        loadOshiData()
+                        print("onUpdate呼び出し")
+                    }
+                )
+            }
+            .id(UUID())
         }
         .navigationBarHidden(true) // ネイティブナビゲーションバーを非表示
+    }
+    
+    struct FirebaseDataLoader<Content: View>: View {
+        let oshiId: String
+        let content: (Oshi?) -> Content
+        @State private var loadedOshi: Oshi? = nil
+        @State private var isLoading: Bool = true
+        
+        init(oshiId: String, @ViewBuilder content: @escaping (Oshi?) -> Content) {
+            self.oshiId = oshiId
+            self.content = content
+        }
+        
+        var body: some View {
+            ZStack {
+                if isLoading {
+                    ProgressView()
+                } else {
+                    content(loadedOshi)
+                }
+            }
+            .onAppear {
+                loadOshiData()
+            }
+        }
+        
+        private func loadOshiData() {
+            guard let userID = Auth.auth().currentUser?.uid else {
+                isLoading = false
+                return
+            }
+            
+            let dbRef = Database.database().reference().child("oshis").child(userID).child(oshiId)
+            dbRef.observeSingleEvent(of: .value) { snapshot in
+                guard let data = snapshot.value as? [String: Any] else {
+                    isLoading = false
+                    return
+                }
+                
+                // 推しデータを構築
+                var oshi = Oshi(
+                    id: oshiId,
+                    name: data["name"] as? String ?? "名前なし",
+                    imageUrl: data["imageUrl"] as? String,
+                    backgroundImageUrl: data["backgroundImageUrl"] as? String,
+                    memo: data["memo"] as? String,
+                    createdAt: data["createdAt"] as? TimeInterval
+                )
+                
+                // 追加プロパティを設定
+                oshi.personality = data["personality"] as? String
+                oshi.speaking_style = data["speaking_style"] as? String
+                oshi.birthday = data["birthday"] as? String
+                oshi.hometown = data["hometown"] as? String
+                oshi.favorite_color = data["favorite_color"] as? String
+                oshi.favorite_food = data["favorite_food"] as? String
+                oshi.disliked_food = data["disliked_food"] as? String
+                oshi.interests = data["interests"] as? [String]
+                oshi.gender = data["gender"] as? String
+                oshi.height = data["height"] as? Int
+                
+                DispatchQueue.main.async {
+                    self.loadedOshi = oshi
+                    self.isLoading = false
+                    print("FirebaseDataLoader - データ取得完了: \(oshi.personality ?? "なし")")
+                }
+            }
+        }
+    }
+    
+    private func loadFullOshiData() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let oshiRef = Database.database().reference().child("oshis").child(userID).child(viewModel.selectedOshi.id)
+        oshiRef.observeSingleEvent(of: .value) { snapshot in
+            guard let oshiData = snapshot.value as? [String: Any] else {
+                // データが取得できなかった場合は通常の処理を続行
+                self.currentOshiId = self.viewModel.selectedOshi.id
+                self.resetViewState()
+                self.loadMessages()
+                self.markMessagesAsRead()
+                return
+            }
+            
+            // 推しデータの基本プロパティを設定
+            var newOshi = Oshi(
+                id: self.viewModel.selectedOshi.id,
+                name: oshiData["name"] as? String ?? self.viewModel.selectedOshi.name,
+                imageUrl: oshiData["imageUrl"] as? String ?? self.viewModel.selectedOshi.imageUrl,
+                backgroundImageUrl: oshiData["backgroundImageUrl"] as? String ?? self.viewModel.selectedOshi.backgroundImageUrl,
+                memo: oshiData["memo"] as? String ?? self.viewModel.selectedOshi.memo,
+                createdAt: oshiData["createdAt"] as? TimeInterval ?? self.viewModel.selectedOshi.createdAt
+            )
+            
+            // 全てのプロパティを設定
+            newOshi.personality = oshiData["personality"] as? String
+            newOshi.speaking_style = oshiData["speaking_style"] as? String
+            newOshi.birthday = oshiData["birthday"] as? String
+            newOshi.hometown = oshiData["hometown"] as? String
+            newOshi.favorite_color = oshiData["favorite_color"] as? String
+            newOshi.favorite_food = oshiData["favorite_food"] as? String
+            newOshi.disliked_food = oshiData["disliked_food"] as? String
+            newOshi.interests = oshiData["interests"] as? [String]
+            newOshi.gender = oshiData["gender"] as? String
+            newOshi.height = oshiData["height"] as? Int
+            
+            DispatchQueue.main.async {
+                self.viewModel.selectedOshi = newOshi
+                print("完全なデータ読み込み後: \(newOshi.personality ?? "なし"), \(newOshi.speaking_style ?? "なし")")
+                
+                // 通常の初期化処理を続行
+                self.currentOshiId = newOshi.id
+                self.resetViewState()
+                self.loadMessages()
+                self.markMessagesAsRead()
+            }
+        }
+    }
+    
+    private func loadActualOshiData() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        // まずselectedOshiIdを取得
+        let userRef = Database.database().reference().child("users").child(userID)
+        userRef.observeSingleEvent(of: .value) { snapshot in
+            guard let userData = snapshot.value as? [String: Any],
+                  let selectedOshiId = userData["selectedOshiId"] as? String,
+                  selectedOshiId != "default" && selectedOshiId != "1" else {
+                // 有効なOshiIdがない場合は、最初の推しを取得してみる
+                self.loadFirstOshi()
+                return
+            }
+            
+            // 選択中の推しデータを取得
+            let oshiRef = Database.database().reference().child("oshis").child(userID).child(selectedOshiId)
+            oshiRef.observeSingleEvent(of: .value) { snapshot in
+                guard let oshiData = snapshot.value as? [String: Any] else {
+                    self.loadFirstOshi()
+                    return
+                }
+                
+                // 推しデータからOshiオブジェクトを作成
+                var oshi = Oshi(
+                    id: selectedOshiId,
+                    name: oshiData["name"] as? String ?? "名前なし",
+                    imageUrl: oshiData["imageUrl"] as? String,
+                    backgroundImageUrl: oshiData["backgroundImageUrl"] as? String,
+                    memo: oshiData["memo"] as? String,
+                    createdAt: oshiData["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970
+                )
+                
+                // 他のプロパティも設定
+                oshi.personality = oshiData["personality"] as? String
+                oshi.speaking_style = oshiData["speaking_style"] as? String
+                // 他のプロパティも同様に設定
+                
+                // viewModelを更新
+                DispatchQueue.main.async {
+                    self.viewModel.selectedOshi = oshi
+                    self.currentOshiId = oshi.id
+                    self.resetViewState()
+                    self.loadMessages()
+                    self.markMessagesAsRead()
+                }
+            }
+        }
+    }
+    
+    // 最初の推しを取得する関数（オプション）
+    private func loadFirstOshi() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let oshisRef = Database.database().reference().child("oshis").child(userID)
+        oshisRef.observeSingleEvent(of: .value) { snapshot in
+            var firstOshi: Oshi?
+            
+            for child in snapshot.children {
+                if let childSnapshot = child as? DataSnapshot,
+                   let oshiData = childSnapshot.value as? [String: Any] {
+                    let id = childSnapshot.key
+                    let name = oshiData["name"] as? String ?? "名前なし"
+                    
+                    firstOshi = Oshi(
+                        id: id,
+                        name: name,
+                        imageUrl: oshiData["imageUrl"] as? String,
+                        backgroundImageUrl: oshiData["backgroundImageUrl"] as? String,
+                        memo: oshiData["memo"] as? String,
+                        createdAt: oshiData["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970
+                    )
+                    break
+                }
+            }
+            
+            if let oshi = firstOshi {
+                DispatchQueue.main.async {
+                    self.viewModel.selectedOshi = oshi
+                    self.currentOshiId = oshi.id
+                    self.resetViewState()
+                    self.loadMessages()
+                    self.markMessagesAsRead()
+                    
+                    // ユーザーのselectedOshiIdも更新
+                    let userRef = Database.database().reference().child("users").child(userID)
+                    userRef.updateChildValues(["selectedOshiId": oshi.id])
+                }
+            }
+        }
+    }
+    
+    private func resetViewState() {
+        messages = []
+        isInitialScrollComplete = false
+        isFetchingMessages = true
+        isLoading = false
+        shouldScrollToBottom = false
+        hasMarkedAsRead = false
     }
 
     private func loadOshiData() {

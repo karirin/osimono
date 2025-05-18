@@ -24,6 +24,7 @@ struct EditOshiPersonalityView: View {
     @State private var hometown: String = ""
     @State private var interests: [String] = []
     @State private var newInterest: String = ""
+    @State private var initializationCompleted: Bool = false
     
     // 性別選択用の状態変数を追加
     @State private var gender: String = "男性"
@@ -44,6 +45,8 @@ struct EditOshiPersonalityView: View {
         self.oshi = viewModel.selectedOshi
         self.onSave = onSave
         self.onUpdate = onUpdate
+        
+        _initializationCompleted = State(initialValue: false)
         
         // 初期値の設定
         _personality = State(initialValue: viewModel.selectedOshi.personality ?? "")
@@ -66,6 +69,9 @@ struct EditOshiPersonalityView: View {
             _gender = State(initialValue: genderValue)
             _genderDetail = State(initialValue: "")
         }
+        
+        print("初期化時 - 性格: \(viewModel.selectedOshi.personality ?? "なし")")
+        print("初期化時 - 話し方: \(viewModel.selectedOshi.speaking_style ?? "なし")")
     }
     
     var body: some View {
@@ -225,7 +231,14 @@ struct EditOshiPersonalityView: View {
             }
         }
         .onAppear {
-            loadCurrentData()
+            // 空の場合のみロード
+            if !initializationCompleted {
+                loadDirectlyFromFirebase()
+            }
+            
+            // デバッグ出力
+            print("onAppear時 - 性格: \(viewModel.selectedOshi.personality ?? "なし")")
+            print("onAppear時 - 話し方: \(viewModel.selectedOshi.speaking_style ?? "なし")")
         }
         .onTapGesture {
             hideKeyboard()
@@ -373,8 +386,52 @@ struct EditOshiPersonalityView: View {
         .padding(.horizontal)
     }
     
+    private func loadDirectlyFromFirebase() {
+       guard let userID = Auth.auth().currentUser?.uid else { return }
+       
+       let oshiRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
+       oshiRef.observeSingleEvent(of: .value) { snapshot in
+           guard let data = snapshot.value as? [String: Any] else { return }
+           
+           DispatchQueue.main.async {
+               // データを取得して設定
+               self.personality = data["personality"] as? String ?? ""
+               self.speakingStyle = data["speaking_style"] as? String ?? ""
+               self.birthday = data["birthday"] as? String ?? ""
+               self.height = data["height"] != nil ? "\(data["height"] as? Int ?? 0)" : ""
+               self.favoriteColor = data["favorite_color"] as? String ?? ""
+               self.favoriteFood = data["favorite_food"] as? String ?? ""
+               self.dislikedFood = data["disliked_food"] as? String ?? ""
+               self.hometown = data["hometown"] as? String ?? ""
+               self.interests = data["interests"] as? [String] ?? []
+               
+               // 性別の処理
+               let genderValue = data["gender"] as? String ?? "男性"
+               if genderValue.hasPrefix("その他：") {
+                   self.gender = "その他"
+                   let detailStartIndex = genderValue.index(genderValue.startIndex, offsetBy: 4)
+                   self.genderDetail = String(genderValue[detailStartIndex...])
+               } else {
+                   self.gender = genderValue
+                   self.genderDetail = ""
+               }
+               
+               self.initializationCompleted = true
+               print("Firebase直接取得 - 性格: \(self.personality)")
+           }
+       }
+    }
+    
     // 現在のデータをロード
     private func loadCurrentData() {
+        // ローカルのデータがすでに設定されている場合はロードしない
+        if !personality.isEmpty {
+            print("既存データあり - スキップ")
+            return
+        }
+        
+        print("loadCurrentData呼び出し - oshi: \(oshi)")
+        
         personality = oshi.personality ?? ""
         speakingStyle = oshi.speaking_style ?? ""
         birthday = oshi.birthday ?? ""
@@ -384,9 +441,9 @@ struct EditOshiPersonalityView: View {
         dislikedFood = oshi.disliked_food ?? ""
         hometown = oshi.hometown ?? ""
         interests = oshi.interests ?? []
+        
         // 性別情報の処理
         let genderValue = oshi.gender ?? "男性"
-        print("loadCurrentData oshi:    :\(oshi)")
         // 「その他：詳細」形式の場合を処理
         if genderValue.hasPrefix("その他：") {
             gender = "その他"

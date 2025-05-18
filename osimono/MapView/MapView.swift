@@ -256,6 +256,7 @@ struct MapView: View {
                 UserProfileView()
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
     
     // 現在地に移動する関数

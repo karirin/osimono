@@ -29,7 +29,7 @@ struct OshiItemFormView: View {
     @State private var itemType: String = "グッズ"
     @State private var showAlert = false
     @State private var alertMessage = ""
-    @State private var locationAddress: String = "東京都新宿区北新宿2-2-14" // 聖地巡礼の場所住所
+    @State private var locationAddress: String = "" // 聖地巡礼の場所住所
     
     @StateObject private var locationManager = LocationManager()
     @State private var isGettingLocation = false

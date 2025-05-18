@@ -51,288 +51,288 @@ struct EditOshiView: View {
         ZStack {
             backgroundColor.edgesIgnoringSafeArea(.all)
             
-//            VStack(spacing: 0) {
-//                // カスタムナビゲーションバー
-//                HStack {
-//                    Button(action: {
-//                        presentationMode.wrappedValue.dismiss()
-//                    }) {
-//                        Text("戻る")
-//                            .foregroundColor(primaryColor)
-//                    }
-//                    .padding()
-//                    
-//                    Spacer()
-//                    
-//                    Text("推しを編集")
-//                        .font(.headline)
-//                        .foregroundColor(.primary)
-//                    
-//                    Spacer()
-//                    
-//                    Button(action: {
-//                        generateHapticFeedback()
-//                        updateOshi()
-//                    }) {
-//                        Text("保存")
-//                            .foregroundColor(primaryColor)
-//                    }
-//                    .padding()
-//                }
-////                .padding(.top, 8)
-//                
-//                ScrollView {
-//                    VStack(spacing: 20) {
-//                        // 推しプロフィール画像とその編集セクション
-//                        VStack {
-//                            // 推しプロフィール画像
-//                            Button(action: {
-//                                currentEditType = .profile
-//                                showImagePicker = true
-//                                generateHapticFeedback()
-//                            }) {
-//                                ZStack {
-//                                    if let image = selectedImage {
-//                                        Image(uiImage: image)
-//                                            .resizable()
-//                                            .scaledToFill()
-//                                            .frame(width: 120, height: 120)
-//                                            .clipShape(Circle())
-//                                            .overlay(
-//                                                Circle()
-//                                                    .stroke(primaryColor, lineWidth: 3)
-//                                            )
-//                                    } else if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
-//                                        AsyncImage(url: url) { phase in
-//                                            switch phase {
-//                                            case .success(let image):
-//                                                image
-//                                                    .resizable()
-//                                                    .scaledToFill()
-//                                                    .frame(width: 120, height: 120)
-//                                                    .clipShape(Circle())
-//                                                    .overlay(
-//                                                        Circle()
-//                                                            .stroke(primaryColor, lineWidth: 3)
-//                                                    )
-//                                            default:
-//                                                Circle()
-//                                                    .fill(Color.gray.opacity(0.2))
-//                                                    .frame(width: 120, height: 120)
-//                                                    .overlay(
-//                                                        Image(systemName: "person.crop.circle")
-//                                                            .resizable()
-//                                                            .scaledToFit()
-//                                                            .frame(width: 40)
-//                                                            .foregroundColor(primaryColor)
-//                                                    )
-//                                            }
-//                                        }
-//                                    } else {
-//                                        Circle()
-//                                            .fill(Color.gray.opacity(0.2))
-//                                            .frame(width: 120, height: 120)
-//                                            .overlay(
-//                                                Image(systemName: "person.crop.circle")
-//                                                    .resizable()
-//                                                    .scaledToFit()
-//                                                    .frame(width: 40)
-//                                                    .foregroundColor(primaryColor)
-//                                            )
-//                                    }
-//                                    
-//                                    // 編集アイコン
-//                                    Circle()
-//                                        .fill(primaryColor)
-//                                        .frame(width: 30, height: 30)
-//                                        .overlay(
-//                                            Image(systemName: "pencil")
-//                                                .font(.system(size: 15))
-//                                                .foregroundColor(.white)
-//                                        )
-//                                        .offset(x: 40, y: 40)
-//                                }
-//                            }
-//                            .padding(.top, 20)
-//                            
-//                            Text("推しの画像を変更できます")
-//                                .font(.caption)
-//                                .foregroundColor(.gray)
-//                                .padding(.top, 8)
-//                            
-//                            // 推し変更ボタン（デザイン改善版）
-//                            Button(action: {
-//                                withAnimation(.spring()) {
-//                                    isShowingOshiSelector = true
-//                                }
-//                                generateHapticFeedback()
-//                            }) {
-//                                HStack(spacing: 10) {
-//                                    Image(systemName: "arrow.triangle.2.circlepath")
-//                                        .font(.system(size: 14))
-//                                    Text("別の推しを選択")
-//                                        .font(.system(size: 14, weight: .medium))
-//                                }
-//                                .padding(.horizontal, 16)
-//                                .padding(.vertical, 8)
-//                                .background(
-//                                    Capsule()
-//                                        .fill(primaryColor.opacity(0.15))
-//                                        .overlay(
-//                                            Capsule()
-//                                                .stroke(primaryColor, lineWidth: 1)
-//                                        )
-//                                )
-//                                .foregroundColor(primaryColor)
-//                            }
-//                            .padding(.top, 15)
-//                        }
-//                        
-//                        // 名前フィールド
-//                        VStack(alignment: .leading) {
-//                            Text("推しの名前")
-//                                .font(.headline)
-//                                .foregroundColor(.primary)
-//                                .padding(.horizontal)
-//                            
-//                            TextField("名前を入力", text: $oshiName)
-//                                .padding()
-//                                .background(Color.white)
-//                                .cornerRadius(10)
-//                                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-//                                .padding(.horizontal)
-//                        }
-//                        .padding(.top, 10)
-//                        
-//                        // 背景画像選択
-//                        VStack(alignment: .leading) {
-//                            Text("背景画像")
-//                                .font(.headline)
-//                                .foregroundColor(.primary)
-//                                .padding(.horizontal)
-//                            
-//                            Button(action: {
-//                                currentEditType = .background
-//                                showImagePicker = true
-//                                generateHapticFeedback()
-//                            }) {
-//                                if let image = selectedBackgroundImage {
-//                                    Image(uiImage: image)
-//                                        .resizable()
-//                                        .scaledToFill()
-//                                        .frame(height: 150)
-//                                        .frame(maxWidth: .infinity)
-//                                        .clipped()
-//                                        .cornerRadius(12)
-//                                        .overlay(
-//                                            RoundedRectangle(cornerRadius: 12)
-//                                                .stroke(primaryColor, lineWidth: 1)
-//                                        )
-//                                } else if let bgUrl = oshi.backgroundImageUrl, let url = URL(string: bgUrl) {
-//                                    AsyncImage(url: url) { phase in
-//                                        switch phase {
-//                                        case .success(let image):
-//                                            image
-//                                                .resizable()
-//                                                .scaledToFill()
-//                                                .frame(height: 150)
-//                                                .frame(maxWidth: .infinity)
-//                                                .clipped()
-//                                                .cornerRadius(12)
-//                                                .overlay(
-//                                                    RoundedRectangle(cornerRadius: 12)
-//                                                        .stroke(primaryColor, lineWidth: 1)
-//                                                )
-//                                        default:
-//                                            placeholderBackground
-//                                        }
-//                                    }
-//                                } else {
-//                                    placeholderBackground
-//                                }
-//                            }
-//                            .padding(.horizontal)
-//                        }
-//                        .padding(.top, 10)
-//                        
-//                        // 性格・特徴編集ボタン (新規追加)
-//                        Button(action: {
-//                            generateHapticFeedback()
-//                            showPersonalityEditor = true
-//                        }) {
-//                            HStack {
-//                                Image(systemName: "person.fill.questionmark")
-//                                    .font(.system(size: 20))
-//                                    .foregroundColor(.white)
-//                                    .padding(12)
-//                                    .background(
-//                                        Circle()
-//                                            .fill(primaryColor)
-//                                    )
-//                                
-//                                VStack(alignment: .leading) {
-//                                    Text("性格・特徴を編集")
-//                                        .font(.headline)
-//                                        .foregroundColor(.primary)
-//                                    
-//                                    Text("推しの性格や好みを設定してチャットを個性的に")
-//                                        .font(.caption)
-//                                        .foregroundColor(.gray)
-//                                }
-//                                
-//                                Spacer()
-//                                
-//                                Image(systemName: "chevron.right")
-//                                    .foregroundColor(.gray)
-//                            }
-//                            .padding()
-//                            .background(Color.white)
-//                            .cornerRadius(12)
-//                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-//                        }
-//                        .padding(.horizontal)
-//                        .padding(.top, 10)
-//                        
-//                        // 現在の性格設定プレビュー (新規追加)
-//                        if hasPersonalitySettings() {
-//                            personalityPreview
-//                                .padding(.horizontal)
-//                                .padding(.top, 5)
-//                        }
-//                        
-//                        // 保存ボタン
-//                        Button(action: {
-//                            generateHapticFeedback()
-//                            updateOshi()
-//                        }) {
-//                            ZStack {
-//                                if isLoading {
-//                                    ProgressView()
-//                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-//                                } else {
-//                                    Text("保存する")
-//                                        .font(.system(size: 16, weight: .bold))
-//                                }
-//                            }
-//                            .frame(maxWidth: .infinity)
-//                            .foregroundColor(.white)
-//                            .padding()
-//                            .background(
-//                                LinearGradient(
-//                                    gradient: Gradient(colors: [primaryColor, primaryColor.opacity(0.8)]),
-//                                    startPoint: .leading,
-//                                    endPoint: .trailing
-//                                )
-//                            )
-//                            .cornerRadius(15)
-//                            .shadow(color: primaryColor.opacity(0.3), radius: 10, x: 0, y: 5)
-//                        }
-//                        .padding(.horizontal, 30)
-////                        .padding(.top, 30)
-//                    }
-////                    .padding(.bottom, 30)
-//                }
-//            }
+            VStack(spacing: 0) {
+                // カスタムナビゲーションバー
+                HStack {
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Text("戻る")
+                            .foregroundColor(primaryColor)
+                    }
+                    .padding()
+                    
+                    Spacer()
+                    
+                    Text("推しを編集")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        generateHapticFeedback()
+                        updateOshi()
+                    }) {
+                        Text("保存")
+                            .foregroundColor(primaryColor)
+                    }
+                    .padding()
+                }
+//                .padding(.top, 8)
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // 推しプロフィール画像とその編集セクション
+                        VStack {
+                            // 推しプロフィール画像
+                            Button(action: {
+                                currentEditType = .profile
+                                showImagePicker = true
+                                generateHapticFeedback()
+                            }) {
+                                ZStack {
+                                    if let image = selectedImage {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 120, height: 120)
+                                            .clipShape(Circle())
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(primaryColor, lineWidth: 3)
+                                            )
+                                    } else if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                        AsyncImage(url: url) { phase in
+                                            switch phase {
+                                            case .success(let image):
+                                                image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 120, height: 120)
+                                                    .clipShape(Circle())
+                                                    .overlay(
+                                                        Circle()
+                                                            .stroke(primaryColor, lineWidth: 3)
+                                                    )
+                                            default:
+                                                Circle()
+                                                    .fill(Color.gray.opacity(0.2))
+                                                    .frame(width: 120, height: 120)
+                                                    .overlay(
+                                                        Image(systemName: "person.crop.circle")
+                                                            .resizable()
+                                                            .scaledToFit()
+                                                            .frame(width: 40)
+                                                            .foregroundColor(primaryColor)
+                                                    )
+                                            }
+                                        }
+                                    } else {
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.2))
+                                            .frame(width: 120, height: 120)
+                                            .overlay(
+                                                Image(systemName: "person.crop.circle")
+                                                    .resizable()
+                                                    .scaledToFit()
+                                                    .frame(width: 40)
+                                                    .foregroundColor(primaryColor)
+                                            )
+                                    }
+                                    
+                                    // 編集アイコン
+                                    Circle()
+                                        .fill(primaryColor)
+                                        .frame(width: 30, height: 30)
+                                        .overlay(
+                                            Image(systemName: "pencil")
+                                                .font(.system(size: 15))
+                                                .foregroundColor(.white)
+                                        )
+                                        .offset(x: 40, y: 40)
+                                }
+                            }
+                            .padding(.top, 20)
+                            
+                            Text("推しの画像を変更できます")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .padding(.top, 8)
+                            
+                            // 推し変更ボタン（デザイン改善版）
+                            Button(action: {
+                                withAnimation(.spring()) {
+                                    isShowingOshiSelector = true
+                                }
+                                generateHapticFeedback()
+                            }) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                        .font(.system(size: 14))
+                                    Text("別の推しを選択")
+                                        .font(.system(size: 14, weight: .medium))
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(primaryColor.opacity(0.15))
+                                        .overlay(
+                                            Capsule()
+                                                .stroke(primaryColor, lineWidth: 1)
+                                        )
+                                )
+                                .foregroundColor(primaryColor)
+                            }
+                            .padding(.top, 15)
+                        }
+                        
+                        // 名前フィールド
+                        VStack(alignment: .leading) {
+                            Text("推しの名前")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                                .padding(.horizontal)
+                            
+                            TextField("名前を入力", text: $oshiName)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(10)
+                                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                                .padding(.horizontal)
+                        }
+                        .padding(.top, 10)
+                        
+                        // 背景画像選択
+                        VStack(alignment: .leading) {
+                            Text("背景画像")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                                .padding(.horizontal)
+                            
+                            Button(action: {
+                                currentEditType = .background
+                                showImagePicker = true
+                                generateHapticFeedback()
+                            }) {
+                                if let image = selectedBackgroundImage {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(height: 150)
+                                        .frame(maxWidth: .infinity)
+                                        .clipped()
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(primaryColor, lineWidth: 1)
+                                        )
+                                } else if let bgUrl = oshi.backgroundImageUrl, let url = URL(string: bgUrl) {
+                                    AsyncImage(url: url) { phase in
+                                        switch phase {
+                                        case .success(let image):
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(height: 150)
+                                                .frame(maxWidth: .infinity)
+                                                .clipped()
+                                                .cornerRadius(12)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(primaryColor, lineWidth: 1)
+                                                )
+                                        default:
+                                            placeholderBackground
+                                        }
+                                    }
+                                } else {
+                                    placeholderBackground
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                        .padding(.top, 10)
+                        
+                        // 性格・特徴編集ボタン (新規追加)
+                        Button(action: {
+                            generateHapticFeedback()
+                            showPersonalityEditor = true
+                        }) {
+                            HStack {
+                                Image(systemName: "person.fill.questionmark")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.white)
+                                    .padding(12)
+                                    .background(
+                                        Circle()
+                                            .fill(primaryColor)
+                                    )
+                                
+                                VStack(alignment: .leading) {
+                                    Text("性格・特徴を編集")
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    
+                                    Text("推しの性格や好みを設定してチャットを個性的に")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 10)
+                        
+                        // 現在の性格設定プレビュー (新規追加)
+                        if hasPersonalitySettings() {
+                            personalityPreview
+                                .padding(.horizontal)
+                                .padding(.top, 5)
+                        }
+                        
+                        // 保存ボタン
+                        Button(action: {
+                            generateHapticFeedback()
+                            updateOshi()
+                        }) {
+                            ZStack {
+                                if isLoading {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                } else {
+                                    Text("保存する")
+                                        .font(.system(size: 16, weight: .bold))
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [primaryColor, primaryColor.opacity(0.8)]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(15)
+                            .shadow(color: primaryColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                        }
+                        .padding(.horizontal, 30)
+//                        .padding(.top, 30)
+                    }
+//                    .padding(.bottom, 30)
+                }
+            }
         }
         .onAppear {
             // 初期値をセット
@@ -347,7 +347,7 @@ struct EditOshiView: View {
         }) {
             AddOshiView()
         }
-        .sheet(isPresented: $showPersonalityEditor) {
+        .fullScreenCover(isPresented: $showPersonalityEditor) {
             // OshiViewModelを作成して渡す
             let viewModel = OshiViewModel(oshi: oshi)
             

@@ -16,7 +16,45 @@ class OshiViewModel: ObservableObject {
     static let placeholder = OshiViewModel(oshi: Oshi(id: "placeholder", name: "", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil))
     init(oshi: Oshi) {
         self.selectedOshi = oshi
+        // 初期化時に完全なデータを取得
+        loadFullData()
     }
+    
+    private func loadFullData() {
+           guard let userID = Auth.auth().currentUser?.uid else { return }
+           
+           let oshiRef = Database.database().reference().child("oshis").child(userID).child(selectedOshi.id)
+           oshiRef.observeSingleEvent(of: .value) { [weak self] snapshot in
+               guard let self = self, let data = snapshot.value as? [String: Any] else { return }
+               
+               // 新しいOshiオブジェクトを作成して全プロパティを設定
+               var newOshi = self.selectedOshi
+               
+               // 全てのプロパティを設定
+               newOshi.personality = data["personality"] as? String
+               newOshi.speaking_style = data["speaking_style"] as? String
+               newOshi.birthday = data["birthday"] as? String
+               newOshi.hometown = data["hometown"] as? String
+               newOshi.favorite_color = data["favorite_color"] as? String
+               newOshi.favorite_food = data["favorite_food"] as? String
+               newOshi.disliked_food = data["disliked_food"] as? String
+               newOshi.interests = data["interests"] as? [String]
+               newOshi.gender = data["gender"] as? String
+               newOshi.height = data["height"] as? Int
+               
+               DispatchQueue.main.async {
+                   self.selectedOshi = newOshi
+                   print("OshiViewModel - 完全データ読み込み完了: \(newOshi.personality ?? "なし")")
+               }
+           }
+       }
+    
+    func updateOshi(_ newOshi: Oshi) {
+         DispatchQueue.main.async {
+             self.selectedOshi = newOshi
+             self.objectWillChange.send()
+         }
+     }
     
     // Firebase からデータを読み込む
     private func loadOshiData() {
@@ -66,15 +104,6 @@ class OshiViewModel: ObservableObject {
                 // このデータ更新を確実に反映させるために、State更新フラグなどを設定
                 // self.dataUpdateCounter += 1  // このような更新カウンターを用意しておくと便利
             }
-        }
-    }
-    
-    // 推しの情報を更新
-    func updateOshi(_ updatedOshi: Oshi) {
-        // メインスレッドでモデルを更新
-        DispatchQueue.main.async {
-            self.selectedOshi = updatedOshi
-            self.saveOshiData(updatedOshi) { _ in }
         }
     }
     
