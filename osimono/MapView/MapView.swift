@@ -212,8 +212,6 @@ struct MapView: View {
                 
                 // Debug after a delay to ensure data is loaded
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    print("Locations count: \(viewModel.locations.count)")
-                    print("Selected categories: \(selectedCategories)")
                     
                     // Check if locations are loaded correctly
                     if viewModel.locations.isEmpty {

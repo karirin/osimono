@@ -147,7 +147,6 @@ struct LocationCardView: View {
                     }
                 }
             }
-            print("location     :\(location)")
         }
     }
 }

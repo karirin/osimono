@@ -260,7 +260,6 @@ struct TopView: View {
             guard let value = snapshot.value as? [String: Any] else { return }
             
             if let selectedOshiId = value["selectedOshiId"] as? String {
-                print("観測されたselectedOshiId: \(selectedOshiId)")
                 
                 DispatchQueue.main.async {
                     self.selectedOshiId = selectedOshiId

@@ -37,6 +37,7 @@ struct ContentView: View {
     @State private var showingAnniversaryAlert = false
     @State private var anniversaryDays = 0
     @State private var firstOshiFlag = false
+    @State private var randomMessageSent = false
     
     // テーマカラーの定義 - アイドル/推し活向けに明るく元気なカラースキーム
     let primaryColor = Color(.systemPink) // 明るいピンク
@@ -163,6 +164,12 @@ struct ContentView: View {
             
             // 画面表示時に常にデータを更新
             loadAllData()
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                if let selectedOshi = self.selectedOshi {
+                    RandomMessageManager.shared.checkAndSendMessageIfNeeded(for: selectedOshi)
+                }
+            }
         }
         .overlay(
             ZStack {
@@ -361,6 +368,97 @@ struct ContentView: View {
                     .fill(Color.black.opacity(0.8))
             )
             .padding()
+        }
+    }
+    
+    private func checkAndSendRandomAIMessage() {
+        // 既に送信済みの場合は何もしない
+        if randomMessageSent {
+            return
+        }
+        
+        // UserDefaultsから前回のメッセージ送信日時を取得
+        let userDefaults = UserDefaults.standard
+        let lastMessageTimestamp = userDefaults.double(forKey: "lastRandomMessageTimestamp")
+        let currentTime = Date().timeIntervalSince1970
+        
+        // 前回のメッセージから24時間以上経過しているか確認（1日1回までの制限）
+        let hoursPassed = (currentTime - lastMessageTimestamp) / (60 * 60)
+        if hoursPassed < 24 {
+            return
+        }
+        
+        // 確率計算（20%の確率でメッセージを送信）
+        let random = Int.random(in: 1...5)
+        if random == 1 {
+            // メッセージを送信
+            sendRandomAIMessage()
+            // 送信済みフラグをセット
+            randomMessageSent = true
+            // 最終送信日時を保存
+            userDefaults.set(currentTime, forKey: "lastRandomMessageTimestamp")
+        }
+    }
+    
+    private func sendRandomAIMessage() {
+        guard let oshi = selectedOshi, !oshiList.isEmpty else {
+            return
+        }
+        
+        // AIメッセージ生成クラスのインスタンスを取得
+        let generator = AIMessageGenerator.shared
+        
+        // 選択中の推しがいない場合は最初の推しを使用
+        let targetOshi = oshi
+        
+        // メッセージの種類をランダムに選択
+        let messageTypes = ["greeting", "encouragement", "update", "question"]
+        let selectedType = messageTypes.randomElement() ?? "greeting"
+        
+        // 選択されたタイプに基づいてプロンプトを生成
+        var userPrompt = ""
+        switch selectedType {
+        case "greeting":
+            userPrompt = "ランダムな挨拶メッセージを送ります"
+        case "encouragement":
+            userPrompt = "応援メッセージを送ります"
+        case "update":
+            userPrompt = "最近の近況報告をします"
+        case "question":
+            userPrompt = "ファンに質問をします"
+        default:
+            userPrompt = "挨拶メッセージを送ります"
+        }
+        
+        // AIメッセージ生成（シミュレーションの場合は固定メッセージを使用）
+        generator.generateResponse(for: userPrompt, oshi: targetOshi, chatHistory: []) { content, error in
+            if let error = error {
+                print("AIメッセージ生成エラー: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let content = content else {
+                print("AIメッセージが空です")
+                return
+            }
+            
+            // メッセージをFirebaseに保存
+            let messageId = UUID().uuidString
+            let message = ChatMessage(
+                id: messageId,
+                content: content,
+                isUser: false,
+                timestamp: Date().timeIntervalSince1970,
+                oshiId: targetOshi.id
+            )
+            
+            ChatDatabaseManager.shared.saveMessage(message) { error in
+                if let error = error {
+                    print("メッセージ保存エラー: \(error.localizedDescription)")
+                } else {
+                    print("ランダムAIメッセージを送信しました: \(content)")
+                }
+            }
         }
     }
     
@@ -647,7 +745,6 @@ struct ContentView: View {
                     if let selectedId = currentSelectedOshiId,
                        let oshi = newOshis.first(where: { $0.id == selectedId }) {
                         self.selectedOshi = oshi
-                        print("ContentView: 現在の推しを設定 - \(oshi.name), ID: \(oshi.id)")
                     } else if let firstOshi = newOshis.first, self.selectedOshi == nil {
                         self.selectedOshi = firstOshi
                         

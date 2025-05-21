@@ -44,7 +44,6 @@ class OshiViewModel: ObservableObject {
                
                DispatchQueue.main.async {
                    self.selectedOshi = newOshi
-                   print("OshiViewModel - 完全データ読み込み完了: \(newOshi.personality ?? "なし")")
                }
            }
        }

@@ -5,6 +5,7 @@ import FirebaseStorage
 import FirebaseDatabase
 import CoreLocation
 import SwiftyCrop
+import ImageIO
 
 struct OshiItemFormView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -63,6 +64,7 @@ struct OshiItemFormView: View {
         return cfg
     }
     
+    @State private var originalImage: UIImage?
     // カテゴリーリスト
     let categories = ["グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
     
@@ -459,27 +461,33 @@ struct OshiItemFormView: View {
             )
         }
         .sheet(isPresented: $isShowingImagePicker) {
-//               ImageTimeLinePicker(selectedImage: $selectedImageForCropping)
             ImagePickerView { pickedImage in
-                self.selectedImageForCropping = pickedImage
+                self.originalImage = pickedImage
+                if let data = pickedImage.jpegData(compressionQuality: 1.0),
+                   let thumb = UIImage.downsample(data: data, maxPixel: 600) {
+                    self.selectedImageForCropping = thumb
+                } else {
+                    self.selectedImageForCropping = pickedImage
+                }
             }
         }
         .onChange(of: selectedImageForCropping) { img in
             guard let img else { return }
-            croppingImage = img            // シートを開くトリガ
+            croppingImage = img
         }
         .fullScreenCover(item: $croppingImage) { img in
             NavigationView {
                 SwiftyCropView(
                     imageToCrop: img,
-                    maskShape: .square,        // ← マスク形状
-                    configuration: cropConfig  // ← 上で作った設定
+                    maskShape: .square,
+                    configuration: cropConfig
                 ) { cropped in
                     if let cropped { selectedImage = cropped }
                     croppingImage = nil
                 }
+                .drawingGroup()
             }
-            .navigationBarHidden(true)        // 画面上部の「キャンセル」を消す
+            .navigationBarHidden(true)
         }
         .alert(isPresented: $showAlert) {
             Alert(title: Text("通知"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
@@ -988,10 +996,10 @@ struct OshiItemFormView: View {
 //            showAlert = true
 //            return
 //        }
-//        
+//
 //        let oshiId = data["oshiId"] as? String ?? "default"
 //        let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(itemId)
-//        
+//
 //        ref.setValue(data) { error, _ in
 //            DispatchQueue.main.async {
 //                if let error = error {
@@ -1005,6 +1013,26 @@ struct OshiItemFormView: View {
 //            }
 //        }
 //    }
+}
+
+extension UIImage {
+    /// PhotosPicker/ImagePicker から得た Data をサムネイルサイズで即デコード
+    static func downsample(data: Data,
+                           maxPixel: CGFloat = 600,   // ← 900 → 600
+                           scale: CGFloat = UIScreen.main.scale) -> UIImage? {
+
+        let cfData = data as CFData
+        guard let source = CGImageSourceCreateWithData(cfData, nil) else { return nil }
+
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: Int(maxPixel * scale)
+        ]
+
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return UIImage(cgImage: cgImage, scale: scale, orientation: .up)
+    }
 }
 
 #Preview {

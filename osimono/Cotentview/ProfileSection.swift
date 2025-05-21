@@ -812,20 +812,17 @@ struct ProfileSection: View {
                 if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
                     DispatchQueue.main.async {
                         self.viewModel?.selectedOshi = oshi
-                        print("loadSelectedOshi: 推しを設定 - \(oshi.name), ID: \(oshi.id)")
                     }
                 } else if !self.oshiList.isEmpty {
                     // selectedOshiIdに該当する推しが見つからない場合は最初の推しを設定
                     DispatchQueue.main.async {
                         self.viewModel?.selectedOshi = self.oshiList[0]
-                        print("loadSelectedOshi: 最初の推しを設定 - \(self.oshiList[0].name)")
                     }
                 }
             } else if !self.oshiList.isEmpty {
                 // selectedOshiIdがない場合も最初の推しを設定
                 DispatchQueue.main.async {
                     self.viewModel?.selectedOshi = self.oshiList[0]
-                    print("loadSelectedOshi: selectedOshiIdなし、最初の推しを設定")
                 }
             }
         }
@@ -896,7 +893,6 @@ struct ProfileSection: View {
         
         dispatchGroup.notify(queue: .main) {
             withAnimation {
-                print("self.isLoading = false")
                 self.isLoading = false
             }
         }
@@ -913,7 +909,6 @@ struct ProfileSection: View {
         
         dispatchGroup.enter()
         fetchUserImageURL(type: .background) { url in
-            print("fetchUserImageURL(type: .background) { url in")
             self.backgroundImageUrl = url
             dispatchGroup.leave()
         }
