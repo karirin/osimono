@@ -28,6 +28,7 @@
 		1879BDA72DC7BDBC0016ACA3 /* SwiftyCrop in Frameworks */ = {isa = PBXBuildFile; productRef = 1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */; };
 		187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE2592D8EFEE100D58928 /* ShimmerEffect */; };
 		187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE25C2D8F4AAF00D58928 /* Shimmer */; };
+		188C012C2DDF4FCC00B7ADB9 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */; };
 		189878432DC9084E000F68FB /* OpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 189878422DC9084E000F68FB /* OpenAI */; };
 		18F429E82DB291EE007C198B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E72DB291EE007C198B /* CropViewController */; };
 		18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E92DB291EE007C198B /* TOCropViewController */; };
@@ -110,6 +111,7 @@
 				18F429E82DB291EE007C198B /* CropViewController in Frameworks */,
 				187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */,
 				187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */,
+				188C012C2DDF4FCC00B7ADB9 /* GoogleMobileAds in Frameworks */,
 				18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */,
 				1870B0262D8BD224004B827B /* FirebaseAuthCombine-Community in Frameworks */,
 				1879BDA72DC7BDBC0016ACA3 /* SwiftyCrop in Frameworks */,
@@ -209,6 +211,7 @@
 				180348842DC0CEFE00AD2922 /* Confetti */,
 				1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */,
 				189878422DC9084E000F68FB /* OpenAI */,
+				188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */,
 			);
 			productName = osimono;
 			productReference = 1870AFB32D8BC85E004B827B /* osimono.app */;
@@ -301,6 +304,7 @@
 				180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */,
 				1879BDA52DC7BDBC0016ACA3 /* XCRemoteSwiftPackageReference "SwiftyCrop" */,
 				189878412DC9084E000F68FB /* XCRemoteSwiftPackageReference "OpenAI" */,
+				188C012A2DDF4FCC00B7ADB9 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1870AFB42D8BC85E004B827B /* Products */;
@@ -729,6 +733,14 @@
 				minimumVersion = 1.5.1;
 			};
 		};
+		188C012A2DDF4FCC00B7ADB9 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.4.0;
+			};
+		};
 		189878412DC9084E000F68FB /* XCRemoteSwiftPackageReference "OpenAI" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/MacPaw/OpenAI";
@@ -836,6 +848,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 187FE25B2D8F4AAF00D58928 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */;
 			productName = Shimmer;
+		};
+		188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 188C012A2DDF4FCC00B7ADB9 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
 		};
 		189878422DC9084E000F68FB /* OpenAI */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HelpModalView: View {
     @ObservedObject var authManager = AuthManager()
+    @Environment(\.colorScheme) var colorScheme
     @Binding var isPresented: Bool
     @State var toggle = false
     @State private var text: String = ""
@@ -16,6 +17,11 @@ struct HelpModalView: View {
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
     @FocusState private var isFocused: Bool
+    
+    init(isPresented: Binding<Bool>) {
+        self._isPresented = isPresented        // Binding を保持
+        UITextView.appearance().backgroundColor = .clear
+    }
     
     var body: some View {
         ZStack {
@@ -30,37 +36,42 @@ struct HelpModalView: View {
                     Text("お問い合せ")
                         .font(.headline)
                         .fontWeight(.bold)
-                    
+                        .foregroundStyle(.gray)
                     Text("ご意見やご要望がありましたら、\nお気軽にお知らせください。\n可能な限り対応いたします。")
                         .font(.system(size: isSmallDevice() ? 16 : 17))
                         .multilineTextAlignment(.leading)
                         .padding(.bottom, 5)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
                 
                 // テキスト入力エリア - より洗練されたデザイン
                 VStack(alignment: .leading, spacing: 8) {
                     Text("メッセージ")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
+                        .foregroundStyle(.gray)
                     ZStack(alignment: .topLeading) {
-                        TextEditor(text: $text)
-                            .focused($isFocused)
-                            .padding(.horizontal, 4) // 編集時の余白
                         if text.isEmpty && !isFocused {
                             Text("例）推しの記録が登録できない")
                                 .foregroundColor(Color(.placeholderText))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
                         }
+                        TextEditor(text: $text)
+                            .focused($isFocused)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 10)
+                            .scrollContentBackground(.hidden)
+                            .background(colorScheme == .dark ? Color(.white) : Color.white)
+                            .foregroundColor(colorScheme == .dark ? .white : .primary)
                     }
-                    .padding(10)
-                    .frame(height: 120,alignment: .top)
-//                    .background(Color(.systemGray6))
+                    .background(colorScheme == .dark ? Color(.white) : Color.white)
+                    .frame(height: 120)
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(Color(.systemGray4), lineWidth: 1)
                     )
+
                 }
                 .padding(.vertical, 5)
                 
@@ -95,6 +106,7 @@ struct HelpModalView: View {
                     Toggle("今後は表示しない", isOn: $toggle)
                         .toggleStyle(SwitchToggleStyle(tint: .blue))
                         .font(.subheadline)
+                        .foregroundStyle(.gray)
                     Spacer()
                 }
                 .padding(.vertical, 5)

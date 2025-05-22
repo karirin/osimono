@@ -9,6 +9,7 @@ import ImageIO
 
 struct OshiItemFormView: View {
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.colorScheme) var colorScheme
     @State private var title: String = ""
     @State private var category: String = "グッズ"
     @State private var memo: String = ""
@@ -392,13 +393,13 @@ struct OshiItemFormView: View {
                                 TextEditor(text: $memo)
                                     .frame(minHeight: 100)
                                     .padding()
-                                    .background(cardColor)
-                                    .cornerRadius(12)
+                                    .cornerRadius(12).background(colorScheme == .dark ? Color(.white) : Color.white)
                                     .shadow(color: Color.black.opacity(0.05), radius: 2)
                             }
                             .padding(.horizontal,isSmallDevice() ? 10 : 0)
+                            .background(colorScheme == .dark ? Color(.white) : Color.white)
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal).background(colorScheme == .dark ? Color(.white) : Color.white)
                         
                         // 送信ボタン
                         Button(action: {

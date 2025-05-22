@@ -38,6 +38,8 @@ struct OshiAIChatView: View {
     @State private var isInitialScrollComplete: Bool = false
     @State private var shouldScrollToBottom: Bool = false
     @State private var showEditPersonality = false
+    @State private var showLimitAlert = false
+    @State private var remainingMessages = 20
     let oshiItem: OshiItem?
     
     // LINE風カラー設定
@@ -86,18 +88,18 @@ struct OshiAIChatView: View {
                      
                      Text(viewModel.selectedOshi.name)
                          .font(.system(size: 17, weight: .medium))
-                     
+                    
+                    
+                    // LINE風メニューボタン
+                    Button(action: {
+                        generateHapticFeedback()
+                        showEditPersonality = true
+                    }) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 20))
+                            .foregroundColor(.black)
+                    }
                      Spacer()
-                     
-                     // LINE風メニューボタン
-                     Button(action: {
-                         generateHapticFeedback()
-                         showEditPersonality = true
-                     }) {
-                         Image(systemName: "pencil")
-                             .font(.system(size: 20))
-                             .foregroundColor(.black)
-                     }
                  }
                  .padding(.horizontal)
                  .padding(.vertical, 10)
@@ -202,6 +204,7 @@ struct OshiAIChatView: View {
                 loadMessages()
                 markMessagesAsRead()
             }
+            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
         }
         .onChange(of: viewModel.selectedOshi.id) { newId in
             if currentOshiId != newId {
@@ -212,6 +215,13 @@ struct OshiAIChatView: View {
         }
         .onDisappear {
             markMessagesAsRead()
+        }
+        .alert(isPresented: $showLimitAlert) {
+            Alert(
+                title: Text("メッセージ制限"),
+                message: Text("1日の送信数を超えました。アップデートをお待ちください。"),
+                dismissButton: .default(Text("OK"))
+            )
         }
         .fullScreenCover(isPresented: $showEditPersonality) {
             // 閉じた後に確実に最新データを取得
@@ -699,6 +709,18 @@ struct OshiAIChatView: View {
     // メッセージ送信
     private func sendMessage() {
         guard !inputText.isEmpty else { return }
+        
+        // メッセージ制限をチェック
+        if MessageLimitManager.shared.hasReachedLimit() {
+            showLimitAlert = true
+            return
+        }
+        
+        // メッセージカウントを増加
+        MessageLimitManager.shared.incrementCount()
+        
+        // 残りのメッセージ数を更新
+        remainingMessages = MessageLimitManager.shared.getRemainingMessages()
         
         // ユーザーメッセージを作成
         let userMessageId = UUID().uuidString

@@ -24,10 +24,12 @@ class RandomMessageManager {
     
     // 保存用キー
     private let lastMessageTimestampKey = "lastRandomMessageTimestamp"
+    private let maxMessagesPerDay = 5
+    private let dailyMessageCountKey = "dailyMessageCount"
+    private let lastCountResetDateKey = "lastCountResetDate"
     
     // アプリ起動時にメッセージ送信をチェック
     func checkAndSendMessageIfNeeded(for oshi: Oshi) {
-        // UserDefaultsから前回のメッセージ送信日時を取得
         let userDefaults = UserDefaults.standard
         let lastMessageTimestamp = userDefaults.double(forKey: lastMessageTimestampKey)
         let currentTime = Date().timeIntervalSince1970
@@ -35,6 +37,27 @@ class RandomMessageManager {
         // 前回のメッセージから設定した時間以上経過しているか確認
         let hoursPassed = (currentTime - lastMessageTimestamp) / (60 * 60)
         if hoursPassed < minimumHoursBetweenMessages {
+            return
+        }
+        
+        // 日付が変わったかチェックし、変わっていれば送信カウントをリセット
+        let today = Calendar.current.startOfDay(for: Date())
+        let lastResetDateTimestamp = userDefaults.double(forKey: lastCountResetDateKey)
+        let lastResetDate = Date(timeIntervalSince1970: lastResetDateTimestamp)
+        
+        let dailyCount: Int
+        
+        if !Calendar.current.isDate(lastResetDate, inSameDayAs: today) {
+            // 日付が変わっていたらカウントリセット
+            dailyCount = 0
+            userDefaults.set(today.timeIntervalSince1970, forKey: lastCountResetDateKey)
+        } else {
+            // 同じ日なら現在のカウントを取得
+            dailyCount = userDefaults.integer(forKey: dailyMessageCountKey)
+        }
+        
+        // 1日の上限に達していたら送信しない
+        if dailyCount >= maxMessagesPerDay {
             return
         }
         
@@ -46,6 +69,9 @@ class RandomMessageManager {
             
             // 最終送信日時を保存
             userDefaults.set(currentTime, forKey: lastMessageTimestampKey)
+            
+            // メッセージカウントを増やす
+            userDefaults.set(dailyCount + 1, forKey: dailyMessageCountKey)
         }
     }
     
