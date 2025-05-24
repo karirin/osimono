@@ -312,17 +312,6 @@ struct ProfileSection: View {
         }) {
             AddOshiView()
         }
-        .fullScreenCover(isPresented: $showChatView) {
-            if viewModel != nil {
-                OshiAIChatView(viewModel: viewModel!, oshiItem: nil)
-                .onDisappear {
-                    fetchOshiList()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        checkForUnreadMessages()
-                    }
-                }
-            }
-        }
         .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
             loadAllData()
             fetchOshiList()
@@ -596,6 +585,31 @@ struct ProfileSection: View {
         }
     }
     
+//    var chatButtonWithBadge: some View {
+//        Button(action: {
+//            showChatAIView()
+//            generateHapticFeedback()
+//            navigateToChatView = true
+//        }) {
+//            ChatBadgeView(count: unreadMessageCount, hasNewMessages: hasNewMessages)
+//        }
+//        .background(
+//            NavigationLink(
+//                destination: {
+//                    if viewModel != nil {
+//                        OshiAIChatView(viewModel: viewModel!, oshiItem: nil)
+//                    }
+//                },
+//                isActive: $navigateToChatView,
+//                label: {
+//                    EmptyView()
+//                }
+//            )
+//            .hidden()
+//        )
+//    }
+
+    
     var chatButtonWithBadge: some View {
         Button(action: {
             showChatAIView()
@@ -605,8 +619,39 @@ struct ProfileSection: View {
         }
         .padding(.trailing, 16)
         .padding(.top, 8)
+        .background(
+            NavigationLink(
+                destination: viewModel != nil ?
+                    AnyView(
+                        OshiAIChatView(viewModel: viewModel!, oshiItem: nil)
+                            .onDisappear {
+                                fetchOshiList()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    checkForUnreadMessages()
+                                }
+                            }
+                    ) :
+                    AnyView(EmptyView()),
+                isActive: $showChatView,
+                label: {
+                    EmptyView()
+                }
+            )
+            .hidden()
+
+        )
     }
-    
+//        .fullScreenCover(isPresented: $showChatView) {
+//            if viewModel != nil {
+//                OshiAIChatView(viewModel: viewModel!, oshiItem: nil)
+//                .onDisappear {
+//                    fetchOshiList()
+//                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//                        checkForUnreadMessages()
+//                    }
+//                }
+//            }
+//        }
     var oshiSelectorOverlay: some View {
         ZStack {
             // 半透明の背景

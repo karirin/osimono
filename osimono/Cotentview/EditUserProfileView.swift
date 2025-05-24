@@ -26,46 +26,44 @@ struct EditUserProfileView: View {
     }
     
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("プロフィール情報")) {
-                    TextField("ユーザー名", text: $username)
-                        .padding(.vertical, 8)
-                    
-                    TextField("推しの名前", text: $favoriteOshi)
-                        .padding(.vertical, 8)
-                }
+        Form {
+            Section(header: Text("プロフィール情報")) {
+                TextField("ユーザー名", text: $username)
+                    .padding(.vertical, 8)
                 
-                Section {
-                    Button(action: saveProfile) {
-                        HStack {
-                            Spacer()
-                            if isLoading {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle())
-                            } else {
-                                Text("保存")
-                                    .fontWeight(.bold)
-                            }
-                            Spacer()
-                        }
-                    }
-                    .disabled(isLoading)
-                    .padding(.vertical, 4)
-                    .foregroundColor(.white)
-                    .background(primaryColor)
-                    .cornerRadius(8)
-                    .padding(.vertical, 6)
-                }
+                TextField("推しの名前", text: $favoriteOshi)
+                    .padding(.vertical, 8)
             }
-            .navigationTitle("プロフィール編集")
-            .navigationBarItems(
-                leading: Button("キャンセル") {
-                    generateHapticFeedback()
-                    presentationMode.wrappedValue.dismiss()
+            
+            Section {
+                Button(action: saveProfile) {
+                    HStack {
+                        Spacer()
+                        if isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle())
+                        } else {
+                            Text("保存")
+                                .fontWeight(.bold)
+                        }
+                        Spacer()
+                    }
                 }
-            )
+                .disabled(isLoading)
+                .padding(.vertical, 4)
+                .foregroundColor(.white)
+                .background(primaryColor)
+                .cornerRadius(8)
+                .padding(.vertical, 6)
+            }
         }
+        .navigationTitle("プロフィール編集")
+        .navigationBarItems(
+            leading: Button("キャンセル") {
+                generateHapticFeedback()
+                presentationMode.wrappedValue.dismiss()
+            }
+        )
     }
     
     func saveProfile() {

@@ -67,360 +67,261 @@ struct OshiItemEditView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                backgroundColor.ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // アイテムタイプ選択
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("投稿タイプ")
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                                .padding(.horizontal)
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 15) {
-                                    ForEach(itemTypes, id: \.self) { type in
-                                        Button(action: {
-                                            generateHapticFeedback()
-                                            itemType = type
-                                        }) {
-                                            VStack(spacing: 5) {
-                                                Image(systemName: iconForItemType(type))
-                                                    .font(.system(size: 24))
-                                                Text(type)
-                                                    .font(.caption)
-                                            }
-                                            .foregroundColor(itemType == type ? primaryColor : .gray)
-                                            .frame(width: 80, height: 80)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(itemType == type ? primaryColor : Color.gray.opacity(0.3), lineWidth: 2)
-                                                    .background(itemType == type ? primaryColor.opacity(0.1) : Color.white)
-                                                    .cornerRadius(12)
-                                            )
+        ZStack {
+            backgroundColor.ignoresSafeArea()
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // アイテムタイプ選択
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("投稿タイプ")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 15) {
+                                ForEach(itemTypes, id: \.self) { type in
+                                    Button(action: {
+                                        generateHapticFeedback()
+                                        itemType = type
+                                    }) {
+                                        VStack(spacing: 5) {
+                                            Image(systemName: iconForItemType(type))
+                                                .font(.system(size: 24))
+                                            Text(type)
+                                                .font(.caption)
                                         }
+                                        .foregroundColor(itemType == type ? primaryColor : .gray)
+                                        .frame(width: 80, height: 80)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(itemType == type ? primaryColor : Color.gray.opacity(0.3), lineWidth: 2)
+                                                .background(itemType == type ? primaryColor.opacity(0.1) : Color.white)
+                                                .cornerRadius(12)
+                                        )
                                     }
-                                }
-                                .padding(.horizontal)
-                            }
-                        }
-                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
-                        
-                        // 画像選択
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("画像")
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                                .padding(.horizontal)
-                            
-                            Button(action: {
-                                generateHapticFeedback()
-                                isImagePickerPresented = true
-                            }) {
-                                if let image = selectedImage {
-                                    ZStack{
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(height: 200)
-                                            .frame(maxWidth: .infinity)
-                                            .clipped()
-                                            .cornerRadius(12)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                            )
-                                        VStack {
-                                            HStack {
-                                                Spacer()
-                                                Button(action: {
-                                                    generateHapticFeedback()
-                                                    withAnimation {
-                                                        selectedImage = nil
-                                                    }
-                                                }) {
-                                                    Image(systemName: "xmark.circle.fill")
-                                                        .font(.system(size: 22))
-                                                        .foregroundColor(.white)
-                                                        .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
-                                                        .padding(12)
-                                                }
-                                            }
-                                            Spacer()
-                                            HStack {
-                                                Spacer()
-                                                Text("画像を変更")
-                                                    .font(.system(size: 14))
-                                                    .padding(.vertical, 6)
-                                                    .padding(.horizontal, 12)
-                                                    .background(Color.black.opacity(0.6))
-                                                    .foregroundColor(.white)
-                                                    .cornerRadius(16)
-                                            }
-                                            .padding(12)
-                                        }
-                                    }
-                                } else if !imageUrl.isEmpty, let url = URL(string: imageUrl) {
-                                    AsyncImage(url: url) { phase in
-                                        if let image = phase.image {
-                                            ZStack{
-                                                image
-                                                    .resizable()
-                                                    .scaledToFill()
-                                                    .frame(height: 200)
-                                                    .frame(maxWidth: .infinity)
-                                                    .clipped()
-                                                    .cornerRadius(12)
-                                                    .overlay(
-                                                        RoundedRectangle(cornerRadius: 12)
-                                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                                    )
-                                                
-                                                VStack {
-                                                    HStack {
-                                                        Spacer()
-                                                        Button(action: {
-                                                            generateHapticFeedback()
-                                                            imageUrl = ""
-                                                        }) {
-                                                            Image(systemName: "xmark.circle.fill")
-                                                                .font(.system(size: 22))
-                                                                .foregroundColor(.white)
-                                                                .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
-                                                                .padding(12)
-                                                        }
-                                                    }
-                                                    Spacer()
-                                                    HStack {
-                                                        Spacer()
-                                                        Text("画像を変更")
-                                                            .font(.system(size: 14))
-                                                            .padding(.vertical, 6)
-                                                            .padding(.horizontal, 12)
-                                                            .background(Color.black.opacity(0.6))
-                                                            .foregroundColor(.white)
-                                                            .cornerRadius(16)
-                                                    }
-                                                    .padding(12)
-                                                }
-                                            }
-                                        } else {
-                                            imagePlaceholder
-                                        }
-                                    }
-                                } else {
-                                    imagePlaceholder
                                 }
                             }
                             .padding(.horizontal)
                         }
-                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                    }
+                    .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                    
+                    // 画像選択
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("画像")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal)
                         
-                        // 基本情報フォーム
-                        VStack(alignment: .leading, spacing: 15) {
-                            // タイトル
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text("タイトル")
-                                    .font(.headline)
-                                    .foregroundColor(.gray)
-                                
-                                TextField(titlePlaceholder(), text: $title)
-                                    .padding()
-                                    .background(cardColor)
-                                    .cornerRadius(12)
-                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
-                            }
-                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
-                            
-                            // カテゴリー（グッズの場合のみ表示）
-                            if itemType == "グッズ" {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("カテゴリー")
-                                        .font(.headline)
-                                        .foregroundColor(.gray)
-                                    
-                                    ScrollView(.horizontal, showsIndicators: false) {
-                                        HStack(spacing: 10) {
-                                            ForEach(categories, id: \.self) { cat in
-                                                Button(action: {
-                                                    generateHapticFeedback()
-                                                    category = cat
-                                                }) {
-                                                    Text(cat)
-                                                        .padding(.horizontal, 15)
-                                                        .padding(.vertical, 8)
-                                                        .background(
-                                                            RoundedRectangle(cornerRadius: 20)
-                                                                .fill(category == cat ? accentColor : Color.gray.opacity(0.1))
-                                                        )
-                                                        .foregroundColor(category == cat ? .white : .gray)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
-                            }
-                            
-                            // 価格（グッズの場合のみ表示）
-                            if itemType == "グッズ" {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("価格")
-                                        .font(.headline)
-                                        .foregroundColor(.gray)
-                                    
-                                    NumberTextField(text: $price, placeholder: "例: 5500")
-                                        .padding()
-                                        .background(cardColor)
+                        Button(action: {
+                            generateHapticFeedback()
+                            isImagePickerPresented = true
+                        }) {
+                            if let image = selectedImage {
+                                ZStack{
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(height: 200)
+                                        .frame(maxWidth: .infinity)
+                                        .clipped()
                                         .cornerRadius(12)
-                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
-                                }
-                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
-                            }
-                            
-                            // イベント名（ライブ記録の場合のみ表示）
-                            if itemType == "ライブ記録" {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("イベント名")
-                                        .font(.headline)
-                                        .foregroundColor(.gray)
-                                    
-                                    TextField("例: BTS ライブ『LOVE YOURSELF』", text: $eventName)
-                                        .padding()
-                                        .background(cardColor)
-                                        .cornerRadius(12)
-                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
-                                }
-                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
-                            }
-                            
-                            // 場所（聖地巡礼の場合のみ表示）
-                            if itemType == "聖地巡礼" {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    HStack {
-                                        Text("場所")
-                                            .font(.headline)
-                                            .foregroundColor(.gray)
-                                        Spacer()
-                                        Button(action: {
-                                            generateHapticFeedback()
-                                            requestCurrentLocation()
-                                        }) {
-                                            HStack(spacing: 4) {
-                                                Image(systemName: "location.fill")
-                                                    .font(.system(size: 12))
-                                                Text("現在地を設定")
-                                                    .font(.system(size: 12))
-                                            }
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(primaryColor)
-                                            .foregroundColor(.white)
-                                            .cornerRadius(8)
-                                        }
-                                        .disabled(isGettingLocation)
-                                    }
-                                    TextField("例: 東京都渋谷区〇〇", text: $locationAddress)
-                                        .padding()
-                                        .background(cardColor)
-                                        .cornerRadius(12)
-                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
-                                }
-                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
-                            }
-                            
-                            // 日付
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(dateLabel())
-                                    .font(.headline)
-                                    .foregroundColor(.gray)
-                                
-                                DatePicker("", selection: $date, displayedComponents: .date)
-                                    .datePickerStyle(CompactDatePickerStyle())
-                                    .labelsHidden()
-                                    .padding()
-                                    .background(cardColor)
-                                    .cornerRadius(12)
-                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
-                                    .environment(\.locale, Locale(identifier: "ja_JP"))
-                            }
-                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
-                            
-                            // タグ
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text("タグ")
-                                    .font(.headline)
-                                    .foregroundColor(.gray)
-                                
-                                // 現在のタグ表示
-                                if !tags.isEmpty {
-                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                    VStack {
                                         HStack {
-                                            ForEach(tags.indices, id: \.self) { index in
-                                                HStack(spacing: 4) {
-                                                    Text("#\(tags[index])")
-                                                        .font(.system(size: 14))
-                                                        .foregroundColor(accentColor)
-                                                    
+                                            Spacer()
+                                            Button(action: {
+                                                generateHapticFeedback()
+                                                withAnimation {
+                                                    selectedImage = nil
+                                                }
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.system(size: 22))
+                                                    .foregroundColor(.white)
+                                                    .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                                    .padding(12)
+                                            }
+                                        }
+                                        Spacer()
+                                        HStack {
+                                            Spacer()
+                                            Text("画像を変更")
+                                                .font(.system(size: 14))
+                                                .padding(.vertical, 6)
+                                                .padding(.horizontal, 12)
+                                                .background(Color.black.opacity(0.6))
+                                                .foregroundColor(.white)
+                                                .cornerRadius(16)
+                                        }
+                                        .padding(12)
+                                    }
+                                }
+                            } else if !imageUrl.isEmpty, let url = URL(string: imageUrl) {
+                                AsyncImage(url: url) { phase in
+                                    if let image = phase.image {
+                                        ZStack{
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(height: 200)
+                                                .frame(maxWidth: .infinity)
+                                                .clipped()
+                                                .cornerRadius(12)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                )
+                                            
+                                            VStack {
+                                                HStack {
+                                                    Spacer()
                                                     Button(action: {
                                                         generateHapticFeedback()
-                                                        tags.remove(at: index)
+                                                        imageUrl = ""
                                                     }) {
                                                         Image(systemName: "xmark.circle.fill")
-                                                            .foregroundColor(.gray)
-                                                            .font(.system(size: 14))
+                                                            .font(.system(size: 22))
+                                                            .foregroundColor(.white)
+                                                            .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                                            .padding(12)
                                                     }
                                                 }
-                                                .padding(.horizontal, 10)
-                                                .padding(.vertical, 5)
-                                                .background(accentColor.opacity(0.1))
-                                                .cornerRadius(15)
+                                                Spacer()
+                                                HStack {
+                                                    Spacer()
+                                                    Text("画像を変更")
+                                                        .font(.system(size: 14))
+                                                        .padding(.vertical, 6)
+                                                        .padding(.horizontal, 12)
+                                                        .background(Color.black.opacity(0.6))
+                                                        .foregroundColor(.white)
+                                                        .cornerRadius(16)
+                                                }
+                                                .padding(12)
                                             }
                                         }
+                                    } else {
+                                        imagePlaceholder
                                     }
-                                    .frame(height: 40)
-                                    .padding(.vertical, 5)
                                 }
+                            } else {
+                                imagePlaceholder
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                    
+                    // 基本情報フォーム
+                    VStack(alignment: .leading, spacing: 15) {
+                        // タイトル
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("タイトル")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                            
+                            TextField(titlePlaceholder(), text: $title)
+                                .padding()
+                                .background(cardColor)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.05), radius: 2)
+                        }
+                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                        
+                        // カテゴリー（グッズの場合のみ表示）
+                        if itemType == "グッズ" {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("カテゴリー")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
                                 
-                                // 新しいタグ追加
-                                HStack {
-                                    TextField("新しいタグを追加", text: $newTag)
-                                        .padding()
-                                        .background(cardColor)
-                                        .cornerRadius(12)
-                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
-                                    
-                                    Button(action: addTag) {
-                                        Image(systemName: "plus.circle.fill")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(accentColor)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(categories, id: \.self) { cat in
+                                            Button(action: {
+                                                generateHapticFeedback()
+                                                category = cat
+                                            }) {
+                                                Text(cat)
+                                                    .padding(.horizontal, 15)
+                                                    .padding(.vertical, 8)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 20)
+                                                            .fill(category == cat ? accentColor : Color.gray.opacity(0.1))
+                                                    )
+                                                    .foregroundColor(category == cat ? .white : .gray)
+                                            }
+                                        }
                                     }
                                 }
                             }
                             .padding(.horizontal, isSmallDevice() ? 10 : 0)
-                            
-                            // お気に入り度
-                            VStack(alignment: .leading, spacing: 12) {
+                        }
+                        
+                        // 価格（グッズの場合のみ表示）
+                        if itemType == "グッズ" {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("価格")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                
+                                NumberTextField(text: $price, placeholder: "例: 5500")
+                                    .padding()
+                                    .background(cardColor)
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
+                            }
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                        }
+                        
+                        // イベント名（ライブ記録の場合のみ表示）
+                        if itemType == "ライブ記録" {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("イベント名")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                
+                                TextField("例: BTS ライブ『LOVE YOURSELF』", text: $eventName)
+                                    .padding()
+                                    .background(cardColor)
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
+                            }
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                        }
+                        
+                        // 場所（聖地巡礼の場合のみ表示）
+                        if itemType == "聖地巡礼" {
+                            VStack(alignment: .leading, spacing: 5) {
                                 HStack {
-                                    Text("お気に入り度")
+                                    Text("場所")
                                         .font(.headline)
                                         .foregroundColor(.gray)
                                     Spacer()
+                                    Button(action: {
+                                        generateHapticFeedback()
+                                        requestCurrentLocation()
+                                    }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "location.fill")
+                                                .font(.system(size: 12))
+                                            Text("現在地を設定")
+                                                .font(.system(size: 12))
+                                        }
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(primaryColor)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(8)
+                                    }
+                                    .disabled(isGettingLocation)
                                 }
-                                StarRatingView(rating: $favorite, size: 40)
-                            }
-                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
-                            
-                            // メモ
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(memoLabel())
-                                    .font(.headline)
-                                    .foregroundColor(.gray)
-                                
-                                TextEditor(text: $memo)
-                                    .frame(minHeight: 100)
+                                TextField("例: 東京都渋谷区〇〇", text: $locationAddress)
                                     .padding()
                                     .background(cardColor)
                                     .cornerRadius(12)
@@ -428,72 +329,200 @@ struct OshiItemEditView: View {
                             }
                             .padding(.horizontal, isSmallDevice() ? 10 : 0)
                         }
-                        .padding(.horizontal)
                         
-                        // 保存ボタン
-                        Button(action: {
-                            generateHapticFeedback()
-                            saveItem()
-                        }) {
-                            Text("保存する")
+                        // 日付
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(dateLabel())
                                 .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 15)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(primaryColor)
-                                )
-                                .shadow(color: primaryColor.opacity(0.4), radius: 5, x: 0, y: 3)
+                                .foregroundColor(.gray)
+                            
+                            DatePicker("", selection: $date, displayedComponents: .date)
+                                .datePickerStyle(CompactDatePickerStyle())
+                                .labelsHidden()
+                                .padding()
+                                .background(cardColor)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                .environment(\.locale, Locale(identifier: "ja_JP"))
                         }
-                        .padding(.horizontal)
-                        .padding(.top, 10)
-                        .padding(.bottom, 30)
-                        .disabled(isLoading || title.isEmpty)
+                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                        
+                        // タグ
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("タグ")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                            
+                            // 現在のタグ表示
+                            if !tags.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack {
+                                        ForEach(tags.indices, id: \.self) { index in
+                                            HStack(spacing: 4) {
+                                                Text("#\(tags[index])")
+                                                    .font(.system(size: 14))
+                                                    .foregroundColor(accentColor)
+                                                
+                                                Button(action: {
+                                                    generateHapticFeedback()
+                                                    tags.remove(at: index)
+                                                }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .foregroundColor(.gray)
+                                                        .font(.system(size: 14))
+                                                }
+                                            }
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 5)
+                                            .background(accentColor.opacity(0.1))
+                                            .cornerRadius(15)
+                                        }
+                                    }
+                                }
+                                .frame(height: 40)
+                                .padding(.vertical, 5)
+                            }
+                            
+                            // 新しいタグ追加
+                            HStack {
+                                TextField("新しいタグを追加", text: $newTag)
+                                    .padding()
+                                    .background(cardColor)
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                
+                                Button(action: addTag) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(accentColor)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                        
+                        // お気に入り度
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("お気に入り度")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                Spacer()
+                            }
+                            StarRatingView(rating: $favorite, size: 40)
+                        }
+                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                        
+                        // メモ
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(memoLabel())
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                            
+                            TextEditor(text: $memo)
+                                .frame(minHeight: 100)
+                                .padding()
+                                .background(cardColor)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.05), radius: 2)
+                        }
+                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                    }
+                    .padding(.horizontal)
+                    
+                    // 保存ボタン
+                    Button(action: {
+                        generateHapticFeedback()
+                        saveItem()
+                    }) {
+                        Text("保存する")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 15)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(primaryColor)
+                            )
+                            .shadow(color: primaryColor.opacity(0.4), radius: 5, x: 0, y: 3)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    .padding(.bottom, 30)
+                    .disabled(isLoading || title.isEmpty)
+                }
+            }
+            .dismissKeyboardOnTap()
+            
+            // ローディングオーバーレイ
+            if isLoading {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .overlay(
+                        VStack {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                                .tint(.white)
+                            Text("保存中...")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding(.top, 10)
+                        }
+                    )
+            }
+        }
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 80 {
+                        presentationMode.wrappedValue.dismiss()
                     }
                 }
-                .dismissKeyboardOnTap()
-                
-                // ローディングオーバーレイ
-                if isLoading {
-                    Color.black.opacity(0.3)
-                        .ignoresSafeArea()
-                        .overlay(
-                            VStack {
-                                ProgressView()
-                                    .scaleEffect(1.5)
-                                    .tint(.white)
-                                Text("保存中...")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .padding(.top, 10)
-                            }
-                        )
-                }
+        )
+        .navigationBarBackButtonHidden(true)
+        .navigationBarItems(leading:
+                                Button(action: {
+            generateHapticFeedback()
+            presentationMode.wrappedValue.dismiss()
+        }) {
+            HStack {
+                Image(systemName: "chevron.left")
+                Text("戻る")
             }
-            .navigationBarTitle("アイテム編集", displayMode: .inline)
-            .navigationBarItems(
-                leading: Button(action: {
-                    generateHapticFeedback()
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.gray)
-                },
-                trailing: Button("保存") {
-                    generateHapticFeedback()
-                    saveItem()
-                }
-                    .disabled(isLoading || title.isEmpty)
+            .foregroundColor(primaryColor)
+        }
+        )
+        .navigationBarItems(
+            trailing: Button(action: {
+                generateHapticFeedback()
+                saveItem()
+            }) {
+                Text("保存")
+                    .foregroundColor(primaryColor)
+                    .frame(maxWidth: .infinity)
+            }
+        )
+//            .navigationBarTitle("アイテム編集", displayMode: .inline)
+//            .navigationBarItems(
+//                leading: Button(action: {
+//                    generateHapticFeedback()
+//                    presentationMode.wrappedValue.dismiss()
+//                }) {
+//                    Image(systemName: "xmark")
+//                        .font(.system(size: 16, weight: .medium))
+//                        .foregroundColor(.gray)
+//                },
+//                trailing: Button("保存") {
+//                    generateHapticFeedback()
+//                    saveItem()
+//                }
+//                    .disabled(isLoading || title.isEmpty)
+//            )
+        .alert(isPresented: $showAlert) {
+            Alert(
+                title: Text("通知"),
+                message: Text(alertMessage),
+                dismissButton: .default(Text("OK"))
             )
-            .alert(isPresented: $showAlert) {
-                Alert(
-                    title: Text("通知"),
-                    message: Text(alertMessage),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
         }
         .sheet(isPresented: $isImagePickerPresented) {
             ImageTimeLinePicker(selectedImage: $selectedImage)

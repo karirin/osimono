@@ -41,6 +41,7 @@ struct OshiAIChatView: View {
     @State private var showLimitAlert = false
     @State private var remainingMessages = 20
     let oshiItem: OshiItem?
+    @State private var editScreenID = UUID()
     
     // LINE風カラー設定
     let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
@@ -52,6 +53,7 @@ struct OshiAIChatView: View {
     @State private var currentOshiId: String = ""
     @State private var loadCompleteOshiData: Bool = false
     var showBackButton: Bool = true
+    @State private var showMessageLimitModal = false
     
     init(viewModel: OshiViewModel, oshiItem: OshiItem?, showBackButton: Bool = true) {
         self.viewModel = viewModel
@@ -190,7 +192,69 @@ struct OshiAIChatView: View {
                         }
                     )
             }
+            
+            if showMessageLimitModal {
+                MessageLimitModal(
+                    isPresented: $showMessageLimitModal,
+                    onWatchAd: {
+                        // リワード広告を表示
+                        showRewardAd()
+                    },
+                    remainingMessages: remainingMessages
+                )
+                .zIndex(999) // 最前面に表示
+            }
+//                .fullScreenCover(isPresented: $showEditPersonality) {
+//                    // 閉じた後に確実に最新データを取得
+//                    loadOshiData()
+//                } content: {
+//                    // この部分でFirebaseから直接データを取得
+//                    FirebaseDataLoader(oshiId: viewModel.selectedOshi.id) { loadedOshi in
+//                        EditOshiPersonalityView(
+//                            viewModel: OshiViewModel(oshi: loadedOshi ?? viewModel.selectedOshi),
+//                            onSave: { updatedOshi in
+//                                self.viewModel.selectedOshi = updatedOshi
+//                                print("編集後の推しデータ: \(updatedOshi.personality ?? "なし")")
+//                            },
+//                            onUpdate: {
+//                                loadOshiData()
+//                                print("onUpdate呼び出し")
+//                            }
+//                        )
+//                    }
+//                    .id(UUID())
+//                }
+                
+            NavigationLink(
+                destination: FirebaseDataLoader(oshiId: viewModel.selectedOshi.id) { loadedOshi in
+                    EditOshiPersonalityView(
+                        viewModel: OshiViewModel(oshi: loadedOshi ?? viewModel.selectedOshi),
+                        onSave: { updatedOshi in
+                            self.viewModel.selectedOshi = updatedOshi
+                            print("編集後の推しデータ: \(updatedOshi.personality ?? "なし")")
+                        },
+                        onUpdate: {
+                            loadOshiData()
+                            print("onUpdate呼び出し")
+                        }
+                    )
+                }
+                .id(editScreenID),   // 再描画を確実にするためにIDをつける
+                isActive: $showEditPersonality,
+                label: {
+                    EmptyView()
+                }
+            )
+            .hidden()
         }
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 80 {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+        )
         .onAppear {
             // データを完全に取得
             if loadCompleteOshiData {
@@ -222,26 +286,6 @@ struct OshiAIChatView: View {
                 message: Text("1日の送信数を超えました。アップデートをお待ちください。"),
                 dismissButton: .default(Text("OK"))
             )
-        }
-        .fullScreenCover(isPresented: $showEditPersonality) {
-            // 閉じた後に確実に最新データを取得
-            loadOshiData()
-        } content: {
-            // この部分でFirebaseから直接データを取得
-            FirebaseDataLoader(oshiId: viewModel.selectedOshi.id) { loadedOshi in
-                EditOshiPersonalityView(
-                    viewModel: OshiViewModel(oshi: loadedOshi ?? viewModel.selectedOshi),
-                    onSave: { updatedOshi in
-                        self.viewModel.selectedOshi = updatedOshi
-                        print("編集後の推しデータ: \(updatedOshi.personality ?? "なし")")
-                    },
-                    onUpdate: {
-                        loadOshiData()
-                        print("onUpdate呼び出し")
-                    }
-                )
-            }
-            .id(UUID())
         }
         .navigationBarHidden(true) // ネイティブナビゲーションバーを非表示
     }
@@ -311,6 +355,22 @@ struct OshiAIChatView: View {
                     print("FirebaseDataLoader - データ取得完了: \(oshi.personality ?? "なし")")
                 }
             }
+        }
+    }
+    
+    private func showRewardAd() {
+        // ここで実際のリワード広告SDKを呼び出す
+        // 例: Google AdMob, Unity Ads など
+        
+        // デモ用：3秒後に広告視聴完了をシミュレート
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            // 広告視聴完了
+            MessageLimitManager.shared.resetCountAfterReward()
+            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+            showMessageLimitModal = false
+            
+            // 成功メッセージを表示（オプション）
+            generateHapticFeedback()
         }
     }
     

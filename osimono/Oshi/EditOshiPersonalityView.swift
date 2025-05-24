@@ -230,6 +230,15 @@ struct EditOshiPersonalityView: View {
                 }
             }
         }
+        .navigationBarHidden(true)
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 80 {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+        )
         .onAppear {
             // 空の場合のみロード
             if !initializationCompleted {

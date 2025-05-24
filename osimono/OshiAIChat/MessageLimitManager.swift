@@ -78,4 +78,27 @@ class MessageLimitManager {
     func setCount(_ count: Int) {
         UserDefaults.standard.set(count, forKey: messageCountKey)
     }
+    
+    func resetCountAfterReward() {
+        UserDefaults.standard.set(0, forKey: messageCountKey)
+        // リワード視聴回数を記録（1日1回まで等の制限を追加する場合）
+        let rewardKey = "rewardWatchedToday"
+        UserDefaults.standard.set(true, forKey: rewardKey)
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "lastRewardDate")
+    }
+    
+    // リワード広告が視聴可能かチェック
+    func canWatchReward() -> Bool {
+        let rewardKey = "rewardWatchedToday"
+        let lastRewardTimestamp = UserDefaults.standard.double(forKey: "lastRewardDate")
+        let lastRewardDate = Date(timeIntervalSince1970: lastRewardTimestamp)
+        
+        // 日付が変わっていたらリセット
+        if !Calendar.current.isDate(lastRewardDate, inSameDayAs: Date()) {
+            UserDefaults.standard.set(false, forKey: rewardKey)
+            return true
+        }
+        
+        return !UserDefaults.standard.bool(forKey: rewardKey)
+    }
 }

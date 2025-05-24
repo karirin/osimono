@@ -17,6 +17,7 @@ struct OshiItemDetailView: View {
     @State private var isShareSheetPresented = false
     @State private var showDeleteConfirmation = false
     @Environment(\.presentationMode) var presentationMode
+    @State private var navigateToEdit = false
     
     init(item: OshiItem) {
         self._item = State(initialValue: item)
@@ -248,7 +249,25 @@ struct OshiItemDetailView: View {
                 .cornerRadius(20, corners: [.topLeft, .topRight])
                 .offset(y: -20)
             }
+            NavigationLink(
+                destination: OshiItemEditView(item: item)
+                    .onSaveCompleted { updatedItem in
+                        self.item = updatedItem
+                    },
+                isActive: $isEditing
+            ) {
+                EmptyView()
+            }
+            .hidden()
         }
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 80 {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+        )
         .background(backgroundColor.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .navigationBarTitle("", displayMode: .inline)
@@ -290,12 +309,6 @@ struct OshiItemDetailView: View {
             } else {
                 ShareSheet(items: [item.title ?? "推しアイテム"])
             }
-        }
-        .fullScreenCover(isPresented: $isEditing) {
-            OshiItemEditView(item: item)
-                .onSaveCompleted { updatedItem in
-                    self.item = updatedItem
-                }
         }
     }
     
