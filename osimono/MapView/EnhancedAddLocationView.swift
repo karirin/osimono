@@ -477,6 +477,14 @@ struct EnhancedAddLocationView: View {
             }
         }
         .dismissKeyboardOnTap()
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 80 {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+        )
         .onChange(of: selectedImage) { newImage in
             if let newImage = newImage {
                 localImageURL = localFileURL(for: newImage)

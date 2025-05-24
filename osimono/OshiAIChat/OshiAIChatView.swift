@@ -247,6 +247,7 @@ struct OshiAIChatView: View {
             )
             .hidden()
         }
+        .dismissKeyboardOnTap()
         .gesture(
             DragGesture()
                 .onEnded { value in
@@ -255,6 +256,7 @@ struct OshiAIChatView: View {
                     }
                 }
         )
+        
         .onAppear {
             // データを完全に取得
             if loadCompleteOshiData {

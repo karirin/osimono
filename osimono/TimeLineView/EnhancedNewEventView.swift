@@ -136,6 +136,14 @@ struct EnhancedNewEventView: View {
             }
         }
         .dismissKeyboardOnTap()
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 80 {
+                        isPresented = false
+                    }
+                }
+        )
         .sheet(isPresented: $isShowingImagePicker) {
 //               ImageTimeLinePicker(selectedImage: $selectedImageForCropping)
             ImagePickerView { pickedImage in

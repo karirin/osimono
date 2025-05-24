@@ -39,6 +39,11 @@ struct ContentView: View {
     @State private var firstOshiFlag = false
     @State private var randomMessageSent = false
     
+    // NavigationLink用の状態変数を追加
+    @State private var navigateToAddOshiForm = false
+    @State private var navigateToItemForm = false
+    @State private var navigateToEditOshi = false
+    
     // テーマカラーの定義 - アイドル/推し活向けに明るく元気なカラースキーム
     let primaryColor = Color(.systemPink) // 明るいピンク
     let accentColor = Color(.purple) // 紫系
@@ -75,15 +80,90 @@ struct ContentView: View {
                         isShowingOshiSelector: $isShowingOshiSelector,
                         showChangeOshiButton: $showChangeOshiButton,
                         isOshiChange: $isOshiChange,
-                        isShowingEditOshiView: $isShowingEditOshiView, onOshiUpdated: {
+                        isShowingEditOshiView: $isShowingEditOshiView,
+                        onOshiUpdated: {
                             self.refreshTrigger.toggle()
-                        }, firstOshiFlag: $firstOshiFlag ,showingOshiAlert: $showingOshiAlert, oshiId: selectedOshi?.id ?? "default"
+                        },
+                        firstOshiFlag: $firstOshiFlag,
+                        showingOshiAlert: $showingOshiAlert,
+                        oshiId: selectedOshi?.id ?? "default",
+                        // NavigationLink用のバインディングを追加
+                        navigateToAddOshiForm: $navigateToAddOshiForm,
+                        navigateToEditOshi: $navigateToEditOshi
                     )
                     
-                    OshiCollectionView(addFlag: $addFlag, oshiId: selectedOshi?.id ?? "default", refreshTrigger: refreshTrigger, showingOshiAlert: $showingOshiAlert, editFlag: $editFlag,isEditingUsername: $isEditingUsername,showChangeOshiButton: $showChangeOshiButton, isShowingEditOshiView: $isShowingEditOshiView)
+                    OshiCollectionView(
+                        addFlag: $addFlag,
+                        oshiId: selectedOshi?.id ?? "default",
+                        refreshTrigger: refreshTrigger,
+                        showingOshiAlert: $showingOshiAlert,
+                        editFlag: $editFlag,
+                        isEditingUsername: $isEditingUsername,
+                        showChangeOshiButton: $showChangeOshiButton,
+                        isShowingEditOshiView: $isShowingEditOshiView,
+                        // NavigationLink用のバインディングを追加
+                        navigateToItemForm: $navigateToItemForm
+                    )
                 }
+                
                 if helpFlag {
                     HelpModalView(isPresented: $helpFlag)
+                }
+                
+                // NavigationLinkを非表示で配置
+                NavigationLink(
+                    destination: AddOshiView()
+                        .gesture(
+                            DragGesture()
+                                .onEnded { value in
+                                    if value.translation.width > 80 {
+                                        navigateToAddOshiForm = false
+                                    }
+                                }
+                        ),
+                    isActive: $navigateToAddOshiForm
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+                
+                NavigationLink(
+                    destination: OshiItemFormView(oshiId: selectedOshi?.id ?? "default")
+                        .navigationBarBackButtonHidden(true)
+                        .gesture(
+                            DragGesture()
+                                .onEnded { value in
+                                    if value.translation.width > 80 {
+                                        navigateToItemForm = false
+                                    }
+                                }
+                        ),
+                    isActive: $navigateToItemForm
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+                
+                if let selectedOshi = selectedOshi {
+                    NavigationLink(
+                        destination: EditOshiView(oshi: selectedOshi) {
+                            // 推しが更新されたときのコールバック
+                            loadAllData()
+                            fetchOshiList()
+                        }
+                        .gesture(
+                            DragGesture()
+                                .onEnded { value in
+                                    if value.translation.width > 80 {
+                                        navigateToEditOshi = false
+                                    }
+                                }
+                        ),
+                        isActive: $navigateToEditOshi
+                    ) {
+                        EmptyView()
+                    }
+                    .hidden()
                 }
             }
             .overlay(
@@ -117,7 +197,7 @@ struct ContentView: View {
                                 if let oshi = selectedOshi {
                                     isShowingImagePicker = true
                                 } else {
-                                    showAddOshiForm = true
+                                    navigateToAddOshiForm = true
                                 }
                             }) {
                                 Text("登録")
@@ -140,11 +220,29 @@ struct ContentView: View {
                         }
                     }
                 }
-                    .animation(.easeInOut, value: isProfileImageEnlarged)
+                .animation(.easeInOut, value: isProfileImageEnlarged)
             )
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .accentColor(primaryColor)
+        .onChange(of: showAddOshiForm) { newValue in
+            if newValue {
+                navigateToAddOshiForm = true
+                showAddOshiForm = false
+            }
+        }
+        .onChange(of: addFlag) { newValue in
+            if newValue {
+                navigateToItemForm = true
+                addFlag = false
+            }
+        }
+        .onChange(of: isShowingEditOshiView) { newValue in
+            if newValue {
+                navigateToEditOshi = true
+                isShowingEditOshiView = false
+            }
+        }
         .onAppear {
             fetchOshiList()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -182,7 +280,7 @@ struct ContentView: View {
                         message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
                         buttonText: "推しを登録する",
                         action: {
-                            showAddOshiForm = true
+                            navigateToAddOshiForm = true
                         },
                         isShowing: $showingOshiAlert
                     )
@@ -278,7 +376,7 @@ struct ContentView: View {
                     // 新規追加ボタン
                     Button(action: {
                         generateHapticFeedback()
-                        showAddOshiForm = true
+                        navigateToAddOshiForm = true
                         isShowingOshiSelector = false
                     }) {
                         VStack {

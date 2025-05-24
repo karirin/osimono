@@ -31,88 +31,103 @@ struct TimelineView: View {
     }
     
     var body: some View {
-        ZStack {
-            backgroundColor.ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                // Modern top bar with year/month
-                HStack {
-                    Text(formattedYearMonth)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(textColor)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .overlay(
-                            HStack {
-                                
-                                Spacer()
-                                Button(action: {
-                                    generateHapticFeedback()
-                                    withAnimation {
-                                        isMonthMode.toggle()
+        NavigationView{
+            ZStack {
+                backgroundColor.ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Modern top bar with year/month
+                    HStack {
+                        Text(formattedYearMonth)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(textColor)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .overlay(
+                                HStack {
+                                    
+                                    Spacer()
+                                    Button(action: {
+                                        generateHapticFeedback()
+                                        withAnimation {
+                                            isMonthMode.toggle()
+                                        }
+                                    }) {
+                                        Image(systemName: isMonthMode ? "list.bullet" : "calendar")
+                                            .font(.system(size: 18, weight: .medium))
+                                            .foregroundColor(textColor)
+                                            .frame(width: 40, height: 40)
+                                            .background(cardBackgroundColor.opacity(0.8))
+                                            .clipShape(Circle())
                                     }
-                                }) {
-                                    Image(systemName: isMonthMode ? "list.bullet" : "calendar")
-                                        .font(.system(size: 18, weight: .medium))
-                                        .foregroundColor(textColor)
-                                        .frame(width: 40, height: 40)
-                                        .background(cardBackgroundColor.opacity(0.8))
-                                        .clipShape(Circle())
+                                    .padding(.leading, 8)
                                 }
-                                .padding(.leading, 8)
-                            }
-                        )
-                }
-                .padding(.top, 8)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 14)
-                
-                Divider()
+                            )
+                    }
+                    .padding(.top, 8)
                     .padding(.horizontal, 16)
-                
-                // Timeline content
-                if !isMonthMode {
-                    EnhancedWeekTimelineView(
-                        viewModel: viewModel,
-                        selectedDate: $selectedDate,
-                        selectedEventID: $selectedEventID
-                    )
-                } else {
-                    EnhancedMonthCalendarView(
-                        viewModel: viewModel,
-                        selectedDate: $selectedDate,
-                        selectedEventID: $selectedEventID
-                    )
+                    .padding(.bottom, 14)
+                    
+                    Divider()
+                        .padding(.horizontal, 16)
+                    
+                    // Timeline content
+                    if !isMonthMode {
+                        EnhancedWeekTimelineView(
+                            viewModel: viewModel,
+                            selectedDate: $selectedDate,
+                            selectedEventID: $selectedEventID
+                        )
+                    } else {
+                        EnhancedMonthCalendarView(
+                            viewModel: viewModel,
+                            selectedDate: $selectedDate,
+                            selectedEventID: $selectedEventID
+                        )
+                    }
                 }
+                
+                // Floating action button
+                //            VStack {
+                //                Spacer()
+                //                HStack {
+                //                    Spacer()
+                //                    Button(action: {
+                //                        generateHapticFeedback()
+                //                        if oshiId == "default" {
+                ////                            showingOshiAlert = true
+                //                            showNewEventView = true
+                //                        } else {
+                //                            showNewEventView = true
+                //                        }
+                //                    }) {
+                //                        Image(systemName: "plus")
+                //                            .font(.system(size: 20, weight: .semibold))
+                //                            .foregroundColor(.white)
+                //                            .frame(width: 56, height: 56)
+                //                            .background(
+                //                                Circle()
+                //                                    .fill(brandColor)
+                //                                    .shadow(color: brandColor.opacity(0.4), radius: 8, x: 0, y: 4)
+                //                            )
+                //                    }
+                //                    .padding([.bottom, .trailing], 24)
+                //                    .transition(.scale)
+                //                }
+                //            }
+                NavigationLink(
+                    destination:
+                        EnhancedNewEventView(
+                            isPresented: $showNewEventView,
+                            viewModel: viewModel,
+                            initialDate: selectedDate
+                        )
+                        .navigationBarHidden(true),
+                    isActive: $showNewEventView
+                ) {
+                    EmptyView()
+                }
+                .hidden()
             }
-            
-            // Floating action button
-//            VStack {
-//                Spacer()
-//                HStack {
-//                    Spacer()
-//                    Button(action: {
-//                        generateHapticFeedback()
-//                        if oshiId == "default" {
-////                            showingOshiAlert = true
-//                            showNewEventView = true
-//                        } else {
-//                            showNewEventView = true
-//                        }
-//                    }) {
-//                        Image(systemName: "plus")
-//                            .font(.system(size: 20, weight: .semibold))
-//                            .foregroundColor(.white)
-//                            .frame(width: 56, height: 56)
-//                            .background(
-//                                Circle()
-//                                    .fill(brandColor)
-//                                    .shadow(color: brandColor.opacity(0.4), radius: 8, x: 0, y: 4)
-//                            )
-//                    }
-//                    .padding([.bottom, .trailing], 24)
-//                    .transition(.scale)
-//                }
-//            }
         }
         .overlay(
             VStack(spacing: -5) {
@@ -170,12 +185,12 @@ struct TimelineView: View {
         .fullScreenCover(isPresented: $showAddOshiForm) {
             AddOshiView()
         }
-        .fullScreenCover(isPresented: $showNewEventView) {
-            // イベント作成ビューが閉じられた時にイベントリストを更新
-            viewModel.fetchEvents(forOshiId: oshiId)
-        } content: {
-            EnhancedNewEventView(isPresented: $showNewEventView, viewModel: viewModel, initialDate: selectedDate)
-        }
+//        .fullScreenCover(isPresented: $showNewEventView) {
+//            // イベント作成ビューが閉じられた時にイベントリストを更新
+//            viewModel.fetchEvents(forOshiId: oshiId)
+//        } content: {
+//            EnhancedNewEventView(isPresented: $showNewEventView, viewModel: viewModel, initialDate: selectedDate)
+//        }
     }
 }
 

@@ -37,6 +37,11 @@ struct OshiCollectionView: View {
     @Binding var isShowingEditOshiView: Bool
     @State private var hasLoadedInitialData = false
     @State private var showAddOshiForm = false
+    
+    // NavigationLink用の状態変数を追加
+    @Binding var navigateToItemForm: Bool
+    @State private var navigateToAddOshiForm = false
+    
     // 色の定義 - 推し活向けカラー
     let primaryColor = Color(.systemPink) // ピンク
     let accentColor = Color(.purple) // 紫
@@ -122,10 +127,9 @@ struct OshiCollectionView: View {
     var body: some View {
         ZStack{
             VStack(spacing: -5) {
+//                BannerAdView()
+//                    .frame(height: 60)
                 
-                    
-//                        BannerAdView()
-//                            .frame(height: 60)
                 // 検索バーとフィルター
                 HStack(spacing: 12) {
                     // 検索バー
@@ -248,7 +252,6 @@ struct OshiCollectionView: View {
                     // ローディング表示
                     VStack {
                         Spacer()
-//                        BestLoadingView()
                         LoadingView2()
                         Spacer()
                     }
@@ -279,7 +282,7 @@ struct OshiCollectionView: View {
                             if oshiId == "default" {
                                 showingOshiAlert = true
                             } else {
-                                addFlag = true
+                                navigateToItemForm = true
                             }
                             generateHapticFeedback()
                         }) {
@@ -307,7 +310,16 @@ struct OshiCollectionView: View {
                     ScrollView {
                         LazyVGrid(columns: [GridItem(.flexible()),GridItem(.flexible()), GridItem(.flexible())], spacing: 5) {
                             ForEach(filteredItems) { item in
-                                NavigationLink(destination: OshiItemDetailView(item: item)) {
+                                NavigationLink(destination: OshiItemDetailView(item: item)
+                                    .gesture(
+                                        DragGesture()
+                                            .onEnded { value in
+                                                if value.translation.width > 80 {
+                                                    // NavigationLinkは自動的に戻る
+                                                }
+                                            }
+                                    )
+                                ) {
                                     OshiItemCard(item: item)
                                 }
                             }
@@ -318,6 +330,23 @@ struct OshiCollectionView: View {
                     }
                 }
             }
+            
+            // NavigationLinkを非表示で配置
+            NavigationLink(
+                destination: AddOshiView()
+                    .gesture(
+                        DragGesture()
+                            .onEnded { value in
+                                if value.translation.width > 80 {
+                                    navigateToAddOshiForm = false
+                                }
+                            }
+                    ),
+                isActive: $navigateToAddOshiForm
+            ) {
+                EmptyView()
+            }
+            .hidden()
         }
         .overlay(
             VStack(spacing: -5) {
@@ -330,7 +359,7 @@ struct OshiCollectionView: View {
                             if oshiId == "default" {
                                 showingOshiAlert = true
                             } else {
-                                addFlag = true
+                                navigateToItemForm = true
                             }
                         }
                         generateHapticFeedback()
@@ -372,17 +401,16 @@ struct OshiCollectionView: View {
             fetchOshiItems()
         }
         .onChange(of: addFlag) { newValue in
-            if !newValue {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    fetchOshiItems()
-                }
+            if newValue {
+                navigateToItemForm = true
+                addFlag = false
             }
         }
-        .fullScreenCover(isPresented: $addFlag) {
-            OshiItemFormView(oshiId: oshiId)
-        }
-        .fullScreenCover(isPresented: $showAddOshiForm) {
-            AddOshiView()
+        .onChange(of: showAddOshiForm) { newValue in
+            if newValue {
+                navigateToAddOshiForm = true
+                showAddOshiForm = false
+            }
         }
     }
     
@@ -445,7 +473,6 @@ struct OshiCollectionView: View {
     // データ取得
     func fetchOshiItems() {
         guard let userId = userId else { return }
-        //            self.isLoading = true
         // 変更：選択中の推しIDのパスから取得
         let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId)
         ref.observeSingleEvent(of: .value) { snapshot in

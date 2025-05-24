@@ -313,6 +313,7 @@ struct AddOshiView: View {
                 }
             }
         }
+        .navigationBarBackButtonHidden(true)
         // 画像選択用のシート
         .sheet(isPresented: $showImagePicker) {
             ImagePickerView { pickedImage in

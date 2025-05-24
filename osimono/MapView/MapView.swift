@@ -22,6 +22,7 @@ struct MapView: View {
     var oshiId: String
     @State private var showAddOshiForm = false
     @State private var showingOshiAlert = false
+    @State private var isAddLocationActive = false
     
     var body: some View {
         NavigationView {
@@ -111,6 +112,45 @@ struct MapView: View {
                             .padding(.bottom, 80)
                     }
                 }
+//                EnhancedAddLocationView(
+//                    viewModel: viewModel,
+//                    onLocationAdded: { newLocationId in
+//                        // Set the newly added location as selected
+//                        selectedLocationId = newLocationId
+//                        
+//                        // Find the new location and center the map on it
+//                        if let newLocation = viewModel.locations.first(where: { $0.id == newLocationId }) {
+//                            withAnimation {
+//                                region.center = CLLocationCoordinate2D(
+//                                    latitude: newLocation.latitude,
+//                                    longitude: newLocation.longitude
+//                                )
+//                            }
+//                        }
+//                    }
+//                )
+                NavigationLink(
+                    destination: EnhancedAddLocationView(
+                        viewModel: viewModel,
+                        onLocationAdded: { newId in
+                            // 追加後の処理は今までと同じ
+                            selectedLocationId = newId
+                            if let loc = viewModel.locations.first(where: { $0.id == newId }) {
+                                withAnimation {
+                                    region.center = CLLocationCoordinate2D(
+                                        latitude: loc.latitude,
+                                        longitude: loc.longitude
+                                    )
+                                }
+                            }
+                        }
+                    )
+                    .navigationBarHidden(true),
+                    isActive: $showAddLocation
+                ) {
+                    EmptyView()
+                }
+                .hidden()
             }
             .onChange(of: selectedLocationId) { newId in
                 if let newId = newId,
@@ -227,25 +267,6 @@ struct MapView: View {
             }
             .fullScreenCover(isPresented: $showAddOshiForm) {
                 AddOshiView()
-            }
-            .fullScreenCover(isPresented: $showAddLocation) {
-                EnhancedAddLocationView(
-                    viewModel: viewModel,
-                    onLocationAdded: { newLocationId in
-                        // Set the newly added location as selected
-                        selectedLocationId = newLocationId
-                        
-                        // Find the new location and center the map on it
-                        if let newLocation = viewModel.locations.first(where: { $0.id == newLocationId }) {
-                            withAnimation {
-                                region.center = CLLocationCoordinate2D(
-                                    latitude: newLocation.latitude,
-                                    longitude: newLocation.longitude
-                                )
-                            }
-                        }
-                    }
-                )
             }
             .sheet(isPresented: $showFilterSheet) {
                 FilterSheetView(selectedCategories: $selectedCategories)

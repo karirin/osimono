@@ -447,9 +447,11 @@ struct OshiItemFormView: View {
                 generateHapticFeedback()
                 presentationMode.wrappedValue.dismiss()
             }) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.gray)
+                HStack {
+                    Image(systemName: "chevron.left")
+                    Text("戻る")
+                }
+                .foregroundColor(primaryColor)
             }
             )
             .navigationBarItems(trailing:
@@ -458,9 +460,18 @@ struct OshiItemFormView: View {
                 saveItem()
             }) {
                 Text("投稿")
+                    .foregroundColor(primaryColor)
             }
             )
         }
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 80 {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+        )
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePickerView { pickedImage in
                 self.originalImage = pickedImage

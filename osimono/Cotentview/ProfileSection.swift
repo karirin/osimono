@@ -58,7 +58,12 @@ struct ProfileSection: View {
     
     @State private var viewModel: OshiViewModel?
     
-    init(editFlag: Binding<Bool>, oshiChange: Binding<Bool>, showAddOshiForm: Binding<Bool>, isEditingUsername: Binding<Bool>, isShowingOshiSelector: Binding<Bool>, showChangeOshiButton: Binding<Bool>, isOshiChange: Binding<Bool>, isShowingEditOshiView: Binding<Bool>, onOshiUpdated: (() -> Void)? = nil, firstOshiFlag: Binding<Bool>, showingOshiAlert: Binding<Bool>, oshiId: String) {
+    // NavigationLink用の状態変数を追加
+    @Binding var navigateToAddOshiForm: Bool
+    @Binding var navigateToEditOshi: Bool
+    @State private var navigateToChatView = false
+    
+    init(editFlag: Binding<Bool>, oshiChange: Binding<Bool>, showAddOshiForm: Binding<Bool>, isEditingUsername: Binding<Bool>, isShowingOshiSelector: Binding<Bool>, showChangeOshiButton: Binding<Bool>, isOshiChange: Binding<Bool>, isShowingEditOshiView: Binding<Bool>, onOshiUpdated: (() -> Void)? = nil, firstOshiFlag: Binding<Bool>, showingOshiAlert: Binding<Bool>, oshiId: String, navigateToAddOshiForm: Binding<Bool>, navigateToEditOshi: Binding<Bool>) {
         self._editFlag = editFlag
         self._oshiChange = oshiChange
         self._showAddOshiForm = showAddOshiForm
@@ -71,6 +76,8 @@ struct ProfileSection: View {
         self._firstOshiFlag = firstOshiFlag
         self._showingOshiAlert = showingOshiAlert
         self.oshiId = oshiId
+        self._navigateToAddOshiForm = navigateToAddOshiForm
+        self._navigateToEditOshi = navigateToEditOshi
         
         // 初期Oshiオブジェクトを作成してViewModelを初期化
         let initialOshi = Oshi(id: oshiId, name: "推しを選択してください", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil)
@@ -185,13 +192,7 @@ struct ProfileSection: View {
                             Button(action: {
                                 generateHapticFeedback()
                                 print("profilePlaceholder button tapped")
-                                if viewModel?.selectedOshi != nil {
-                                    print("profilePlaceholder button tapped1")
-                                    showAddOshiForm = true
-                                } else {
-                                    print("profilePlaceholder button tapped2")
-                                    showAddOshiForm = true
-                                }
+                                navigateToAddOshiForm = true
                             }) {
                                 profilePlaceholder
                             }
@@ -231,6 +232,29 @@ struct ProfileSection: View {
                 }
                 .offset(y: 0)
             }
+            
+            // NavigationLinkを非表示で配置
+            if viewModel != nil {
+                NavigationLink(
+                    destination: OshiAIChatView(viewModel: viewModel!, oshiItem: nil)
+                        .gesture(
+                            DragGesture()
+                                .onEnded { value in
+                                    if value.translation.width > 80 {
+                                        navigateToChatView = false
+                                        fetchOshiList()
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                            checkForUnreadMessages()
+                                        }
+                                    }
+                                }
+                        ),
+                    isActive: $navigateToChatView
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+            }
         }
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(image: $image, onImagePicked: { pickedImage in
@@ -260,13 +284,6 @@ struct ProfileSection: View {
                 
                 // 定期的にチェックするタイマー
                 startUnreadItemsCheckTimer()
-                
-//                if let oshiId = selectedOshi?.id {
-//                    UnreadPostTracker.shared.markPostsAsRead(for: oshiId) { error in
-//                        if let error = error {
-//                        }
-//                    }
-//                }
             } else {
                 // 画面が再表示される場合も、最新の未読状態をチェック
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -297,31 +314,22 @@ struct ProfileSection: View {
                 fetchOshiList()
             }
         }
-        .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
-            loadAllData()
-            fetchOshiList()
-            showChangeOshiButton.toggle()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                let userDefaults = UserDefaults.standard
-                if !userDefaults.bool(forKey: "firstOshiFlag") && !oshiList.isEmpty {
-                    firstOshiFlag = true
-                    userDefaults.set(true, forKey: "firstOshiFlag")
-                    userDefaults.synchronize()
-                }
+        .onChange(of: showAddOshiForm) { newValue in
+            if newValue {
+                navigateToAddOshiForm = true
+                showAddOshiForm = false
             }
-        }) {
-            AddOshiView()
         }
-        .fullScreenCover(isPresented: $isShowingEditOshiView, onDismiss: {
-            loadAllData()
-            fetchOshiList()
-        }) {
-            if let oshi = viewModel?.selectedOshi {
-                EditOshiView(oshi: oshi) {
-                    // 推しが更新されたときのコールバック
-                    loadAllData()
-                    fetchOshiList()
-                }
+        .onChange(of: showChatView) { newValue in
+            if newValue {
+                navigateToChatView = true
+                showChatView = false
+            }
+        }
+        .onChange(of: isShowingEditOshiView) { newValue in
+            if newValue {
+                navigateToEditOshi = true
+                isShowingEditOshiView = false
             }
         }
     }
@@ -361,7 +369,7 @@ struct ProfileSection: View {
         }
         
         // チャットビューを表示
-        showChatView = true
+        navigateToChatView = true
     }
 
     // 投稿を既読にするメソッドを追加（推し投稿一覧画面に遷移する時に呼び出す）
@@ -381,12 +389,157 @@ struct ProfileSection: View {
         }
     }
     
+    // その他の既存メソッドはそのまま...
+    // (checkForUnreadMessages, startMessageCheckTimer, uploadOshiImageToFirebase, checkForUnreadPosts, updateBadgeStatus, checkForAllUnreadItems, forceCheckUnreadMessages, startBadgeAnimation, chatButtonWithBadge, oshiSelectorOverlay, fetchOshiList, loadSelectedOshi, saveSelectedOshiId, saveOshiProfile, loadAllData, loadSettingAllData, fetchUserProfile, fetchUserImageURL, startEditing, profilePlaceholder)
+    
+    var chatButtonWithBadge: some View {
+        Button(action: {
+            showChatAIView()
+            generateHapticFeedback()
+        }) {
+            ChatBadgeView(count: unreadMessageCount, hasNewMessages: hasNewMessages)
+        }
+        .padding(.trailing, 16)
+        .padding(.top, 8)
+    }
+    
+    var oshiSelectorOverlay: some View {
+        ZStack {
+            // 半透明の背景
+            Color.black.opacity(0.7)
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    withAnimation(.spring()) {
+                        isShowingOshiSelector = false
+                    }
+                }
+            
+            VStack(spacing: 20) {
+                // ヘッダー
+                HStack {
+                    Text("推しを選択")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        generateHapticFeedback()
+                        withAnimation(.spring()) {
+                            isShowingOshiSelector = false
+                        }
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding()
+                
+                // 推しリスト - グリッドレイアウト
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
+                    // 新規追加ボタン
+                    Button(action: {
+                        generateHapticFeedback()
+                        navigateToAddOshiForm = true
+                        isShowingOshiSelector = false
+                    }) {
+                        VStack {
+                            ZStack {
+                                Circle()
+                                    .fill(primaryColor.opacity(0.2))
+                                    .frame(width: 80, height: 80)
+                                
+                                Image(systemName: "plus")
+                                    .font(.system(size: 30))
+                                    .foregroundColor(primaryColor)
+                            }
+                            
+                            Text("新規追加")
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                        }
+                    }
+                    
+                    // 推しリスト
+                    ForEach(oshiList) { oshi in
+                        Button(action: {
+                            viewModel?.selectedOshi = oshi
+                            saveSelectedOshiId(oshi.id)
+                            generateHapticFeedback()
+                            withAnimation(.spring()) {
+                                isShowingOshiSelector = false
+                                editFlag = false
+                                isEditingUsername = false
+                                showChangeOshiButton = false
+                            }
+                        }) {
+                            VStack {
+                                ZStack {
+                                    // プロフィール画像またはプレースホルダー
+                                    if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                        AsyncImage(url: url) { phase in
+                                            switch phase {
+                                            case .success(let image):
+                                                image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 80, height: 80)
+                                                    .clipShape(Circle())
+                                            default:
+                                                Circle()
+                                                    .fill(Color.gray.opacity(0.3))
+                                                    .frame(width: 80, height: 80)
+                                                    .overlay(
+                                                        Text(String(oshi.name.prefix(1)))
+                                                            .font(.system(size: 30, weight: .bold))
+                                                            .foregroundColor(.white)
+                                                    )
+                                            }
+                                        }
+                                    } else {
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 80, height: 80)
+                                            .overlay(
+                                                Text(String(oshi.name.prefix(1)))
+                                                    .font(.system(size: 30, weight: .bold))
+                                                    .foregroundColor(.white)
+                                            )
+                                    }
+                                    
+                                    // 選択インジケーター
+                                    if viewModel?.selectedOshi.id == oshi.id {
+                                        Circle()
+                                            .stroke(primaryColor, lineWidth: 4)
+                                            .frame(width: 85, height: 85)
+                                    }
+                                }
+                                
+                                Text(oshi.name)
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.black.opacity(0.8))
+            )
+            .padding()
+        }
+    }
+    
     // 未読メッセージをチェックする関数
     func checkForUnreadMessages() {
         guard let oshi = viewModel?.selectedOshi else {
             return
         }
-        
         
         ChatDatabaseManager.shared.fetchUnreadMessageCount(for: oshi.id) { count, error in
             if let error = error {
@@ -582,205 +735,6 @@ struct ProfileSection: View {
                 self.badgeBounce = false
                 self.isAnimatingBadge = false
             }
-        }
-    }
-    
-//    var chatButtonWithBadge: some View {
-//        Button(action: {
-//            showChatAIView()
-//            generateHapticFeedback()
-//            navigateToChatView = true
-//        }) {
-//            ChatBadgeView(count: unreadMessageCount, hasNewMessages: hasNewMessages)
-//        }
-//        .background(
-//            NavigationLink(
-//                destination: {
-//                    if viewModel != nil {
-//                        OshiAIChatView(viewModel: viewModel!, oshiItem: nil)
-//                    }
-//                },
-//                isActive: $navigateToChatView,
-//                label: {
-//                    EmptyView()
-//                }
-//            )
-//            .hidden()
-//        )
-//    }
-
-    
-    var chatButtonWithBadge: some View {
-        Button(action: {
-            showChatAIView()
-            generateHapticFeedback()
-        }) {
-            ChatBadgeView(count: unreadMessageCount, hasNewMessages: hasNewMessages)
-        }
-        .padding(.trailing, 16)
-        .padding(.top, 8)
-        .background(
-            NavigationLink(
-                destination: viewModel != nil ?
-                    AnyView(
-                        OshiAIChatView(viewModel: viewModel!, oshiItem: nil)
-                            .onDisappear {
-                                fetchOshiList()
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    checkForUnreadMessages()
-                                }
-                            }
-                    ) :
-                    AnyView(EmptyView()),
-                isActive: $showChatView,
-                label: {
-                    EmptyView()
-                }
-            )
-            .hidden()
-
-        )
-    }
-//        .fullScreenCover(isPresented: $showChatView) {
-//            if viewModel != nil {
-//                OshiAIChatView(viewModel: viewModel!, oshiItem: nil)
-//                .onDisappear {
-//                    fetchOshiList()
-//                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-//                        checkForUnreadMessages()
-//                    }
-//                }
-//            }
-//        }
-    var oshiSelectorOverlay: some View {
-        ZStack {
-            // 半透明の背景
-            Color.black.opacity(0.7)
-                .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    withAnimation(.spring()) {
-                        isShowingOshiSelector = false
-                    }
-                }
-            
-            VStack(spacing: 20) {
-                // ヘッダー
-                HStack {
-                    Text("推しを選択")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        generateHapticFeedback()
-                        withAnimation(.spring()) {
-                            isShowingOshiSelector = false
-                        }
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                    }
-                }
-                .padding()
-                
-                // 推しリスト - グリッドレイアウト
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
-                    // 新規追加ボタン
-                    Button(action: {
-                        generateHapticFeedback()
-                        showAddOshiForm = true
-                        isShowingOshiSelector = false
-                    }) {
-                        VStack {
-                            ZStack {
-                                Circle()
-                                    .fill(primaryColor.opacity(0.2))
-                                    .frame(width: 80, height: 80)
-                                
-                                Image(systemName: "plus")
-                                    .font(.system(size: 30))
-                                    .foregroundColor(primaryColor)
-                            }
-                            
-                            Text("新規追加")
-                                .font(.subheadline)
-                                .foregroundColor(.white)
-                        }
-                    }
-                    
-                    // 推しリスト
-                    ForEach(oshiList) { oshi in
-                        Button(action: {
-                            viewModel?.selectedOshi = oshi
-                            saveSelectedOshiId(oshi.id)
-                            generateHapticFeedback()
-                            withAnimation(.spring()) {
-                                isShowingOshiSelector = false
-                                editFlag = false
-                                isEditingUsername = false
-                                showChangeOshiButton = false
-                            }
-                        }) {
-                            VStack {
-                                ZStack {
-                                    // プロフィール画像またはプレースホルダー
-                                    if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
-                                        AsyncImage(url: url) { phase in
-                                            switch phase {
-                                            case .success(let image):
-                                                image
-                                                    .resizable()
-                                                    .scaledToFill()
-                                                    .frame(width: 80, height: 80)
-                                                    .clipShape(Circle())
-                                            default:
-                                                Circle()
-                                                    .fill(Color.gray.opacity(0.3))
-                                                    .frame(width: 80, height: 80)
-                                                    .overlay(
-                                                        Text(String(oshi.name.prefix(1)))
-                                                            .font(.system(size: 30, weight: .bold))
-                                                            .foregroundColor(.white)
-                                                    )
-                                            }
-                                        }
-                                    } else {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 80, height: 80)
-                                            .overlay(
-                                                Text(String(oshi.name.prefix(1)))
-                                                    .font(.system(size: 30, weight: .bold))
-                                                    .foregroundColor(.white)
-                                            )
-                                    }
-                                    
-                                    // 選択インジケーター
-                                    if viewModel?.selectedOshi.id == oshi.id {
-                                        Circle()
-                                            .stroke(primaryColor, lineWidth: 4)
-                                            .frame(width: 85, height: 85)
-                                    }
-                                }
-                                
-                                Text(oshi.name)
-                                    .font(.subheadline)
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-                            }
-                        }
-                    }
-                }
-                .padding()
-            }
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.black.opacity(0.8))
-            )
-            .padding()
         }
     }
     
@@ -1048,6 +1002,17 @@ struct ProfileSection: View {
                     .offset(x: 32, y: 32)
             }
         }
+    }
+    
+    // 小さいデバイスかどうかを確認
+    func isSmallDevice() -> Bool {
+        return UIScreen.main.bounds.height < 700
+    }
+    
+    // 触覚フィードバック
+    func generateHapticFeedback() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
     }
 }
 
