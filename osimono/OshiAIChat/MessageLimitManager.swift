@@ -14,7 +14,7 @@ class MessageLimitManager {
     static let shared = MessageLimitManager()
     
     // 1日の最大メッセージ送信回数
-    private let maxMessagesPerDay = 20
+    private let maxMessagesPerDay = 10
     
     // ユーザーデフォルトキー
     private let messageCountKey = "dailyMessageCount"

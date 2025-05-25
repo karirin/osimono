@@ -22,7 +22,7 @@ class RewardAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
     func loadRewardedAd() {
         let request = GoogleMobileAds.Request()
         RewardedAd.load(
-            with: "YOUR_AD_UNIT_ID",
+            with: "ca-app-pub-4898800212808837/3373075660",
             request: request
         ) { [weak self] ad, error in
             if let error = error {

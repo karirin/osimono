@@ -35,14 +35,14 @@ struct MessageLimitModal: View {
                 
                 // 説明文
                 VStack(spacing: 10) {
-                    Text("1日20回まで推しと会話できます")
+                    Text("1日10回まで推しと会話できます")
                         .font(.body)
                         .foregroundColor(.gray)
                     
-                    Text("動画を視聴すると、さらに20回会話できるようになります！")
+                    Text("動画を視聴すると、さらに10回会話できるようになります！")
                         .font(.body)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+//                        .padding(.horizontal)
                 }
                 
                 // ボタン
@@ -53,9 +53,10 @@ struct MessageLimitModal: View {
                     }) {
                         HStack {
                             Image(systemName: "play.circle.fill")
-                                .font(.system(size: 20))
-                            Text("動画を見て会話を続ける")
+                                .font(.system(size: 40))
+                            Text("動画を見て\n会話を続ける")
                                 .fontWeight(.semibold)
+                                .font(.system(size: 20))
                         }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)

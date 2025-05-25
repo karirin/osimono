@@ -74,7 +74,7 @@ struct TopView: View {
                             )
                             .transition(.opacity)
                         } else if vm.selectedOshi.id != "1" { // ダミー推しではない場合
-                            OshiAIChatView(viewModel: vm, oshiItem: nil, showBackButton: false)
+                            OshiAIChatView(viewModel: vm, oshiItem: nil, showBackButton: false, isEmbedded: false)
                                 .id(vm.selectedOshi.id) // 推しが変わったら再生成
                         }
                     }else{

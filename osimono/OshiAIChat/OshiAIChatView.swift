@@ -10,6 +10,7 @@ import OpenAI
 import Firebase
 import FirebaseAuth
 import FirebaseDatabase
+import GoogleMobileAds
 
 // MARK: - 共通クライアント
 struct AIClient {
@@ -39,9 +40,11 @@ struct OshiAIChatView: View {
     @State private var shouldScrollToBottom: Bool = false
     @State private var showEditPersonality = false
     @State private var showLimitAlert = false
-    @State private var remainingMessages = 20
+    @State private var remainingMessages = 10
     let oshiItem: OshiItem?
     @State private var editScreenID = UUID()
+    @State private var showRewardCompletedModal = false
+    @State private var rewardAmount = 0
     
     // LINE風カラー設定
     let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
@@ -54,17 +57,71 @@ struct OshiAIChatView: View {
     @State private var loadCompleteOshiData: Bool = false
     var showBackButton: Bool = true
     @State private var showMessageLimitModal = false
+    @State private var rewardedAd: RewardedAd?
+    @State private var isLoadingAd = false
+    var isEmbedded: Bool = false
     
-    init(viewModel: OshiViewModel, oshiItem: OshiItem?, showBackButton: Bool = true) {
+    init(viewModel: OshiViewModel, oshiItem: OshiItem?, showBackButton: Bool = true, isEmbedded: Bool = false) {
         self.viewModel = viewModel
         self.oshiItem = oshiItem
         self.showBackButton = showBackButton
+        self.isEmbedded = isEmbedded
         
         // 初期化時に完全なデータを取得
         _loadCompleteOshiData = State(initialValue: true)
     }
 
     var body: some View {
+        Group {
+            if isEmbedded {
+                chatContent
+            } else {
+                NavigationView {
+                    chatContent
+                }
+                .navigationViewStyle(StackNavigationViewStyle())
+            }
+        }
+        .dismissKeyboardOnTap()
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 80 {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+        )
+        
+        .onAppear {
+            // データを完全に取得
+            if loadCompleteOshiData {
+                loadCompleteOshiData = false
+                loadFullOshiData()
+            } else if viewModel.selectedOshi.id == "1" {
+                loadActualOshiData()
+            } else {
+                currentOshiId = viewModel.selectedOshi.id
+                resetViewState()
+                loadMessages()
+                markMessagesAsRead()
+            }
+            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+            loadRewardedAd()
+        }
+        .onChange(of: viewModel.selectedOshi.id) { newId in
+            if currentOshiId != newId {
+                currentOshiId = newId
+                resetViewState()
+                loadMessages()
+            }
+        }
+        .onDisappear {
+            markMessagesAsRead()
+        }
+        .navigationBarHidden(true) // ネイティブナビゲーションバーを非表示
+    }
+    
+    private var chatContent: some View {
         ZStack {
             // 背景色をLINE風に
             lineBgColor.edgesIgnoringSafeArea(.all)
@@ -72,25 +129,24 @@ struct OshiAIChatView: View {
             VStack(spacing: 0) {
                 // LINE風ヘッダー
                 HStack(spacing: 10) {
-                     // 戻るボタンを条件付きで表示
-                     if showBackButton {
-                         Button(action: {
-                             generateHapticFeedback()
-                             presentationMode.wrappedValue.dismiss()
-                         }) {
-                             Image(systemName: "chevron.left")
-                                 .font(.system(size: 18, weight: .semibold))
-                                 .foregroundColor(.blue)
-                         }
-                     }
-                     
-                     // プロフィール画像（小さく表示）
-                     profileImage
-                         .frame(width: 36, height: 36)
-                     
-                     Text(viewModel.selectedOshi.name)
-                         .font(.system(size: 17, weight: .medium))
+                    // 戻るボタンを条件付きで表示
+                    if showBackButton {
+                        Button(action: {
+                            generateHapticFeedback()
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.blue)
+                        }
+                    }
                     
+                    // プロフィール画像（小さく表示）
+                    profileImage
+                        .frame(width: 36, height: 36)
+                    
+                    Text(viewModel.selectedOshi.name)
+                        .font(.system(size: 17, weight: .medium))
                     
                     // LINE風メニューボタン
                     Button(action: {
@@ -101,12 +157,12 @@ struct OshiAIChatView: View {
                             .font(.system(size: 20))
                             .foregroundColor(.black)
                     }
-                     Spacer()
-                 }
-                 .padding(.horizontal)
-                 .padding(.vertical, 10)
-                 .background(Color.white)
-                 .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(Color.white)
+                .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
                 
                 // チャットメッセージリスト
                 ScrollViewReader { proxy in
@@ -151,7 +207,6 @@ struct OshiAIChatView: View {
                 VStack(spacing: 0) {
                     Divider()
                     HStack(spacing: 10) {
-                        
                         // 入力フィールド
                         TextField("\(viewModel.selectedOshi.name)に話しかけてみよう", text: $inputText)
                             .padding(10)
@@ -204,27 +259,16 @@ struct OshiAIChatView: View {
                 )
                 .zIndex(999) // 最前面に表示
             }
-//                .fullScreenCover(isPresented: $showEditPersonality) {
-//                    // 閉じた後に確実に最新データを取得
-//                    loadOshiData()
-//                } content: {
-//                    // この部分でFirebaseから直接データを取得
-//                    FirebaseDataLoader(oshiId: viewModel.selectedOshi.id) { loadedOshi in
-//                        EditOshiPersonalityView(
-//                            viewModel: OshiViewModel(oshi: loadedOshi ?? viewModel.selectedOshi),
-//                            onSave: { updatedOshi in
-//                                self.viewModel.selectedOshi = updatedOshi
-//                                print("編集後の推しデータ: \(updatedOshi.personality ?? "なし")")
-//                            },
-//                            onUpdate: {
-//                                loadOshiData()
-//                                print("onUpdate呼び出し")
-//                            }
-//                        )
-//                    }
-//                    .id(UUID())
-//                }
-                
+            
+            if showRewardCompletedModal {
+                RewardCompletedModal(
+                    isPresented: $showRewardCompletedModal,
+                    rewardAmount: rewardAmount
+                )
+                .zIndex(1000) // MessageLimitModalより上に表示
+            }
+            
+            // NavigationLink（非表示）
             NavigationLink(
                 destination: FirebaseDataLoader(oshiId: viewModel.selectedOshi.id) { loadedOshi in
                     EditOshiPersonalityView(
@@ -239,7 +283,7 @@ struct OshiAIChatView: View {
                         }
                     )
                 }
-                .id(editScreenID),   // 再描画を確実にするためにIDをつける
+                .id(editScreenID),
                 isActive: $showEditPersonality,
                 label: {
                     EmptyView()
@@ -247,49 +291,6 @@ struct OshiAIChatView: View {
             )
             .hidden()
         }
-        .dismissKeyboardOnTap()
-        .gesture(
-            DragGesture()
-                .onEnded { value in
-                    if value.translation.width > 80 {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-        )
-        
-        .onAppear {
-            // データを完全に取得
-            if loadCompleteOshiData {
-                loadCompleteOshiData = false
-                loadFullOshiData()
-            } else if viewModel.selectedOshi.id == "1" {
-                loadActualOshiData()
-            } else {
-                currentOshiId = viewModel.selectedOshi.id
-                resetViewState()
-                loadMessages()
-                markMessagesAsRead()
-            }
-            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
-        }
-        .onChange(of: viewModel.selectedOshi.id) { newId in
-            if currentOshiId != newId {
-                currentOshiId = newId
-                resetViewState()
-                loadMessages()
-            }
-        }
-        .onDisappear {
-            markMessagesAsRead()
-        }
-        .alert(isPresented: $showLimitAlert) {
-            Alert(
-                title: Text("メッセージ制限"),
-                message: Text("1日の送信数を超えました。アップデートをお待ちください。"),
-                dismissButton: .default(Text("OK"))
-            )
-        }
-        .navigationBarHidden(true) // ネイティブナビゲーションバーを非表示
     }
     
     struct FirebaseDataLoader<Content: View>: View {
@@ -360,19 +361,60 @@ struct OshiAIChatView: View {
         }
     }
     
-    private func showRewardAd() {
-        // ここで実際のリワード広告SDKを呼び出す
-        // 例: Google AdMob, Unity Ads など
-        
-        // デモ用：3秒後に広告視聴完了をシミュレート
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            // 広告視聴完了
-            MessageLimitManager.shared.resetCountAfterReward()
-            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
-            showMessageLimitModal = false
+    private func loadRewardedAd() {
+        let request = Request()
+        RewardedAd.load(with: "ca-app-pub-3940256099942544/1712485313", // テスト用ID
+                          request: request) { [self] ad, error in
+            if let error = error {
+                print("リワード広告の読み込みに失敗しました: \(error.localizedDescription)")
+                return
+            }
             
-            // 成功メッセージを表示（オプション）
-            generateHapticFeedback()
+            DispatchQueue.main.async {
+                self.rewardedAd = ad
+                print("リワード広告の読み込みが完了しました")
+            }
+        }
+    }
+    
+    private func showRewardAd() {
+        guard let rewardedAd = rewardedAd else {
+            print("リワード広告が準備できていません")
+            // 広告が準備できていない場合は再読み込み
+            loadRewardedAd()
+            return
+        }
+        
+        // rootViewControllerの取得方法を修正
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
+            print("rootViewControllerが取得できません")
+            return
+        }
+        
+        rewardedAd.present(from: rootViewController) {
+            // 広告視聴完了時の処理
+            DispatchQueue.main.async {
+                // まず制限をリセット
+                MessageLimitManager.shared.resetCountAfterReward()
+                self.remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+                
+                // メッセージ制限モーダルを閉じる
+                self.showMessageLimitModal = false
+                
+                // 報酬獲得数を設定（MessageLimitManagerから取得または固定値）
+                self.rewardAmount = 10 // または MessageLimitManager.shared.getRewardAmount()
+                
+                // 少し遅延してからリワード完了モーダルを表示
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    self.showRewardCompletedModal = true
+                }
+                
+                generateHapticFeedback()
+                
+                // 広告を再読み込み（次回のため）
+                self.loadRewardedAd()
+            }
         }
     }
     
@@ -774,7 +816,8 @@ struct OshiAIChatView: View {
         
         // メッセージ制限をチェック
         if MessageLimitManager.shared.hasReachedLimit() {
-            showLimitAlert = true
+            print("sendMessage()!!!!")
+            showMessageLimitModal = true
             return
         }
         

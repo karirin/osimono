@@ -401,6 +401,8 @@ struct SettingsView: View {
                     fetchOshiList()
                     loadSelectedOshi()
                 }
+            } else {
+                AddOshiView()
             }
         }
         .alert(isPresented: $isShowingLogoutAlert) {

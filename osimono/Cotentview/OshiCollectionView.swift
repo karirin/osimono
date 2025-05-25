@@ -127,8 +127,8 @@ struct OshiCollectionView: View {
     var body: some View {
         ZStack{
             VStack(spacing: -5) {
-//                BannerAdView()
-//                    .frame(height: 60)
+                BannerAdView()
+                    .frame(height: 60)
                 
                 // 検索バーとフィルター
                 HStack(spacing: 12) {

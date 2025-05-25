@@ -36,23 +36,23 @@ struct HelpModalView: View {
                     Text("お問い合せ")
                         .font(.headline)
                         .fontWeight(.bold)
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(.black)
                     Text("ご意見やご要望がありましたら、\nお気軽にお知らせください。\n可能な限り対応いたします。")
                         .font(.system(size: isSmallDevice() ? 16 : 17))
                         .multilineTextAlignment(.leading)
                         .padding(.bottom, 5)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.black)
                 }
                 
                 // テキスト入力エリア - より洗練されたデザイン
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("メッセージ")
+                    Text("問い合わせ内容")
                         .font(.subheadline)
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(.black)
                     ZStack(alignment: .topLeading) {
                         if text.isEmpty && !isFocused {
                             Text("例）推しの記録が登録できない")
-                                .foregroundColor(Color(.placeholderText))
+                                .foregroundColor(Color(.gray))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
                         }
@@ -61,8 +61,7 @@ struct HelpModalView: View {
                             .padding(.horizontal, 10)
                             .padding(.vertical, 10)
                             .scrollContentBackground(.hidden)
-                            .background(colorScheme == .dark ? Color(.white) : Color.white)
-                            .foregroundColor(colorScheme == .dark ? .white : .primary)
+                            .foregroundColor(colorScheme == .dark ? .black : .black)
                     }
                     .background(colorScheme == .dark ? Color(.white) : Color.white)
                     .frame(height: 120)
@@ -106,7 +105,7 @@ struct HelpModalView: View {
                     Toggle("今後は表示しない", isOn: $toggle)
                         .toggleStyle(SwitchToggleStyle(tint: .blue))
                         .font(.subheadline)
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(.black)
                     Spacer()
                 }
                 .padding(.vertical, 5)
