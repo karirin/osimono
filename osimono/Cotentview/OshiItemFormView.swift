@@ -202,9 +202,14 @@ struct OshiItemFormView: View {
                                 
                                 TextField(titlePlaceholder(), text: $title)
                                     .padding()
-                                    .background(cardColor)
-                                    .cornerRadius(12)
-                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color(.secondarySystemBackground))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color(.separator), lineWidth: 0.5)
+                                    )
                             }
                             .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             // カテゴリー（グッズの場合のみ表示）
@@ -246,8 +251,14 @@ struct OshiItemFormView: View {
                                     
                                     NumberTextField(text: $price, placeholder: "例: 5500")
                                         .padding()
-                                        .background(cardColor)
-                                        .cornerRadius(12)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color(.secondarySystemBackground))
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color(.separator), lineWidth: 0.5)
+                                        )
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 }
                                 .padding(.horizontal,isSmallDevice() ? 10 : 0)
@@ -262,7 +273,14 @@ struct OshiItemFormView: View {
                                     
                                     TextField("例: BTS ライブ『LOVE YOURSELF』", text: $eventName)
                                         .padding()
-                                        .background(cardColor)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color(.secondarySystemBackground))
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color(.separator), lineWidth: 0.5)
+                                        )
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 }
@@ -297,7 +315,14 @@ struct OshiItemFormView: View {
                                     }
                                     TextField("例: 東京都渋谷区〇〇", text: $locationAddress)
                                         .padding()
-                                        .background(cardColor)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color(.secondarySystemBackground))
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color(.separator), lineWidth: 0.5)
+                                        )
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 }
@@ -360,7 +385,14 @@ struct OshiItemFormView: View {
                                 HStack {
                                     TextField("新しいタグを追加", text: $newTag)
                                         .padding()
-                                        .background(cardColor)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color(.secondarySystemBackground))
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color(.separator), lineWidth: 0.5)
+                                        )
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                     
@@ -384,23 +416,49 @@ struct OshiItemFormView: View {
                             }
                             .padding(.horizontal,isSmallDevice() ? 10 : 0)
                             
-                            // メモ
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(memoLabel())
                                     .font(.headline)
                                     .foregroundColor(.gray)
                                 
-                                TextEditor(text: $memo)
-                                    .frame(minHeight: 100)
-                                    .padding()
-                                    .cornerRadius(12).background(colorScheme == .dark ? Color(.white) : Color.white)
-                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                ZStack(alignment: .topLeading) {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.secondarySystemBackground))
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.secondarySystemBackground))
+                            )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color(.separator), lineWidth: 0.5)
+                                        )
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                    
+                                    // TextEditorを透明背景で配置
+                                    TextEditor(text: $memo)
+                                        .frame(minHeight: 100)
+                                        .padding()
+                                        .background(Color.clear)
+                                        .scrollContentBackground(.hidden) // iOS 16以降で背景を非表示
+                                        .onAppear {
+                                            // iOS 15以前のTextEditorの背景色設定
+                                            UITextView.appearance().backgroundColor = UIColor.clear
+                                        }
+                                    
+                                    // プレースホルダーテキスト（メモが空の場合）
+                                    if memo.isEmpty {
+                                        Text("ここにメモを入力")
+                                            .foregroundColor(.gray.opacity(0.6))
+                                            .padding(.horizontal, 20)
+                                            .padding(.vertical, 16)
+                                            .allowsHitTesting(false)
+                                    }
+                                }
+                                .frame(minHeight: 120)
                             }
-                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
-                            .background(colorScheme == .dark ? Color(.white) : Color.white)
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
                         }
-                        .padding(.horizontal).background(colorScheme == .dark ? Color(.white) : Color.white)
-                        
+                        .padding(.horizontal)
                         // 送信ボタン
                         Button(action: {
                             generateHapticFeedback()
@@ -504,6 +562,17 @@ struct OshiItemFormView: View {
         .alert(isPresented: $showAlert) {
             Alert(title: Text("通知"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
+    }
+    
+    private func textFieldStyle() -> some View {
+        return AnyView(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.separator), lineWidth: 0.5)
+                )
+        )
     }
     
     // タグ追加関数

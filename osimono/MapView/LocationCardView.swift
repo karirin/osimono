@@ -83,6 +83,7 @@ struct LocationCardView: View {
             // Info section
             VStack(alignment: .leading, spacing: 4) {
                 Text(location.title)
+                    .foregroundColor(.black)
                     .font(.system(size: 16, weight: .bold))
                     .lineLimit(1)
                 
@@ -223,4 +224,47 @@ struct RatingModalView: View {
         default: return ""
         }
     }
+}
+
+#Preview {
+    // EventLocationの実際の初期化方法に合わせて調整してください
+    // 例1: 基本的な初期化
+    let sampleLocation = EventLocation(
+        id: "sample-location-1",
+        title: "推しカフェ",
+        latitude: 35.6762,
+        longitude: 139.6503,
+        imageURL: "https://example.com/sample-image.jpg", category: "test",
+        ratingSum: 42
+    )
+    
+    // 例2: もしEventLocationが異なる初期化方法を持つ場合
+    // let sampleLocation = EventLocation()
+    // sampleLocation.id = "sample-location-1"
+    // sampleLocation.title = "推しカフェ"
+    // などの設定...
+    
+    // MapPinView.PinTypeの実際の値に合わせて調整してください
+    // 例: .restaurant, .shop, .event, .other など
+    let samplePinType = MapPinView.PinType.cafe
+    
+    VStack(spacing: 20) {
+        // 選択されていない状態
+        LocationCardView(
+            location: sampleLocation,
+            isSelected: false,
+            pinType: samplePinType,
+            oshiId: "sample-oshi-id"
+        )
+        
+        // 選択されている状態
+        LocationCardView(
+            location: sampleLocation,
+            isSelected: true,
+            pinType: samplePinType,
+            oshiId: "sample-oshi-id"
+        )
+    }
+    .padding()
+    .background(Color(.systemGroupedBackground))
 }

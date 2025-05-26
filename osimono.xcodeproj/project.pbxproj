@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		180348852DC0CEFE00AD2922 /* Confetti in Frameworks */ = {isa = PBXBuildFile; productRef = 180348842DC0CEFE00AD2922 /* Confetti */; };
+		18274FF82DE2C5AF00917A47 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */; };
 		182AD6682D8F50B9006F9F09 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 182AD6672D8F50B9006F9F09 /* Lottie */; };
 		1870B01A2D8BD224004B827B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0192D8BD224004B827B /* FirebaseAnalytics */; };
 		1870B01C2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B01B2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion */; };
@@ -98,6 +99,7 @@
 				1870B0342D8BD224004B827B /* FirebaseFunctions in Frameworks */,
 				1870B02C2D8BD224004B827B /* FirebaseDatabase in Frameworks */,
 				1870B02E2D8BD224004B827B /* FirebaseDynamicLinks in Frameworks */,
+				18274FF82DE2C5AF00917A47 /* FirebaseAnalytics in Frameworks */,
 				1870B0202D8BD224004B827B /* FirebaseAppCheck in Frameworks */,
 				1870B0242D8BD224004B827B /* FirebaseAuth in Frameworks */,
 				1870B01A2D8BD224004B827B /* FirebaseAnalytics in Frameworks */,
@@ -212,6 +214,7 @@
 				1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */,
 				189878422DC9084E000F68FB /* OpenAI */,
 				188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */,
+				18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */,
 			);
 			productName = osimono;
 			productReference = 1870AFB32D8BC85E004B827B /* osimono.app */;
@@ -528,7 +531,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3;
+				MARKETING_VERSION = 1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -562,7 +565,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3;
+				MARKETING_VERSION = 1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -764,6 +767,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */;
 			productName = Confetti;
+		};
+		18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FirebaseAnalytics;
 		};
 		182AD6672D8F50B9006F9F09 /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;

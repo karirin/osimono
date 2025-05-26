@@ -137,8 +137,16 @@ struct OshiCollectionView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.gray)
                         
-                        TextField("推しの名前、グッズ名で検索", text: $searchText)
-                            .font(.system(size: 14))
+                        ZStack(alignment: .leading) {
+                            if searchText.isEmpty {
+                                Text("推しの名前、グッズ名で検索")
+                                    .foregroundColor(.gray)
+                                    .font(.system(size: 14))
+                            }
+                            TextField("", text: $searchText)
+                                .font(.system(size: 14))
+                                .foregroundColor(.black)
+                        }
                         
                         if !searchText.isEmpty {
                             Button(action: {

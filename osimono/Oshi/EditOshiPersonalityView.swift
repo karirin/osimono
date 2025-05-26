@@ -39,6 +39,7 @@ struct EditOshiPersonalityView: View {
     // 色の定義
     let primaryColor = Color(.systemPink)
     let backgroundColor = Color(UIColor.systemGroupedBackground)
+    let cardBackgroundColor = Color(UIColor.secondarySystemGroupedBackground)
     
     init(viewModel: OshiViewModel, onSave: @escaping (Oshi) -> Void, onUpdate: @escaping () -> Void) {
         self.viewModel = viewModel
@@ -160,7 +161,7 @@ struct EditOshiPersonalityView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("性別")
                                     .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary) // .grayから変更
                                 
                                 Picker("性別", selection: $gender) {
                                     ForEach(genderOptions, id: \.self) { option in
@@ -172,7 +173,7 @@ struct EditOshiPersonalityView: View {
                                 if gender == "その他" {
                                      TextField("詳細を入力（例：犬、ロボット、橋など）", text: $genderDetail)
                                          .padding(10)
-                                         .background(Color.gray.opacity(0.1))
+                                         .background(Color(.tertiarySystemFill)) // ダークモード対応
                                          .cornerRadius(8)
                                          .padding(.top, 5)
                                          .transition(.opacity.combined(with: .slide))
@@ -181,7 +182,7 @@ struct EditOshiPersonalityView: View {
                             }
                         }
                         .padding()
-                        .background(Color.white)
+                        .background(cardBackgroundColor) // Color.whiteから変更
                         .cornerRadius(12)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         .padding(.horizontal)
@@ -274,7 +275,7 @@ struct EditOshiPersonalityView: View {
             )
         }
         .padding()
-        .background(Color.white)
+        .background(cardBackgroundColor)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
@@ -308,7 +309,7 @@ struct EditOshiPersonalityView: View {
             )
         }
         .padding()
-        .background(Color.white)
+        .background(cardBackgroundColor) // Color.whiteから変更
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
@@ -339,7 +340,7 @@ struct EditOshiPersonalityView: View {
             HStack {
                 TextField("新しい趣味・興味を追加", text: $newInterest)
                     .padding(10)
-                    .background(Color.gray.opacity(0.1))
+                    .background(Color(.tertiarySystemFill)) // ダークモード対応
                     .cornerRadius(8)
                 
                 Button(action: {
@@ -356,7 +357,7 @@ struct EditOshiPersonalityView: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(cardBackgroundColor) // Color.whiteから変更
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
@@ -389,7 +390,7 @@ struct EditOshiPersonalityView: View {
             )
         }
         .padding()
-        .background(Color.white)
+        .background(cardBackgroundColor) // Color.whiteから変更
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
@@ -569,17 +570,17 @@ struct CustomTextField: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary) // .grayから変更
             
             HStack {
                 Image(systemName: iconName)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary) // .grayから変更
                 
                 TextField(placeholder, text: $text)
                     .keyboardType(keyboardType)
             }
             .padding(10)
-            .background(Color.gray.opacity(0.1))
+            .background(Color(.tertiarySystemFill)) // ダークモード対応
             .cornerRadius(8)
         }
     }
@@ -693,11 +694,27 @@ struct FlowLayout<T: Hashable, V: View>: View {
         createdAt: Date().timeIntervalSince1970
     )
     
-    // プレビュー用のクロージャ
-    let updateAction = {}
+    // サンプルのOshiViewModelを作成
+    let sampleViewModel = OshiViewModel(oshi: sampleOshi)
     
-//    EditOshiPersonalityView(oshi: $sampleOshi, onUpdate: updateAction)
-//        .preferredColorScheme(.light)
-    TopView()
+    // プレビュー用のクロージャ
+    let onSaveAction: (Oshi) -> Void = { oshi in
+        print("保存されました: \(oshi.name)")
+    }
+    
+    let onUpdateAction: () -> Void = {
+        print("更新されました")
+    }
+    
+    // selectedOshiを設定してからViewを返す
+    EditOshiPersonalityView(
+        viewModel: {
+            sampleViewModel.selectedOshi = sampleOshi
+            return sampleViewModel
+        }(),
+        onSave: onSaveAction,
+        onUpdate: onUpdateAction
+    )
+    .preferredColorScheme(.light)
 }
 

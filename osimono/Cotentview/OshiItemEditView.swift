@@ -227,7 +227,14 @@ struct OshiItemEditView: View {
                             
                             TextField(titlePlaceholder(), text: $title)
                                 .padding()
-                                .background(cardColor)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.secondarySystemBackground))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color(.separator), lineWidth: 0.5)
+                                )
                                 .cornerRadius(12)
                                 .shadow(color: Color.black.opacity(0.05), radius: 2)
                         }
@@ -272,7 +279,14 @@ struct OshiItemEditView: View {
                                 
                                 NumberTextField(text: $price, placeholder: "例: 5500")
                                     .padding()
-                                    .background(cardColor)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color(.secondarySystemBackground))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color(.separator), lineWidth: 0.5)
+                                    )
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.05), radius: 2)
                             }
@@ -387,7 +401,14 @@ struct OshiItemEditView: View {
                             HStack {
                                 TextField("新しいタグを追加", text: $newTag)
                                     .padding()
-                                    .background(cardColor)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color(.secondarySystemBackground))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color(.separator), lineWidth: 0.5)
+                                    )
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 
@@ -418,12 +439,37 @@ struct OshiItemEditView: View {
                                 .font(.headline)
                                 .foregroundColor(.gray)
                             
-                            TextEditor(text: $memo)
-                                .frame(minHeight: 100)
-                                .padding()
-                                .background(cardColor)
-                                .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.05), radius: 2)
+                            ZStack(alignment: .topLeading) {
+                                // 背景
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.secondarySystemBackground))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color(.separator), lineWidth: 0.5)
+                                    )
+                                    .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                
+                                // TextEditorを透明背景で配置
+                                TextEditor(text: $memo)
+                                    .frame(minHeight: 100)
+                                    .padding()
+                                    .background(Color.clear)
+                                    .scrollContentBackground(.hidden) // iOS 16以降で背景を非表示
+                                    .onAppear {
+                                        // iOS 15以前のTextEditorの背景色設定
+                                        UITextView.appearance().backgroundColor = UIColor.clear
+                                    }
+                                
+                                // プレースホルダーテキスト（メモが空の場合）
+                                if memo.isEmpty {
+                                    Text("ここにメモを入力")
+                                        .foregroundColor(.gray.opacity(0.6))
+                                        .padding(.horizontal, 20)
+                                        .padding(.vertical, 16)
+                                        .allowsHitTesting(false)
+                                }
+                            }
+                            .frame(minHeight: 120)
                         }
                         .padding(.horizontal, isSmallDevice() ? 10 : 0)
                     }
@@ -865,6 +911,65 @@ struct OshiItemEditView: View {
     }
 }
 
+struct CustomTextEditor: UIViewRepresentable {
+    @Binding var text: String
+    var placeholder: String = ""
+    
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.backgroundColor = UIColor.clear
+        textView.font = UIFont.systemFont(ofSize: 16)
+        textView.delegate = context.coordinator
+        textView.text = placeholder
+        textView.textColor = UIColor.placeholderText
+        return textView
+    }
+    
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        if text.isEmpty && uiView.text == placeholder {
+            return
+        }
+        if !text.isEmpty && uiView.textColor == UIColor.placeholderText {
+            uiView.text = text
+            uiView.textColor = UIColor.label
+        } else if uiView.text != text {
+            uiView.text = text
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UITextViewDelegate {
+        let parent: CustomTextEditor
+        
+        init(_ parent: CustomTextEditor) {
+            self.parent = parent
+        }
+        
+        func textViewDidBeginEditing(_ textView: UITextView) {
+            if textView.textColor == UIColor.placeholderText {
+                textView.text = ""
+                textView.textColor = UIColor.label
+            }
+        }
+        
+        func textViewDidEndEditing(_ textView: UITextView) {
+            if textView.text.isEmpty {
+                textView.text = parent.placeholder
+                textView.textColor = UIColor.placeholderText
+            }
+        }
+        
+        func textViewDidChange(_ textView: UITextView) {
+            if textView.textColor != UIColor.placeholderText {
+                parent.text = textView.text
+            }
+        }
+    }
+}
+
 struct OshiItem: Identifiable, Codable {
     var id: String = UUID().uuidString
     var title: String?
@@ -955,8 +1060,8 @@ struct OshiItem: Identifiable, Codable {
         details: "ダミー詳細",
         createdAt: Date().timeIntervalSince1970
     )
-    //    OshiItemEditView(item: dummyItem)
-    TopView()
+        OshiItemEditView(item: dummyItem)
+//    TopView()
 }
 
 

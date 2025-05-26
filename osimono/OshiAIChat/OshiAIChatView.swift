@@ -147,7 +147,7 @@ struct OshiAIChatView: View {
                     
                     Text(viewModel.selectedOshi.name)
                         .font(.system(size: 17, weight: .medium))
-                    
+                        .foregroundStyle(.black)
                     // LINE風メニューボタン
                     Button(action: {
                         generateHapticFeedback()
@@ -211,6 +211,7 @@ struct OshiAIChatView: View {
                         TextField("\(viewModel.selectedOshi.name)に話しかけてみよう", text: $inputText)
                             .padding(10)
                             .background(Color.white)
+                            .foregroundStyle(.black)
                             .cornerRadius(18)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 18)

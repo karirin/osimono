@@ -85,6 +85,35 @@ struct TimelineView: View {
                         )
                     }
                 }
+                .overlay(
+                    VStack(spacing: -5) {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                generateHapticFeedback()
+                                if oshiId == "default" {
+        //                            showingOshiAlert = true
+                                    showNewEventView = true
+                                } else {
+                                    showNewEventView = true
+                                }
+                            }) {
+                                Image(systemName: "calendar.badge.plus")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 56, height: 56)
+                                    .background(
+                                        Circle()
+                                            .fill(brandColor)
+                                            .shadow(color: brandColor.opacity(0.4), radius: 8, x: 0, y: 4)
+                                    )
+                            }
+                            .padding([.bottom, .trailing], 18)
+                            .transition(.scale)
+                        }
+                    }
+                )
                 
                 // Floating action button
                 //            VStack {
@@ -129,35 +158,6 @@ struct TimelineView: View {
                 .hidden()
             }
         }
-        .overlay(
-            VStack(spacing: -5) {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        generateHapticFeedback()
-                        if oshiId == "default" {
-//                            showingOshiAlert = true
-                            showNewEventView = true
-                        } else {
-                            showNewEventView = true
-                        }
-                    }) {
-                        Image(systemName: "calendar.badge.plus")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 56, height: 56)
-                            .background(
-                                Circle()
-                                    .fill(brandColor)
-                                    .shadow(color: brandColor.opacity(0.4), radius: 8, x: 0, y: 4)
-                            )
-                    }
-                    .padding([.bottom, .trailing], 18)
-                    .transition(.scale)
-                }
-            }
-        )
         .overlay(
             ZStack{
                 if showingOshiAlert {

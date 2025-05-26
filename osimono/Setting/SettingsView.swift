@@ -420,11 +420,9 @@ struct SettingsView: View {
                 title: Text("アプリを評価"),
                 message: Text("App Storeでこのアプリを評価しますか？"),
                 primaryButton: .default(Text("評価する")) {
-                    // StoreKit 2.0のレビュー要求機能を呼び出す
-                    requestReview()
                     
                     // または、App Storeのレビューページに直接移動
-                    if let writeReviewURL = URL(string: "https://apps.apple.com/app/idYOUR_APP_ID?action=write-review") {
+                    if let writeReviewURL = URL(string: "https://apps.apple.com/app/id6746085816?action=write-review") {
                         openURL(writeReviewURL)
                     }
                 },

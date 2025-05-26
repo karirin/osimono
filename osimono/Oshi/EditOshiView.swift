@@ -197,7 +197,14 @@ struct EditOshiView: View {
                             
                             TextField("名前を入力", text: $oshiName)
                                 .padding()
-                                .background(Color.white)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.secondarySystemBackground))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color(.separator), lineWidth: 0.5)
+                                )
                                 .cornerRadius(10)
                                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                                 .padding(.horizontal)
@@ -273,7 +280,7 @@ struct EditOshiView: View {
                                 VStack(alignment: .leading) {
                                     Text("性格・特徴を編集")
                                         .font(.headline)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(.black)
                                     
                                     Text("推しの性格や好みを設定してチャットを個性的に")
                                         .font(.caption)
@@ -422,11 +429,11 @@ struct EditOshiView: View {
                             let genderDetail = String(gender[detailStartIndex...])
                             Text("性別：\(genderDetail)")
                                 .font(.system(size: 14))
-                                .foregroundColor(.primary)
+                                .foregroundColor(.black)
                         } else {
                             Text("性別：\(gender)")
                                 .font(.system(size: 14))
-                                .foregroundColor(.primary)
+                                .foregroundColor(.black)
                         }
                     }
                 }
@@ -439,7 +446,7 @@ struct EditOshiView: View {
                         
                         Text("性格: \(personality)")
                             .font(.system(size: 14))
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                     }
                 }
                 
@@ -451,7 +458,7 @@ struct EditOshiView: View {
                         
                         Text("話し方: \(speakingStyle)")
                             .font(.system(size: 14))
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                     }
                 }
                 
@@ -463,7 +470,7 @@ struct EditOshiView: View {
                         
                         Text("誕生日: \(birthday)")
                             .font(.system(size: 14))
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                     }
                 }
                 
@@ -475,7 +482,7 @@ struct EditOshiView: View {
                         
                         Text("趣味: \(interests.joined(separator: "、"))")
                             .font(.system(size: 14))
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                             .lineLimit(1)
                     }
                 }
@@ -488,6 +495,7 @@ struct EditOshiView: View {
                     .stroke(Color.gray.opacity(0.3), lineWidth: 1)
             )
         }
+        .frame(maxWidth:.infinity)
     }
     
     var oshiSelectorOverlay: some View {
