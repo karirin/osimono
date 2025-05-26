@@ -89,6 +89,160 @@ class LocationViewModel: ObservableObject {
     private var db = Database.database().reference()
     private var storage = Storage.storage()
     
+    // 場所を削除
+    func deleteLocation(locationId: String, oshiId: String) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        // まず画像があれば削除
+        if let location = locations.first(where: { $0.id == locationId }),
+           let imageURL = location.imageURL {
+            // Storage参照を作成
+            let imagePath = "location_images/\(userId)/\(oshiId)/\(locationId).jpg"
+            let storageRef = storage.reference().child(imagePath)
+            
+            // 画像を削除
+            storageRef.delete { error in
+                if let error = error {
+                    print("画像削除エラー: \(error.localizedDescription)")
+                }
+            }
+        }
+        
+        // データベースから削除
+        let ref = db.child("locations").child(userId).child(oshiId).child(locationId)
+        ref.removeValue { error, _ in
+            if let error = error {
+                print("削除エラー: \(error.localizedDescription)")
+            } else {
+                print("削除成功")
+                
+                // oshiItemsテーブルからも削除（聖地巡礼の場合）
+                let oshiItemRef = self.db.child("oshiItems").child(userId).child(oshiId).child(locationId)
+                oshiItemRef.removeValue()
+            }
+        }
+    }
+
+    // 場所を更新
+    func updateLocation(id: String,
+                       title: String,
+                       latitude: Double,
+                       longitude: Double,
+                       category: String,
+                       rating: Int,
+                       note: String?,
+                       image: UIImage?,
+                       completion: @escaping (Bool) -> Void) {
+        
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("User not logged in")
+            completion(false)
+            return
+        }
+        
+        let locationRef = db.child("locations").child(userId).child(currentOshiId).child(id)
+        
+        var updateData: [String: Any] = [
+            "title": title,
+            "latitude": latitude,
+            "longitude": longitude,
+            "category": category,
+            "ratingSum": rating,
+            "note": note ?? "",
+            "createdAt": Date().timeIntervalSince1970
+        ]
+        
+        // 画像がある場合は先にアップロード
+        if let image = image, let imageData = image.jpegData(compressionQuality: 0.7) {
+            let imagePath = "location_images/\(userId)/\(currentOshiId)/\(id).jpg"
+            let storageRef = storage.reference().child(imagePath)
+            
+            storageRef.putData(imageData, metadata: nil) { metadata, error in
+                if let error = error {
+                    print("Error uploading image: \(error.localizedDescription)")
+                    // 画像アップロードに失敗してもデータは更新
+                    self.performLocationUpdate(ref: locationRef, data: updateData, completion: completion)
+                    return
+                }
+                
+                storageRef.downloadURL { url, error in
+                    if let downloadURL = url {
+                        updateData["imageURL"] = downloadURL.absoluteString
+                    }
+                    self.performLocationUpdate(ref: locationRef, data: updateData, completion: completion)
+                }
+            }
+        } else {
+            // 画像がない場合は直接更新
+            performLocationUpdate(ref: locationRef, data: updateData, completion: completion)
+        }
+    }
+    
+    private func performLocationUpdate(ref: DatabaseReference, data: [String: Any], completion: @escaping (Bool) -> Void) {
+        ref.updateChildValues(data) { error, _ in
+            if let error = error {
+                print("Error updating location: \(error.localizedDescription)")
+                completion(false)
+            } else {
+                print("Location updated successfully")
+                completion(true)
+            }
+        }
+    }
+    
+    func getLocationDetails(id: String, completion: @escaping (EventLocation?) -> Void) {
+        print("🔍 Starting getLocationDetails for ID: '\(id)'")
+        
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            completion(nil)
+            return
+        }
+        print("✅ User ID: \(userId)")
+        
+        print("✅ Current Oshi ID: \(currentOshiId)")
+        
+        let locationRef = db.child("locations").child(userId).child(currentOshiId).child(id)
+        print("🔍 Firebase path: locations/\(userId)/\(currentOshiId)/\(id)")
+        
+        locationRef.observeSingleEvent(of: .value) { snapshot in
+            print("📡 Firebase response received")
+            print("📊 Snapshot exists: \(snapshot.exists())")
+            print("📊 Snapshot key: \(snapshot.key)")
+            print("📊 Snapshot value: \(snapshot.value ?? "nil")")
+            
+            if let dict = snapshot.value as? [String: Any] {
+                print("✅ Successfully converted to dictionary")
+                print("📋 Dictionary contents: \(dict)")
+                
+                do {
+                    let jsonData = try JSONSerialization.data(withJSONObject: dict)
+                    print("✅ Successfully converted to JSON data")
+                    
+                    var location = try JSONDecoder().decode(EventLocation.self, from: jsonData)
+                    print("✅ Successfully decoded to EventLocation")
+                    print("📍 Location title: \(location.title)")
+                    
+                    location.id = snapshot.key
+                    location.oshiId = self.currentOshiId
+                    print("✅ Set ID and OshiId, completing with location")
+                    completion(location)
+                } catch {
+                    print("❌ Error decoding location details: \(error)")
+                    print("❌ JSON Data: \(String(data: try! JSONSerialization.data(withJSONObject: dict), encoding: .utf8) ?? "nil")")
+                    completion(nil)
+                }
+            } else {
+                print("❌ Failed to convert snapshot to dictionary")
+                print("❌ Snapshot value type: \(type(of: snapshot.value))")
+                completion(nil)
+            }
+        } withCancel: { error in
+            print("❌ Firebase error: \(error.localizedDescription)")
+            completion(nil)
+        }
+    }
+    
     // 全ユーザーのロケーションを読み込む場合の実装
     func fetchLocations(forOshiId oshiId: String = "default") {
         guard let userId = Auth.auth().currentUser?.uid else { return }

@@ -421,37 +421,37 @@ struct EnhancedAddLocationView: View {
                         .padding(.horizontal)
                         
                         // Note Field
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("メモ")
-                                    .font(.system(size: 16, weight: .medium))
-                                
-                                Spacer()
-                                
-                                Text("\(note.count) / 200")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            ZStack(alignment: .topLeading) {
-                                if note.isEmpty {
-                                    Text("どんな推しスポットか簡単に説明しましょう")
-                                        .foregroundColor(.gray)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 12)
-                                }
-                                
-                                TextEditor(text: $note)
-                                    .padding(4)
-                                    .frame(height: 100)
-                                    .background(Color(UIColor.systemGray6))
-                                    .cornerRadius(12)
-                                    .opacity(note.isEmpty ? 0.25 : 1)
-                            }
-                            .background(Color(UIColor.systemGray6))
-                            .cornerRadius(12)
-                        }
-                        .padding(.horizontal)
+//                        VStack(alignment: .leading, spacing: 8) {
+//                            HStack {
+//                                Text("メモ")
+//                                    .font(.system(size: 16, weight: .medium))
+//                                
+//                                Spacer()
+//                                
+//                                Text("\(note.count) / 200")
+//                                    .font(.system(size: 14))
+//                                    .foregroundColor(.gray)
+//                            }
+//                            
+//                            ZStack(alignment: .topLeading) {
+//                                if note.isEmpty {
+//                                    Text("どんな推しスポットか簡単に説明しましょう")
+//                                        .foregroundColor(.gray)
+//                                        .padding(.horizontal, 8)
+//                                        .padding(.vertical, 12)
+//                                }
+//                                
+//                                TextEditor(text: $note)
+//                                    .padding(4)
+//                                    .frame(height: 100)
+//                                    .background(Color(UIColor.systemGray6))
+//                                    .cornerRadius(12)
+//                                    .opacity(note.isEmpty ? 0.25 : 1)
+//                            }
+//                            .background(Color(UIColor.systemGray6))
+//                            .cornerRadius(12)
+//                        }
+//                        .padding(.horizontal)
                         
                         Spacer(minLength: 40)
                     }

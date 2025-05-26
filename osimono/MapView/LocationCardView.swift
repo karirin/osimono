@@ -20,6 +20,10 @@ struct LocationCardView: View {
     @State private var showRatingModal: Bool = false
     var oshiId: String
     
+    @State private var showActionSheet = false
+    @State private var showEditView = false
+    @State private var showDeleteAlert = false
+    
     var distanceText: String {
         if let userLoc = userLocation {
             let eventLoc = CLLocation(latitude: location.latitude, longitude: location.longitude)
@@ -116,7 +120,61 @@ struct LocationCardView: View {
                 }
             }
             .padding(10)
+            
+            
+            NavigationLink(
+                destination: EditLocationView(
+                    viewModel: viewModel,
+                    existingLocation: location, // 既存のlocationオブジェクトを渡す
+                    onLocationUpdated: { updatedLocationId in
+                        print("Location updated: \(updatedLocationId)")
+                        showEditView = false
+                    }
+                )
+                .navigationBarHidden(true),
+                isActive: $showEditView
+            ) {
+                EmptyView()
+            }
+            .hidden()
         }
+        .onLongPressGesture {
+            generateHapticFeedback()
+            showActionSheet = true
+        }
+        .actionSheet(isPresented: $showActionSheet) {
+            ActionSheet(
+                title: Text("スポットの操作"),
+                buttons: [
+                    .default(Text("編集")) {
+                        showEditView = true
+                    },
+                    .destructive(Text("削除")) {
+                        showDeleteAlert = true
+                    },
+                    .cancel(Text("キャンセル"))
+                ]
+            )
+        }
+        .alert(isPresented: $showDeleteAlert) {
+            Alert(
+                title: Text("スポットを削除"),
+                message: Text("「\(location.title)」を削除しますか？この操作は取り消せません。"),
+                primaryButton: .destructive(Text("削除")) {
+                    deleteLocation()
+                },
+                secondaryButton: .cancel(Text("キャンセル"))
+            )
+        }
+//        .sheet(isPresented: $showEditView) {
+//            EditLocationView(
+//                viewModel: viewModel,
+//                location: location,
+//                onUpdate: {
+//                    showEditView = false
+//                }
+//            )
+//        }
         .frame(width: isSelected ? 220 : 180)
         .background(Color.white)
         .cornerRadius(12)
@@ -149,6 +207,11 @@ struct LocationCardView: View {
                 }
             }
         }
+    }
+    
+    private func deleteLocation() {
+        guard let locationId = location.id else { return }
+        viewModel.deleteLocation(locationId: locationId, oshiId: oshiId)
     }
 }
 
