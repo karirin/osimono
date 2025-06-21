@@ -11,6 +11,22 @@ import Firebase
 import FirebaseAuth
 import FirebaseDatabase
 import GoogleMobileAds
+import Combine
+
+extension Publishers {
+    static var keyboardHeight: AnyPublisher<CGFloat, Never> {
+        let willShow = NotificationCenter.default.publisher(for: UIApplication.keyboardWillShowNotification)
+            .map { notification -> CGFloat in
+                (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect)?.height ?? 0
+            }
+        
+        let willHide = NotificationCenter.default.publisher(for: UIApplication.keyboardWillHideNotification)
+            .map { _ -> CGFloat in 0 }
+        
+        return MergeMany(willShow, willHide)
+            .eraseToAnyPublisher()
+    }
+}
 
 // MARK: - 共通クライアント
 struct AIClient {
@@ -61,13 +77,15 @@ struct OshiAIChatView: View {
     @State private var isLoadingAd = false
     var isEmbedded: Bool = false
     
+    // キーボード関連の状態管理を追加
+    @FocusState private var isTextFieldFocused: Bool
+    @State private var keyboardHeight: CGFloat = 0
+    
     init(viewModel: OshiViewModel, oshiItem: OshiItem?, showBackButton: Bool = true, isEmbedded: Bool = false) {
         self.viewModel = viewModel
         self.oshiItem = oshiItem
         self.showBackButton = showBackButton
         self.isEmbedded = isEmbedded
-        
-        // 初期化時に完全なデータを取得
         _loadCompleteOshiData = State(initialValue: true)
     }
 
@@ -83,156 +101,236 @@ struct OshiAIChatView: View {
             }
         }
         .dismissKeyboardOnTap()
+        .onReceive(Publishers.keyboardHeight) { height in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                keyboardHeight = height
+            }
+        }
         .gesture(
             DragGesture()
                 .onEnded { value in
                     if value.translation.width > 80 {
-                        presentationMode.wrappedValue.dismiss()
+                        // キーボードを閉じてから画面を閉じる
+                        isTextFieldFocused = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            presentationMode.wrappedValue.dismiss()
+                        }
                     }
                 }
         )
-        
         .onAppear {
-            // データを完全に取得
-            if loadCompleteOshiData {
-                loadCompleteOshiData = false
-                loadFullOshiData()
-            } else if viewModel.selectedOshi.id == "1" {
-                loadActualOshiData()
-            } else {
-                currentOshiId = viewModel.selectedOshi.id
-                resetViewState()
-                loadMessages()
-                markMessagesAsRead()
-            }
-            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
-            loadRewardedAd()
+            setupView()
         }
         .onChange(of: viewModel.selectedOshi.id) { newId in
-            if currentOshiId != newId {
-                currentOshiId = newId
-                resetViewState()
-                loadMessages()
-            }
+            handleOshiChange(newId: newId)
         }
         .onDisappear {
+            cleanup()
+        }
+        .navigationBarHidden(true)
+    }
+    
+    private func setupView() {
+        if loadCompleteOshiData {
+            loadCompleteOshiData = false
+            loadFullOshiData()
+        } else if viewModel.selectedOshi.id == "1" {
+            loadActualOshiData()
+        } else {
+            currentOshiId = viewModel.selectedOshi.id
+            resetViewState()
+            loadMessages()
             markMessagesAsRead()
         }
-        .navigationBarHidden(true) // ネイティブナビゲーションバーを非表示
+        remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+        loadRewardedAd()
+    }
+    
+    private func handleOshiChange(newId: String) {
+        if currentOshiId != newId {
+            print("推しが変更されました: \(currentOshiId) -> \(newId)")
+            currentOshiId = newId
+            resetViewState()
+            loadMessages()
+        }
+    }
+    
+    private func cleanup() {
+        markMessagesAsRead()
+        isTextFieldFocused = false // キーボードを閉じる
     }
     
     private var chatContent: some View {
         ZStack {
-            // 背景色をLINE風に
             lineBgColor.edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
-                // LINE風ヘッダー
-                HStack(spacing: 10) {
-                    // 戻るボタンを条件付きで表示
-                    if showBackButton {
-                        Button(action: {
-                            generateHapticFeedback()
-                            presentationMode.wrappedValue.dismiss()
-                        }) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    
-                    // プロフィール画像（小さく表示）
-                    profileImage
-                        .frame(width: 36, height: 36)
-                    
-                    Text(viewModel.selectedOshi.name)
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.black)
-                    // LINE風メニューボタン
-                    Button(action: {
-                        generateHapticFeedback()
-                        showEditPersonality = true
-                    }) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 20))
-                            .foregroundColor(.black)
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(Color.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
+                // ヘッダー
+                headerView
                 
                 // チャットメッセージリスト
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            if messages.isEmpty {
-                                Text("会話を始めましょう！")
-                                    .foregroundColor(.gray)
-                                    .padding(.top, 40)
-                            } else {
-                                ForEach(messages, id: \.id) { message in
-                                    LineChatBubble(message: message, oshiName: viewModel.selectedOshi.name, oshiImageURL: viewModel.selectedOshi.imageUrl)
-                                        .id(message.id)
-                                }
-                                Color.clear
-                                    .frame(height: 1)
-                                    .id("bottomMarker")
-                            }
-                        }
-                        .padding()
-                        .opacity(isInitialScrollComplete ? 1 : 0)
-                    }
-                    .onChange(of: messages.count) { _ in
-                        if !isFetchingMessages && !messages.isEmpty && !isInitialScrollComplete {
-                            proxy.scrollTo("bottomMarker", anchor: .bottom)
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                isInitialScrollComplete = true
-                            }
-                        }
-                    }
-                    .onChange(of: shouldScrollToBottom) { shouldScroll in
-                        if shouldScroll && !messages.isEmpty {
-                            withAnimation {
-                                proxy.scrollTo("bottomMarker", anchor: .bottom)
-                            }
-                            shouldScrollToBottom = false
-                        }
-                    }
-                }
+                chatMessagesView
                 
-                // LINE風入力エリア
-                VStack(spacing: 0) {
-                    Divider()
-                    HStack(spacing: 10) {
-                        // 入力フィールド
-                        TextField("\(viewModel.selectedOshi.name)に話しかけてみよう", text: $inputText)
-                            .padding(10)
-                            .background(Color.white)
-                            .foregroundStyle(.black)
-                            .cornerRadius(18)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 18)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                        
-                        // 送信ボタン（LINE風）
-                        Button(action: sendMessage) {
-                            Image(systemName: "arrow.up.circle.fill")
-                                .font(.system(size: 32))
-                                .foregroundColor(inputText.isEmpty || isLoading ? Color.gray.opacity(0.5) : lineGreen)
-                        }
-                        .disabled(inputText.isEmpty || isLoading)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 10)
-                    .background(Color.white)
-                }
-                .opacity(isInitialScrollComplete ? 1 : 0)
+                // 入力エリア（修正版）
+                inputAreaView
+                    .padding(.bottom, keyboardHeight > 0 ? 0 : 0) // キーボードに合わせて調整
             }
             
+            // オーバーレイ
+            overlaysView
+        }
+    }
+    
+    private var headerView: some View {
+        HStack(spacing: 10) {
+            if showBackButton {
+                Button(action: {
+                    generateHapticFeedback()
+                    isTextFieldFocused = false // キーボードを閉じる
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.blue)
+                }
+            }
+            
+            profileImage
+                .frame(width: 36, height: 36)
+            
+            Text(viewModel.selectedOshi.name)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(.black)
+            
+            Button(action: {
+                generateHapticFeedback()
+                isTextFieldFocused = false // キーボードを閉じる
+                showEditPersonality = true
+            }) {
+                Image(systemName: "pencil")
+                    .font(.system(size: 20))
+                    .foregroundColor(.black)
+            }
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 10)
+        .background(Color.white)
+        .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
+    }
+    
+    private var chatMessagesView: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    if messages.isEmpty {
+                        Text("会話を始めましょう！")
+                            .foregroundColor(.gray)
+                            .padding(.top, 40)
+                    } else {
+                        ForEach(messages, id: \.id) { message in
+                            LineChatBubble(message: message, oshiName: viewModel.selectedOshi.name, oshiImageURL: viewModel.selectedOshi.imageUrl)
+                                .id(message.id)
+                        }
+                        Color.clear
+                            .frame(height: 1)
+                            .id("bottomMarker")
+                    }
+                }
+                .padding()
+                .opacity(isInitialScrollComplete ? 1 : 0)
+            }
+            .onChange(of: messages.count) { _ in
+                // 関数を使わずに直接実装
+                if !isFetchingMessages && !messages.isEmpty && !isInitialScrollComplete {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        proxy.scrollTo("bottomMarker", anchor: .bottom)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isInitialScrollComplete = true
+                        }
+                    }
+                }
+            }
+            .onChange(of: shouldScrollToBottom) { shouldScroll in
+                if shouldScroll && !messages.isEmpty {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        proxy.scrollTo("bottomMarker", anchor: .bottom)
+                    }
+                    shouldScrollToBottom = false
+                }
+            }
+            .onChange(of: keyboardHeight) { _ in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        proxy.scrollTo("bottomMarker", anchor: .bottom)
+                    }
+                }
+            }
+        }
+    }
+    
+    // 修正された入力エリア
+    private var inputAreaView: some View {
+        VStack(spacing: 0) {
+            Divider()
+            HStack(spacing: 12) {
+                // テキストフィールド
+                TextField("\(viewModel.selectedOshi.name)に話しかけてみよう", text: $inputText)
+                    .focused($isTextFieldFocused)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Color.white)
+                    .foregroundStyle(.black)
+                    .cornerRadius(20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
+                    .onSubmit {
+                        if !inputText.isEmpty && !isLoading {
+                            print("Enter key pressed")
+                            sendMessage()
+                        }
+                    }
+                
+                // 送信ボタン（修正版）
+                sendButton
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.white)
+        }
+        .opacity(isInitialScrollComplete ? 1 : 0)
+    }
+    
+    private var sendButton: some View {
+        Button(action: {
+            print("Send button tapped")
+            if !inputText.isEmpty && !isLoading {
+                generateHapticFeedback()
+                sendMessage()
+            }
+        }) {
+            ZStack {
+                Circle()
+                    .fill(inputText.isEmpty || isLoading ? Color.gray.opacity(0.4) : lineGreen)
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+            }
+        }
+        .disabled(inputText.isEmpty || isLoading)
+        .buttonStyle(PlainButtonStyle()) // デフォルトスタイルを無効化
+        .scaleEffect(inputText.isEmpty || isLoading ? 0.9 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: inputText.isEmpty || isLoading)
+    }
+    
+    private var overlaysView: some View {
+        ZStack {
             // ローディングオーバーレイ
             if !isInitialScrollComplete || isLoading {
                 Color.black.opacity(0.5)
@@ -247,18 +345,20 @@ struct OshiAIChatView: View {
                                 .padding(.top, 10)
                         }
                     )
+                    .onTapGesture {
+                        // ローディング中のタップを無効化
+                    }
             }
             
             if showMessageLimitModal {
                 MessageLimitModal(
                     isPresented: $showMessageLimitModal,
                     onWatchAd: {
-                        // リワード広告を表示
                         showRewardAd()
                     },
                     remainingMessages: remainingMessages
                 )
-                .zIndex(999) // 最前面に表示
+                .zIndex(999)
             }
             
             if showRewardCompletedModal {
@@ -266,7 +366,7 @@ struct OshiAIChatView: View {
                     isPresented: $showRewardCompletedModal,
                     rewardAmount: rewardAmount
                 )
-                .zIndex(1000) // MessageLimitModalより上に表示
+                .zIndex(1000)
             }
             
             // NavigationLink（非表示）
@@ -276,19 +376,15 @@ struct OshiAIChatView: View {
                         viewModel: OshiViewModel(oshi: loadedOshi ?? viewModel.selectedOshi),
                         onSave: { updatedOshi in
                             self.viewModel.selectedOshi = updatedOshi
-                            print("編集後の推しデータ: \(updatedOshi.personality ?? "なし")")
                         },
                         onUpdate: {
                             loadOshiData()
-                            print("onUpdate呼び出し")
                         }
                     )
                 }
                 .id(editScreenID),
                 isActive: $showEditPersonality,
-                label: {
-                    EmptyView()
-                }
+                label: { EmptyView() }
             )
             .hidden()
         }
@@ -814,7 +910,7 @@ struct OshiAIChatView: View {
     // メッセージ送信
     private func sendMessage() {
         guard !inputText.isEmpty else { return }
-        
+        print("タップ５！！！！！")
         // メッセージ制限をチェック
         if MessageLimitManager.shared.hasReachedLimit() {
             print("sendMessage()!!!!")
@@ -841,7 +937,9 @@ struct OshiAIChatView: View {
         
         // 入力フィールドをクリア（メッセージ追加前に行う）
         let userInput = inputText
-        inputText = ""
+        DispatchQueue.main.async {
+            self.inputText = ""
+        }
         
         // メッセージをUIに追加
         messages.append(userMessage)

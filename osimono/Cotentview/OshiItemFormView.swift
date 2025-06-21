@@ -532,13 +532,8 @@ struct OshiItemFormView: View {
         )
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePickerView { pickedImage in
-                self.originalImage = pickedImage
-                if let data = pickedImage.jpegData(compressionQuality: 1.0),
-                   let thumb = UIImage.downsample(data: data, maxPixel: 600) {
-                    self.selectedImageForCropping = thumb
-                } else {
-                    self.selectedImageForCropping = pickedImage
-                }
+                // 直接selectedImageForCroppingに設定（ダウンサンプリングなし）
+                self.selectedImageForCropping = pickedImage
             }
         }
         .onChange(of: selectedImageForCropping) { img in

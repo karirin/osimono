@@ -163,7 +163,8 @@ struct EnhancedMonthCalendarView: View {
                 ForEach(Array(eventsForSelectedDate.enumerated()), id: \.element.id) { index, event in
                     EnhancedTimelineRow(
                         event: event,
-                        selectedEventID: $selectedEventID
+                        selectedEventID: $selectedEventID,
+                        viewModel: viewModel
                     )
                     .padding(.bottom, 8)
                 }

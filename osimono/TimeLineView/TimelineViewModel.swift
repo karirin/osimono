@@ -23,6 +23,106 @@ class TimelineViewModel: ObservableObject {
         fetchEvents(forOshiId: id)
     }
     
+    func updateEvent(event: TimelineEvent, completion: ((Bool) -> Void)? = nil) {
+        isLoading = true
+        var updatedEvent = event
+        updatedEvent.oshiId = currentOshiId
+        
+        if let image = updatedEvent.image {
+            // 新しい画像がある場合は古い画像を削除してから新しい画像をアップロード
+            if let oldImageURL = event.imageURL, !oldImageURL.isEmpty {
+                let oldStorageRef = Storage.storage().reference(forURL: oldImageURL)
+                oldStorageRef.delete { error in
+                    if let error = error {
+                        print("古い画像削除エラー: \(error.localizedDescription)")
+                    }
+                }
+            }
+            
+            // 新しい画像をアップロード
+            guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+                completion?(false)
+                isLoading = false
+                return
+            }
+            
+            let imageId = UUID().uuidString
+            let imageRef = Storage.storage().reference().child("timelineImages/\(currentOshiId)/\(imageId).jpg")
+            
+            imageRef.putData(imageData, metadata: nil) { metadata, error in
+                if let error = error {
+                    print("画像アップロード失敗: \(error.localizedDescription)")
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        completion?(false)
+                    }
+                    return
+                }
+                
+                imageRef.downloadURL { url, error in
+                    if let downloadURL = url {
+                        self.updateEventInFirebase(updatedEvent, imageURL: downloadURL.absoluteString) { success in
+                            DispatchQueue.main.async {
+                                self.isLoading = false
+                                completion?(success)
+                            }
+                        }
+                    } else {
+                        self.updateEventInFirebase(updatedEvent, imageURL: nil) { success in
+                            DispatchQueue.main.async {
+                                self.isLoading = false
+                                completion?(success)
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // 新しい画像がない場合は既存の画像URLを保持
+            updateEventInFirebase(updatedEvent, imageURL: updatedEvent.imageURL) { success in
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    completion?(success)
+                }
+            }
+        }
+    }
+    
+    private func updateEventInFirebase(_ event: TimelineEvent, imageURL: String?, completion: ((Bool) -> Void)? = nil) {
+        let colorString: String
+        if event.color == Color(hex: "3B82F6") {
+            colorString = "blue"
+        } else if event.color == Color(hex: "10B981") {
+            colorString = "green"
+        } else {
+            colorString = "gray"
+        }
+        
+        let eventId = event.id.uuidString
+        var eventDict: [String: Any] = [
+            "id": eventId,
+            "time": event.time,
+            "title": event.title,
+            "color": colorString
+        ]
+        
+        if let imageURL = imageURL {
+            eventDict["imageURL"] = imageURL
+        }
+        
+        let oshiId = event.oshiId ?? currentOshiId
+        dbRef.child(oshiId).child(eventId).setValue(eventDict) { error, _ in
+            if let error = error {
+                print("イベント更新エラー: \(error.localizedDescription)")
+                completion?(false)
+            } else {
+                // UIの更新のため、イベントを再取得
+                self.fetchEvents(forOshiId: oshiId)
+                completion?(true)
+            }
+        }
+    }
+    
     // 特定の推しに関連するイベントを取得
     func fetchEvents(forOshiId oshiId: String = "default") {
         isLoading = true

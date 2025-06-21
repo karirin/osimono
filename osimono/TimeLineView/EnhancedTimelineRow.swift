@@ -12,10 +12,11 @@ import FirebaseAuth
 struct EnhancedTimelineRow: View {
     let event: TimelineEvent
     @Binding var selectedEventID: UUID?
+    @ObservedObject var viewModel: TimelineViewModel // ViewModelを追加
     
     // Colors
     private let cardBackgroundColor = Color(UIColor.secondarySystemBackground)
-    private let timelineColor = Color(UIColor.systemGray4) // Color for the timeline line
+    private let timelineColor = Color(UIColor.systemGray4)
     
     var formattedTime: String {
         let inputFormatter = DateFormatter()
@@ -53,7 +54,6 @@ struct EnhancedTimelineRow: View {
                     .frame(width: 12, height: 12)
                     .shadow(color: event.color.opacity(0.3), radius: 2, x: 0, y: 1)
             }
-            //            .frame(height: selectedEventID == event.id ? 200 : 20)
             
             // Event content
             VStack(alignment: .leading, spacing: 8) {
@@ -61,9 +61,29 @@ struct EnhancedTimelineRow: View {
                     Text(event.title)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Color(UIColor.label))
-                    // 画像アイコン分の余白を確保
                         .padding(.trailing, (selectedEventID != event.id && event.imageURL != nil) ? 30 : 0)
                     
+                    Spacer()
+                    
+                    // 編集ボタン（選択時のみ表示）
+                    if selectedEventID == event.id {
+                        NavigationLink(destination:
+                            EnhancedEditEventView(
+                                isPresented: .constant(false),
+                                viewModel: viewModel,
+                                eventToEdit: event
+                            )
+                            .navigationBarHidden(true)
+                        ) {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color(UIColor.systemBlue))
+                                .frame(width: 32, height: 32)
+                                .background(Color(UIColor.systemBlue).opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                        .transition(.scale.combined(with: .opacity))
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .overlay(
@@ -85,7 +105,6 @@ struct EnhancedTimelineRow: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.gray.opacity(0.1))
                                 .frame(height: 160)
-                            //                                .shimmer(true)
                         case .success(let image):
                             image
                                 .resizable()

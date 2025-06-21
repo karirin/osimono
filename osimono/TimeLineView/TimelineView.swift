@@ -31,7 +31,7 @@ struct TimelineView: View {
     }
     
     var body: some View {
-        NavigationView{
+        NavigationView {
             ZStack {
                 backgroundColor.ignoresSafeArea()
                 
@@ -90,15 +90,17 @@ struct TimelineView: View {
                         Spacer()
                         HStack {
                             Spacer()
-                            Button(action: {
-                                generateHapticFeedback()
-                                if oshiId == "default" {
-        //                            showingOshiAlert = true
-                                    showNewEventView = true
-                                } else {
-                                    showNewEventView = true
-                                }
-                            }) {
+                            
+                            // NavigationLinkでイベント作成画面に遷移
+                            NavigationLink(
+                                destination: EnhancedNewEventView(
+                                    isPresented: $showNewEventView,
+                                    viewModel: viewModel,
+                                    initialDate: selectedDate
+                                )
+                                .navigationBarHidden(true),
+                                isActive: $showNewEventView
+                            ) {
                                 Image(systemName: "calendar.badge.plus")
                                     .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(.white)
@@ -109,54 +111,21 @@ struct TimelineView: View {
                                             .shadow(color: brandColor.opacity(0.4), radius: 8, x: 0, y: 4)
                                     )
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                generateHapticFeedback()
+                                if oshiId == "default" {
+                                    showNewEventView = true
+                                } else {
+                                    showNewEventView = true
+                                }
+                            })
                             .padding([.bottom, .trailing], 18)
                             .transition(.scale)
                         }
                     }
                 )
-                
-                // Floating action button
-                //            VStack {
-                //                Spacer()
-                //                HStack {
-                //                    Spacer()
-                //                    Button(action: {
-                //                        generateHapticFeedback()
-                //                        if oshiId == "default" {
-                ////                            showingOshiAlert = true
-                //                            showNewEventView = true
-                //                        } else {
-                //                            showNewEventView = true
-                //                        }
-                //                    }) {
-                //                        Image(systemName: "plus")
-                //                            .font(.system(size: 20, weight: .semibold))
-                //                            .foregroundColor(.white)
-                //                            .frame(width: 56, height: 56)
-                //                            .background(
-                //                                Circle()
-                //                                    .fill(brandColor)
-                //                                    .shadow(color: brandColor.opacity(0.4), radius: 8, x: 0, y: 4)
-                //                            )
-                //                    }
-                //                    .padding([.bottom, .trailing], 24)
-                //                    .transition(.scale)
-                //                }
-                //            }
-                NavigationLink(
-                    destination:
-                        EnhancedNewEventView(
-                            isPresented: $showNewEventView,
-                            viewModel: viewModel,
-                            initialDate: selectedDate
-                        )
-                        .navigationBarHidden(true),
-                    isActive: $showNewEventView
-                ) {
-                    EmptyView()
-                }
-                .hidden()
             }
+            .navigationBarHidden(true)
         }
         .overlay(
             ZStack{
@@ -185,12 +154,6 @@ struct TimelineView: View {
         .fullScreenCover(isPresented: $showAddOshiForm) {
             AddOshiView()
         }
-//        .fullScreenCover(isPresented: $showNewEventView) {
-//            // イベント作成ビューが閉じられた時にイベントリストを更新
-//            viewModel.fetchEvents(forOshiId: oshiId)
-//        } content: {
-//            EnhancedNewEventView(isPresented: $showNewEventView, viewModel: viewModel, initialDate: selectedDate)
-//        }
     }
 }
 
