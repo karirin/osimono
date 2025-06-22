@@ -106,11 +106,10 @@ struct OshiAIChatView: View {
                 keyboardHeight = height
             }
         }
-        .gesture(
-            DragGesture()
+        .simultaneousGesture(                  // ← 子ビューのタップも同時に許可
+            DragGesture(minimumDistance: 30)   // ← 誤認防止にしきい値を大きめに
                 .onEnded { value in
                     if value.translation.width > 80 {
-                        // キーボードを閉じてから画面を閉じる
                         isTextFieldFocused = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             presentationMode.wrappedValue.dismiss()
@@ -306,13 +305,7 @@ struct OshiAIChatView: View {
     }
     
     private var sendButton: some View {
-        Button(action: {
-            print("Send button tapped")
-            if !inputText.isEmpty && !isLoading {
-                generateHapticFeedback()
-                sendMessage()
-            }
-        }) {
+        Button(action: {}) {
             ZStack {
                 Circle()
                     .fill(inputText.isEmpty || isLoading ? Color.gray.opacity(0.4) : lineGreen)
@@ -322,11 +315,20 @@ struct OshiAIChatView: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
             }
+            .contentShape(Rectangle())            // 40×40 を確実にタップ領域に
+            .highPriorityGesture(                 // ドラッグより先にタップを認識
+                TapGesture().onEnded {
+                    if !inputText.isEmpty && !isLoading {
+                        generateHapticFeedback()
+                        sendMessage()
+                    }
+                }
+            )
+            .disabled(inputText.isEmpty || isLoading)
+            .buttonStyle(PlainButtonStyle())
+            .scaleEffect(inputText.isEmpty || isLoading ? 0.9 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: inputText.isEmpty || isLoading)
         }
-        .disabled(inputText.isEmpty || isLoading)
-        .buttonStyle(PlainButtonStyle()) // デフォルトスタイルを無効化
-        .scaleEffect(inputText.isEmpty || isLoading ? 0.9 : 1.0)
-        .animation(.easeInOut(duration: 0.15), value: inputText.isEmpty || isLoading)
     }
     
     private var overlaysView: some View {

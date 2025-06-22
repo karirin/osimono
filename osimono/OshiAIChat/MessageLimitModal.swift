@@ -18,7 +18,7 @@ struct MessageLimitModal: View {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
                 .onTapGesture {
-                    // 背景タップで閉じないようにする
+                    isPresented = false
                 }
             
             VStack(spacing: 20) {
