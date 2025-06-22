@@ -90,43 +90,55 @@ struct OshiAIChatView: View {
     }
 
     var body: some View {
+        ZStack {
+            chatLayer
+                .allowsHitTesting(!(showMessageLimitModal || showRewardCompletedModal))
+                .gesture(
+                    (showMessageLimitModal || showRewardCompletedModal) ? nil :
+                        DragGesture(minimumDistance: 30)
+                            .onEnded { value in
+                                if value.translation.width > 80 {
+                                    isTextFieldFocused = false
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        presentationMode.wrappedValue.dismiss()
+                                    }
+                                }
+                            }
+                )
+
+            if showMessageLimitModal {
+                MessageLimitModal(
+                    isPresented: $showMessageLimitModal,
+                    onWatchAd: { showRewardAd() },
+                    remainingMessages: remainingMessages
+                )
+            }
+
+            if showRewardCompletedModal {
+                RewardCompletedModal(
+                    isPresented: $showRewardCompletedModal,
+                    rewardAmount: rewardAmount
+                )
+            }
+        }
+        .onReceive(Publishers.keyboardHeight) { height in
+            withAnimation(.easeInOut(duration: 0.3)) { keyboardHeight = height }
+        }
+        .dismissKeyboardOnTap()
+        .onAppear { setupView() }
+        .onChange(of: viewModel.selectedOshi.id) { handleOshiChange(newId: $0) }
+        .onDisappear { cleanup() }
+        .navigationBarHidden(true)
+    }
+    
+    private var chatLayer: some View {
         Group {
             if isEmbedded {
                 chatContent
             } else {
-                NavigationView {
-                    chatContent
-                }
-                .navigationViewStyle(StackNavigationViewStyle())
+                NavigationView { chatContent }.navigationViewStyle(StackNavigationViewStyle())
             }
         }
-        .dismissKeyboardOnTap()
-        .onReceive(Publishers.keyboardHeight) { height in
-            withAnimation(.easeInOut(duration: 0.3)) {
-                keyboardHeight = height
-            }
-        }
-        .simultaneousGesture(                  // ← 子ビューのタップも同時に許可
-            DragGesture(minimumDistance: 30)   // ← 誤認防止にしきい値を大きめに
-                .onEnded { value in
-                    if value.translation.width > 80 {
-                        isTextFieldFocused = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            presentationMode.wrappedValue.dismiss()
-                        }
-                    }
-                }
-        )
-        .onAppear {
-            setupView()
-        }
-        .onChange(of: viewModel.selectedOshi.id) { newId in
-            handleOshiChange(newId: newId)
-        }
-        .onDisappear {
-            cleanup()
-        }
-        .navigationBarHidden(true)
     }
     
     private func setupView() {
@@ -462,7 +474,7 @@ struct OshiAIChatView: View {
     
     private func loadRewardedAd() {
         let request = Request()
-        RewardedAd.load(with: "ca-app-pub-3940256099942544/1712485313", // テスト用ID
+        RewardedAd.load(with: "ca-app-pub-4898800212808837/3373075660",
                           request: request) { [self] ad, error in
             if let error = error {
                 print("リワード広告の読み込みに失敗しました: \(error.localizedDescription)")
