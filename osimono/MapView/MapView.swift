@@ -7,7 +7,7 @@ import CoreLocation
 import Shimmer
 
 struct MapView: View {
-    @ObservedObject var viewModel = LocationViewModel()
+    @StateObject  var viewModel = LocationViewModel()
     @State private var showAddLocation = false
     @State private var showFilterSheet = false
     @State private var region = MKCoordinateRegion(
@@ -50,6 +50,7 @@ struct MapView: View {
                                 }
                             }
                         }
+                        .id(location.id)
                         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 4)
                         .zIndex(selectedLocationId == location.id ? 100 : 1) 
                     }
@@ -72,6 +73,7 @@ struct MapView: View {
                                             userLocation: locationManager.userLocation,
                                             oshiId: oshiId
                                         )
+                                        .environmentObject(viewModel)
                                         .id(location.id)
                                         .onTapGesture {
                                             withAnimation {

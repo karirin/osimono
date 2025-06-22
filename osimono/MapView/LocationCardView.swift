@@ -15,7 +15,7 @@ struct LocationCardView: View {
     var isSelected: Bool
     var pinType: MapPinView.PinType
     var userLocation: CLLocation?
-    @ObservedObject private var viewModel = LocationViewModel()
+    @EnvironmentObject private var viewModel: LocationViewModel
     @State private var userRating: Int = 0
     @State private var showRatingModal: Bool = false
     var oshiId: String
