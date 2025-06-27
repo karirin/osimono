@@ -31,6 +31,7 @@
 		187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE25C2D8F4AAF00D58928 /* Shimmer */; };
 		188C012C2DDF4FCC00B7ADB9 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */; };
 		189878432DC9084E000F68FB /* OpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 189878422DC9084E000F68FB /* OpenAI */; };
+		18B9E1172E096099000F4B57 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 18B9E1162E096099000F4B57 /* FirebaseAnalytics */; };
 		18F429E82DB291EE007C198B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E72DB291EE007C198B /* CropViewController */; };
 		18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E92DB291EE007C198B /* TOCropViewController */; };
 /* End PBXBuildFile section */
@@ -112,6 +113,7 @@
 				1870B01E2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				18F429E82DB291EE007C198B /* CropViewController in Frameworks */,
 				187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */,
+				18B9E1172E096099000F4B57 /* FirebaseAnalytics in Frameworks */,
 				187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */,
 				188C012C2DDF4FCC00B7ADB9 /* GoogleMobileAds in Frameworks */,
 				18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */,
@@ -215,6 +217,7 @@
 				189878422DC9084E000F68FB /* OpenAI */,
 				188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */,
 				18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */,
+				18B9E1162E096099000F4B57 /* FirebaseAnalytics */,
 			);
 			productName = osimono;
 			productReference = 1870AFB32D8BC85E004B827B /* osimono.app */;
@@ -531,7 +534,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -565,7 +568,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -865,6 +868,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 189878412DC9084E000F68FB /* XCRemoteSwiftPackageReference "OpenAI" */;
 			productName = OpenAI;
+		};
+		18B9E1162E096099000F4B57 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FirebaseAnalytics;
 		};
 		18F429E72DB291EE007C198B /* CropViewController */ = {
 			isa = XCSwiftPackageProductDependency;

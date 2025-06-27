@@ -19,10 +19,7 @@ struct LocationCardView: View {
     @State private var userRating: Int = 0
     @State private var showRatingModal: Bool = false
     var oshiId: String
-    
-    @State private var showActionSheet = false
-    @State private var showEditView = false
-    @State private var showDeleteAlert = false
+    var onEditTapped: (() -> Void)? // 編集ボタンタップ時のコールバック
     
     var distanceText: String {
         if let userLoc = userLocation {
@@ -73,15 +70,39 @@ struct LocationCardView: View {
                 }
                 
                 // Category badge
-                Text(pinType.label)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(pinType.color.opacity(2.0))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(pinType.color.opacity(0.125))
-                    .background(Color.white)
-                    .cornerRadius(10)
-                    .padding(8)
+                HStack{
+                    Text(pinType.label)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(pinType.color.opacity(2.0))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(pinType.color.opacity(0.125))
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        .padding(8)
+                    Spacer()
+                    // 編集ボタン（選択時のみ表示）
+                    if isSelected {
+                        Button(action: {
+                            generateHapticFeedback()
+                            onEditTapped?()
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 30, height: 30)
+                                    .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
+                                
+                                Image(systemName: "ellipsis")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.black)
+                                    .rotationEffect(.degrees(90))
+                            }
+                        }
+                        .offset(x: -6, y: 0)
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                }
             }
             
             // Info section
@@ -103,78 +124,19 @@ struct LocationCardView: View {
                     Spacer()
                     
                     // Rating display
-                    Button(action: {
-//                        generateHapticFeedback()
-//                        showRatingModal = true
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "heart.fill")
-                                .foregroundColor(Color(hex: "EC4899"))
-                                .font(.system(size: 12))
-                            
-                            Text("\(location.ratingSum)")
-                                .font(.system(size: 12))
-                                .foregroundColor(.gray)
-                        }
+                    HStack(spacing: 4) {
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(Color(hex: "EC4899"))
+                            .font(.system(size: 12))
+                        
+                        Text("\(location.ratingSum)")
+                            .font(.system(size: 12))
+                            .foregroundColor(.gray)
                     }
                 }
             }
             .padding(10)
-            
-            
-            NavigationLink(
-                destination: EditLocationView(
-                    viewModel: viewModel,
-                    existingLocation: location, // 既存のlocationオブジェクトを渡す
-                    onLocationUpdated: { updatedLocationId in
-                        print("Location updated: \(updatedLocationId)")
-                        showEditView = false
-                    }
-                )
-                .navigationBarHidden(true),
-                isActive: $showEditView
-            ) {
-                EmptyView()
-            }
-            .hidden()
         }
-        .onLongPressGesture {
-            generateHapticFeedback()
-            showActionSheet = true
-        }
-        .actionSheet(isPresented: $showActionSheet) {
-            ActionSheet(
-                title: Text("スポットの操作"),
-                buttons: [
-                    .default(Text("編集")) {
-                        showEditView = true
-                    },
-                    .destructive(Text("削除")) {
-                        showDeleteAlert = true
-                    },
-                    .cancel(Text("キャンセル"))
-                ]
-            )
-        }
-        .alert(isPresented: $showDeleteAlert) {
-            Alert(
-                title: Text("スポットを削除"),
-                message: Text("「\(location.title)」を削除しますか？この操作は取り消せません。"),
-                primaryButton: .destructive(Text("削除")) {
-                    deleteLocation()
-                },
-                secondaryButton: .cancel(Text("キャンセル"))
-            )
-        }
-//        .sheet(isPresented: $showEditView) {
-//            EditLocationView(
-//                viewModel: viewModel,
-//                location: location,
-//                onUpdate: {
-//                    showEditView = false
-//                }
-//            )
-//        }
         .frame(width: isSelected ? 220 : 180)
         .background(Color.white)
         .cornerRadius(12)
@@ -187,7 +149,6 @@ struct LocationCardView: View {
                 userRating: $userRating,
                 onRate: { rating in
                     if let locationId = location.id {
-                        // 既存の評価(userRating)も渡す必要があります
                         viewModel.updateRating(for: locationId, newRating: rating, oldRating: userRating, oshiId: oshiId)
                     }
                     showRatingModal = false
@@ -207,11 +168,6 @@ struct LocationCardView: View {
                 }
             }
         }
-    }
-    
-    private func deleteLocation() {
-        guard let locationId = location.id else { return }
-        viewModel.deleteLocation(locationId: locationId, oshiId: oshiId)
     }
 }
 
@@ -311,23 +267,24 @@ struct RatingModalView: View {
     // 例: .restaurant, .shop, .event, .other など
     let samplePinType = MapPinView.PinType.cafe
     
-    VStack(spacing: 20) {
-        // 選択されていない状態
-        LocationCardView(
-            location: sampleLocation,
-            isSelected: false,
-            pinType: samplePinType,
-            oshiId: "sample-oshi-id"
-        )
-        
-        // 選択されている状態
-        LocationCardView(
-            location: sampleLocation,
-            isSelected: true,
-            pinType: samplePinType,
-            oshiId: "sample-oshi-id"
-        )
-    }
-    .padding()
-    .background(Color(.systemGroupedBackground))
+//    VStack(spacing: 20) {
+//        // 選択されていない状態
+//        LocationCardView(
+//            location: sampleLocation,
+//            isSelected: false,
+//            pinType: samplePinType,
+//            oshiId: "sample-oshi-id"
+//        )
+//        
+//        // 選択されている状態
+//        LocationCardView(
+//            location: sampleLocation,
+//            isSelected: true,
+//            pinType: samplePinType,
+//            oshiId: "sample-oshi-id"
+//        )
+//    }
+//    .padding()
+//    .background(Color(.systemGroupedBackground))
+    TopView()
 }

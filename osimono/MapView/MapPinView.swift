@@ -26,7 +26,6 @@ struct MapPinView: View {
     
     enum PinType {
         case live // ライブ会場
-        //        case location // ロケ地
         case cafe // カフェ・飲食店
         case shop // グッズショップ
         case photo // 撮影スポット
@@ -40,7 +39,6 @@ struct MapPinView: View {
             case .cafe: return Color(hex: "10B981")     // エメラルド/緑
             case .shop: return Color(hex: "F59E0B")     // アンバー/オレンジ
             case .photo: return Color(hex: "EC4899")    // ピンク
-                //            case .sacred: return Color(hex: "EF4444")   // レッド/赤
             case .other: return Color(hex: "6B7280")    // グレー
             }
         }
@@ -48,7 +46,6 @@ struct MapPinView: View {
         var icon: String {
             switch self {
             case .live: return "music.note"
-                //            case .location: return "mappin"
             case .cafe: return "cup.and.saucer"
             case .shop: return "bag"
             case .photo: return "camera"
@@ -60,7 +57,6 @@ struct MapPinView: View {
         var label: String {
             switch self {
             case .live: return "ライブ会場"
-                //            case .location: return "ロケ地"
             case .cafe: return "カフェ・飲食店"
             case .shop: return "グッズショップ"
             case .photo: return "撮影スポット"
@@ -157,7 +153,6 @@ struct MapPinView: View {
                 }
             }
             .scaleEffect(isSelected ? 1.1 : 1.0)
-            // Using .animation() modifier here with value: isSelected to isolate just this animation
             .animation(.spring(response: 0.3), value: isSelected)
             .zIndex(1)
             
