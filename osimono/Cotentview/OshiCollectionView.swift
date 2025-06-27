@@ -124,11 +124,37 @@ struct OshiCollectionView: View {
         return result
     }
     
+    private let adminUserIds = [
+        "3UDNienzhkdheKIy77lyjMJhY4D3",
+        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    ]
+    
+    @State private var isAdmin = false
+    @State private var isCheckingAdminStatus = true
+    
+    private func checkAdminStatus() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            isAdmin = false
+            isCheckingAdminStatus = false
+            return
+        }
+        
+        // UserIDで管理者権限をチェック
+        isAdmin = adminUserIds.contains(userID)
+        isCheckingAdminStatus = false
+        
+        if isAdmin {
+            print("🔑 管理者としてログイン中: \(userID)")
+        }
+    }
+    
     var body: some View {
         ZStack{
             VStack(spacing: -5) {
-                BannerAdView()
-                    .frame(height: 60)
+                if !isAdmin {
+                    BannerAdView()
+                        .frame(height: 60)
+                }
                 
                 // 検索バーとフィルター
                 HStack(spacing: 12) {
@@ -398,6 +424,7 @@ struct OshiCollectionView: View {
         .background(backgroundColor)
         .onAppear {
             fetchOshiItems()
+            checkAdminStatus()
         }
         .onChange(of: oshiId) { newOshiId in
             fetchOshiItems()
