@@ -41,6 +41,7 @@ class OshiViewModel: ObservableObject {
                newOshi.interests = data["interests"] as? [String]
                newOshi.gender = data["gender"] as? String
                newOshi.height = data["height"] as? Int
+               newOshi.user_nickname = data["user_nickname"] as? String
                
                DispatchQueue.main.async {
                    self.selectedOshi = newOshi
@@ -141,6 +142,10 @@ class OshiViewModel: ObservableObject {
             data["interests"] = interests
         }
         
+        if let userNickname = updatedOshi.user_nickname {
+            data["user_nickname"] = userNickname
+        }
+        
         if let gender = updatedOshi.gender {
             data["gender"] = gender
         }
@@ -152,7 +157,6 @@ class OshiViewModel: ObservableObject {
                 return
             }
             
-            // 保存成功後、ローカルのモデルも更新
             DispatchQueue.main.async {
                 self.selectedOshi = updatedOshi
                 completion(nil)

@@ -399,12 +399,12 @@ struct EditOshiView: View {
         }
     }
     
-    // 性格設定があるかチェック
     private func hasPersonalitySettings() -> Bool {
         return oshi.personality != nil || oshi.speaking_style != nil ||
                oshi.birthday != nil || oshi.height != nil ||
                oshi.hometown != nil || oshi.favorite_color != nil ||
                oshi.favorite_food != nil || oshi.disliked_food != nil ||
+               oshi.user_nickname != nil ||
                (oshi.interests != nil && !oshi.interests!.isEmpty)
     }
     
@@ -416,14 +416,25 @@ struct EditOshiView: View {
                 .foregroundColor(.gray)
             
             VStack(alignment: .leading, spacing: 8) {
-                // 性別情報を表示（新規追加）
+                if let userNickname = oshi.user_nickname, !userNickname.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "person.circle")
+                            .font(.system(size: 12))
+                            .foregroundColor(primaryColor.opacity(0.8))
+                        
+                        Text("あなたの呼び方：\(userNickname)")
+                            .font(.system(size: 14))
+                            .foregroundColor(.black)
+                    }
+                }
+                
+                // 性別情報を表示（既存）
                 if let gender = oshi.gender, !gender.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "person.fill")
                             .font(.system(size: 12))
                             .foregroundColor(primaryColor.opacity(0.8))
                         
-                        // 「その他：詳細」形式に対応
                         if gender.hasPrefix("その他：") {
                             let detailStartIndex = gender.index(gender.startIndex, offsetBy: 4)
                             let genderDetail = String(gender[detailStartIndex...])

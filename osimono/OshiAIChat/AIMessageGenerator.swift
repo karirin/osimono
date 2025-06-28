@@ -28,6 +28,12 @@ class AIMessageGenerator {
         
         """
         
+        if let userNickname = oshi.user_nickname, !userNickname.isEmpty {
+            prompt += "ファンのことは「\(userNickname)」と呼んでください。\n"
+        } else {
+            prompt += "ファンのことは「あなた」と呼んでください。\n"
+        }
+        
         // 性別情報の追加（詳細対応）
         if let gender = oshi.gender {
             if gender.hasPrefix("その他：") {
@@ -74,9 +80,12 @@ class AIMessageGenerator {
             上記の性格設定や特徴に沿った口調や内容で会話してください。
             特に話し方の特徴がある場合は、その特徴を反映させて返信を作成してください。
             性別・種類に合わせた表現や口調を心がけてください。
+            設定された呼び方でファンに話しかけることを忘れずに。
             ただし、過度に演技的にならないよう自然な会話を心がけてください。
             
             """
+        } else {
+            prompt += "\n設定された呼び方でファンに話しかけることを忘れずに。\n"
         }
         
         prompt += "\nファンの推し活の内容："

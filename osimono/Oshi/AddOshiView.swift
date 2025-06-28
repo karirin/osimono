@@ -35,7 +35,8 @@ struct AddOshiView: View {
     @State private var personality: String = ""
     @State private var speakingStyle: String = ""
     @State private var showAdvancedOptions: Bool = false // 詳細設定表示トグル
-    
+    @State private var userNickname: String = ""
+
     public struct Texts {
         public var cancelButton: String
         public var interactionInstructions: String
@@ -241,7 +242,7 @@ struct AddOshiView: View {
                             
                             // 性格入力フィールド（新規追加）
                             VStack(alignment: .leading) {
-                                Text("推しの性格 (オプション)")
+                                Text("推しの性格")
                                     .font(.headline)
                                     .padding(.horizontal)
                                 
@@ -255,11 +256,24 @@ struct AddOshiView: View {
                             
                             // 話し方の特徴入力フィールド（新規追加）
                             VStack(alignment: .leading) {
-                                Text("話し方の特徴 (オプション)")
+                                Text("話し方の特徴")
                                     .font(.headline)
                                     .padding(.horizontal)
                                 
                                 TextField("敬語、タメ口、絵文字多用 など", text: $speakingStyle)
+                                    .padding()
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                                    .padding(.horizontal)
+                            }
+                            
+                            VStack(alignment: .leading) {
+                                Text("あなたの呼び方")
+                                    .font(.headline)
+                                    .padding(.horizontal)
+                                
+                                TextField("〇〇ちゃん、〇〇くん など", text: $userNickname)
                                     .padding()
                                     .background(Color.white)
                                     .cornerRadius(10)
@@ -455,7 +469,13 @@ struct AddOshiView: View {
         if !speakingStyle.isEmpty {
             data["speaking_style"] = speakingStyle
         }
+
+        // ★新規追加：呼び方設定の保存
+        if !userNickname.isEmpty {
+            data["user_nickname"] = userNickname
+        }
         
+        // 既存の画像アップロード処理...
         let dispatchGroup = DispatchGroup()
         
         // プロフィール画像をアップロード

@@ -28,6 +28,7 @@ struct Oshi: Identifiable, Codable, Equatable {
     var disliked_food: String?  // 苦手な食べ物
     var hometown: String?     // 出身地
     var gender: String?       // 性別（男性、女性、その他）
+    var user_nickname: String? // 推しがユーザーを呼ぶ呼び方（例：「〇〇ちゃん」「〇〇くん」「〇〇さん」など）
     
     static func == (lhs: Oshi, rhs: Oshi) -> Bool {
         return lhs.id == rhs.id
@@ -37,6 +38,6 @@ struct Oshi: Identifiable, Codable, Equatable {
         case id, name, imageUrl, backgroundImageUrl, memo, createdAt
         case personality, interests, speaking_style, birthday
         case height, favorite_color, favorite_food, disliked_food, hometown
-        case gender
+        case gender, user_nickname
     }
 }

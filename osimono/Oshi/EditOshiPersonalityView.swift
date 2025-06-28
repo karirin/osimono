@@ -25,7 +25,7 @@ struct EditOshiPersonalityView: View {
     @State private var interests: [String] = []
     @State private var newInterest: String = ""
     @State private var initializationCompleted: Bool = false
-    
+    @State private var userNickname: String = ""
     // 性別選択用の状態変数を追加
     @State private var gender: String = "男性"
     @State private var genderDetail: String = ""
@@ -59,7 +59,9 @@ struct EditOshiPersonalityView: View {
         _dislikedFood = State(initialValue: viewModel.selectedOshi.disliked_food ?? "")
         _hometown = State(initialValue: viewModel.selectedOshi.hometown ?? "")
         _interests = State(initialValue: viewModel.selectedOshi.interests ?? [])
-        
+        _personality = State(initialValue: viewModel.selectedOshi.personality ?? "")
+        _speakingStyle = State(initialValue: viewModel.selectedOshi.speaking_style ?? "")
+        _userNickname = State(initialValue: viewModel.selectedOshi.user_nickname ?? "")
         // 性別情報の処理
         let genderValue = viewModel.selectedOshi.gender ?? "男性"
         if genderValue.hasPrefix("その他：") {
@@ -70,9 +72,6 @@ struct EditOshiPersonalityView: View {
             _gender = State(initialValue: genderValue)
             _genderDetail = State(initialValue: "")
         }
-        
-        print("初期化時 - 性格: \(viewModel.selectedOshi.personality ?? "なし")")
-        print("初期化時 - 話し方: \(viewModel.selectedOshi.speaking_style ?? "なし")")
     }
     
     var body: some View {
@@ -190,6 +189,8 @@ struct EditOshiPersonalityView: View {
                         // 性格入力セクション
                         personalitySection
                         
+                        userInteractionSection
+                        
                         // プロフィール入力セクション
                         profileSection
                         
@@ -273,6 +274,30 @@ struct EditOshiPersonalityView: View {
                 text: $speakingStyle,
                 iconName: "bubble.left.fill"
             )
+        }
+        .padding()
+        .background(cardBackgroundColor)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .padding(.horizontal)
+    }
+    
+    var userInteractionSection: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            SectionHeader(title: "ユーザーとの関係性", icon: "person.2.fill")
+            
+            CustomTextField(
+                title: "あなたの呼び方",
+                placeholder: "例：〇〇ちゃん、〇〇くん",
+                text: $userNickname,
+                iconName: "person.circle"
+            )
+            
+            // ヘルプテキスト
+            Text("推しがあなたのことをどう呼ぶかを設定できます。空欄の場合は「あなた」と呼ばれます。")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 4)
         }
         .padding()
         .background(cardBackgroundColor)
@@ -414,7 +439,7 @@ struct EditOshiPersonalityView: View {
                self.dislikedFood = data["disliked_food"] as? String ?? ""
                self.hometown = data["hometown"] as? String ?? ""
                self.interests = data["interests"] as? [String] ?? []
-               
+               self.userNickname = data["user_nickname"] as? String ?? ""
                // 性別の処理
                let genderValue = data["gender"] as? String ?? "男性"
                if genderValue.hasPrefix("その他：") {
@@ -494,6 +519,8 @@ struct EditOshiPersonalityView: View {
             updates["height"] = heightValue
         }
         
+        updates["user_nickname"] = userNickname
+        
         dbRef.updateChildValues(updates) { error, _ in
             DispatchQueue.main.async {
                 isLoading = false
@@ -516,6 +543,7 @@ struct EditOshiPersonalityView: View {
                         updatedOshi.height = heightInt
                     }
                     updatedOshi.gender = gender
+                    updatedOshi.user_nickname = userNickname
                     viewModel.selectedOshi = updatedOshi
                     // Binding変数を明示的に更新
                     onSave(updatedOshi)
