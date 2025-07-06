@@ -147,9 +147,9 @@ struct OshiItemDetailView: View {
                         }
                         
                         // 日付
-                        if let date = item.date {
+                        if let date = getItemDate() {
                             detailRow(
-                                title: item.itemType == "グッズ" ? "購入日" : (item.itemType == "ライブ記録" ? "イベント日" : "投稿日"),
+                                title: getDateLabel(),
                                 value: formatDate(date),
                                 icon: "calendar"
                             )
@@ -329,6 +329,53 @@ struct OshiItemDetailView: View {
                     .font(.system(size: 50))
                     .foregroundColor(.gray)
             }
+        }
+    }
+    
+    func getItemDate() -> Date? {
+        guard let itemType = item.itemType else {
+            return item.date
+        }
+        
+        switch itemType {
+        case "グッズ", "ライブ記録", "SNS投稿":
+            if let timestamp = item.purchaseDate {
+                return Date(timeIntervalSince1970: timestamp)
+            }
+        case "聖地巡礼":
+            if let timestamp = item.visitDate {
+                return Date(timeIntervalSince1970: timestamp)
+            }
+        case "その他":
+            if let timestamp = item.recordDate {
+                return Date(timeIntervalSince1970: timestamp)
+            }
+        default:
+            break
+        }
+        
+        return item.date
+    }
+
+    // 日付ラベル取得メソッドを追加
+    func getDateLabel() -> String {
+        guard let itemType = item.itemType else {
+            return "日付"
+        }
+        
+        switch itemType {
+        case "グッズ":
+            return "購入日"
+        case "聖地巡礼":
+            return "訪問日"
+        case "ライブ記録":
+            return "イベント日"
+        case "SNS投稿":
+            return "投稿日"
+        case "その他":
+            return "記録日"
+        default:
+            return "日付"
         }
     }
     
