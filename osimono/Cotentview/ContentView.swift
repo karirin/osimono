@@ -762,7 +762,7 @@ struct ContentView: View {
         
         // カウンターを更新
         UserDefaults.standard.set(count, forKey: "launchHelpCount")
-        if count % 15 == 0 {
+        if count % 10 == 0 {
             helpFlag = true
         }
     }

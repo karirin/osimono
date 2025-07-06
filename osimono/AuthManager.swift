@@ -22,13 +22,12 @@ class AuthManager: ObservableObject {
         user = Auth.auth().currentUser
         if user == nil {
             signInAnonymously()
-        } else {
         }
     }
     
     var currentUserId: String? {
-        print("user?.uid:\(user?.uid)")
         return user?.uid
+//        return "h00DJESlqpPmGWzZKgMIMyxeDqo1"
     }
     
     func signInAnonymously() {

@@ -20,6 +20,9 @@ struct TimelineView: View {
     private let secondaryTextColor = Color(UIColor.secondaryLabel)
     @State private var showAddOshiForm = false
     @State private var showingOshiAlert = false
+    @State private var helpFlag: Bool = false
+    
+    @ObservedObject var authManager = AuthManager()
     
     var oshiId: String
     
@@ -124,6 +127,10 @@ struct TimelineView: View {
                         }
                     }
                 )
+                
+                if helpFlag {
+                    HelpModalView(isPresented: $helpFlag)
+                }
             }
             .navigationBarHidden(true)
         }
@@ -147,12 +154,34 @@ struct TimelineView: View {
         .onAppear {
             viewModel.updateCurrentOshi(id: oshiId)
             viewModel.fetchEvents(forOshiId: oshiId)
+            authManager.fetchUserFlag { userFlag, error in
+                if let error = error {
+                    print(error.localizedDescription)
+                } else if let userFlag = userFlag {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        if userFlag == 0 {
+                            executeProcessEveryfifTimes()
+                        }
+                    }
+                }
+            }
         }
         .onChange(of: oshiId) { newId in
             viewModel.updateCurrentOshi(id: newId)
         }
         .fullScreenCover(isPresented: $showAddOshiForm) {
             AddOshiView()
+        }
+    }
+    
+    func executeProcessEveryfifTimes() {
+        // UserDefaultsからカウンターを取得
+        let count = UserDefaults.standard.integer(forKey: "launchHelpCount") + 1
+        
+        // カウンターを更新
+        UserDefaults.standard.set(count, forKey: "launchHelpCount")
+        if count % 10 == 0 {
+            helpFlag = true
         }
     }
 }

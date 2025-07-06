@@ -294,7 +294,7 @@ struct EditOshiPersonalityView: View {
             )
             
             // ヘルプテキスト
-            Text("推しがあなたのことをどう呼ぶかを設定できます。空欄の場合は「あなた」と呼ばれます。")
+            Text("推しがあなたのことをどう呼ぶかを設定できます。")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 4)

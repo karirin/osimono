@@ -61,6 +61,8 @@ struct OshiAIChatView: View {
     @State private var editScreenID = UUID()
     @State private var showRewardCompletedModal = false
     @State private var rewardAmount = 0
+    @State private var helpFlag: Bool = false
+    @ObservedObject var authManager = AuthManager()
     
     // LINE風カラー設定
     let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
@@ -120,15 +122,44 @@ struct OshiAIChatView: View {
                     rewardAmount: rewardAmount
                 )
             }
+            
+            if helpFlag {
+                HelpModalView(isPresented: $helpFlag)
+            }
         }
         .onReceive(Publishers.keyboardHeight) { height in
             withAnimation(.easeInOut(duration: 0.3)) { keyboardHeight = height }
         }
         .dismissKeyboardOnTap()
-        .onAppear { setupView() }
+        .onAppear {
+            setupView()
+
+            authManager.fetchUserFlag { userFlag, error in
+                if let error = error {
+                    print(error.localizedDescription)
+                } else if let userFlag = userFlag {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        if userFlag == 0 {
+                            executeProcessEveryfifTimes()
+                        }
+                    }
+                }
+            }
+        }
         .onChange(of: viewModel.selectedOshi.id) { handleOshiChange(newId: $0) }
         .onDisappear { cleanup() }
         .navigationBarHidden(true)
+    }
+    
+    func executeProcessEveryfifTimes() {
+        // UserDefaultsからカウンターを取得
+        let count = UserDefaults.standard.integer(forKey: "launchHelpCount") + 1
+        
+        // カウンターを更新
+        UserDefaults.standard.set(count, forKey: "launchHelpCount")
+        if count % 10 == 0 {
+            helpFlag = true
+        }
     }
     
     private var chatLayer: some View {

@@ -30,8 +30,6 @@ class AIMessageGenerator {
         
         if let userNickname = oshi.user_nickname, !userNickname.isEmpty {
             prompt += "ファンのことは「\(userNickname)」と呼んでください。\n"
-        } else {
-            prompt += "ファンのことは「あなた」と呼んでください。\n"
         }
         
         // 性別情報の追加（詳細対応）
