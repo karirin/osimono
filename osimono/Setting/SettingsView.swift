@@ -18,6 +18,8 @@ struct SettingsView: View {
     @State private var isShowingLogoutAlert = false
     @ObservedObject var authManager = AuthManager()
     @State private var selectedOshi: Oshi? = nil
+    @State private var isShowingOshiSelector = false
+    @State private var showAddOshiForm = false
     
     // For bug reporting and App Store review
     @State private var showingBugReportForm = false
@@ -204,6 +206,36 @@ struct SettingsView: View {
                                 Spacer()
                             }
                             .padding(.vertical, 8)
+                            
+                            Button(action: {
+                               withAnimation(.spring()) {
+                                   isShowingOshiSelector = true
+                               }
+                               generateHapticFeedback()
+                           }) {
+                               HStack(spacing: 10) {
+                                   Image(systemName: "arrow.triangle.2.circlepath")
+                                       .font(.system(size: 14))
+                                       .foregroundColor(primaryColor)
+                                   Text("別の推しを選択")
+                                       .font(.system(size: 14, weight: .medium))
+                                       .foregroundColor(primaryColor)
+                                   Spacer()
+                                   Image(systemName: "chevron.right")
+                                       .font(.system(size: 12))
+                                       .foregroundColor(.gray)
+                               }
+                               .padding(.horizontal, 16)
+                               .padding(.vertical, 12)
+                               .background(
+                                   RoundedRectangle(cornerRadius: 10)
+                                       .fill(primaryColor.opacity(0.1))
+                                       .overlay(
+                                           RoundedRectangle(cornerRadius: 10)
+                                               .stroke(primaryColor.opacity(0.3), lineWidth: 1)
+                                       )
+                               )
+                           }
                         }
                         .padding()
                         .background(cardColor)
@@ -439,7 +471,7 @@ struct SettingsView: View {
                                 
                                 Spacer()
                                 
-                                Text("2.0.0")
+                                Text("2.1.0")
                                     .foregroundColor(.primary)
                             }
                             .padding(.vertical, 8)
@@ -488,6 +520,13 @@ struct SettingsView: View {
                 AddOshiView()
             }
         }
+        .overlay(
+            ZStack {
+                if isShowingOshiSelector {
+                    oshiSelectorOverlay
+                }
+            }
+        )
         .alert(isPresented: $isShowingLogoutAlert) {
             Alert(
                 title: Text("ログアウト"),
@@ -514,6 +553,146 @@ struct SettingsView: View {
         }
     }
     
+    var oshiSelectorOverlay: some View {
+         ZStack {
+             // 半透明の背景
+             Color.black.opacity(0.7)
+                 .edgesIgnoringSafeArea(.all)
+                 .onTapGesture {
+                     withAnimation(.spring()) {
+                         isShowingOshiSelector = false
+                     }
+                 }
+             
+             VStack(spacing: 20) {
+                 // ヘッダー
+                 HStack {
+                     Text("推しを変更")
+                         .font(.title2)
+                         .fontWeight(.bold)
+                         .foregroundColor(.white)
+                     
+                     Spacer()
+                     
+                     Button(action: {
+                         generateHapticFeedback()
+                         withAnimation(.spring()) {
+                             isShowingOshiSelector = false
+                         }
+                     }) {
+                         Image(systemName: "xmark.circle.fill")
+                             .font(.title2)
+                             .foregroundColor(.white)
+                     }
+                 }
+                 .padding()
+                 
+                 // 推しリスト - グリッドレイアウト
+                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
+                     // 新規追加ボタン
+                     Button(action: {
+                         generateHapticFeedback()
+                         showAddOshiForm = true
+                         isShowingOshiSelector = false
+                     }) {
+                         VStack {
+                             ZStack {
+                                 Circle()
+                                     .fill(primaryColor.opacity(0.2))
+                                     .frame(width: 80, height: 80)
+                                 
+                                 Image(systemName: "plus")
+                                     .font(.system(size: 30))
+                                     .foregroundColor(primaryColor)
+                             }
+                             
+                             Text("新規追加")
+                                 .font(.subheadline)
+                                 .foregroundColor(.white)
+                         }
+                     }
+                     
+                     // 推しリスト
+                     ForEach(oshiList) { oshi in
+                         Button(action: {
+                             generateHapticFeedback()
+                             saveSelectedOshiId(oshi.id)
+                             // 選択した推しの情報を更新
+                             selectedOshi = oshi
+                             username = oshi.name
+                             // プロフィール画像も更新
+                             if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                 loadImage(from: url) { image in
+                                     profileImage = image
+                                 }
+                             }
+                             // オーバーレイを閉じる
+                             withAnimation(.spring()) {
+                                 isShowingOshiSelector = false
+                             }
+                             // 推し変更を通知
+                             oshiChange.toggle()
+                         }) {
+                             VStack {
+                                 ZStack {
+                                     // プロフィール画像またはプレースホルダー
+                                     if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                         AsyncImage(url: url) { phase in
+                                             switch phase {
+                                             case .success(let image):
+                                                 image
+                                                     .resizable()
+                                                     .scaledToFill()
+                                                     .frame(width: 80, height: 80)
+                                                     .clipShape(Circle())
+                                             default:
+                                                 Circle()
+                                                     .fill(Color.gray.opacity(0.3))
+                                                     .frame(width: 80, height: 80)
+                                                     .overlay(
+                                                         Text(String(oshi.name.prefix(1)))
+                                                             .font(.system(size: 30, weight: .bold))
+                                                             .foregroundColor(.white)
+                                                     )
+                                             }
+                                         }
+                                     } else {
+                                         Circle()
+                                             .fill(Color.gray.opacity(0.3))
+                                             .frame(width: 80, height: 80)
+                                             .overlay(
+                                                 Text(String(oshi.name.prefix(1)))
+                                                     .font(.system(size: 30, weight: .bold))
+                                                     .foregroundColor(.white)
+                                             )
+                                     }
+                                     
+                                     // 選択インジケーター
+                                     if let selected = selectedOshi, oshi.id == selected.id {
+                                         Circle()
+                                             .stroke(primaryColor, lineWidth: 4)
+                                             .frame(width: 85, height: 85)
+                                     }
+                                 }
+                                 
+                                 Text(oshi.name)
+                                     .font(.subheadline)
+                                     .foregroundColor(.white)
+                                     .lineLimit(1)
+                             }
+                         }
+                     }
+                 }
+                 .padding()
+             }
+             .background(
+                 RoundedRectangle(cornerRadius: 20)
+                     .fill(Color.black.opacity(1))
+             )
+             .padding()
+         }
+     }
+    
     // MARK: - 管理者権限チェック
     private func checkAdminStatus() {
         guard let userID = Auth.auth().currentUser?.uid else {
@@ -528,6 +707,17 @@ struct SettingsView: View {
         
         if isAdmin {
             print("🔑 管理者としてログイン中: \(userID)")
+        }
+    }
+    
+    func saveSelectedOshiId(_ oshiId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedOshiId": oshiId]) { error, _ in
+            if let error = error {
+                print("推しID保存エラー: \(error.localizedDescription)")
+            }
         }
     }
     
