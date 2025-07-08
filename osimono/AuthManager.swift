@@ -94,6 +94,20 @@ class AuthManager: ObservableObject {
         }
     }
     
+    func updateUserCsFlag(userId: String, userCsFlag: Int, completion: @escaping (Bool) -> Void) {
+        let userRef = Database.database().reference().child("users").child(userId)
+        let updates = ["userCsFlag": userCsFlag]
+        print(updates)
+        userRef.updateChildValues(updates) { (error, _) in
+            if let error = error {
+                print("Error updating tutorialNum: \(error)")
+                completion(false)
+            } else {
+                completion(true)
+            }
+        }
+    }
+    
     func updateContact(userId: String, newContact: String, completion: @escaping (Bool) -> Void) {
         // contactテーブルの下の指定されたuserIdの参照を取得
         let contactRef = Database.database().reference().child("contacts").child(userId)

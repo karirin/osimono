@@ -2,7 +2,7 @@
 //  AIMessageGenerator.swift
 //  osimono
 //
-//  Created by Apple on 2025/05/08.
+//  Modified to fix Kansai dialect issue with "タメ口"
 //
 
 import SwiftUI
@@ -18,7 +18,6 @@ class AIMessageGenerator {
         self.openAI = AIClient.shared
     }
     
-    // システムプロンプトの作成
     private func createSystemPrompt(oshi: Oshi, item: OshiItem? = nil) -> String {
         var prompt = """
         あなたは\(oshi.name)という名前の会話相手の推しです。
@@ -52,7 +51,9 @@ class AIMessageGenerator {
         }
         
         if let speakingStyle = oshi.speaking_style, !speakingStyle.isEmpty {
-            prompt += "あなたの話し方の特徴: \(speakingStyle)\n"
+            let processedSpeakingStyle = processSpeakingStyle(speakingStyle)
+            prompt += "あなたの話し方の特徴: \(processedSpeakingStyle)\n"
+//            prompt += "あなたの話し方の特徴: \(speakingStyle)\n"
             hasPersonalityInfo = true
         }
        
@@ -71,12 +72,12 @@ class AIMessageGenerator {
             hasPersonalityInfo = true
         }
         
-        // 性格情報が設定されている場合、AIへの追加指示を含める
+        // 性格情報が設定されている場合、AIへの追加指示を含める（修正版）
         if hasPersonalityInfo {
             prompt += """
             
             上記の性格設定や特徴に沿った口調や内容で会話してください。
-            特に話し方の特徴がある場合は、その特徴を反映させて返信を作成してください。
+            「タメ口」は関西弁ではなく、標準語でのフレンドリーな口調として解釈してください。
             性別・種類に合わせた表現や口調を心がけてください。
             設定された呼び方でファンに話しかけることを忘れずに。
             ただし、過度に演技的にならないよう自然な会話を心がけてください。
@@ -119,6 +120,33 @@ class AIMessageGenerator {
         print("=========================================")
         
         return prompt
+    }
+    
+    // 話し方の特徴を処理する新しい関数
+    private func processSpeakingStyle(_ speakingStyle: String) -> String {
+        var processedStyle = speakingStyle
+        
+        processedStyle = processedStyle.replacingOccurrences(
+            of: "タメ口",
+            with: "フレンドリーで親しみやすい口調（標準語）"
+        )
+        
+        let dialectReplacements = [
+            "関西弁": "明るく元気な口調（標準語）",
+            "関西": "明るく元気な口調（標準語）",
+            "大阪弁": "明るく元気な口調（標準語）",
+            "京都弁": "上品で丁寧な口調（標準語）",
+            "広島弁": "温かみのある口調（標準語）",
+            "博多弁": "親しみやすい口調（標準語）",
+            "津軽弁": "素朴で温かい口調（標準語）",
+            "沖縄弁": "のんびりとした口調（標準語）"
+        ]
+        
+        for (dialect, replacement) in dialectReplacements {
+            processedStyle = processedStyle.replacingOccurrences(of: dialect, with: replacement)
+        }
+        
+        return processedStyle
     }
     
     // APIキーが未設定の場合の応答生成
@@ -210,9 +238,6 @@ class AIMessageGenerator {
         var messages: [ChatQuery.ChatCompletionMessageParam] = [
             .init(role: .system, content: createSystemPrompt(oshi: oshi))!
         ]
-        
-//        let role: Chat.Role = message.isUser ? .user : .assistant
-//        messages.append(.init(role: role, content: message.content))
         
         // チャット履歴を追加（最新の10件まで）
         let recentMessages = chatHistory.suffix(10)

@@ -38,6 +38,7 @@ struct ContentView: View {
     @State private var anniversaryDays = 0
     @State private var firstOshiFlag = false
     @State private var randomMessageSent = false
+    @State private var customerFlag: Bool = false
     
     // NavigationLink用の状態変数を追加
     @State private var navigateToAddOshiForm = false
@@ -108,6 +109,10 @@ struct ContentView: View {
                 
                 if helpFlag {
                     HelpModalView(isPresented: $helpFlag)
+                }
+                
+                if customerFlag {
+                    ReviewView(isPresented: $customerFlag, helpFlag: $helpFlag)
                 }
                 
                 // NavigationLinkを非表示で配置
@@ -255,6 +260,7 @@ struct ContentView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         if userFlag == 0 {
                             executeProcessEveryfifTimes()
+                            executeProcessEveryThreeTimes()
                         }
                     }
                 }
@@ -495,6 +501,20 @@ struct ContentView: View {
             randomMessageSent = true
             // 最終送信日時を保存
             userDefaults.set(currentTime, forKey: "lastRandomMessageTimestamp")
+        }
+    }
+    
+    func executeProcessEveryThreeTimes() {
+        // UserDefaultsからカウンターを取得
+        let count = UserDefaults.standard.integer(forKey: "launchCount") + 1
+        
+        // カウンターを更新
+        UserDefaults.standard.set(count, forKey: "launchCount")
+        
+        // 3回に1回の割合で処理を実行
+        
+        if count % 10 == 0 {
+            customerFlag = true
         }
     }
     
@@ -762,7 +782,7 @@ struct ContentView: View {
         
         // カウンターを更新
         UserDefaults.standard.set(count, forKey: "launchHelpCount")
-        if count % 10 == 0 {
+        if count % 15 == 0 {
             helpFlag = true
         }
     }
