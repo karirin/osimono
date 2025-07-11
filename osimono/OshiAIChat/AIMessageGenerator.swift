@@ -200,7 +200,7 @@ class AIMessageGenerator {
                 .init(role: .system, content: createSystemPrompt(oshi: oshi, item: item))!,
                 .init(role: .user, content: userPrompt)!
             ],
-            model: .gpt4_1_nano,
+            model: .gpt4_o_mini,
             temperature: 0.8
         )
         
@@ -251,7 +251,7 @@ class AIMessageGenerator {
         
         let query = ChatQuery(
             messages: messages,
-            model: .gpt4_1_nano,
+            model: .gpt4_o_mini,
             temperature: 0.8
         )
         

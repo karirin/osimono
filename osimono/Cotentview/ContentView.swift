@@ -65,6 +65,8 @@ struct ContentView: View {
     
     @Binding var oshiChange: Bool
     
+    @State private var showApologyModal: Bool = false
+    
     // プロフィールセクションの高さ
     var profileSectionHeight: CGFloat {
         isSmallDevice() ? 280 : 280
@@ -274,9 +276,19 @@ struct ContentView: View {
                     RandomMessageManager.shared.checkAndSendMessageIfNeeded(for: selectedOshi)
                 }
             }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                if ApologyModalView.shouldShowApology() {
+                    showApologyModal = true
+                }
+            }
         }
         .overlay(
             ZStack {
+                if showApologyModal {
+                    ApologyModalView(isPresented: $showApologyModal)
+                        .transition(.opacity)
+                }
                 if isShowingOshiSelector {
                     oshiSelectorOverlay
                 }
