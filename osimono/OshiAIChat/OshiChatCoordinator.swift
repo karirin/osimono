@@ -1,15 +1,15 @@
+////
+////  OshiChatCoordinator.swift
+////  osimono
+////
+////  Created by Apple on 2025/05/08.
+////
 //
-//  OshiChatCoordinator.swift
-//  osimono
-//
-//  Created by Apple on 2025/05/08.
-//
-
 import SwiftUI
 import FirebaseDatabase
 import FirebaseAuth
-
-// 推しチャットシステム全体を管理するクラス
+//
+//// 推しチャットシステム全体を管理するクラス
 class OshiChatCoordinator: ObservableObject {
     static let shared = OshiChatCoordinator()
     
@@ -193,141 +193,4 @@ struct OshiChatSession: Identifiable {
     var id: String { oshi.id }
     let oshi: Oshi
     let latestMessage: ChatMessage
-}
-
-// チャット一覧画面
-struct OshiChatListView: View {
-    @StateObject private var coordinator = OshiChatCoordinator.shared
-    @State private var searchText = ""
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                VStack {
-                    if coordinator.isLoading {
-                        ProgressView("チャット履歴を読み込み中...")
-                    } else if coordinator.recentChats.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "bubble.left.and.bubble.right")
-                                .font(.system(size: 60))
-                                .foregroundColor(.gray)
-                            Text("まだチャット履歴がありません")
-                                .font(.headline)
-                            Text("推しを追加してチャットを始めよう！")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                        .padding()
-                    } else {
-                        List {
-                            ForEach(filteredChats) { session in
-//                                NavigationLink(destination: OshiAIChatView(viewModel: session, oshiItem: nil)) {
-//                                    ChatSessionRow(session: session)
-//                                }
-                            }
-                        }
-                        .listStyle(InsetGroupedListStyle())
-                    }
-                }
-                .searchable(text: $searchText, prompt: "推しの名前で検索")
-                .navigationTitle("チャット履歴")
-                .onAppear {
-                    coordinator.fetchRecentChats {}
-                }
-                .refreshable {
-                    coordinator.fetchRecentChats {}
-                }
-            }
-        }
-    }
-    
-    // 検索フィルター
-    private var filteredChats: [OshiChatSession] {
-        if searchText.isEmpty {
-            return coordinator.recentChats
-        } else {
-            return coordinator.recentChats.filter {
-                $0.oshi.name.lowercased().contains(searchText.lowercased())
-            }
-        }
-    }
-}
-
-// チャットセッション行のUI
-struct ChatSessionRow: View {
-    let session: OshiChatSession
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            // プロフィール画像
-            if let imageUrl = session.oshi.imageUrl, !imageUrl.isEmpty {
-                AsyncImage(url: URL(string: imageUrl)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    case .failure, .empty:
-                        Image(systemName: "person.circle.fill")
-                            .foregroundColor(.gray)
-                    @unknown default:
-                        Image(systemName: "person.circle.fill")
-                            .foregroundColor(.gray)
-                    }
-                }
-                .frame(width: 50, height: 50)
-                .clipShape(Circle())
-            } else {
-                Image(systemName: "person.circle.fill")
-                    .resizable()
-                    .frame(width: 50, height: 50)
-                    .foregroundColor(.gray)
-            }
-            
-            // チャット情報
-            VStack(alignment: .leading, spacing: 4) {
-                Text(session.oshi.name)
-                    .font(.headline)
-                
-                Text(session.latestMessage.content)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .lineLimit(1)
-            }
-            
-            Spacer()
-            
-            // タイムスタンプ
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(formattedDate(session.latestMessage.timestamp))
-                    .font(.caption)
-                    .foregroundColor(.gray)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-    
-    // 日付のフォーマット
-    private func formattedDate(_ timestamp: TimeInterval) -> String {
-        let date = Date(timeIntervalSince1970: timestamp)
-        let now = Date()
-        let calendar = Calendar.current
-        
-        if calendar.isDateInToday(date) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm"
-            return formatter.string(from: date)
-        } else if calendar.isDateInYesterday(date) {
-            return "昨日"
-        } else {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MM/dd"
-            return formatter.string(from: date)
-        }
-    }
-}
-
-// Preview
-#Preview {
-    OshiChatListView()
 }

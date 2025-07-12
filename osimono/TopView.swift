@@ -74,8 +74,9 @@ struct TopView: View {
                             )
                             .transition(.opacity)
                         } else if vm.selectedOshi.id != "1" { // ダミー推しではない場合
-                            OshiAIChatView(viewModel: vm, oshiItem: nil, showBackButton: false, isEmbedded: false)
-                                .id(vm.selectedOshi.id) // 推しが変わったら再生成
+//                            OshiAIChatView(viewModel: vm, oshiItem: nil, showBackButton: false, isEmbedded: false)
+//                                .id(vm.selectedOshi.id) // 推しが変わったら再生成
+                            OshiChatListView()
                         }
                     }else{
                         // 推しが登録されていない場合
@@ -108,8 +109,8 @@ struct TopView: View {
 //                        .padding()
 //                }
                 ZStack {
-//                    SettingsView(oshiChange: $oshiChange)
-                    SubscriptionSettingsView()
+                    SettingsView(oshiChange: $oshiChange)
+//                    SubscriptionSettingsView()
                 }
                 .tabItem {
                     Image(systemName: "gear")

@@ -436,96 +436,98 @@ struct ProfileSection: View {
                     }
                 }
                 .padding()
-                
-                // 推しリスト - グリッドレイアウト
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
-                    // 新規追加ボタン
-                    Button(action: {
-                        generateHapticFeedback()
-                        navigateToAddOshiForm = true
-                        isShowingOshiSelector = false
-                    }) {
-                        VStack {
-                            ZStack {
-                                Circle()
-                                    .fill(primaryColor.opacity(0.2))
-                                    .frame(width: 80, height: 80)
-                                
-                                Image(systemName: "plus")
-                                    .font(.system(size: 30))
-                                    .foregroundColor(primaryColor)
-                            }
-                            
-                            Text("新規追加")
-                                .font(.subheadline)
-                                .foregroundColor(.white)
-                        }
-                    }
+                ScrollView{
                     
-                    // 推しリスト
-                    ForEach(oshiList) { oshi in
+                    // 推しリスト - グリッドレイアウト
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
+                        // 新規追加ボタン
                         Button(action: {
-                            viewModel?.selectedOshi = oshi
-                            saveSelectedOshiId(oshi.id)
                             generateHapticFeedback()
-                            withAnimation(.spring()) {
-                                isShowingOshiSelector = false
-                                editFlag = false
-                                isEditingUsername = false
-                                showChangeOshiButton = false
-                            }
+                            navigateToAddOshiForm = true
+                            isShowingOshiSelector = false
                         }) {
                             VStack {
                                 ZStack {
-                                    // プロフィール画像またはプレースホルダー
-                                    if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
-                                        AsyncImage(url: url) { phase in
-                                            switch phase {
-                                            case .success(let image):
-                                                image
-                                                    .resizable()
-                                                    .scaledToFill()
-                                                    .frame(width: 80, height: 80)
-                                                    .clipShape(Circle())
-                                            default:
-                                                Circle()
-                                                    .fill(Color.gray.opacity(0.3))
-                                                    .frame(width: 80, height: 80)
-                                                    .overlay(
-                                                        Text(String(oshi.name.prefix(1)))
-                                                            .font(.system(size: 30, weight: .bold))
-                                                            .foregroundColor(.white)
-                                                    )
-                                            }
-                                        }
-                                    } else {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 80, height: 80)
-                                            .overlay(
-                                                Text(String(oshi.name.prefix(1)))
-                                                    .font(.system(size: 30, weight: .bold))
-                                                    .foregroundColor(.white)
-                                            )
-                                    }
+                                    Circle()
+                                        .fill(primaryColor.opacity(0.2))
+                                        .frame(width: 80, height: 80)
                                     
-                                    // 選択インジケーター
-                                    if viewModel?.selectedOshi.id == oshi.id {
-                                        Circle()
-                                            .stroke(primaryColor, lineWidth: 4)
-                                            .frame(width: 85, height: 85)
-                                    }
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 30))
+                                        .foregroundColor(primaryColor)
                                 }
                                 
-                                Text(oshi.name)
+                                Text("新規追加")
                                     .font(.subheadline)
                                     .foregroundColor(.white)
-                                    .lineLimit(1)
+                            }
+                        }
+                        
+                        // 推しリスト
+                        ForEach(oshiList) { oshi in
+                            Button(action: {
+                                viewModel?.selectedOshi = oshi
+                                saveSelectedOshiId(oshi.id)
+                                generateHapticFeedback()
+                                withAnimation(.spring()) {
+                                    isShowingOshiSelector = false
+                                    editFlag = false
+                                    isEditingUsername = false
+                                    showChangeOshiButton = false
+                                }
+                            }) {
+                                VStack {
+                                    ZStack {
+                                        // プロフィール画像またはプレースホルダー
+                                        if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                            AsyncImage(url: url) { phase in
+                                                switch phase {
+                                                case .success(let image):
+                                                    image
+                                                        .resizable()
+                                                        .scaledToFill()
+                                                        .frame(width: 80, height: 80)
+                                                        .clipShape(Circle())
+                                                default:
+                                                    Circle()
+                                                        .fill(Color.gray.opacity(0.3))
+                                                        .frame(width: 80, height: 80)
+                                                        .overlay(
+                                                            Text(String(oshi.name.prefix(1)))
+                                                                .font(.system(size: 30, weight: .bold))
+                                                                .foregroundColor(.white)
+                                                        )
+                                                }
+                                            }
+                                        } else {
+                                            Circle()
+                                                .fill(Color.gray.opacity(0.3))
+                                                .frame(width: 80, height: 80)
+                                                .overlay(
+                                                    Text(String(oshi.name.prefix(1)))
+                                                        .font(.system(size: 30, weight: .bold))
+                                                        .foregroundColor(.white)
+                                                )
+                                        }
+                                        
+                                        // 選択インジケーター
+                                        if viewModel?.selectedOshi.id == oshi.id {
+                                            Circle()
+                                                .stroke(primaryColor, lineWidth: 4)
+                                                .frame(width: 85, height: 85)
+                                        }
+                                    }
+                                    
+                                    Text(oshi.name)
+                                        .font(.subheadline)
+                                        .foregroundColor(.white)
+                                        .lineLimit(1)
+                                }
                             }
                         }
                     }
+                    .padding()
                 }
-                .padding()
             }
             .background(
                 RoundedRectangle(cornerRadius: 20)
