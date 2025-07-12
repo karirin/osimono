@@ -18,7 +18,11 @@ struct OshiChatListView: View {
     @State private var unreadCounts: [String: Int] = [:]
     @State private var lastMessages: [String: String] = [:]
     @State private var lastMessageTimes: [String: TimeInterval] = [:]
+    @State private var showDeleteAlert = false
+    @State private var oshiToDelete: Oshi?
     @Environment(\.presentationMode) var presentationMode
+    
+    @State private var isEditing = false
     
     // LINE風カラー設定
     let lineGrayBG = Color(UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0))
@@ -52,21 +56,51 @@ struct OshiChatListView: View {
         .refreshable {
             loadData()
         }
+        .alert("チャット履歴を削除", isPresented: $showDeleteAlert) {
+            Button("削除", role: .destructive) {
+                if let oshi = oshiToDelete {
+                    deleteChatHistory(for: oshi)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("\(oshiToDelete?.name ?? "")とのチャット履歴を削除しますか？この操作は元に戻せません。")
+        }
+    }
+    
+    // チャットが存在するかどうかを判定
+    private var hasAnyChats: Bool {
+        return oshiList.contains { oshi in
+            if let lastTime = lastMessageTimes[oshi.id], lastTime > 0 {
+                return true
+            }
+            return false
+        }
     }
     
     // MARK: - ヘッダービュー
     private var headerView: some View {
         VStack(spacing: 0) {
             HStack {
-                Button(action: {
-                    generateHapticFeedback()
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.blue)
+                // チャットが存在する場合のみ編集ボタンを表示
+                if hasAnyChats {
+                    Button(action: {
+                        generateHapticFeedback()
+                        withAnimation(.spring()) { isEditing.toggle() }
+                    }) {
+                        Text(isEditing ? "完了" : "編集")
+                            .font(.system(size: 16))
+                            .foregroundColor(.blue)
+                    }
+                    .opacity(0)
+                    .padding(.leading)
+                } else {
+                    // チャットがない場合は空のスペーサー
+                    Spacer()
+                        .frame(width: 44) // ボタンと同じ幅を確保
+                        .opacity(0)
+                        .padding(.leading)
                 }
-                .padding(.leading)
                 
                 Spacer()
                 
@@ -76,15 +110,23 @@ struct OshiChatListView: View {
                 
                 Spacer()
                 
-                Button(action: {
-                    generateHapticFeedback()
-                    // 設定やその他のアクション
-                }) {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 18))
-                        .foregroundColor(.gray)
+                // チャットが存在する場合のみ編集ボタンを表示
+                if hasAnyChats {
+                    Button(action: {
+                        generateHapticFeedback()
+                        withAnimation(.spring()) { isEditing.toggle() }
+                    }) {
+                        Text(isEditing ? "完了" : "編集")
+                            .font(.system(size: 16))
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.trailing)
+                } else {
+                    // チャットがない場合は空のスペーサー
+                    Spacer()
+                        .frame(width: 44) // ボタンと同じ幅を確保
+                        .padding(.trailing)
                 }
-                .padding(.trailing)
             }
             .padding(.vertical, 12)
             .background(Color.white)
@@ -181,15 +223,37 @@ struct OshiChatListView: View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 ForEach(filteredOshiList, id: \.id) { oshi in
-                    NavigationLink(destination: destinationView(for: oshi)) {
-                        ChatRowView(
-                            oshi: oshi,
-                            unreadCount: unreadCounts[oshi.id] ?? 0,
-                            lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
-                            lastMessageTime: lastMessageTimes[oshi.id] ?? 0
-                        )
+                    if isEditing {
+                        HStack {
+                            ChatRowView(
+                                oshi: oshi,
+                                unreadCount: unreadCounts[oshi.id] ?? 0,
+                                lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
+                                lastMessageTime: lastMessageTimes[oshi.id] ?? 0
+                            )
+                            Spacer(minLength: 0)
+                            Button(role: .destructive) {
+                                generateHapticFeedback()
+                                oshiToDelete = oshi
+                                showDeleteAlert = true
+                            } label: {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.red)
+                                    .padding(.trailing, 12)
+                            }
+                        }
+                    } else {
+                        NavigationLink(destination: destinationView(for: oshi)) {
+                            ChatRowView(
+                                oshi: oshi,
+                                unreadCount: unreadCounts[oshi.id] ?? 0,
+                                lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
+                                lastMessageTime: lastMessageTimes[oshi.id] ?? 0
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .buttonStyle(PlainButtonStyle())
                     
                     Divider()
                         .padding(.leading, 80)
@@ -199,6 +263,7 @@ struct OshiChatListView: View {
         }
         .background(Color.white)
     }
+    
     
     // MARK: - フィルタリングされた推しリスト
     private var filteredOshiList: [Oshi] {
@@ -222,6 +287,35 @@ struct OshiChatListView: View {
                 loadUnreadCounts()
                 loadLastMessages()
             }
+    }
+    
+    // MARK: - チャット履歴削除
+    private func deleteChatHistory(for oshi: Oshi) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        // Firebaseからチャット履歴を削除
+        let chatRef = Database.database().reference()
+            .child("oshiChats")
+            .child(userId)
+            .child(oshi.id)
+        
+        chatRef.removeValue { error, _ in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("チャット履歴削除エラー: \(error.localizedDescription)")
+                } else {
+                    print("チャット履歴を削除しました: \(oshi.name)")
+                    // ローカルの状態も更新
+                    self.lastMessages[oshi.id] = "まだメッセージがありません"
+                    self.lastMessageTimes[oshi.id] = 0
+                    self.unreadCounts[oshi.id] = 0
+                    
+                    // 最後に読んだタイムスタンプもリセット
+                    let userRef = Database.database().reference().child("users").child(userId)
+                    userRef.child("lastReadTimestamps").child(oshi.id).removeValue()
+                }
+            }
+        }
     }
     
     // MARK: - データ読み込み
@@ -372,6 +466,96 @@ struct OshiChatListView: View {
     }
 }
 
+// MARK: - スワイプ可能な行
+struct SwipeableRow<Content: View>: View {
+    let content: (Bool) -> Content
+    let onDelete: () -> Void
+    let onTap: () -> Void
+    
+    @State private var offset: CGFloat = 0
+    @State private var isShowingDeleteButton = false
+    
+    private let deleteButtonWidth: CGFloat = 80
+    private let threshold: CGFloat = 50
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            // メインコンテンツ
+            content(isShowingDeleteButton)
+                .offset(x: offset)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            let translation = value.translation.width
+                            
+                            // 左スワイプのみ許可
+                            if translation < 0 {
+                                offset = translation
+                            } else if offset < 0 {
+                                // 右スワイプで戻す
+                                offset = min(0, translation + offset)
+                            }
+                        }
+                        .onEnded { value in
+                            let translation = value.translation.width
+                            let velocity = value.velocity.width
+                            
+                            withAnimation(.spring(response: 0.3)) {
+                                if translation < -threshold || velocity < -800 {
+                                    // 削除ボタンを表示
+                                    offset = -deleteButtonWidth
+                                    isShowingDeleteButton = true
+                                } else {
+                                    // 元の位置に戻す
+                                    offset = 0
+                                    isShowingDeleteButton = false
+                                }
+                            }
+                        }
+                )
+                .background(Color.white)
+            
+            // 削除ボタン
+            if isShowingDeleteButton {
+                Button(action: {
+                    withAnimation(.spring()) {
+                        offset = 0
+                        isShowingDeleteButton = false
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        onDelete()
+                    }
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white)
+                        
+                        Text("削除")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: deleteButtonWidth)
+                    .frame(maxHeight: .infinity)
+                    .background(Color.red)
+                }
+                .transition(.move(edge: .trailing))
+            }
+        }
+        .clipped()
+        .contentShape(Rectangle())
+        .onTapGesture {
+            // 削除ボタンが表示されている場合はそれを閉じる
+            if isShowingDeleteButton {
+                withAnimation(.spring()) {
+                    offset = 0
+                    isShowingDeleteButton = false
+                }
+            }
+        }
+    }
+}
+
 // MARK: - チャット行ビュー
 struct ChatRowView: View {
     let oshi: Oshi
@@ -493,5 +677,6 @@ struct ChatRowView: View {
 
 // MARK: - プレビュー
 #Preview {
-    OshiChatListView()
+//    OshiChatListView()
+    TopView()
 }

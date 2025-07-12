@@ -799,69 +799,65 @@ struct OshiAIChatView: View {
     
     // Firebaseからメッセージを読み込む
     private func loadMessages() {
-         isFetchingMessages = true
-         isInitialScrollComplete = false // 読み込み開始時にリセット
-         
-         // 特定のアイテムに関連するチャットを読み込む場合
-         if let item = oshiItem {
-             // itemのidが存在することを確認
-             let itemId = item.id
-             
-             ChatDatabaseManager.shared.fetchMessages(for: viewModel.selectedOshi.id, itemId: itemId) { fetchedMessages, error in
-                 DispatchQueue.main.async {
-                     if let error = error {
-                         print("メッセージ読み込みエラー: \(error.localizedDescription)")
-                         isFetchingMessages = false
-                         // エラー時にはローディング解除
-                         if messages.isEmpty {
-                             isInitialScrollComplete = true
-                         }
-                         return
-                     }
-                     
-                     if let messages = fetchedMessages, !messages.isEmpty {
-                         self.messages = messages
-                         isFetchingMessages = false
-                         // メッセージが存在するが空の場合は即座にローディング解除
-                         if messages.isEmpty {
-                             isInitialScrollComplete = true
-                         }
-                     } else {
-                         addInitialMessage(for: item)
-                     }
-                 }
-             }
-         } else {
-             // 推し全体のチャット履歴を読み込む
-             ChatDatabaseManager.shared.fetchMessages(for: viewModel.selectedOshi.id) { fetchedMessages, error in
-                 DispatchQueue.main.async {
-                     if let error = error {
-                         print("メッセージ読み込みエラー: \(error.localizedDescription)")
-                         isFetchingMessages = false
-                         // エラー時にはローディング解除
-                         if messages.isEmpty {
-                             isInitialScrollComplete = true
-                         }
-                         return
-                     }
-                     
-                     if let messages = fetchedMessages, !messages.isEmpty {
-                         self.messages = messages
-                         isFetchingMessages = false
-                         // メッセージが空の場合は即座にローディング解除
-                         if messages.isEmpty {
-                             isInitialScrollComplete = true
-                         }
-                     } else {
-                         // チャット履歴がない場合、ウェルカムメッセージを追加
-                         addWelcomeMessage()
-                         isFetchingMessages = false
-                         // isInitialScrollComplete はonChange内で更新される
-                     }
-                 }
-             }
-         }
-     }
+        isFetchingMessages = true
+        isInitialScrollComplete = false
+        
+        if let item = oshiItem {
+            let itemId = item.id
+            
+            ChatDatabaseManager.shared.fetchMessages(for: viewModel.selectedOshi.id, itemId: itemId) { fetchedMessages, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        print("メッセージ読み込みエラー: \(error.localizedDescription)")
+                        isFetchingMessages = false
+                        if messages.isEmpty {
+                            isInitialScrollComplete = true
+                        }
+                        return
+                    }
+                    
+                    if let messages = fetchedMessages, !messages.isEmpty {
+                        self.messages = messages
+                        isFetchingMessages = false
+                        if messages.isEmpty {
+                            isInitialScrollComplete = true
+                        }
+                    } else {
+                        addInitialMessage(for: item)
+                    }
+                }
+            }
+        } else {
+            ChatDatabaseManager.shared.fetchMessages(for: viewModel.selectedOshi.id) { fetchedMessages, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        print("メッセージ読み込みエラー: \(error.localizedDescription)")
+                        isFetchingMessages = false
+                        if messages.isEmpty {
+                            isInitialScrollComplete = true
+                        }
+                        return
+                    }
+                    
+                    if let messages = fetchedMessages, !messages.isEmpty {
+                        self.messages = messages
+                        isFetchingMessages = false
+                        if messages.isEmpty {
+                            isInitialScrollComplete = true
+                        }
+                    } else {
+                        // ここをコメントアウトまたは削除
+                        // addWelcomeMessage()
+                        
+                        // 代わりに空の状態でローディングを終了
+                        isFetchingMessages = false
+                        isInitialScrollComplete = true
+                    }
+                }
+            }
+        }
+    }
+
     
     // 初期メッセージ（アイテムについて）
     private func addInitialMessage(for item: OshiItem) {
@@ -873,14 +869,10 @@ struct OshiAIChatView: View {
                 
                 if let error = error {
                     print("AIメッセージ生成エラー: \(error.localizedDescription)")
-                    // エラー時には簡単なメッセージを表示
-                    addDefaultWelcomeMessage()
                     return
                 }
                 
                 guard let content = content else {
-                    // コンテンツがない場合も簡単なメッセージを表示
-                    addDefaultWelcomeMessage()
                     return
                 }
                 
@@ -905,49 +897,6 @@ struct OshiAIChatView: View {
                 // 画面に表示
                 messages.append(message)
                 isFetchingMessages = false  // ここでフェッチ完了を設定
-            }
-        }
-    }
-    
-    // ウェルカムメッセージ
-    private func addWelcomeMessage() {
-        let messageId = UUID().uuidString
-        let message = ChatMessage(
-            id: messageId,
-            content: "こんにちは！\(viewModel.selectedOshi.name)だよ！いつも応援してくれてありがとう✨\n何か質問があれば話しかけてね！",
-            isUser: false,
-            timestamp: Date().timeIntervalSince1970,
-            oshiId: viewModel.selectedOshi.id
-        )
-        
-        // メッセージをデータベースに保存
-        ChatDatabaseManager.shared.saveMessage(message) { error in
-            if let error = error {
-                print("メッセージ保存エラー: \(error.localizedDescription)")
-            }
-        }
-        
-        // 画面に表示
-        messages.append(message)
-    }
-    
-    // エラー時などのデフォルトメッセージ
-    private func addDefaultWelcomeMessage() {
-        let messageId = UUID().uuidString
-        let message = ChatMessage(
-            id: messageId,
-            content: "こんにちは！\(viewModel.selectedOshi.name)だよ！何か聞きたいことがあれば教えてね💕",
-            isUser: false,
-            timestamp: Date().timeIntervalSince1970,
-            oshiId: viewModel.selectedOshi.id
-        )
-        
-        messages.append(message)
-        
-        // データベースに保存
-        ChatDatabaseManager.shared.saveMessage(message) { error in
-            if let error = error {
-                print("メッセージ保存エラー: \(error.localizedDescription)")
             }
         }
     }
