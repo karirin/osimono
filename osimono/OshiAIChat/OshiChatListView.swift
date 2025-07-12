@@ -16,6 +16,8 @@ struct OshiChatListView: View {
     @State private var oshiList: [Oshi] = []
     @State private var isLoading = true
     @State private var unreadCounts: [String: Int] = [:]
+    @State private var lastMessages: [String: String] = [:]
+    @State private var lastMessageTimes: [String: TimeInterval] = [:]
     @Environment(\.presentationMode) var presentationMode
     
     // LINE風カラー設定
@@ -183,8 +185,8 @@ struct OshiChatListView: View {
                         ChatRowView(
                             oshi: oshi,
                             unreadCount: unreadCounts[oshi.id] ?? 0,
-                            lastMessage: getLastMessage(for: oshi),
-                            lastMessageTime: getLastMessageTime(for: oshi)
+                            lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
+                            lastMessageTime: lastMessageTimes[oshi.id] ?? 0
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -200,20 +202,14 @@ struct OshiChatListView: View {
     
     // MARK: - フィルタリングされた推しリスト
     private var filteredOshiList: [Oshi] {
-        if searchText.isEmpty {
-            return oshiList.sorted { oshi1, oshi2 in
-                let time1 = getLastMessageTime(for: oshi1)
-                let time2 = getLastMessageTime(for: oshi2)
-                return time1 > time2
-            }
-        } else {
-            return oshiList.filter {
-                $0.name.lowercased().contains(searchText.lowercased())
-            }.sorted { oshi1, oshi2 in
-                let time1 = getLastMessageTime(for: oshi1)
-                let time2 = getLastMessageTime(for: oshi2)
-                return time1 > time2
-            }
+        let filteredList = searchText.isEmpty ? oshiList : oshiList.filter {
+            $0.name.lowercased().contains(searchText.lowercased())
+        }
+        
+        return filteredList.sorted { oshi1, oshi2 in
+            let time1 = lastMessageTimes[oshi1.id] ?? 0
+            let time2 = lastMessageTimes[oshi2.id] ?? 0
+            return time1 > time2
         }
     }
     
@@ -224,6 +220,7 @@ struct OshiChatListView: View {
             .onDisappear {
                 // チャット画面から戻った時に未読数を更新
                 loadUnreadCounts()
+                loadLastMessages()
             }
     }
     
@@ -292,9 +289,58 @@ struct OshiChatListView: View {
             
             DispatchQueue.main.async {
                 self.oshiList = newOshis
-                self.isLoading = false
                 self.loadUnreadCounts()
+                self.loadLastMessages()
             }
+        }
+    }
+    
+    // MARK: - 実際のFirebaseデータを取得する修正されたメソッド
+    private func loadLastMessages() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        let dispatchGroup = DispatchGroup()
+        var tempLastMessages: [String: String] = [:]
+        var tempLastMessageTimes: [String: TimeInterval] = [:]
+        
+        for oshi in oshiList {
+            dispatchGroup.enter()
+            
+            // 各推しの最新メッセージを取得
+            let chatRef = Database.database().reference()
+                .child("oshiChats")
+                .child(userId)
+                .child(oshi.id)
+            
+            chatRef.queryOrdered(byChild: "timestamp")
+                .queryLimited(toLast: 1)
+                .observeSingleEvent(of: .value) { snapshot in
+                    
+                    var latestMessage: String = "まだメッセージがありません"
+                    var latestTimestamp: TimeInterval = 0
+                    
+                    for child in snapshot.children {
+                        if let childSnapshot = child as? DataSnapshot,
+                           let messageDict = childSnapshot.value as? [String: Any],
+                           let content = messageDict["content"] as? String,
+                           let timestamp = messageDict["timestamp"] as? TimeInterval {
+                            latestMessage = content
+                            latestTimestamp = timestamp
+                            break
+                        }
+                    }
+                    
+                    tempLastMessages[oshi.id] = latestMessage
+                    tempLastMessageTimes[oshi.id] = latestTimestamp
+                    
+                    dispatchGroup.leave()
+                }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            self.lastMessages = tempLastMessages
+            self.lastMessageTimes = tempLastMessageTimes
+            self.isLoading = false
         }
     }
     
@@ -314,27 +360,6 @@ struct OshiChatListView: View {
         dispatchGroup.notify(queue: .main) {
             self.unreadCounts = tempUnreadCounts
         }
-    }
-    
-    // MARK: - ヘルパーメソッド
-    private func getLastMessage(for oshi: Oshi) -> String {
-        // 実際の実装では、Firebaseから最新メッセージを取得
-        // ここではサンプルメッセージを返す
-        let sampleMessages = [
-            "こんにちは！今日も一日お疲れ様でした✨",
-            "お疲れ様！いつも応援してくれてありがとう💕",
-            "今度の新しいグッズ、どう思う？",
-            "今日はどんな一日だった？",
-            "また今度話しかけてね！"
-        ]
-        return sampleMessages.randomElement() ?? "メッセージがありません"
-    }
-    
-    private func getLastMessageTime(for oshi: Oshi) -> TimeInterval {
-        // 実際の実装では、Firebaseから最新メッセージの時間を取得
-        // ここではランダムな時間を返す
-        let randomDays = Double.random(in: 0...7)
-        return Date().timeIntervalSince1970 - (randomDays * 24 * 60 * 60)
     }
     
     private func hideKeyboard() {
@@ -439,6 +464,10 @@ struct ChatRowView: View {
     
     // 時間フォーマット
     private func formatTime(_ timestamp: TimeInterval) -> String {
+        if timestamp == 0 {
+            return ""
+        }
+        
         let date = Date(timeIntervalSince1970: timestamp)
         let calendar = Calendar.current
         let now = Date()
