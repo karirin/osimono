@@ -14,6 +14,7 @@ struct OshiChatListView: View {
     @StateObject private var coordinator = OshiChatCoordinator.shared
     @State private var searchText = ""
     @State private var oshiList: [Oshi] = []
+    @State private var selectedOshiId: String = "" // 選択中の推しIDを追加
     @State private var isLoading = true
     @State private var unreadCounts: [String: Int] = [:]
     @State private var lastMessages: [String: String] = [:]
@@ -229,7 +230,8 @@ struct OshiChatListView: View {
                                 oshi: oshi,
                                 unreadCount: unreadCounts[oshi.id] ?? 0,
                                 lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
-                                lastMessageTime: lastMessageTimes[oshi.id] ?? 0
+                                lastMessageTime: lastMessageTimes[oshi.id] ?? 0,
+                                isSelected: oshi.id == selectedOshiId
                             )
                             Spacer(minLength: 0)
                             Button(role: .destructive) {
@@ -249,7 +251,8 @@ struct OshiChatListView: View {
                                 oshi: oshi,
                                 unreadCount: unreadCounts[oshi.id] ?? 0,
                                 lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
-                                lastMessageTime: lastMessageTimes[oshi.id] ?? 0
+                                lastMessageTime: lastMessageTimes[oshi.id] ?? 0,
+                                isSelected: oshi.id == selectedOshiId
                             )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -265,16 +268,28 @@ struct OshiChatListView: View {
     }
     
     
-    // MARK: - フィルタリングされた推しリスト
+    // MARK: - フィルタリングされた推しリスト（修正版）
     private var filteredOshiList: [Oshi] {
         let filteredList = searchText.isEmpty ? oshiList : oshiList.filter {
             $0.name.lowercased().contains(searchText.lowercased())
         }
         
+        // 選択中の推しを一番上に表示するためのソート
         return filteredList.sorted { oshi1, oshi2 in
-            let time1 = lastMessageTimes[oshi1.id] ?? 0
-            let time2 = lastMessageTimes[oshi2.id] ?? 0
-            return time1 > time2
+            // まず選択中の推しかどうかで比較
+            let isOshi1Selected = oshi1.id == selectedOshiId
+            let isOshi2Selected = oshi2.id == selectedOshiId
+            
+            if isOshi1Selected && !isOshi2Selected {
+                return true // oshi1が選択中で、oshi2が選択中でない場合、oshi1を上に
+            } else if !isOshi1Selected && isOshi2Selected {
+                return false // oshi2が選択中で、oshi1が選択中でない場合、oshi2を上に
+            } else {
+                // どちらも選択中、またはどちらも非選択の場合は、最新メッセージ時間でソート
+                let time1 = lastMessageTimes[oshi1.id] ?? 0
+                let time2 = lastMessageTimes[oshi2.id] ?? 0
+                return time1 > time2
+            }
         }
     }
     
@@ -286,6 +301,7 @@ struct OshiChatListView: View {
                 // チャット画面から戻った時に未読数を更新
                 loadUnreadCounts()
                 loadLastMessages()
+                loadSelectedOshiId() // 選択中の推しIDも再取得
             }
     }
     
@@ -322,6 +338,21 @@ struct OshiChatListView: View {
     private func loadData() {
         isLoading = true
         loadOshiList()
+        loadSelectedOshiId() // 選択中の推しIDを取得
+    }
+    
+    // 選択中の推しIDを取得する新しいメソッド
+    private func loadSelectedOshiId() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        let userRef = Database.database().reference().child("users").child(userId)
+        userRef.child("selectedOshiId").observeSingleEvent(of: .value) { snapshot in
+            if let selectedId = snapshot.value as? String {
+                DispatchQueue.main.async {
+                    self.selectedOshiId = selectedId
+                }
+            }
+        }
     }
     
     private func loadOshiList() {
@@ -466,116 +497,49 @@ struct OshiChatListView: View {
     }
 }
 
-// MARK: - スワイプ可能な行
-struct SwipeableRow<Content: View>: View {
-    let content: (Bool) -> Content
-    let onDelete: () -> Void
-    let onTap: () -> Void
-    
-    @State private var offset: CGFloat = 0
-    @State private var isShowingDeleteButton = false
-    
-    private let deleteButtonWidth: CGFloat = 80
-    private let threshold: CGFloat = 50
-    
-    var body: some View {
-        HStack(spacing: 0) {
-            // メインコンテンツ
-            content(isShowingDeleteButton)
-                .offset(x: offset)
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            let translation = value.translation.width
-                            
-                            // 左スワイプのみ許可
-                            if translation < 0 {
-                                offset = translation
-                            } else if offset < 0 {
-                                // 右スワイプで戻す
-                                offset = min(0, translation + offset)
-                            }
-                        }
-                        .onEnded { value in
-                            let translation = value.translation.width
-                            let velocity = value.velocity.width
-                            
-                            withAnimation(.spring(response: 0.3)) {
-                                if translation < -threshold || velocity < -800 {
-                                    // 削除ボタンを表示
-                                    offset = -deleteButtonWidth
-                                    isShowingDeleteButton = true
-                                } else {
-                                    // 元の位置に戻す
-                                    offset = 0
-                                    isShowingDeleteButton = false
-                                }
-                            }
-                        }
-                )
-                .background(Color.white)
-            
-            // 削除ボタン
-            if isShowingDeleteButton {
-                Button(action: {
-                    withAnimation(.spring()) {
-                        offset = 0
-                        isShowingDeleteButton = false
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        onDelete()
-                    }
-                }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.white)
-                        
-                        Text("削除")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white)
-                    }
-                    .frame(width: deleteButtonWidth)
-                    .frame(maxHeight: .infinity)
-                    .background(Color.red)
-                }
-                .transition(.move(edge: .trailing))
-            }
-        }
-        .clipped()
-        .contentShape(Rectangle())
-        .onTapGesture {
-            // 削除ボタンが表示されている場合はそれを閉じる
-            if isShowingDeleteButton {
-                withAnimation(.spring()) {
-                    offset = 0
-                    isShowingDeleteButton = false
-                }
-            }
-        }
-    }
-}
-
-// MARK: - チャット行ビュー
+// MARK: - チャット行ビュー（修正版）
 struct ChatRowView: View {
     let oshi: Oshi
     let unreadCount: Int
     let lastMessage: String
     let lastMessageTime: TimeInterval
-    
+    let isSelected: Bool // 選択中かどうかのフラグを追加
+
     var body: some View {
         HStack(spacing: 12) {
             // プロフィール画像
-            profileImageView
-                .frame(width: 56, height: 56)
+            ZStack {
+                profileImageView
+                    .frame(width: 56, height: 56)
+                
+                // 選択中の推しには特別なインジケーターを表示
+                if isSelected {
+                    Circle()
+                        .stroke(Color.pink, lineWidth: 3)
+                        .frame(width: 56, height: 56)
+                }
+            }
             
             // メッセージ情報
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(oshi.name)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.black)
-                        .lineLimit(1)
+                    HStack(spacing: 6) {
+                        Text(oshi.name)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.black)
+                            .lineLimit(1)
+                        
+                        // 選択中の推しにはバッジを表示
+                        if isSelected {
+                            Text("選択中")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.pink)
+                                .cornerRadius(8)
+                        }
+                    }
                     
                     Spacer()
                     
@@ -600,7 +564,7 @@ struct ChatRowView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.white)
+        .background(isSelected ? Color.pink.opacity(0.05) : Color.white) // 選択中は背景色を変更
     }
     
     // プロフィール画像
