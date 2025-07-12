@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import OpenAI
+import OpenAISwift
 import Firebase
 import FirebaseAuth
 import FirebaseDatabase
@@ -29,21 +29,21 @@ extension Publishers {
 }
 
 // MARK: - 共通クライアント
-struct AIClient {
-    /// プレビュー中・APIキー未設定時は `nil`
-    static let shared: OpenAI? = {
-        let envKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"]
-        let plistKey = Bundle.main.infoDictionary?["OPENAI_API_KEY"] as? String
-        guard let key = (envKey?.isEmpty == false ? envKey : nil) ??
-                        (plistKey?.isEmpty == false ? plistKey : nil) else {
-            #if DEBUG
-            print("⚠️ OPENAI_API_KEY が取得できませんでした")
-            #endif
-            return nil
-        }
-        return OpenAI(apiToken: key)
-    }()
-}
+//struct AIClient {
+//    /// プレビュー中・APIキー未設定時は `nil`
+//    static let shared: OpenAI? = {
+//        let envKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"]
+//        let plistKey = Bundle.main.infoDictionary?["OPENAI_API_KEY"] as? String
+//        guard let key = (envKey?.isEmpty == false ? envKey : nil) ??
+//                        (plistKey?.isEmpty == false ? plistKey : nil) else {
+//            #if DEBUG
+//            print("⚠️ OPENAI_API_KEY が取得できませんでした")
+//            #endif
+//            return nil
+//        }
+//        return OpenAI(apiToken: key)
+//    }()
+//}
 
 // MARK: - メインビュー
 struct OshiAIChatView: View {
