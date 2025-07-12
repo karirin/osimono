@@ -1,5 +1,5 @@
 {
-  "originHash" : "186a2401e594ee9caf4feee659d1a07e7e461ac3d183ef8bba3ccd3ebf8a529a",
+  "originHash" : "410ee1050222af58ce305f9bbdbe006f9e1a40e1467338faf0a2527ce08e23d8",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -119,12 +119,12 @@
       }
     },
     {
-      "identity" : "openai",
+      "identity" : "openaiswift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/MacPaw/OpenAI",
+      "location" : "https://github.com/adamrushy/OpenAISwift",
       "state" : {
-        "revision" : "40f3d6cdb5a2ad72369984a8e0e99a28c6e46f47",
-        "version" : "0.4.2"
+        "revision" : "ca66fb720d6ebb657601db5a0852b830ae310a4c",
+        "version" : "1.4.1"
       }
     },
     {

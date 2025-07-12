@@ -108,7 +108,8 @@ struct TopView: View {
 //                        .padding()
 //                }
                 ZStack {
-                    SettingsView(oshiChange: $oshiChange)
+//                    SettingsView(oshiChange: $oshiChange)
+                    SubscriptionSettingsView()
                 }
                 .tabItem {
                     Image(systemName: "gear")

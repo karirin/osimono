@@ -8,7 +8,7 @@
 import SwiftUI
 import StoreKit
 
-struct PremiumSubscriptionView: View {
+struct SubscriptionPreView: View {
     @StateObject private var subscriptionManager = SubscriptionManager()
     @Environment(\.presentationMode) var presentationMode
     @State private var isLoading = false
@@ -308,5 +308,5 @@ struct PlanCard: View {
 }
 
 #Preview {
-    PremiumSubscriptionView()
+    SubscriptionPreView()
 }

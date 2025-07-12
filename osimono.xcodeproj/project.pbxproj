@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		180348852DC0CEFE00AD2922 /* Confetti in Frameworks */ = {isa = PBXBuildFile; productRef = 180348842DC0CEFE00AD2922 /* Confetti */; };
+		1814B9322E22400E0034EE4C /* OpenAISwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1814B9312E22400E0034EE4C /* OpenAISwift */; };
 		18274FF82DE2C5AF00917A47 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */; };
 		182AD6682D8F50B9006F9F09 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 182AD6672D8F50B9006F9F09 /* Lottie */; };
 		1870B01A2D8BD224004B827B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0192D8BD224004B827B /* FirebaseAnalytics */; };
@@ -30,7 +31,6 @@
 		187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE2592D8EFEE100D58928 /* ShimmerEffect */; };
 		187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE25C2D8F4AAF00D58928 /* Shimmer */; };
 		188C012C2DDF4FCC00B7ADB9 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */; };
-		189878432DC9084E000F68FB /* OpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 189878422DC9084E000F68FB /* OpenAI */; };
 		18B9E1172E096099000F4B57 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 18B9E1162E096099000F4B57 /* FirebaseAnalytics */; };
 		18F429E82DB291EE007C198B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E72DB291EE007C198B /* CropViewController */; };
 		18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E92DB291EE007C198B /* TOCropViewController */; };
@@ -100,6 +100,7 @@
 				1870B0342D8BD224004B827B /* FirebaseFunctions in Frameworks */,
 				1870B02C2D8BD224004B827B /* FirebaseDatabase in Frameworks */,
 				1870B02E2D8BD224004B827B /* FirebaseDynamicLinks in Frameworks */,
+				1814B9322E22400E0034EE4C /* OpenAISwift in Frameworks */,
 				18274FF82DE2C5AF00917A47 /* FirebaseAnalytics in Frameworks */,
 				1870B0202D8BD224004B827B /* FirebaseAppCheck in Frameworks */,
 				1870B0242D8BD224004B827B /* FirebaseAuth in Frameworks */,
@@ -107,7 +108,6 @@
 				182AD6682D8F50B9006F9F09 /* Lottie in Frameworks */,
 				1870B0302D8BD224004B827B /* FirebaseFirestore in Frameworks */,
 				1870B0362D8BD224004B827B /* FirebaseStorage in Frameworks */,
-				189878432DC9084E000F68FB /* OpenAI in Frameworks */,
 				1870B0222D8BD224004B827B /* FirebaseAppDistribution-Beta in Frameworks */,
 				1870B0382D8BD224004B827B /* FirebaseStorageCombine-Community in Frameworks */,
 				1870B01E2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
@@ -214,10 +214,10 @@
 				18F429E92DB291EE007C198B /* TOCropViewController */,
 				180348842DC0CEFE00AD2922 /* Confetti */,
 				1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */,
-				189878422DC9084E000F68FB /* OpenAI */,
 				188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */,
 				18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */,
 				18B9E1162E096099000F4B57 /* FirebaseAnalytics */,
+				1814B9312E22400E0034EE4C /* OpenAISwift */,
 			);
 			productName = osimono;
 			productReference = 1870AFB32D8BC85E004B827B /* osimono.app */;
@@ -309,8 +309,8 @@
 				18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */,
 				180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */,
 				1879BDA52DC7BDBC0016ACA3 /* XCRemoteSwiftPackageReference "SwiftyCrop" */,
-				189878412DC9084E000F68FB /* XCRemoteSwiftPackageReference "OpenAI" */,
 				188C012A2DDF4FCC00B7ADB9 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				1814B9302E22400E0034EE4C /* XCRemoteSwiftPackageReference "OpenAISwift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1870AFB42D8BC85E004B827B /* Products */;
@@ -534,7 +534,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.4;
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -568,7 +568,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.4;
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -699,6 +699,14 @@
 				minimumVersion = 0.1.0;
 			};
 		};
+		1814B9302E22400E0034EE4C /* XCRemoteSwiftPackageReference "OpenAISwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adamrushy/OpenAISwift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.4.1;
+			};
+		};
 		182AD6662D8F50B9006F9F09 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
@@ -747,14 +755,6 @@
 				minimumVersion = 12.4.0;
 			};
 		};
-		189878412DC9084E000F68FB /* XCRemoteSwiftPackageReference "OpenAI" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/MacPaw/OpenAI";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.4.2;
-			};
-		};
 		18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/TimOliver/TOCropViewController.git";
@@ -770,6 +770,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */;
 			productName = Confetti;
+		};
+		1814B9312E22400E0034EE4C /* OpenAISwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1814B9302E22400E0034EE4C /* XCRemoteSwiftPackageReference "OpenAISwift" */;
+			productName = OpenAISwift;
 		};
 		18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -863,11 +868,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 188C012A2DDF4FCC00B7ADB9 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
 			productName = GoogleMobileAds;
-		};
-		189878422DC9084E000F68FB /* OpenAI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 189878412DC9084E000F68FB /* XCRemoteSwiftPackageReference "OpenAI" */;
-			productName = OpenAI;
 		};
 		18B9E1162E096099000F4B57 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
