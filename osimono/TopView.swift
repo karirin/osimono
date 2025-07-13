@@ -22,6 +22,8 @@ struct TopView: View {
     @State private var hasLoadedProfileImages = false
     @State private var cachedImageURLs: [String: String] = [:] // oshiId: imageUrl
     @State private var initialLoadCompleted = false
+    @State private var observerHandle: DatabaseHandle? // 監視ハンドルを追加
+    
     let dummyOshi = Oshi(
         id: "1",
         name: "テストの推し",
@@ -30,6 +32,7 @@ struct TopView: View {
         memo: nil,
         createdAt: Date().timeIntervalSince1970
     )
+    
     var body: some View {
         ZStack{
             TabView {
@@ -74,8 +77,6 @@ struct TopView: View {
                             )
                             .transition(.opacity)
                         } else if vm.selectedOshi.id != "1" { // ダミー推しではない場合
-//                            OshiAIChatView(viewModel: vm, oshiItem: nil, showBackButton: false, isEmbedded: false)
-//                                .id(vm.selectedOshi.id) // 推しが変わったら再生成
                             OshiChatListView()
                         }
                     }else{
@@ -97,20 +98,8 @@ struct TopView: View {
                         .frame(width:1,height:1)
                     Text("チャット")
                 }
-//                HStack{
-//                    DiaryView(oshiId: selectedOshiId ?? "default")
-////                    ContentView()
-//                }
-//
-//                .tabItem {
-//                    Image(systemName: "book.pages")
-//                        .padding()
-//                    Text("日記")
-//                        .padding()
-//                }
                 ZStack {
                     SettingsView(oshiChange: $oshiChange)
-//                    SubscriptionSettingsView()
                 }
                 .tabItem {
                     Image(systemName: "gear")
@@ -166,6 +155,20 @@ struct TopView: View {
                 oshiChange = false
             }
         }
+        .onDisappear {
+            // メモリリーク防止のために監視を解除
+            removeObserver()
+        }
+    }
+    
+    // 監視ハンドル削除メソッドを追加
+    private func removeObserver() {
+        guard let userID = Auth.auth().currentUser?.uid,
+              let handle = observerHandle else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.removeObserver(withHandle: handle)
+        observerHandle = nil
     }
     
     func fetchOshiList() {
@@ -191,13 +194,37 @@ struct TopView: View {
                         let memo = value["memo"] as? String
                         let createdAt = value["createdAt"] as? TimeInterval
                         
+                        // 性格関連の属性も追加
+                        let personality = value["personality"] as? String
+                        let speakingStyle = value["speaking_style"] as? String
+                        let birthday = value["birthday"] as? String
+                        let height = value["height"] as? Int
+                        let favoriteColor = value["favorite_color"] as? String
+                        let favoriteFood = value["favorite_food"] as? String
+                        let dislikedFood = value["disliked_food"] as? String
+                        let hometown = value["hometown"] as? String
+                        let interests = value["interests"] as? [String]
+                        let gender = value["gender"] as? String ?? "男性"
+                        let userNickname = value["user_nickname"] as? String
+                        
                         let oshi = Oshi(
                             id: id,
                             name: name,
                             imageUrl: imageUrl,
                             backgroundImageUrl: backgroundImageUrl,
                             memo: memo,
-                            createdAt: createdAt
+                            createdAt: createdAt,
+                            personality: personality,
+                            interests: interests,
+                            speaking_style: speakingStyle,
+                            birthday: birthday,
+                            height: height,
+                            favorite_color: favoriteColor,
+                            favorite_food: favoriteFood,
+                            disliked_food: dislikedFood,
+                            hometown: hometown,
+                            gender: gender,
+                            user_nickname: userNickname
                         )
                         newOshis.append(oshi)
                     }
@@ -208,24 +235,75 @@ struct TopView: View {
                 self.oshiList = newOshis
                 self.hasLoadedProfileImages = true
                 
-                // 推しリストが取得できたら、選択中の推しを取得または設定
+                print("✅ 推しリスト取得完了: \(newOshis.count)人")
+                
+                // 推しリストが取得できたら、選択中の推しを設定
                 if !newOshis.isEmpty {
-                    // 選択中の推しIDがあれば、それを使う
-                    if self.selectedOshiId != "default" {
-                        self.loadSelectedOshi()
-                    }
-                    // まだ推しが選択されていない場合、最初の推しを選択
-                    else if let firstOshi = newOshis.first, self.selectedOshi == nil {
-                        self.selectedOshi = firstOshi
-                        self.viewModel = OshiViewModel(oshi: firstOshi)
-                        
-                        // ユーザーのselectedOshiIdも更新しておく
-                        if let userId = Auth.auth().currentUser?.uid {
-                            let userRef = Database.database().reference().child("users").child(userId)
-                            userRef.updateChildValues(["selectedOshiId": firstOshi.id])
+                    // 現在のselectedOshiIdがデフォルト値の場合は、最初の推しを選択
+                    if self.selectedOshiId == "default" {
+                        self.loadSelectedOshiFromFirebase(withFallback: newOshis.first!)
+                    } else {
+                        // selectedOshiIdがある場合は、該当する推しを検索
+                        if let matchingOshi = newOshis.first(where: { $0.id == self.selectedOshiId }) {
+                            self.updateSelectedOshi(matchingOshi)
+                        } else {
+                            // 該当する推しがない場合は最初の推しを選択
+                            self.updateSelectedOshi(newOshis.first!)
                         }
                     }
                 }
+            }
+        }
+    }
+    
+    // 選択中の推しをFirebaseから取得し、フォールバックも設定
+    func loadSelectedOshiFromFirebase(withFallback fallbackOshi: Oshi) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            // ユーザーIDがない場合はフォールバックを使用
+            updateSelectedOshi(fallbackOshi)
+            return
+        }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.child("selectedOshiId").observeSingleEvent(of: .value) { snapshot in
+            if let selectedOshiId = snapshot.value as? String,
+               selectedOshiId != "default",
+               let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
+                // Firebaseに保存されている推しIDに該当する推しが見つかった場合
+                DispatchQueue.main.async {
+                    print("✅ Firebase保存済み推し: \(oshi.name)")
+                    self.updateSelectedOshi(oshi)
+                }
+            } else {
+                // Firebaseに保存されていないか、該当する推しがない場合はフォールバックを使用
+                DispatchQueue.main.async {
+                    print("✅ フォールバック推し: \(fallbackOshi.name)")
+                    self.updateSelectedOshi(fallbackOshi)
+                    // Firebaseにも保存
+                    self.saveSelectedOshiId(fallbackOshi.id)
+                }
+            }
+        }
+    }
+    
+    // 選択中の推しを更新する共通メソッド
+    func updateSelectedOshi(_ oshi: Oshi) {
+        self.selectedOshi = oshi
+        self.selectedOshiId = oshi.id
+        self.viewModel = OshiViewModel(oshi: oshi)
+        print("🎯 推し選択完了: \(oshi.name) (ID: \(oshi.id))")
+    }
+    
+    // 推しIDをFirebaseに保存
+    func saveSelectedOshiId(_ oshiId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedOshiId": oshiId]) { error, _ in
+            if let error = error {
+                print("❌ 推しID保存エラー: \(error.localizedDescription)")
+            } else {
+                print("✅ 推しID保存成功: \(oshiId)")
             }
         }
     }
@@ -240,44 +318,45 @@ struct TopView: View {
                 // 選択中の推しIDが存在する場合、oshiListから該当する推しを検索して設定
                 if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
                     DispatchQueue.main.async {
-                        self.selectedOshi = oshi
-                        // 選択された推しでviewModelを更新
-                        self.viewModel = OshiViewModel(oshi: oshi)
+                        self.updateSelectedOshi(oshi)
                     }
                 }
             }
         }
     }
     
+    // 修正された observeSelectedOshiId メソッド
     func observeSelectedOshiId() {
         guard let userID = Auth.auth().currentUser?.uid else { return }
         
         let dbRef = Database.database().reference().child("users").child(userID)
         
         // 既存の監視を解除（重複監視を防ぐ）
-        dbRef.removeAllObservers()
+        removeObserver()
         
-        // 再度監視を設定
-        dbRef.observe(.value) { snapshot in
-            guard let value = snapshot.value as? [String: Any] else { return }
-            
-            if let selectedOshiId = value["selectedOshiId"] as? String {
-                
+        // 再度監視を設定（selectedOshiIdのみを監視）
+        observerHandle = dbRef.child("selectedOshiId").observe(.value) { snapshot in
+            if let selectedOshiId = snapshot.value as? String {
                 DispatchQueue.main.async {
-                    self.selectedOshiId = selectedOshiId
+                    print("🔄 selectedOshiId変更検知: \(selectedOshiId)")
                     
-                    // 選択中の推しIDに対応する推しオブジェクトを取得
-                    if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
-                        self.selectedOshi = oshi
-                        // 選択された推しでviewModelを更新
-                        self.viewModel = OshiViewModel(oshi: oshi)
+                    // 現在のIDと異なる場合のみ更新
+                    if self.selectedOshiId != selectedOshiId {
+                        self.selectedOshiId = selectedOshiId
                         
-                        DispatchQueue.main.async {
-                            self.oshiChange = !self.oshiChange
+                        // 選択中の推しIDに対応する推しオブジェクトを取得
+                        if let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
+                            self.updateSelectedOshi(oshi)
+                            
+                            // タブビューのデータ更新をトリガー
+                            DispatchQueue.main.async {
+                                self.oshiChange.toggle()
+                            }
+                        } else {
+                            // 対応する推しが見つからない場合は再取得
+                            print("⚠️ 対応する推しが見つからないため、推しリストを再取得します")
+                            self.fetchOshiList()
                         }
-                    } else {
-                        // 対応する推しが見つからない場合は再取得
-                        self.fetchOshiList()
                     }
                 }
             }

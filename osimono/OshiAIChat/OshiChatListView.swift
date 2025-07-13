@@ -38,7 +38,8 @@ struct OshiChatListView: View {
                 VStack(spacing: 0) {
                     // ヘッダー
                     headerView
-                    
+                    BannerAdChatListView()
+                        .frame(height: 60)
                     // メインコンテンツ
                     if isLoading {
                         loadingView
@@ -255,6 +256,7 @@ struct OshiChatListView: View {
                                 isSelected: oshi.id == selectedOshiId
                             )
                         }
+                        .navigationBarHidden(true)
                         .buttonStyle(PlainButtonStyle())
                     }
                     

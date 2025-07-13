@@ -93,7 +93,7 @@ struct OshiAIChatView: View {
 
     var body: some View {
         ZStack {
-            chatLayer
+            chatContent
                 .allowsHitTesting(!(showMessageLimitModal || showRewardCompletedModal))
                 .gesture(
                     (showMessageLimitModal || showRewardCompletedModal) ? nil :
@@ -162,16 +162,6 @@ struct OshiAIChatView: View {
         }
     }
     
-    private var chatLayer: some View {
-        Group {
-            if isEmbedded {
-                chatContent
-            } else {
-                NavigationView { chatContent }.navigationViewStyle(StackNavigationViewStyle())
-            }
-        }
-    }
-    
     private func setupView() {
         if loadCompleteOshiData {
             loadCompleteOshiData = false
@@ -212,7 +202,6 @@ struct OshiAIChatView: View {
                 
                 // チャットメッセージリスト
                 chatMessagesView
-                
                 // 入力エリア（修正版）
                 inputAreaView
                     .padding(.bottom, keyboardHeight > 0 ? 0 : 0) // キーボードに合わせて調整
@@ -265,6 +254,8 @@ struct OshiAIChatView: View {
     
     private var chatMessagesView: some View {
         ScrollViewReader { proxy in
+            BannerAdChatView()
+                .frame(height: 60)
             ScrollView {
                 VStack(spacing: 16) {
                     if messages.isEmpty {
