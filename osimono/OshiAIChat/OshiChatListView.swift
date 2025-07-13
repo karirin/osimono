@@ -24,10 +24,16 @@ struct OshiChatListView: View {
     @Environment(\.presentationMode) var presentationMode
     
     @State private var isEditing = false
+    @State private var showAddOshiForm = false
+    
+    @State private var helpFlag = false
+    @State private var customerFlag = false
+    @ObservedObject var authManager = AuthManager()
     
     // LINE風カラー設定
     let lineGrayBG = Color(UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0))
     let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
+    let primaryColor = Color(.systemPink)
     
     var body: some View {
         NavigationView {
@@ -49,11 +55,34 @@ struct OshiChatListView: View {
                         chatListView
                     }
                 }
+                
+                if customerFlag {
+                    
+                }
+                
+                if helpFlag {
+                    HelpModalView(isPresented: $helpFlag)
+                }
+                
+                if customerFlag {
+                    ReviewView(isPresented: $customerFlag, helpFlag: $helpFlag)
+                }
             }
         }
         .navigationBarHidden(true)
         .onAppear {
             loadData()
+            authManager.fetchUserFlag { userFlag, error in
+                if let error = error {
+                    print(error.localizedDescription)
+                } else if let userFlag = userFlag {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        if userFlag == 0 {
+                            executeProcessEveryThreeTimes()
+                        }
+                    }
+                }
+            }
         }
         .refreshable {
             loadData()
@@ -68,6 +97,25 @@ struct OshiChatListView: View {
         } message: {
             Text("\(oshiToDelete?.name ?? "")とのチャット履歴を削除しますか？この操作は元に戻せません。")
         }
+        .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
+            loadData() // 新しい推しが追加されたら一覧を更新
+        }) {
+            AddOshiView()
+        }
+    }
+    
+    func executeProcessEveryThreeTimes() {
+        // UserDefaultsからカウンターを取得
+        let count = UserDefaults.standard.integer(forKey: "launchCount") + 1
+        
+        // カウンターを更新
+        UserDefaults.standard.set(count, forKey: "launchCount")
+        
+        // 3回に1回の割合で処理を実行
+        
+        if count % 10 == 0 {
+            customerFlag = true
+        }
     }
     
     // チャットが存在するかどうかを判定
@@ -80,33 +128,24 @@ struct OshiChatListView: View {
         }
     }
     
-    // MARK: - ヘッダービュー
+    // MARK: - ヘッダービュー（修正版）
     private var headerView: some View {
         VStack(spacing: 0) {
             HStack {
-                // チャットが存在する場合のみ編集ボタンを表示
-                if hasAnyChats {
-                    Button(action: {
-                        generateHapticFeedback()
-                        withAnimation(.spring()) { isEditing.toggle() }
-                    }) {
-                        Text(isEditing ? "完了" : "編集")
-                            .font(.system(size: 16))
-                            .foregroundColor(.blue)
-                    }
-                    .opacity(0)
-                    .padding(.leading)
-                } else {
-                    // チャットがない場合は空のスペーサー
-                    Spacer()
-                        .frame(width: 44) // ボタンと同じ幅を確保
-                        .opacity(0)
-                        .padding(.leading)
+                // 推し追加ボタン
+                Button(action: {
+                    generateHapticFeedback()
+                    showAddOshiForm = true
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(primaryColor)
                 }
+                .padding(.leading)
                 
                 Spacer()
                 
-                Text("トーク")
+                Text("チャット")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.black)
                 
@@ -185,7 +224,7 @@ struct OshiChatListView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    // MARK: - 空の状態表示
+    // MARK: - 空の状態表示（修正版）
     private var emptyStateView: some View {
         VStack(spacing: 20) {
             Image(systemName: "bubble.left.and.bubble.right")
@@ -205,15 +244,26 @@ struct OshiChatListView: View {
             
             Button(action: {
                 generateHapticFeedback()
-                // 推し登録画面へ遷移
+                showAddOshiForm = true
             }) {
-                Text("推しを登録する")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(lineGreen)
-                    .cornerRadius(20)
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 20))
+                    Text("推しを登録する")
+                        .font(.headline)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [primaryColor, primaryColor.opacity(0.8)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(20)
+                .shadow(color: primaryColor.opacity(0.3), radius: 5, x: 0, y: 2)
             }
         }
         .padding()
@@ -222,53 +272,99 @@ struct OshiChatListView: View {
     
     // MARK: - チャット一覧
     private var chatListView: some View {
-        ScrollView {
-            LazyVStack(spacing: 0) {
-                ForEach(filteredOshiList, id: \.id) { oshi in
-                    if isEditing {
-                        HStack {
-                            ChatRowView(
-                                oshi: oshi,
-                                unreadCount: unreadCounts[oshi.id] ?? 0,
-                                lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
-                                lastMessageTime: lastMessageTimes[oshi.id] ?? 0,
-                                isSelected: oshi.id == selectedOshiId
-                            )
-                            Spacer(minLength: 0)
-                            Button(role: .destructive) {
-                                generateHapticFeedback()
-                                oshiToDelete = oshi
-                                showDeleteAlert = true
-                            } label: {
-                                Image(systemName: "trash")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.red)
-                                    .padding(.trailing, 12)
-                            }
+        VStack(spacing: 0) {
+            // 推し追加用のカード（上部に表示）
+            VStack(spacing: 12) {
+                Button(action: {
+                    generateHapticFeedback()
+                    showAddOshiForm = true
+                }) {
+                    HStack(spacing: 12) {
+                        // プラスアイコン
+                        ZStack {
+                            Circle()
+                                .fill(primaryColor.opacity(0.1))
+                                .frame(width: 56, height: 56)
+                            
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 30))
+                                .foregroundColor(primaryColor)
                         }
-                    } else {
-                        NavigationLink(destination: destinationView(for: oshi)) {
-                            ChatRowView(
-                                oshi: oshi,
-                                unreadCount: unreadCounts[oshi.id] ?? 0,
-                                lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
-                                lastMessageTime: lastMessageTimes[oshi.id] ?? 0,
-                                isSelected: oshi.id == selectedOshiId
-                            )
+                        
+                        // テキスト
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("新しい推しを追加")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.primary)
+                            
+                            Text("推しを登録してチャットを始めよう")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
                         }
-                        .navigationBarHidden(true)
-                        .buttonStyle(PlainButtonStyle())
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
                     }
-                    
-                    Divider()
-                        .padding(.leading, 80)
-                        .background(Color.gray.opacity(0.3))
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                }
+                .background(Color.white)
+                
+                Divider()
+            }
+            .background(Color.white)
+            
+            // 既存のチャット一覧
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(filteredOshiList, id: \.id) { oshi in
+                        if isEditing {
+                            HStack {
+                                ChatRowView(
+                                    oshi: oshi,
+                                    unreadCount: unreadCounts[oshi.id] ?? 0,
+                                    lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
+                                    lastMessageTime: lastMessageTimes[oshi.id] ?? 0,
+                                    isSelected: oshi.id == selectedOshiId
+                                )
+                                Spacer(minLength: 0)
+                                Button(role: .destructive) {
+                                    generateHapticFeedback()
+                                    oshiToDelete = oshi
+                                    showDeleteAlert = true
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(.red)
+                                        .padding(.trailing, 12)
+                                }
+                            }
+                        } else {
+                            NavigationLink(destination: destinationView(for: oshi)) {
+                                ChatRowView(
+                                    oshi: oshi,
+                                    unreadCount: unreadCounts[oshi.id] ?? 0,
+                                    lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
+                                    lastMessageTime: lastMessageTimes[oshi.id] ?? 0,
+                                    isSelected: oshi.id == selectedOshiId
+                                )
+                            }
+                            .navigationBarHidden(true)
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        
+                        Divider()
+                            .padding(.leading, 80)
+                            .background(Color.gray.opacity(0.3))
+                    }
                 }
             }
+            .background(Color.white)
         }
-        .background(Color.white)
     }
-    
     
     // MARK: - フィルタリングされた推しリスト（修正版）
     private var filteredOshiList: [Oshi] {
