@@ -575,145 +575,34 @@ struct SettingsView: View {
     }
     
     var oshiSelectorOverlay: some View {
-         ZStack {
-             // 半透明の背景
-             Color.black.opacity(0.3)
-                 .edgesIgnoringSafeArea(.all)
-                 .onTapGesture {
-                     withAnimation(.spring()) {
-                         isShowingOshiSelector = false
-                     }
-                 }
-                 VStack(spacing: 20) {
-                     // ヘッダー
-                     HStack {
-                         Text("推しを変更")
-                             .font(.title2)
-                             .fontWeight(.bold)
-                             .foregroundColor(.white)
-                         
-                         Spacer()
-                         
-                         Button(action: {
-                             generateHapticFeedback()
-                             withAnimation(.spring()) {
-                                 isShowingOshiSelector = false
-                             }
-                         }) {
-                             Image(systemName: "xmark.circle.fill")
-                                 .font(.title2)
-                                 .foregroundColor(.white)
-                         }
-                     }
-                     .padding()
-                 ScrollView{
-                     
-                     // 推しリスト - グリッドレイアウト
-                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
-                         // 新規追加ボタン
-                         Button(action: {
-                             generateHapticFeedback()
-                             showAddOshiForm = true
-                             isShowingOshiSelector = false
-                         }) {
-                             VStack {
-                                 ZStack {
-                                     Circle()
-                                         .fill(primaryColor.opacity(0.2))
-                                         .frame(width: 80, height: 80)
-                                     
-                                     Image(systemName: "plus")
-                                         .font(.system(size: 30))
-                                         .foregroundColor(primaryColor)
-                                 }
-                                 
-                                 Text("新規追加")
-                                     .font(.subheadline)
-                                     .foregroundColor(.white)
-                             }
-                         }
-                         
-                         // 推しリスト
-                         ForEach(oshiList) { oshi in
-                             Button(action: {
-                                 generateHapticFeedback()
-                                 saveSelectedOshiId(oshi.id)
-                                 // 選択した推しの情報を更新
-                                 selectedOshi = oshi
-                                 username = oshi.name
-                                 // プロフィール画像も更新
-                                 if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
-                                     loadImage(from: url) { image in
-                                         profileImage = image
-                                     }
-                                 }
-                                 // オーバーレイを閉じる
-                                 withAnimation(.spring()) {
-                                     isShowingOshiSelector = false
-                                 }
-                                 // 推し変更を通知
-                                 oshiChange.toggle()
-                             }) {
-                                 VStack {
-                                     ZStack {
-                                         // プロフィール画像またはプレースホルダー
-                                         if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
-                                             AsyncImage(url: url) { phase in
-                                                 switch phase {
-                                                 case .success(let image):
-                                                     image
-                                                         .resizable()
-                                                         .scaledToFill()
-                                                         .frame(width: 80, height: 80)
-                                                         .clipShape(Circle())
-                                                 default:
-                                                     Circle()
-                                                         .fill(Color.gray.opacity(0.3))
-                                                         .frame(width: 80, height: 80)
-                                                         .overlay(
-                                                            Text(String(oshi.name.prefix(1)))
-                                                                .font(.system(size: 30, weight: .bold))
-                                                                .foregroundColor(.white)
-                                                         )
-                                                 }
-                                             }
-                                         } else {
-                                             Circle()
-                                                 .fill(Color.gray.opacity(0.3))
-                                                 .frame(width: 80, height: 80)
-                                                 .overlay(
-                                                    Text(String(oshi.name.prefix(1)))
-                                                        .font(.system(size: 30, weight: .bold))
-                                                        .foregroundColor(.white)
-                                                 )
-                                         }
-                                         
-                                         // 選択インジケーター
-                                         if let selected = selectedOshi, oshi.id == selected.id {
-                                             Circle()
-                                                 .stroke(primaryColor, lineWidth: 4)
-                                                 .frame(width: 85, height: 85)
-                                         }
-                                     }
-                                     
-                                     Text(oshi.name)
-                                         .font(.subheadline)
-                                         .foregroundColor(.white)
-                                         .lineLimit(1)
-                                 }
-                             }
-                         }
-                     }
-                     .padding()
-                 }
-             }
-             .background(
-                 RoundedRectangle(cornerRadius: 20)
-                     .fill(Color.black.opacity(1))
-             )
-             .padding()
-         }
-     }
+        OshiSelectorView(
+            isPresented: $isShowingOshiSelector,
+            oshiList: $oshiList,
+            selectedOshi: selectedOshi,
+            onOshiSelected: { oshi in
+                saveSelectedOshiId(oshi.id)
+                // 選択した推しの情報を更新
+                selectedOshi = oshi
+                username = oshi.name
+                // プロフィール画像も更新
+                if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                    loadImage(from: url) { image in
+                        profileImage = image
+                    }
+                }
+                // 推し変更を通知
+                oshiChange.toggle()
+            },
+            onAddOshi: {
+                showAddOshiForm = true
+            },
+            onOshiDeleted: {
+                fetchOshiList()
+                loadSelectedOshi()
+                oshiChange.toggle()
+            }
+        )
+    }
     
     // MARK: - 管理者権限チェック
     private func checkAdminStatus() {
