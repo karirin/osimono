@@ -2,7 +2,7 @@
 //  EditOshiView.swift
 //  osimono
 //
-//  Updated to add personality editing
+//  Updated to add delete functionality
 //
 
 import SwiftUI
@@ -23,12 +23,14 @@ struct EditOshiView: View {
     var oshi: Oshi
     var onSave: ((Oshi) -> Void)?
     var onUpdate: () -> Void // 更新後のコールバック
+    var onDelete: (() -> Void)? // 削除後のコールバック
     
     @State private var oshiList: [Oshi] = []
     @State private var isShowingOshiSelector = false
     @State private var selectedOshi: Oshi? // 編集対象の推し
     @State private var showAddOshiForm = false
     @State private var showPersonalityEditor = false // 性格編集画面表示フラグ
+    @State private var showDeleteAlert = false // 削除確認アラート
     
     @State private var selectedImageForCropping: UIImage?   // 追加
     @State private var showImagePicker = false              // 追加
@@ -79,7 +81,6 @@ struct EditOshiView: View {
                     }
                     .padding()
                 }
-//                .padding(.top, 8)
                 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -335,9 +336,30 @@ struct EditOshiView: View {
                             .shadow(color: primaryColor.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                         .padding(.horizontal, 30)
-//                        .padding(.top, 30)
+                        
+                        // 削除ボタン (新規追加)
+                        Button(action: {
+                            generateHapticFeedback()
+                            showDeleteAlert = true
+                        }) {
+                            HStack {
+                                Image(systemName: "trash.fill")
+                                    .font(.system(size: 16))
+                                Text("推しを削除")
+                                    .font(.system(size: 16, weight: .medium))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .foregroundColor(.red)
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .stroke(Color.red, lineWidth: 1)
+                                    .background(Color.clear)
+                            )
+                        }
+                        .padding(.horizontal, 30)
+                        .padding(.top, 10)
                     }
-//                    .padding(.bottom, 30)
                 }
             }
         }
@@ -396,6 +418,126 @@ struct EditOshiView: View {
                 }
             }
             .navigationBarHidden(true)
+        }
+        .alert("推しを削除", isPresented: $showDeleteAlert) {
+            Button("削除", role: .destructive) {
+                deleteOshi()
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("\(oshi.name)を削除しますか？この操作は元に戻せません。\n関連するチャット履歴やアイテム記録もすべて削除されます。")
+        }
+    }
+    
+    // 削除処理
+    private func deleteOshi() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        isLoading = true
+        
+        let dispatchGroup = DispatchGroup()
+        var deletionError: Error? = nil
+        
+        // 1. 推しデータを削除
+        dispatchGroup.enter()
+        let oshiRef = Database.database().reference().child("oshis").child(userId).child(oshi.id)
+        oshiRef.removeValue { error, _ in
+            if let error = error {
+                deletionError = error
+                print("推しデータ削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 2. チャット履歴を削除
+        dispatchGroup.enter()
+        let chatRef = Database.database().reference().child("oshiChats").child(userId).child(oshi.id)
+        chatRef.removeValue { error, _ in
+            if let error = error {
+                deletionError = error
+                print("チャット履歴削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 3. アイテム記録を削除
+        dispatchGroup.enter()
+        let itemsRef = Database.database().reference().child("oshiItems").child(userId).child(oshi.id)
+        itemsRef.removeValue { error, _ in
+            if let error = error {
+                deletionError = error
+                print("アイテム記録削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 4. ストレージの画像を削除
+        dispatchGroup.enter()
+        let storageRef = Storage.storage().reference().child("oshis").child(userId).child(oshi.id)
+        storageRef.delete { error in
+            // 画像が存在しない場合のエラーは無視
+            if let error = error, (error as NSError).code != StorageErrorCode.objectNotFound.rawValue {
+                print("ストレージ削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 5. 最後に読んだタイムスタンプを削除
+        dispatchGroup.enter()
+        let userRef = Database.database().reference().child("users").child(userId)
+        userRef.child("lastReadTimestamps").child(oshi.id).removeValue { error, _ in
+            if let error = error {
+                print("タイムスタンプ削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 6. 選択中の推しIDを更新（削除する推しが選択中の場合）
+        dispatchGroup.enter()
+        userRef.child("selectedOshiId").observeSingleEvent(of: .value) { snapshot in
+            if let selectedOshiId = snapshot.value as? String, selectedOshiId == oshi.id {
+                // 削除する推しが選択中の場合、他の推しに変更するか、デフォルトに戻す
+                let oshisRef = Database.database().reference().child("oshis").child(userId)
+                oshisRef.observeSingleEvent(of: .value) { oshiSnapshot in
+                    var newSelectedId = "default"
+                    
+                    // 他の推しが存在する場合、最初の推しを選択
+                    for child in oshiSnapshot.children {
+                        if let childSnapshot = child as? DataSnapshot,
+                           childSnapshot.key != oshi.id {
+                            newSelectedId = childSnapshot.key
+                            break
+                        }
+                    }
+                    
+                    userRef.updateChildValues(["selectedOshiId": newSelectedId]) { error, _ in
+                        if let error = error {
+                            print("選択中推しID更新エラー: \(error.localizedDescription)")
+                        }
+                        dispatchGroup.leave()
+                    }
+                }
+            } else {
+                dispatchGroup.leave()
+            }
+        }
+        
+        // すべての削除処理が完了したら
+        dispatchGroup.notify(queue: .main) {
+            self.isLoading = false
+            
+            if let error = deletionError {
+                print("削除処理でエラーが発生しました: \(error.localizedDescription)")
+                // エラーアラートを表示することもできます
+            } else {
+                print("推し「\(self.oshi.name)」を削除しました")
+                
+                // 削除成功時のコールバックを呼び出し
+                self.onDelete?()
+                
+                // ビューを閉じる
+                self.presentationMode.wrappedValue.dismiss()
+            }
         }
     }
     

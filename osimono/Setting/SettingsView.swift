@@ -524,10 +524,19 @@ struct SettingsView: View {
             oshiChange.toggle()
         }) {
             if let oshi = selectedOshi {
-                EditOshiView(oshi: oshi) {
-                    fetchOshiList()
-                    loadSelectedOshi()
-                }
+                EditOshiView(
+                    oshi: oshi,
+                    onUpdate: {
+                        fetchOshiList()
+                        loadSelectedOshi()
+                    },
+                    onDelete: {
+                        // 削除後の処理
+                        fetchOshiList()
+                        loadSelectedOshi()
+                        oshiChange.toggle()
+                    }
+                )
             } else {
                 AddOshiView()
             }
