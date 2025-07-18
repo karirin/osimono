@@ -132,6 +132,9 @@ struct OshiCollectionView: View {
     @State private var isAdmin = false
     @State private var isCheckingAdminStatus = true
     
+    @State private var totalUnreadCount = 0
+    @State private var hasNewMessages = false
+    
     private func checkAdminStatus() {
         guard let userID = Auth.auth().currentUser?.uid else {
             isAdmin = false
@@ -341,6 +344,10 @@ struct OshiCollectionView: View {
                     .padding()
                 } else {
                     // コレクション表示
+                    NavigationLink(destination: ChatHubView()) {
+                        ChatBadgeView(count: totalUnreadCount, hasNewMessages: hasNewMessages)
+                    }
+                    .navigationBarHidden(true)
                     ScrollView {
                         LazyVGrid(columns: [GridItem(.flexible()),GridItem(.flexible()), GridItem(.flexible())], spacing: 5) {
                             ForEach(filteredItems) { item in
