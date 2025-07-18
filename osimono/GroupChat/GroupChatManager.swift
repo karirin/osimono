@@ -66,6 +66,8 @@ class GroupChatManager: ObservableObject {
             return
         }
         
+        print("グループ作成中 - ID: \(groupId), メンバー: \(memberIds)")
+        
         let groupInfo = GroupChatInfo(
             id: groupId,
             name: name,
@@ -77,6 +79,11 @@ class GroupChatManager: ObservableObject {
         
         let groupRef = database.child("groupChats").child(userId).child(groupId).child("info")
         groupRef.setValue(groupInfo.toDictionary()) { error, _ in
+            if let error = error {
+                print("グループ情報保存エラー: \(error.localizedDescription)")
+            } else {
+                print("グループ情報保存成功 - メンバー: \(memberIds)")
+            }
             completion(error)
         }
     }

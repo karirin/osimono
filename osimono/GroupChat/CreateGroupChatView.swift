@@ -358,6 +358,7 @@ struct CreateGroupChatView: View {
         let finalGroupName = groupName.isEmpty ? "グループチャット" : groupName
         let memberIds = selectedMembers.map { $0.id }
         
+        // グループ情報を作成
         groupChatManager.createOrUpdateGroup(
             groupId: groupId,
             name: finalGroupName,
@@ -370,6 +371,8 @@ struct CreateGroupChatView: View {
                     print("グループ作成エラー: \(error.localizedDescription)")
                     // エラーアラートを表示
                 } else {
+                    print("グループ作成成功 - メンバー: \(memberIds)")
+                    
                     // 作成成功
                     let groupInfo = GroupChatInfo(
                         id: groupId,

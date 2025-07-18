@@ -2,7 +2,7 @@
 //  OshiGroupChatView.swift
 //  osimono
 //
-//  Created by Apple on 2025/07/18.
+//  複数の推しとのグループチャット機能
 //
 
 import SwiftUI
@@ -309,7 +309,10 @@ struct OshiGroupChatView: View {
     private func setupGroupChat() {
         loadOshiList()
         loadMessages()
-        loadGroupMembers()
+        // グループメンバーの読み込みを後回しにして、推しリストが読み込まれてから実行
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.loadGroupMembers()
+        }
         isInitialScrollComplete = true
     }
     
@@ -352,11 +355,8 @@ struct OshiGroupChatView: View {
             
             DispatchQueue.main.async {
                 self.allOshiList = oshis
-                // 初回は全ての推しを選択状態にする
-                if self.selectedMembers.isEmpty && oshis.count > 1 {
-                    self.selectedMembers = oshis
-                    self.updateGroupMembers()
-                }
+                // ★ 修正：自動的に全員選択しないように変更
+                // グループメンバーはFirebaseから読み込まれるか、手動で選択されるまで空のままにする
             }
         }
     }
@@ -374,8 +374,35 @@ struct OshiGroupChatView: View {
     private func loadGroupMembers() {
         groupChatManager.fetchGroupMembers(for: groupId) { memberIds, error in
             DispatchQueue.main.async {
-                if let memberIds = memberIds {
+                if let memberIds = memberIds, !memberIds.isEmpty {
+                    // Firebaseから取得したメンバーIDに基づいて推しを選択
                     self.selectedMembers = self.allOshiList.filter { memberIds.contains($0.id) }
+                } else {
+                    // メンバーが設定されていない場合は空のまま
+                    self.selectedMembers = []
+                }
+                
+                // グループ名も取得
+                self.loadGroupInfo()
+            }
+        }
+    }
+    
+    // グループ情報を取得する新しいメソッド
+    private func loadGroupInfo() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        let groupInfoRef = Database.database().reference()
+            .child("groupChats")
+            .child(userId)
+            .child(groupId)
+            .child("info")
+        
+        groupInfoRef.observeSingleEvent(of: .value) { snapshot in
+            if let groupData = snapshot.value as? [String: Any],
+               let name = groupData["name"] as? String {
+                DispatchQueue.main.async {
+                    self.groupName = name
                 }
             }
         }
