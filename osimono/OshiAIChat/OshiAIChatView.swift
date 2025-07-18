@@ -79,6 +79,30 @@ struct OshiAIChatView: View {
     @State private var isLoadingAd = false
     var isEmbedded: Bool = false
     
+    private let adminUserIds = [
+        "3UDNienzhkdheKIy77lyjMJhY4D3",
+        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    ]
+    
+    @State private var isAdmin = false
+    @State private var isCheckingAdminStatus = true
+    
+    private func checkAdminStatus() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            isAdmin = false
+            isCheckingAdminStatus = false
+            return
+        }
+        
+        // UserIDで管理者権限をチェック
+        isAdmin = adminUserIds.contains(userID)
+        isCheckingAdminStatus = false
+        
+        if isAdmin {
+            print("🔑 管理者としてログイン中: \(userID)")
+        }
+    }
+    
     // キーボード関連の状態管理を追加
     @FocusState private var isTextFieldFocused: Bool
     @State private var keyboardHeight: CGFloat = 0
@@ -133,7 +157,7 @@ struct OshiAIChatView: View {
         .dismissKeyboardOnTap()
         .onAppear {
             setupView()
-
+            checkAdminStatus()
             authManager.fetchUserFlag { userFlag, error in
                 if let error = error {
                     print(error.localizedDescription)
@@ -254,8 +278,10 @@ struct OshiAIChatView: View {
     
     private var chatMessagesView: some View {
         ScrollViewReader { proxy in
-            BannerAdChatView()
-                .frame(height: 60)
+            if !isAdmin {
+                BannerAdChatView()
+                    .frame(height: 60)
+            }
             ScrollView {
                 VStack(spacing: 16) {
                     if messages.isEmpty {
@@ -484,11 +510,12 @@ struct OshiAIChatView: View {
                 oshi.interests = data["interests"] as? [String]
                 oshi.gender = data["gender"] as? String
                 oshi.height = data["height"] as? Int
+                oshi.user_nickname = data["user_nickname"] as? String // これを追加
                 
                 DispatchQueue.main.async {
                     self.loadedOshi = oshi
                     self.isLoading = false
-                    print("FirebaseDataLoader - データ取得完了: \(oshi.personality ?? "なし")")
+                    print("FirebaseDataLoader - データ取得完了: \(oshi.user_nickname ?? "なし")")
                 }
             }
         }
@@ -586,10 +613,10 @@ struct OshiAIChatView: View {
             newOshi.interests = oshiData["interests"] as? [String]
             newOshi.gender = oshiData["gender"] as? String
             newOshi.height = oshiData["height"] as? Int
+            newOshi.user_nickname = oshiData["user_nickname"] as? String // これを追加
             
             DispatchQueue.main.async {
                 self.viewModel.selectedOshi = newOshi
-                print("完全なデータ読み込み後: \(newOshi.personality ?? "なし"), \(newOshi.speaking_style ?? "なし")")
                 
                 // 通常の初期化処理を続行
                 self.currentOshiId = newOshi.id

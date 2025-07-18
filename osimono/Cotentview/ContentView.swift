@@ -856,7 +856,20 @@ struct ContentView: View {
                             let memo = value["memo"] as? String
                             let createdAt = value["createdAt"] as? TimeInterval
                             
-                            let oshi = Oshi(
+                            // 性格関連の属性を追加（user_nicknameを含む）
+                            let personality = value["personality"] as? String
+                            let speakingStyle = value["speaking_style"] as? String
+                            let birthday = value["birthday"] as? String
+                            let height = value["height"] as? Int
+                            let favoriteColor = value["favorite_color"] as? String
+                            let favoriteFood = value["favorite_food"] as? String
+                            let dislikedFood = value["disliked_food"] as? String
+                            let hometown = value["hometown"] as? String
+                            let interests = value["interests"] as? [String]
+                            let gender = value["gender"] as? String
+                            let userNickname = value["user_nickname"] as? String // これが重要
+                            
+                            var oshi = Oshi(
                                 id: id,
                                 name: name,
                                 imageUrl: imageUrl,
@@ -864,6 +877,20 @@ struct ContentView: View {
                                 memo: memo,
                                 createdAt: createdAt
                             )
+                            
+                            // 全てのプロパティを設定
+                            oshi.personality = personality
+                            oshi.speaking_style = speakingStyle
+                            oshi.birthday = birthday
+                            oshi.height = height
+                            oshi.favorite_color = favoriteColor
+                            oshi.favorite_food = favoriteFood
+                            oshi.disliked_food = dislikedFood
+                            oshi.hometown = hometown
+                            oshi.interests = interests
+                            oshi.gender = gender
+                            oshi.user_nickname = userNickname // これを追加
+                            
                             newOshis.append(oshi)
                         }
                     }
