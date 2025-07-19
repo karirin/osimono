@@ -208,4 +208,220 @@ class AIMessageGenerator {
         }
         return "こんにちは！\(oshi.name)だよ！いつも応援してくれてありがとう✨\n何か質問があれば話しかけてね！"
     }
+    
+    func generateAIToAIMessage(
+        speaker: Oshi,
+        listener: Oshi,
+        topic: String,
+        chatHistory: [ChatMessage],
+        completion: @escaping (String?, Error?) -> Void
+    ) {
+        guard let client = client else {
+            let simpleMessages = [
+                "\(listener.name)、\(topic)についてどう思う？",
+                "\(listener.name)、最近\(topic)が気になってるんだ",
+                "\(listener.name)、\(topic)の話をしない？"
+            ]
+            completion(simpleMessages.randomElement(), nil)
+            return
+        }
+        
+        let systemPrompt = createAIToAISystemPrompt(speaker: speaker, listener: listener)
+        let userPrompt = "あなた（\(speaker.name)）が\(listener.name)に対して「\(topic)」について話しかけてください。"
+        
+        let messages = buildChatMessages(systemPrompt: systemPrompt, userPrompt: userPrompt, chatHistory: chatHistory)
+        client.sendChat(messages: messages, completion: completion)
+    }
+
+    func generateAIToGroupMessage(
+        speaker: Oshi,
+        groupMembers: [Oshi],
+        topic: String,
+        chatHistory: [ChatMessage],
+        completion: @escaping (String?, Error?) -> Void
+    ) {
+        guard let client = client else {
+            let simpleMessages = [
+                "みんな、\(topic)についてどう思う？",
+                "今日は\(topic)の話をしない？",
+                "\(topic)って面白いよね！"
+            ]
+            completion(simpleMessages.randomElement(), nil)
+            return
+        }
+        
+        let memberNames = groupMembers.filter { $0.id != speaker.id }.map { $0.name }.joined(separator: "、")
+        let systemPrompt = createAIToGroupSystemPrompt(speaker: speaker, memberNames: memberNames)
+        let userPrompt = "グループのみんなに向けて「\(topic)」について話題を振ってください。"
+        
+        let messages = buildChatMessages(systemPrompt: systemPrompt, userPrompt: userPrompt, chatHistory: chatHistory)
+        client.sendChat(messages: messages, completion: completion)
+    }
+
+    func generateAIToUserMessage(
+        speaker: Oshi,
+        topic: String,
+        chatHistory: [ChatMessage],
+        completion: @escaping (String?, Error?) -> Void
+    ) {
+        guard let client = client else {
+            let simpleMessages = [
+                "\(topic)についてどう思う？",
+                "最近\(topic)が気になってるんだ",
+                "\(topic)の話をしない？"
+            ]
+            completion(simpleMessages.randomElement(), nil)
+            return
+        }
+        
+        let systemPrompt = createAIToUserSystemPrompt(speaker: speaker)
+        let userPrompt = "ユーザーに向けて「\(topic)」について話しかけてください。"
+        
+        let messages = buildChatMessages(systemPrompt: systemPrompt, userPrompt: userPrompt, chatHistory: chatHistory)
+        client.sendChat(messages: messages, completion: completion)
+    }
+
+    private func createAIToAISystemPrompt(speaker: Oshi, listener: Oshi) -> String {
+        var prompt = """
+        あなたは\(speaker.name)です。
+        同じグループの仲間である\(listener.name)に話しかけてください。
+        
+        指針：
+        - \(listener.name)の名前を呼んで話しかける
+        - 自然で親しみやすい会話
+        - 1〜2文程度の短い発言
+        - 質問や話題提供を含める
+        """
+        
+        if let personality = speaker.personality {
+            prompt += "\nあなたの性格: \(personality)"
+        }
+        
+        return prompt
+    }
+
+    private func createAIToGroupSystemPrompt(speaker: Oshi, memberNames: String) -> String {
+        var prompt = """
+        あなたは\(speaker.name)です。
+        グループの仲間たち（\(memberNames)）とユーザーに向けて話しかけてください。
+        
+        指針：
+        - 「みんな」や「グループのみんな」などの呼びかけ
+        - 全員が参加できる話題
+        - 1〜2文程度の短い発言
+        - 会話を促進する内容
+        """
+        
+        if let personality = speaker.personality {
+            prompt += "\nあなたの性格: \(personality)"
+        }
+        
+        return prompt
+    }
+
+    private func createAIToUserSystemPrompt(speaker: Oshi) -> String {
+        var prompt = """
+        あなたは\(speaker.name)です。
+        ユーザーに直接話しかけてください。
+        
+        指針：
+        - ユーザーに対して親しみやすく話しかける
+        - 個人的な会話
+        - 1〜2文程度の短い発言
+        - 興味を引く話題や質問
+        """
+        
+        if let personality = speaker.personality {
+            prompt += "\nあなたの性格: \(personality)"
+        }
+        
+        if let userNickname = speaker.user_nickname {
+            prompt += "\nユーザーのことは「\(userNickname)」と呼んでください。"
+        }
+        
+        return prompt
+    }
+
+    private func buildChatMessages(systemPrompt: String, userPrompt: String, chatHistory: [ChatMessage]) -> [[String: String]] {
+        var messages: [[String: String]] = [[
+            "role": "system",
+            "content": systemPrompt
+        ]]
+        
+        // 直近の会話履歴を追加
+        for message in chatHistory.suffix(3) {
+            messages.append([
+                "role": message.isUser ? "user" : "assistant",
+                "content": message.content
+            ])
+        }
+        
+        messages.append(["role": "user", "content": userPrompt])
+        return messages
+    }
+    
+    func generateAIReactionResponse(
+        reactor: Oshi,
+        originalMessage: String,
+        originalSender: Oshi,
+        chatHistory: [ChatMessage],
+        completion: @escaping (String?, Error?) -> Void
+    ) {
+        guard let client = client else {
+            let simpleReactions = [
+                "そうだね！",
+                "いいね〜",
+                "わかる！",
+                "本当にそう思う✨",
+                "同感だよ〜",
+                "うんうん！"
+            ]
+            completion(simpleReactions.randomElement(), nil)
+            return
+        }
+        
+        let systemPrompt = createAIReactionSystemPrompt(reactor: reactor, originalSender: originalSender)
+        let userPrompt = "\(originalSender.name)：「\(originalMessage)」"
+        
+        var messages: [[String: String]] = [[
+            "role": "system",
+            "content": systemPrompt
+        ]]
+        
+        // 直近の会話履歴を追加（簡潔に）
+        for message in chatHistory.suffix(3) {
+            messages.append([
+                "role": message.isUser ? "user" : "assistant",
+                "content": message.content
+            ])
+        }
+        
+        messages.append(["role": "user", "content": userPrompt])
+        
+        client.sendChat(messages: messages, completion: completion)
+    }
+
+    private func createAIReactionSystemPrompt(reactor: Oshi, originalSender: Oshi) -> String {
+        var prompt = """
+        あなたは\(reactor.name)です。
+        グループチャットで仲間の\(originalSender.name)の発言に反応してください。
+        
+        反応の指針：
+        - 1〜2文程度の短い反応
+        - 自然で親しみやすい反応
+        - 絵文字は控えめに使用
+        - 会話を盛り上げるような内容
+        - 質問で返すよりも、共感や感想を優先
+        """
+        
+        if let personality = reactor.personality, !personality.isEmpty {
+            prompt += "\nあなたの性格: \(personality)"
+        }
+        
+        if let speakingStyle = reactor.speaking_style, !speakingStyle.isEmpty {
+            prompt += "\nあなたの話し方: \(processSpeakingStyle(speakingStyle))"
+        }
+        
+        return prompt
+    }
 }

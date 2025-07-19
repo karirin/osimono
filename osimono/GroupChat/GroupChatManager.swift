@@ -222,3 +222,16 @@ class GroupChatManager: ObservableObject {
         }
     }
 }
+
+extension GroupChatMessage {
+    func toChatMessage() -> ChatMessage {
+        return ChatMessage(
+            id: self.id,
+            content: self.content,
+            isUser: self.isUser,
+            timestamp: self.timestamp,
+            oshiId: self.senderId,
+            itemId: nil
+        )
+    }
+}

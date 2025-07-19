@@ -11,6 +11,12 @@ import FirebaseAuth
 import FirebaseDatabase
 import Combine
 
+enum ConversationPattern {
+    case aiToAI        // AI同士で話す
+    case aiToGroup     // AIがAIと自分に話す（グループ全体）
+    case aiToUser      // AIが自分に話す
+}
+
 struct OshiGroupChatView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var groupChatManager = GroupChatManager()
@@ -460,16 +466,95 @@ struct OshiGroupChatView: View {
         
         isLoading = true
         
-        // ランダムに返信する推しを選択（1〜2人）
-        let respondingMembers = selectedMembers.shuffled().prefix(Int.random(in: 1...min(2, selectedMembers.count)))
+        // 最初の返信メンバーを選択
+        let initialRespondingMembers = selectedMembers.shuffled().prefix(Int.random(in: 1...min(2, selectedMembers.count)))
         
+        // [weak self] を削除
+        generateInitialResponses(for: userInput, members: Array(initialRespondingMembers)) {
+            // 初回返信完了後、AI同士の反応をチェック
+            self.checkForAIReactions()
+        }
+    }
+    
+    private func checkForAIReactions() {
+        // 反応の確率（30%程度）
+        let reactionProbability = 1.0
+        
+        // 最新のAIメッセージを取得
+        guard let lastMessage = messages.last,
+              !lastMessage.isUser,
+              let lastSender = selectedMembers.first(where: { $0.id == lastMessage.senderId }) else {
+            return
+        }
+        
+        // 他のメンバーが反応するかチェック
+        let otherMembers = selectedMembers.filter { $0.id != lastMessage.senderId }
+        
+        for member in otherMembers {
+            // 各メンバーが反応する確率をチェック
+            if Double.random(in: 0...1) < reactionProbability {
+                // 反応を生成（少し遅延をつけて）
+                let delay = Double.random(in: 2.0...5.0)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    self.generateAIReaction(reactor: member, originalMessage: lastMessage, originalSender: lastSender)
+                }
+                
+                break // 一度に一人だけ反応
+            }
+        }
+    }
+    
+    private func generateAIReaction(reactor: Oshi, originalMessage: GroupChatMessage, originalSender: Oshi) {
+        let reactionPrompt = """
+        \(originalSender.name)が「\(originalMessage.content)」と言いました。
+        あなた（\(reactor.name)）は同じグループの仲間として、この発言に短く自然に反応してください。
+        リアクションは1〜2文程度の短いものにしてください。
+        """
+        
+        // 簡潔な型変換
+        let chatHistory = Array(messages.suffix(3).map { $0.toChatMessage() })
+        
+        AIMessageGenerator.shared.generateResponse(
+            for: reactionPrompt,
+            oshi: reactor,
+            chatHistory: chatHistory
+        ) { content, error in
+            guard let content = content,
+                  !content.isEmpty else { return }
+            
+            DispatchQueue.main.async {
+                let reactionMessage = GroupChatMessage(
+                    id: UUID().uuidString,
+                    content: content,
+                    isUser: false,
+                    timestamp: Date().timeIntervalSince1970,
+                    groupId: self.groupId,
+                    senderId: reactor.id,
+                    senderName: reactor.name,
+                    senderImageUrl: reactor.imageUrl
+                )
+                
+                self.messages.append(reactionMessage)
+                self.shouldScrollToBottom = true
+                
+                // メッセージを保存
+                self.groupChatManager.saveMessage(reactionMessage) { error in
+                    if let error = error {
+                        print("AI反応保存エラー: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+    }
+
+    private func generateInitialResponses(for userInput: String, members: [Oshi], completion: @escaping () -> Void) {
         let dispatchGroup = DispatchGroup()
         var responses: [(oshi: Oshi, content: String)] = []
         
-        for oshi in respondingMembers {
+        for oshi in members {
             dispatchGroup.enter()
             
-            // 各推しの個性に応じた返信を生成
             AIMessageGenerator.shared.generateResponse(
                 for: userInput,
                 oshi: oshi,
@@ -494,7 +579,7 @@ struct OshiGroupChatView: View {
         dispatchGroup.notify(queue: .main) {
             self.isLoading = false
             
-            // 少し時間差をつけて返信を表示
+            // 時間差をつけて返信を表示
             for (index, response) in responses.enumerated() {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 1.5) {
                     let aiMessage = GroupChatMessage(
@@ -511,7 +596,6 @@ struct OshiGroupChatView: View {
                     self.messages.append(aiMessage)
                     self.shouldScrollToBottom = true
                     
-                    // メッセージを保存
                     self.groupChatManager.saveMessage(aiMessage) { error in
                         if let error = error {
                             print("AI返信保存エラー: \(error.localizedDescription)")
@@ -519,13 +603,256 @@ struct OshiGroupChatView: View {
                     }
                 }
             }
+            
+            // 最後のメッセージ表示後に完了通知
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(responses.count) * 1.5 + 0.5) {
+                completion()
+            }
         }
+    }
+    
+    private func determineConversationPattern() -> ConversationPattern {
+        let patterns: [(ConversationPattern, Double)] = [
+            (.aiToAI, 0.3),      // 30%の確率でAI同士
+            (.aiToGroup, 0.4),   // 40%の確率でグループ全体
+            (.aiToUser, 0.3)     // 30%の確率でユーザーのみ
+        ]
+        
+        let random = Double.random(in: 0...1)
+        var cumulative = 0.0
+        
+        for (pattern, probability) in patterns {
+            cumulative += probability
+            if random <= cumulative {
+                return pattern
+            }
+        }
+        
+        return .aiToUser // デフォルト
     }
     
     private func scrollToBottom(proxy: ScrollViewProxy) {
         if !messages.isEmpty && isInitialScrollComplete {
             withAnimation(.easeInOut(duration: 0.3)) {
                 proxy.scrollTo("bottomMarker", anchor: .bottom)
+            }
+        }
+    }
+    
+    private func scheduleRandomConversation() {
+        // 5〜15分後にランダムで会話を開始
+        let delay = Double.random(in: 300...900) // 5-15分
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            if self.selectedMembers.count >= 2 {
+                // 20%の確率で自動会話を開始
+                if Double.random(in: 0...1) < 0.2 {
+                    self.initiateAIConversation()
+                }
+            }
+            
+            // 次の会話をスケジュール
+            self.scheduleRandomConversation()
+        }
+    }
+    
+    private func generateConversationStarter() -> String {
+        let topics = [
+            "最近見た映画",
+            "今日の天気",
+            "好きな音楽",
+            "おすすめの本",
+            "週末の予定",
+            "美味しかった食べ物",
+            "面白いニュース",
+            "趣味の話"
+        ]
+        return topics.randomElement() ?? "最近の出来事"
+    }
+
+    private func generateGroupTopic() -> String {
+        let topics = [
+            "みんなでできる楽しいこと",
+            "今度の休日の計画",
+            "おすすめのスポット",
+            "一緒に見たい映画",
+            "グループでやりたいこと",
+            "みんなの近況報告"
+        ]
+        return topics.randomElement() ?? "みんなでできること"
+    }
+
+    private func generateUserDirectedTopic() -> String {
+        let topics = [
+            "最近どう？",
+            "今日は何をしてた？",
+            "何か面白いことあった？",
+            "おすすめの話",
+            "最近気になること",
+            "今度一緒にしたいこと"
+        ]
+        return topics.randomElement() ?? "最近の様子"
+    }
+    
+    private func initiateAIConversation() {
+        guard selectedMembers.count >= 2 else { return }
+        
+        let conversationPattern = determineConversationPattern()
+        
+        switch conversationPattern {
+        case .aiToAI:
+            startAIToAIConversation()
+        case .aiToGroup:
+            startAIToGroupConversation()
+        case .aiToUser:
+            startAIToUserConversation()
+        }
+    }
+
+    private func startAIToAIConversation() {
+        let participants = selectedMembers.shuffled().prefix(2)
+        guard participants.count == 2 else { return }
+        
+        let speaker = participants[0]
+        let listener = participants[1]
+        let conversationStarter = generateConversationStarter()
+        
+        AIMessageGenerator.shared.generateAIToAIMessage(
+            speaker: speaker,
+            listener: listener,
+            topic: conversationStarter,
+            chatHistory: Array(messages.suffix(3).map { $0.toChatMessage() })
+        ) { content, error in // [weak self] を削除
+            guard let content = content, !content.isEmpty else { return }
+            
+            DispatchQueue.main.async {
+                self.addAIMessage(from: speaker, content: content)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    self.generateAIResponse(from: listener, to: speaker, originalMessage: content)
+                }
+            }
+        }
+    }
+
+    // startAIToGroupConversation() メソッドを修正
+    private func startAIToGroupConversation() {
+        guard let speaker = selectedMembers.randomElement() else { return }
+        let groupTopic = generateGroupTopic()
+        
+        AIMessageGenerator.shared.generateAIToGroupMessage(
+            speaker: speaker,
+            groupMembers: selectedMembers,
+            topic: groupTopic,
+            chatHistory: Array(messages.suffix(3).map { $0.toChatMessage() })
+        ) { content, error in // [weak self] を削除
+            guard let content = content, !content.isEmpty else { return }
+            
+            DispatchQueue.main.async {
+                self.addAIMessage(from: speaker, content: content)
+                self.checkForGroupReactions(originalSpeaker: speaker, message: content)
+            }
+        }
+    }
+
+    // startAIToUserConversation() メソッドを修正
+    private func startAIToUserConversation() {
+        guard let speaker = selectedMembers.randomElement() else { return }
+        let userTopic = generateUserDirectedTopic()
+        
+        AIMessageGenerator.shared.generateAIToUserMessage(
+            speaker: speaker,
+            topic: userTopic,
+            chatHistory: Array(messages.suffix(3).map { $0.toChatMessage() })
+        ) { content, error in // [weak self] を削除
+            guard let content = content, !content.isEmpty else { return }
+            
+            DispatchQueue.main.async {
+                self.addAIMessage(from: speaker, content: content)
+            }
+        }
+    }
+    
+    private func addAIMessage(from oshi: Oshi, content: String) {
+        let message = GroupChatMessage(
+            id: UUID().uuidString,
+            content: content,
+            isUser: false,
+            timestamp: Date().timeIntervalSince1970,
+            groupId: groupId,
+            senderId: oshi.id,
+            senderName: oshi.name,
+            senderImageUrl: oshi.imageUrl
+        )
+        
+        messages.append(message)
+        shouldScrollToBottom = true
+        
+        // メッセージを保存
+        groupChatManager.saveMessage(message) { error in
+            if let error = error {
+                print("AIメッセージ保存エラー: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func generateAIResponse(from responder: Oshi, to originalSpeaker: Oshi, originalMessage: String) {
+        let responsePrompt = """
+        \(originalSpeaker.name)が「\(originalMessage)」と言いました。
+        あなた（\(responder.name)）は\(originalSpeaker.name)に対して自然に返答してください。
+        返答は1〜2文程度の短いものにしてください。
+        """
+        
+        let chatHistory = Array(messages.suffix(3).map { $0.toChatMessage() })
+        
+        AIMessageGenerator.shared.generateResponse(
+            for: responsePrompt,
+            oshi: responder,
+            chatHistory: chatHistory
+        ) { content, error in
+            guard let content = content, !content.isEmpty else { return }
+            
+            DispatchQueue.main.async {
+                self.addAIMessage(from: responder, content: content)
+            }
+        }
+    }
+
+    private func checkForGroupReactions(originalSpeaker: Oshi, message: String) {
+        let otherMembers = selectedMembers.filter { $0.id != originalSpeaker.id }
+        
+        // 30%の確率で他のメンバーが反応
+        for member in otherMembers {
+            if Double.random(in: 0...1) < 0.3 {
+                let delay = Double.random(in: 2.0...5.0)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    self.generateGroupReaction(reactor: member, originalSpeaker: originalSpeaker, originalMessage: message)
+                }
+                
+                break // 一度に一人だけ反応
+            }
+        }
+    }
+
+    private func generateGroupReaction(reactor: Oshi, originalSpeaker: Oshi, originalMessage: String) {
+        let reactionPrompt = """
+        \(originalSpeaker.name)がグループに向けて「\(originalMessage)」と言いました。
+        あなた（\(reactor.name)）はグループの一員として、この発言に短く自然に反応してください。
+        反応は1〜2文程度の短いものにしてください。
+        """
+        
+        let chatHistory = Array(messages.suffix(3).map { $0.toChatMessage() })
+        
+        AIMessageGenerator.shared.generateResponse(
+            for: reactionPrompt,
+            oshi: reactor,
+            chatHistory: chatHistory
+        ) { content, error in
+            guard let content = content, !content.isEmpty else { return }
+            
+            DispatchQueue.main.async {
+                self.addAIMessage(from: reactor, content: content)
             }
         }
     }
