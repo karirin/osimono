@@ -1,274 +1,12 @@
 //
-//  GroupChatListView.swift
+//  GroupChatRowView.swift
 //  osimono
 //
-//  グループチャット一覧画面
+//  改善されたグループチャット行ビュー - アイコン表示を強化
 //
 
 import SwiftUI
-import Firebase
-import FirebaseAuth
 
-struct GroupChatListView: View {
-    @StateObject private var groupChatManager = GroupChatManager()
-    @State private var groupChats: [GroupChatInfo] = []
-    @State private var isLoading = true
-    @State private var showCreateGroup = false
-    @State private var unreadCounts: [String: Int] = [:]
-    @State private var allOshiList: [Oshi] = []
-    @Environment(\.presentationMode) var presentationMode
-    
-    // LINE風カラー設定
-    let lineGrayBG = Color(UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0))
-    let primaryColor = Color(.systemPink)
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                lineGrayBG.edgesIgnoringSafeArea(.all)
-                
-                VStack(spacing: 0) {
-                    // ヘッダー
-                    headerView
-                    
-                    if isLoading {
-                        loadingView
-                    } else if groupChats.isEmpty {
-                        emptyStateView
-                    } else {
-                        groupChatListView
-                    }
-                }
-            }
-        }
-        .navigationBarHidden(true)
-        .onAppear {
-            loadData()
-        }
-        .refreshable {
-            loadData()
-        }
-        .sheet(isPresented: $showCreateGroup) {
-            CreateGroupChatView(
-                allOshiList: allOshiList,
-                onCreate: { groupInfo in
-                    loadData()
-                }
-            )
-        }
-    }
-    
-    private var headerView: some View {
-        HStack {
-            Button(action: {
-                generateHapticFeedback()
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.blue)
-            }
-            .padding(.leading)
-            
-            Spacer()
-            
-            Text("グループチャット")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.black)
-            
-            Spacer()
-            
-            Button(action: {
-                generateHapticFeedback()
-                showCreateGroup = true
-            }) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(primaryColor)
-            }
-            .padding(.trailing)
-        }
-        .padding(.vertical, 12)
-        .background(Color.white)
-        .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
-    }
-    
-    private var loadingView: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.2)
-            Text("読み込み中...")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
-    private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "person.2.circle")
-                .font(.system(size: 60))
-                .foregroundColor(.gray.opacity(0.6))
-            
-            VStack(spacing: 8) {
-                Text("まだグループチャットがありません")
-                    .font(.headline)
-                    .foregroundColor(.black)
-                
-                Text("複数の推しと一緒にチャットを楽しもう！")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-            }
-            
-            Button(action: {
-                generateHapticFeedback()
-                showCreateGroup = true
-            }) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 20))
-                    Text("グループを作成する")
-                        .font(.headline)
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [primaryColor, primaryColor.opacity(0.8)]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .cornerRadius(20)
-                .shadow(color: primaryColor.opacity(0.3), radius: 5, x: 0, y: 2)
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
-    private var groupChatListView: some View {
-        ScrollView {
-            LazyVStack(spacing: 0) {
-                ForEach(groupChats, id: \.id) { group in
-                    NavigationLink(destination: destinationView(for: group)) {
-                        GroupChatRowView(
-                            group: group,
-                            unreadCount: unreadCounts[group.id] ?? 0,
-                            allOshiList: allOshiList
-                        )
-                    }
-                    .navigationBarHidden(true)
-                    .buttonStyle(PlainButtonStyle())
-                    
-                    Divider()
-                        .padding(.leading, 80)
-                        .background(Color.gray.opacity(0.3))
-                }
-            }
-        }
-        .background(Color.white)
-    }
-    
-    private func destinationView(for group: GroupChatInfo) -> some View {
-        OshiGroupChatView(groupId: group.id)
-            .onDisappear {
-                // グループチャット画面から戻った時に未読数を更新
-                loadUnreadCounts()
-            }
-    }
-    
-    private func loadData() {
-        isLoading = true
-        loadOshiList()
-        loadGroupChats()
-    }
-    
-    private func loadOshiList() {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            isLoading = false
-            return
-        }
-        
-        let ref = Database.database().reference().child("oshis").child(userId)
-        ref.observeSingleEvent(of: .value) { snapshot in
-            var oshis: [Oshi] = []
-            
-            for child in snapshot.children {
-                if let childSnapshot = child as? DataSnapshot,
-                   let value = childSnapshot.value as? [String: Any] {
-                    let id = childSnapshot.key
-                    let name = value["name"] as? String ?? "名前なし"
-                    let imageUrl = value["imageUrl"] as? String
-                    
-                    let oshi = Oshi(
-                        id: id,
-                        name: name,
-                        imageUrl: imageUrl,
-                        backgroundImageUrl: value["backgroundImageUrl"] as? String,
-                        memo: value["memo"] as? String,
-                        createdAt: value["createdAt"] as? TimeInterval,
-                        personality: value["personality"] as? String,
-                        interests: value["interests"] as? [String],
-                        speaking_style: value["speaking_style"] as? String,
-                        birthday: value["birthday"] as? String,
-                        height: value["height"] as? Int,
-                        favorite_color: value["favorite_color"] as? String,
-                        favorite_food: value["favorite_food"] as? String,
-                        disliked_food: value["disliked_food"] as? String,
-                        hometown: value["hometown"] as? String,
-                        gender: value["gender"] as? String,
-                        user_nickname: value["user_nickname"] as? String
-                    )
-                    oshis.append(oshi)
-                }
-            }
-            
-            DispatchQueue.main.async {
-                self.allOshiList = oshis
-            }
-        }
-    }
-    
-    private func loadGroupChats() {
-        groupChatManager.fetchGroupList { groups, error in
-            DispatchQueue.main.async {
-                if let groups = groups {
-                    self.groupChats = groups
-                    self.loadUnreadCounts()
-                }
-                self.isLoading = false
-            }
-        }
-    }
-    
-    private func loadUnreadCounts() {
-        let dispatchGroup = DispatchGroup()
-        var tempUnreadCounts: [String: Int] = [:]
-        
-        for group in groupChats {
-            dispatchGroup.enter()
-            
-            groupChatManager.fetchUnreadMessageCount(for: group.id) { count, _ in
-                tempUnreadCounts[group.id] = count
-                dispatchGroup.leave()
-            }
-        }
-        
-        dispatchGroup.notify(queue: .main) {
-            self.unreadCounts = tempUnreadCounts
-        }
-    }
-    
-    private func generateHapticFeedback() {
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-    }
-}
-
-// グループチャット行ビュー
 struct GroupChatRowView: View {
     let group: GroupChatInfo
     let unreadCount: Int
@@ -277,6 +15,8 @@ struct GroupChatRowView: View {
     var groupMembers: [Oshi] {
         return allOshiList.filter { group.memberIds.contains($0.id) }
     }
+    
+    private let primaryColor = Color(.systemPink)
     
     var body: some View {
         HStack(spacing: 12) {
@@ -326,61 +66,196 @@ struct GroupChatRowView: View {
     
     private var groupIconView: some View {
         ZStack {
+            // 背景サークル
             Circle()
-                .fill(Color.gray.opacity(0.2))
+                .fill(LinearGradient(
+                    gradient: Gradient(colors: [
+                        primaryColor.opacity(0.1),
+                        primaryColor.opacity(0.05)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
                 .frame(width: 56, height: 56)
+                .overlay(
+                    Circle()
+                        .stroke(primaryColor.opacity(0.2), lineWidth: 1)
+                )
             
+            // アイコン内容
             if groupMembers.isEmpty {
-                Image(systemName: "person.2.circle")
-                    .font(.system(size: 24))
-                    .foregroundColor(.gray)
+                // メンバーがいない場合のデフォルトアイコン
+                Image(systemName: "person.2.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundColor(primaryColor.opacity(0.7))
             } else if groupMembers.count == 1 {
                 // 1人の場合は通常のプロフィール画像
-                if let imageUrl = groupMembers[0].imageUrl, let url = URL(string: imageUrl) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .clipShape(Circle())
-                        default:
+                singleMemberIcon(groupMembers[0])
+            } else if groupMembers.count == 2 {
+                // 2人の場合は左右に配置
+                twoMembersIcon
+            } else {
+                // 3人以上の場合は三角形配置
+                multipleMembersIcon
+            }
+        }
+        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+    }
+    
+    // 1人のメンバーアイコン
+    private func singleMemberIcon(_ oshi: Oshi) -> some View {
+        Group {
+            if let imageUrl = oshi.imageUrl,
+               !imageUrl.isEmpty,
+               let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 48, height: 48)
+                            .clipShape(Circle())
+                    case .failure(_):
+                        fallbackIcon(for: oshi, size: 48)
+                    case .empty:
+                        ZStack {
                             Circle()
-                                .fill(Color.gray.opacity(0.2))
-                                .overlay(
-                                    Text(String(groupMembers[0].name.prefix(1)))
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(.gray)
-                                )
+                                .fill(Color.gray.opacity(0.1))
+                                .frame(width: 48, height: 48)
+                            ProgressView()
+                                .scaleEffect(0.8)
                         }
+                    @unknown default:
+                        fallbackIcon(for: oshi, size: 48)
                     }
-                } else {
-                    Circle()
-                        .fill(Color.gray.opacity(0.2))
-                        .overlay(
-                            Text(String(groupMembers[0].name.prefix(1)))
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.gray)
-                        )
                 }
             } else {
-                // 複数人の場合は重ねて表示
-                ForEach(Array(groupMembers.prefix(3).enumerated()), id: \.element.id) { index, oshi in
-                    Circle()
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(width: 28, height: 28)
-                        .overlay(
-                            Text(String(oshi.name.prefix(1)))
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.gray)
-                        )
-                        .offset(
-                            x: index == 0 ? -8 : (index == 1 ? 8 : 0),
-                            y: index == 0 ? -8 : (index == 1 ? -8 : 10)
-                        )
+                fallbackIcon(for: oshi, size: 48)
+            }
+        }
+    }
+    
+    // 2人のメンバーアイコン
+    private var twoMembersIcon: some View {
+        ZStack {
+            // 左側のメンバー
+            memberCircle(groupMembers[0], size: 32)
+                .offset(x: -8, y: 0)
+            
+            // 右側のメンバー
+            memberCircle(groupMembers[1], size: 32)
+                .offset(x: 8, y: 0)
+        }
+    }
+    
+    // 3人以上のメンバーアイコン
+    private var multipleMembersIcon: some View {
+        ZStack {
+            // 上部中央
+            memberCircle(groupMembers[0], size: 24)
+                .offset(x: 0, y: -10)
+            
+            // 左下
+            memberCircle(groupMembers[1], size: 24)
+                .offset(x: -10, y: 8)
+            
+            // 右下
+            if groupMembers.count > 2 {
+                memberCircle(groupMembers[2], size: 24)
+                    .offset(x: 10, y: 8)
+            }
+            
+            // 4人以上の場合は数字表示
+            if groupMembers.count > 3 {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Text("+\(groupMembers.count - 3)")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(2)
+                            .background(primaryColor)
+                            .clipShape(Circle())
+                            .offset(x: 8, y: 8)
+                    }
                 }
             }
         }
+    }
+    
+    // 個別メンバーサークル
+    private func memberCircle(_ oshi: Oshi, size: CGFloat) -> some View {
+        Group {
+            if let imageUrl = oshi.imageUrl,
+               !imageUrl.isEmpty,
+               let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: size, height: size)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 1.5)
+                            )
+                    case .failure(_):
+                        fallbackIcon(for: oshi, size: size)
+                    case .empty:
+                        ZStack {
+                            Circle()
+                                .fill(Color.gray.opacity(0.1))
+                                .frame(width: size, height: size)
+                            ProgressView()
+                                .scaleEffect(0.5)
+                        }
+                    @unknown default:
+                        fallbackIcon(for: oshi, size: size)
+                    }
+                }
+            } else {
+                fallbackIcon(for: oshi, size: size)
+            }
+        }
+    }
+    
+    // フォールバックアイコン
+    private func fallbackIcon(for oshi: Oshi, size: CGFloat) -> some View {
+        Circle()
+            .fill(LinearGradient(
+                gradient: Gradient(colors: [
+                    generateColorFromString(oshi.id),
+                    generateColorFromString(oshi.id).opacity(0.7)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ))
+            .frame(width: size, height: size)
+            .overlay(
+                Text(String(oshi.name.prefix(1)).uppercased())
+                    .font(.system(size: size * 0.4, weight: .bold))
+                    .foregroundColor(.white)
+            )
+            .overlay(
+                Circle()
+                    .stroke(Color.white, lineWidth: size > 30 ? 1.5 : 1)
+            )
+    }
+    
+    // 文字列からカラーを生成
+    private func generateColorFromString(_ string: String) -> Color {
+        let colors: [Color] = [
+            .red, .blue, .green, .orange, .purple, .pink,
+            .teal, .indigo, .mint, .cyan, .yellow, .brown
+        ]
+        
+        let hash = abs(string.hashValue)
+        let index = hash % colors.count
+        return colors[index]
     }
     
     private var unreadBadge: some View {
@@ -422,6 +297,64 @@ struct GroupChatRowView: View {
     }
 }
 
+// プレビュー用のサンプルデータ
 #Preview {
-    GroupChatListView()
+    VStack(spacing: 0) {
+        // 1人のグループ
+        GroupChatRowView(
+            group: GroupChatInfo(
+                id: "1",
+                name: "推し1とのチャット",
+                memberIds: ["oshi1"],
+                createdAt: Date().timeIntervalSince1970,
+                lastMessageTime: Date().timeIntervalSince1970,
+                lastMessage: "こんにちは！"
+            ),
+            unreadCount: 3,
+            allOshiList: [
+                Oshi(id: "oshi1", name: "田中さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil)
+            ]
+        )
+        
+        Divider()
+        
+        // 2人のグループ
+        GroupChatRowView(
+            group: GroupChatInfo(
+                id: "2",
+                name: "推し2人チーム",
+                memberIds: ["oshi1", "oshi2"],
+                createdAt: Date().timeIntervalSince1970,
+                lastMessageTime: Date().timeIntervalSince1970 - 3600,
+                lastMessage: "今度一緒にお出かけしましょう！"
+            ),
+            unreadCount: 0,
+            allOshiList: [
+                Oshi(id: "oshi1", name: "田中さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil),
+                Oshi(id: "oshi2", name: "佐藤くん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil)
+            ]
+        )
+        
+        Divider()
+        
+        // 4人のグループ
+        GroupChatRowView(
+            group: GroupChatInfo(
+                id: "3",
+                name: "みんなでワイワイグループ",
+                memberIds: ["oshi1", "oshi2", "oshi3", "oshi4"],
+                createdAt: Date().timeIntervalSince1970,
+                lastMessageTime: Date().timeIntervalSince1970 - 86400,
+                lastMessage: "楽しかったね〜！"
+            ),
+            unreadCount: 15,
+            allOshiList: [
+                Oshi(id: "oshi1", name: "田中さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil),
+                Oshi(id: "oshi2", name: "佐藤くん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil),
+                Oshi(id: "oshi3", name: "山田ちゃん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil),
+                Oshi(id: "oshi4", name: "鈴木さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil)
+            ]
+        )
+    }
+    .background(Color(.systemGroupedBackground))
 }

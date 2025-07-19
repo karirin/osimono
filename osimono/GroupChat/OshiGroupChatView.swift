@@ -2,7 +2,7 @@
 //  OshiGroupChatView.swift
 //  osimono
 //
-//  複数の推しとのグループチャット機能
+//  複数の推しとのグループチャット機能 - 通知バッジ修正版
 //
 
 import SwiftUI
@@ -42,6 +42,9 @@ struct OshiGroupChatView: View {
     @FocusState private var isTextFieldFocused: Bool
     @State private var keyboardHeight: CGFloat = 0
     
+    // 既読管理用
+    @State private var hasMarkedAsRead: Bool = false
+    
     // LINE風カラー設定
     let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
     let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
@@ -80,6 +83,12 @@ struct OshiGroupChatView: View {
         }
         .onAppear {
             setupGroupChat()
+            // 画面表示時に既読マーク
+            markAsReadWhenAppear()
+        }
+        .onDisappear {
+            // 画面を離れる時にも既読マーク（念のため）
+            markAsReadWhenDisappear()
         }
         .navigationBarHidden(true)
     }
@@ -109,6 +118,10 @@ struct OshiGroupChatView: View {
                 Button(action: {
                     generateHapticFeedback()
                     isTextFieldFocused = false
+                    
+                    // 戻る前に既読マーク
+                    markAsReadWhenDisappear()
+                    
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -251,6 +264,8 @@ struct OshiGroupChatView: View {
             }
             .onChange(of: messages.count) { _ in
                 scrollToBottom(proxy: proxy)
+                // メッセージが更新されたら既読マーク
+                markAsReadAfterDelay()
             }
             .onChange(of: shouldScrollToBottom) { shouldScroll in
                 if shouldScroll && !messages.isEmpty {
@@ -312,6 +327,49 @@ struct OshiGroupChatView: View {
         .opacity(isInitialScrollComplete ? 1 : 0)
     }
     
+    // MARK: - 既読マーク関連メソッド
+    
+    private func markAsReadWhenAppear() {
+        // 画面表示時に少し遅延を入れて既読マーク
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            markGroupChatAsRead()
+        }
+    }
+    
+    private func markAsReadWhenDisappear() {
+        // 画面を離れる時に既読マーク
+        markGroupChatAsRead()
+    }
+    
+    private func markAsReadAfterDelay() {
+        // メッセージ受信後に既読マーク（重複実行を防ぐ）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            markGroupChatAsRead()
+        }
+    }
+    
+    private func markGroupChatAsRead() {
+        // 既に実行済みの場合はスキップ（短時間での重複実行を防ぐ）
+        guard !hasMarkedAsRead else { return }
+        
+        hasMarkedAsRead = true
+        
+        groupChatManager.markGroupChatAsRead(for: groupId) { error in
+            if let error = error {
+                print("グループチャット既読マークエラー: \(error.localizedDescription)")
+            } else {
+                print("グループチャット既読マーク成功: \(self.groupId)")
+            }
+            
+            // 一定時間後にフラグをリセット
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                self.hasMarkedAsRead = false
+            }
+        }
+    }
+    
+    // MARK: - セットアップ関連メソッド
+    
     private func setupGroupChat() {
         loadOshiList()
         loadMessages()
@@ -361,8 +419,6 @@ struct OshiGroupChatView: View {
             
             DispatchQueue.main.async {
                 self.allOshiList = oshis
-                // ★ 修正：自動的に全員選択しないように変更
-                // グループメンバーはFirebaseから読み込まれるか、手動で選択されるまで空のままにする
             }
         }
     }
@@ -372,6 +428,8 @@ struct OshiGroupChatView: View {
             DispatchQueue.main.async {
                 if let messages = fetchedMessages {
                     self.messages = messages
+                    // メッセージ読み込み完了後に既読マーク
+                    self.markAsReadAfterDelay()
                 }
             }
         }

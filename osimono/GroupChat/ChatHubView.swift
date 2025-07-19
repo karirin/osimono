@@ -2,7 +2,7 @@
 //  ChatHubView.swift
 //  osimono
 //
-//  個人チャットとグループチャットを統合したハブ画面
+//  個人チャットとグループチャットを統合したハブ画面 - 通知バッジ修正版
 //
 
 import SwiftUI
@@ -308,6 +308,10 @@ struct ChatHubView: View {
                     }
                 }
                 .background(Color.white)
+                .refreshable {
+                    // グループチャット画面をプルして更新
+                    loadGroupUnreadCounts()
+                }
             }
         }
     }
@@ -541,15 +545,21 @@ struct ChatHubView: View {
         let viewModel = OshiViewModel(oshi: oshi)
         return OshiAIChatView(viewModel: viewModel, oshiItem: nil)
             .onDisappear {
-                loadIndividualChatData()
-                loadSelectedOshiId()
+                // 個人チャット画面から戻った時に未読数を更新
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    loadIndividualChatData()
+                    loadSelectedOshiId()
+                }
             }
     }
     
     private func groupChatDestination(for group: GroupChatInfo) -> some View {
         return OshiGroupChatView(groupId: group.id)
             .onDisappear {
-                loadGroupUnreadCounts()
+                // グループチャット画面から戻った時に未読数を更新
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    loadGroupUnreadCounts()
+                }
             }
     }
     
@@ -739,6 +749,7 @@ struct ChatHubView: View {
         
         dispatchGroup.notify(queue: .main) {
             self.groupUnreadCounts = tempUnreadCounts
+            print("グループ未読数更新完了: \(tempUnreadCounts)")
         }
     }
     

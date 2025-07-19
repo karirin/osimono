@@ -2,7 +2,7 @@
 //  GroupChatManager.swift
 //  osimono
 //
-//  グループチャット管理クラス
+//  グループチャット管理クラス - 既読マーク改善版
 //
 
 import Foundation
@@ -202,6 +202,7 @@ class GroupChatManager: ObservableObject {
                     unreadCount += 1
                 }
                 
+                print("グループ \(groupId) の未読数: \(unreadCount) (最終既読: \(lastReadTimestamp))")
                 completion(unreadCount, nil)
             }
         }
@@ -214,10 +215,17 @@ class GroupChatManager: ObservableObject {
             return
         }
         
+        print("グループ \(groupId) を既読マーク中...")
+        
         let currentTimestamp = Date().timeIntervalSince1970
         let userRef = Database.database().reference().child("users").child(userId)
         
         userRef.child("lastReadGroupChats").child(groupId).setValue(currentTimestamp) { error, _ in
+            if let error = error {
+                print("グループ既読マークエラー: \(error.localizedDescription)")
+            } else {
+                print("グループ \(groupId) の既読マーク完了 (タイムスタンプ: \(currentTimestamp))")
+            }
             completion(error)
         }
     }
