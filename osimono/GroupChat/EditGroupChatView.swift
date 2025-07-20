@@ -2,7 +2,7 @@
 //  EditGroupChatView.swift
 //  osimono
 //
-//  グループチャット編集画面
+//  グループチャット編集画面 - Modern Design
 //
 
 import SwiftUI
@@ -18,318 +18,544 @@ struct EditGroupChatView: View {
     @State private var groupName: String = ""
     @State private var selectedMembers: [Oshi] = []
     @State private var isUpdating: Bool = false
+    @State private var showDeleteAlert: Bool = false
     
-    let primaryColor = Color(.systemPink)
+    // Modern color scheme
+    private let accentColor = Color(.systemPink)
+    private let gradientColors = [Color(.systemPink), Color(.systemPurple)]
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // ヘッダー
-                headerView
+            ZStack {
+                // Modern background with subtle gradient
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(.systemBackground),
+                        Color(.systemGroupedBackground).opacity(0.5)
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // グループ名編集
-                        groupNameSection
-                        
-                        // メンバー選択
-                        memberSelectionSection
-                        
-                        // 更新ボタン
-                        updateButtonSection
+                VStack(spacing: 0) {
+                    // Modern header with glass effect
+                    headerView
+                    
+                    ScrollView {
+                        LazyVStack(spacing: 28) {
+                            // Group name section with modern card design
+                            groupNameSection
+                            
+                            // Member selection with enhanced UI
+                            memberSelectionSection
+                            
+                            // Update button with modern styling
+                            updateButtonSection
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 24)
                     }
-                    .padding()
                 }
             }
-            .background(Color(.systemGroupedBackground))
         }
         .navigationBarHidden(true)
         .onAppear {
             setupInitialData()
         }
+        .alert("グループを削除", isPresented: $showDeleteAlert) {
+            Button("削除", role: .destructive) {
+                // Delete group logic here
+            }
+            Button("キャンセル", role: .cancel) { }
+        } message: {
+            Text("このグループを削除しますか？この操作は取り消せません。")
+        }
     }
     
     private var headerView: some View {
-        HStack {
-            Button("キャンセル") {
+        HStack(spacing: 16) {
+            // Cancel button with modern design
+            Button(action: {
                 presentationMode.wrappedValue.dismiss()
+            }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.secondary)
+                    .symbolRenderingMode(.hierarchical)
             }
-            .foregroundColor(.blue)
             
             Spacer()
             
-            Text("グループ編集")
-                .font(.headline)
-                .fontWeight(.medium)
-            
-            Spacer()
-            
-            Button("保存") {
-                updateGroup()
-            }
-            .foregroundColor(canUpdateGroup ? .blue : .gray)
-            .disabled(!canUpdateGroup || isUpdating)
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
-    }
-    
-    private var groupNameSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("グループ名")
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            TextField("グループ名を入力", text: $groupName)
-                .padding()
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(.separator), lineWidth: 1)
-                )
-            
-            Text("空白の場合は「グループチャット」になります")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-    
-    private var memberSelectionSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("メンバー")
-                    .font(.headline)
+            // Title with modern typography
+            VStack(spacing: 2) {
+                Text("グループ編集")
+                    .font(.title3)
+                    .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 
-                Text("(\(selectedMembers.count)/\(allOshiList.count))")
-                    .font(.subheadline)
+                Text("\(selectedMembers.count)人のメンバー")
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
             
-            if allOshiList.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "person.circle")
-                        .font(.system(size: 40))
-                        .foregroundColor(.gray)
-                    
-                    Text("推しが登録されていません")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                }
-                .padding()
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-            } else {
-                VStack(spacing: 0) {
-                    // 全選択/全解除ボタン
-                    HStack {
-                        Button(action: {
-                            if selectedMembers.count == allOshiList.count {
-                                selectedMembers = []
-                            } else {
-                                selectedMembers = allOshiList
-                            }
-                            generateHapticFeedback()
-                        }) {
-                            HStack {
-                                Image(systemName: selectedMembers.count == allOshiList.count ? "checkmark.square.fill" : "square")
-                                    .foregroundColor(selectedMembers.count == allOshiList.count ? primaryColor : .gray)
-                                
-                                Text(selectedMembers.count == allOshiList.count ? "全解除" : "全選択")
-                                    .font(.subheadline)
-                                    .foregroundColor(.primary)
-                            }
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    
-                    Divider()
-                    
-                    // 推しリスト
-                    ForEach(allOshiList, id: \.id) { oshi in
-                        memberRowView(oshi: oshi)
-                        
-                        if oshi.id != allOshiList.last?.id {
-                            Divider()
-                                .padding(.leading, 60)
-                        }
-                    }
-                }
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-            }
+            Spacer()
             
-            if selectedMembers.count < 1 {
-                Text("グループには最低1人のメンバーが必要です")
-                    .font(.caption)
-                    .foregroundColor(.red)
+            // Save button with modern styling
+            Button(action: {
+                updateGroup()
+            }) {
+                HStack(spacing: 6) {
+                    if isUpdating {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    Text("保存")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: canUpdateGroup ? gradientColors : [Color.gray]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(20)
+                .shadow(color: canUpdateGroup ? accentColor.opacity(0.3) : .clear, radius: 8, x: 0, y: 4)
             }
+            .disabled(!canUpdateGroup || isUpdating)
+            .scaleEffect(canUpdateGroup ? 1.0 : 0.95)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: canUpdateGroup)
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(
+            .ultraThinMaterial,
+            in: RoundedRectangle(cornerRadius: 0)
+        )
+        .overlay(
+            Rectangle()
+                .frame(height: 0.5),
+//                .foregroundColor(.separator.opacity(0.3)),
+            alignment: .bottom
+        )
     }
     
-    private func memberRowView(oshi: Oshi) -> some View {
+    private var groupNameSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Section header with icon
+            HStack(spacing: 8) {
+                Image(systemName: "textformat")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(accentColor)
+                
+                Text("グループ名")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+            }
+            
+            // Modern text field
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("例：お気に入りメンバー", text: $groupName)
+                    .font(.system(size: 16))
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(16)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(
+                                groupName.isEmpty ? Color(.separator) : accentColor,
+                                lineWidth: groupName.isEmpty ? 1 : 2
+                            )
+                    )
+                    .animation(.easeInOut(duration: 0.2), value: groupName.isEmpty)
+                
+                Text("空白の場合は「グループチャット」として表示されます")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 4)
+            }
+        }
+//        .padding(20)
+//        .background(
+//            RoundedRectangle(cornerRadius: 20)
+//                .fill(.ultraThinMaterial)
+//                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
+//        )
+    }
+    
+    private var memberSelectionSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Section header with counter
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(accentColor)
+                    
+                    Text("メンバー選択")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                }
+                
+                Spacer()
+                
+                // Modern counter badge
+                Text("\(selectedMembers.count)/\(allOshiList.count)")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: gradientColors),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
+            }
+            
+            if allOshiList.isEmpty {
+                emptyStateView
+            } else {
+                VStack(spacing: 12) {
+                    // Select all/none button with modern design
+                    selectAllButton
+                    
+                    // Member list with modern cards
+                    LazyVStack(spacing: 8) {
+                        ForEach(allOshiList, id: \.id) { oshi in
+                            memberCard(oshi: oshi)
+                        }
+                    }
+                }
+            }
+            
+            // Validation message
+            if selectedMembers.count < 1 {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text("最低1人のメンバーを選択してください")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+                .padding(.horizontal, 4)
+            }
+        }
+//        .padding(20)
+//        .background(
+//            RoundedRectangle(cornerRadius: 20)
+//                .fill(.ultraThinMaterial)
+//                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
+//        )
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "person.circle.fill")
+                .font(.system(size: 50))
+                .foregroundStyle(.secondary)
+                .symbolRenderingMode(.hierarchical)
+            
+            VStack(spacing: 4) {
+                Text("推しが登録されていません")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                Text("まずは推しを追加してからグループを作成しましょう")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(32)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+    }
+    
+    private var selectAllButton: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                if selectedMembers.count == allOshiList.count {
+                    selectedMembers = []
+                } else {
+                    selectedMembers = allOshiList
+                }
+            }
+            generateHapticFeedback()
+        }) {
+            HStack(spacing: 12) {
+                Image(systemName: selectedMembers.count == allOshiList.count ? "checkmark.square.fill" : "square")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(selectedMembers.count == allOshiList.count ? accentColor : .secondary)
+                
+                Text(selectedMembers.count == allOshiList.count ? "全て解除" : "全て選択")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+            .padding(16)
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(.separator).opacity(0.5), lineWidth: 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func memberCard(oshi: Oshi) -> some View {
         Button(action: {
             toggleMemberSelection(oshi: oshi)
         }) {
-            HStack(spacing: 12) {
-                // プロフィール画像
-                Group {
-                    if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
-                        AsyncImage(url: url) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                                    .clipShape(Circle())
-                            default:
-                                defaultProfileImage(for: oshi)
+            HStack(spacing: 16) {
+                // Modern profile image with border
+                ZStack {
+                    Group {
+                        if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                case .failure(_), .empty:
+                                    defaultProfileImage(for: oshi)
+                                @unknown default:
+                                    defaultProfileImage(for: oshi)
+                                }
                             }
+                        } else {
+                            defaultProfileImage(for: oshi)
                         }
-                    } else {
-                        defaultProfileImage(for: oshi)
+                    }
+                    .frame(width: 50, height: 50)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                selectedMembers.contains(where: { $0.id == oshi.id })
+                                    ? accentColor : Color.clear,
+                                lineWidth: 3
+                            )
+                    )
+                    
+                    // Selection indicator
+                    if selectedMembers.contains(where: { $0.id == oshi.id }) {
+                        Circle()
+                            .fill(accentColor)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.white)
+                            )
+                            .offset(x: 18, y: -18)
+                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                     }
                 }
-                .frame(width: 44, height: 44)
                 
-                // 推し情報
-                VStack(alignment: .leading, spacing: 2) {
+                // Member info with modern typography
+                VStack(alignment: .leading, spacing: 4) {
                     Text(oshi.name)
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(1)
                     
                     if let personality = oshi.personality, !personality.isEmpty {
                         Text(personality)
-                            .font(.system(size: 14))
+                            .font(.system(size: 15))
                             .foregroundColor(.secondary)
                             .lineLimit(1)
+                    } else {
+                        Text("性格未設定")
+                            .font(.system(size: 15))
+//                            .foregroundColor(.tertiary)
+                            .italic()
                     }
                 }
                 
                 Spacer()
-                
-                // 選択状態
-                Image(systemName: selectedMembers.contains(where: { $0.id == oshi.id }) ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 24))
-                    .foregroundColor(selectedMembers.contains(where: { $0.id == oshi.id }) ? primaryColor : .gray)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(.systemBackground))
+                    .shadow(
+                        color: selectedMembers.contains(where: { $0.id == oshi.id })
+                            ? accentColor.opacity(0.2) : .black.opacity(0.05),
+                        radius: selectedMembers.contains(where: { $0.id == oshi.id }) ? 8 : 4,
+                        x: 0,
+                        y: 2
+                    )
+            )
+            .scaleEffect(selectedMembers.contains(where: { $0.id == oshi.id }) ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedMembers.contains(where: { $0.id == oshi.id }))
         }
         .buttonStyle(PlainButtonStyle())
     }
     
     private func defaultProfileImage(for oshi: Oshi) -> some View {
         Circle()
-            .fill(Color.gray.opacity(0.2))
+            .fill(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        accentColor.opacity(0.3),
+                        accentColor.opacity(0.1)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .overlay(
                 Text(String(oshi.name.prefix(1)))
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.gray)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(accentColor)
             )
     }
     
     private var updateButtonSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             if selectedMembers.count >= 1 {
-                // プレビュー
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("更新後のグループ")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    HStack(spacing: 12) {
-                        // グループアイコンプレビュー
-                        ZStack {
-                            Circle()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(width: 50, height: 50)
-                            
-                            if selectedMembers.count == 1 {
-                                Text(String(selectedMembers[0].name.prefix(1)))
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundColor(.gray)
-                            } else {
-                                ForEach(Array(selectedMembers.prefix(2).enumerated()), id: \.element.id) { index, oshi in
-                                    Circle()
-                                        .fill(primaryColor.opacity(0.3))
-                                        .frame(width: 24, height: 24)
-                                        .overlay(
-                                            Text(String(oshi.name.prefix(1)))
-                                                .font(.system(size: 10, weight: .bold))
-                                                .foregroundColor(.white)
-                                        )
-                                        .offset(
-                                            x: index == 0 ? -8 : 8,
-                                            y: index == 0 ? -8 : 8
-                                        )
-                                }
-                            }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(groupName.isEmpty ? "グループチャット" : groupName)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.primary)
-                            
-                            Text(selectedMembers.map { $0.name }.joined(separator: "、"))
-                                .font(.system(size: 14))
-                                .foregroundColor(.secondary)
-                                .lineLimit(2)
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                }
+                // Modern preview card
+                groupPreviewCard
             }
             
-            // 更新ボタン
+            // Modern update button
             Button(action: {
                 updateGroup()
             }) {
-                HStack {
+                HStack(spacing: 12) {
                     if isUpdating {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(0.8)
+                            .scaleEffect(0.9)
                     } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 20))
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 22, weight: .medium))
                     }
                     
                     Text(isUpdating ? "更新中..." : "グループを更新")
-                        .font(.headline)
-                        .fontWeight(.medium)
+                        .font(.system(size: 18, weight: .semibold))
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding()
+                .padding(.vertical, 18)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: canUpdateGroup ? [primaryColor, primaryColor.opacity(0.8)] : [Color.gray, Color.gray.opacity(0.8)]),
+                        gradient: Gradient(colors: canUpdateGroup ? gradientColors : [Color.gray]),
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 )
-                .cornerRadius(15)
-                .shadow(color: canUpdateGroup ? primaryColor.opacity(0.3) : Color.clear, radius: 10, x: 0, y: 5)
+                .cornerRadius(20)
+                .shadow(
+                    color: canUpdateGroup ? accentColor.opacity(0.4) : .clear,
+                    radius: 15,
+                    x: 0,
+                    y: 8
+                )
+                .scaleEffect(canUpdateGroup ? 1.0 : 0.95)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: canUpdateGroup)
             }
             .disabled(!canUpdateGroup || isUpdating)
+        }
+//        .padding(20)
+//        .background(
+//            RoundedRectangle(cornerRadius: 20)
+//                .fill(.ultraThinMaterial)
+//                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
+//        )
+    }
+    
+    private var groupPreviewCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "eye.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(accentColor)
+                
+                Text("プレビュー")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.secondary)
+            }
+            
+            HStack(spacing: 16) {
+                // Modern group icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: gradientColors),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 60, height: 60)
+                    
+                    if selectedMembers.count == 1 {
+                        Text(String(selectedMembers[0].name.prefix(1)))
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                    } else {
+                        HStack(spacing: -8) {
+                            ForEach(Array(selectedMembers.prefix(3).enumerated()), id: \.element.id) { index, oshi in
+                                Circle()
+                                    .fill(.white)
+                                    .frame(width: 22, height: 22)
+                                    .overlay(
+                                        Text(String(oshi.name.prefix(1)))
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(accentColor)
+                                    )
+                            }
+                        }
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(groupName.isEmpty ? "グループチャット" : groupName)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    Text(selectedMembers.map { $0.name }.joined(separator: "、"))
+                        .font(.system(size: 15))
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+            }
+            .padding(16)
+            .background(Color(.systemBackground))
+            .cornerRadius(16)
         }
     }
     
     private var canUpdateGroup: Bool {
-        return selectedMembers.count >= 1 && !groupName.isEmpty
+        return selectedMembers.count >= 1
     }
     
     private func setupInitialData() {
@@ -340,10 +566,12 @@ struct EditGroupChatView: View {
     private func toggleMemberSelection(oshi: Oshi) {
         generateHapticFeedback()
         
-        if selectedMembers.contains(where: { $0.id == oshi.id }) {
-            selectedMembers.removeAll { $0.id == oshi.id }
-        } else {
-            selectedMembers.append(oshi)
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            if selectedMembers.contains(where: { $0.id == oshi.id }) {
+                selectedMembers.removeAll { $0.id == oshi.id }
+            } else {
+                selectedMembers.append(oshi)
+            }
         }
     }
     
@@ -351,11 +579,11 @@ struct EditGroupChatView: View {
         guard canUpdateGroup, !isUpdating else { return }
         
         isUpdating = true
+        generateHapticFeedback()
         
         let finalGroupName = groupName.isEmpty ? "グループチャット" : groupName
         let memberIds = selectedMembers.map { $0.id }
         
-        // グループ情報を更新
         groupChatManager.createOrUpdateGroup(
             groupId: group.id,
             name: finalGroupName,
@@ -366,11 +594,10 @@ struct EditGroupChatView: View {
                 
                 if let error = error {
                     print("グループ更新エラー: \(error.localizedDescription)")
-                    // エラーアラートを表示
+                    // Show error alert with modern design
                 } else {
                     print("グループ更新成功 - メンバー: \(memberIds)")
                     
-                    // 更新成功
                     let updatedGroupInfo = GroupChatInfo(
                         id: self.group.id,
                         name: finalGroupName,
