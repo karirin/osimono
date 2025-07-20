@@ -11,7 +11,6 @@ import FirebaseAuth
 
 class GroupChatManager: ObservableObject {
     private let database = Database.database().reference()
-    private var messageListeners: [String: DatabaseHandle] = [:]
     
     // ユーザーID取得
     private var userId: String? {
@@ -43,15 +42,7 @@ class GroupChatManager: ObservableObject {
         }
         
         let messagesRef = database.child("groupChats").child(userId).child(groupId).child("messages")
-        
-        // 既存のリスナーがある場合は削除
-        if let existingHandle = messageListeners[groupId] {
-            messagesRef.removeObserver(withHandle: existingHandle)
-            messageListeners.removeValue(forKey: groupId)
-        }
-        
-        // 新しいリスナーを設定
-        let handle = messagesRef.queryOrdered(byChild: "timestamp").observe(.value) { snapshot in
+        messagesRef.queryOrdered(byChild: "timestamp").observe(.value) { snapshot in
             var messages: [GroupChatMessage] = []
             
             for child in snapshot.children {
@@ -64,40 +55,8 @@ class GroupChatManager: ObservableObject {
             
             // 時間順にソート
             messages.sort { $0.timestamp < $1.timestamp }
-            
-            DispatchQueue.main.async {
-                completion(messages, nil)
-            }
-        } withCancel: { error in
-            DispatchQueue.main.async {
-                completion(nil, error)
-            }
+            completion(messages, nil)
         }
-        
-        // リスナーハンドルを保存
-        messageListeners[groupId] = handle
-    }
-    
-    func removeMessageListener(for groupId: String) {
-        guard let userId = userId else { return }
-        
-        if let handle = messageListeners[groupId] {
-            let messagesRef = database.child("groupChats").child(userId).child(groupId).child("messages")
-            messagesRef.removeObserver(withHandle: handle)
-            messageListeners.removeValue(forKey: groupId)
-            print("グループ \(groupId) のメッセージリスナーを削除しました")
-        }
-    }
-    
-    func removeAllMessageListeners() {
-        guard let userId = userId else { return }
-        
-        for (groupId, handle) in messageListeners {
-            let messagesRef = database.child("groupChats").child(userId).child(groupId).child("messages")
-            messagesRef.removeObserver(withHandle: handle)
-        }
-        messageListeners.removeAll()
-        print("全てのメッセージリスナーを削除しました")
     }
     
     // グループ情報を作成または更新
