@@ -166,7 +166,8 @@ struct TopView: View {
     // 監視ハンドル削除メソッドを追加
     private func removeObserver() {
         guard let userID = Auth.auth().currentUser?.uid,
-              let handle = observerHandle else { return }
+              let handle =
+                observerHandle else { return }
         
         let dbRef = Database.database().reference().child("users").child(userID)
         dbRef.removeObserver(withHandle: handle)

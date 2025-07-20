@@ -54,6 +54,8 @@ struct OshiGroupChatView: View {
     let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
     let primaryColor = Color(.systemPink)
     
+    @StateObject private var interstitialManager = GroupChatInterstitialManager.shared
+    
     var body: some View {
         ZStack {
             // 背景色（ローディング中でも表示）
@@ -105,9 +107,13 @@ struct OshiGroupChatView: View {
         }
         .onAppear {
             setupGroupChat()
+            // インタースティシャル広告を事前読み込み
+            interstitialManager.preloadInterstitialAd()
         }
         .onDisappear {
             markAsReadWhenDisappear()
+            // リスナーを削除してメモリリークを防止
+            groupChatManager.removeMessageListener(for: groupId)
         }
         .navigationBarHidden(true)
         .sheet(isPresented: $showEditGroupSheet) {
@@ -463,39 +469,21 @@ struct OshiGroupChatView: View {
         // 初期ローディング開始
         isInitialLoadingComplete = false
         
-        // 非同期で各データを読み込み
-        let dispatchGroup = DispatchGroup()
-        
-        // 推しリスト読み込み
-        dispatchGroup.enter()
+        // 順次読み込みに変更（並行処理を避ける）
         loadOshiList {
-            dispatchGroup.leave()
-        }
-        
-        // メッセージ読み込み
-        dispatchGroup.enter()
-        loadMessages {
-            dispatchGroup.leave()
-        }
-        
-        // グループメンバー読み込み
-        dispatchGroup.enter()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.loadGroupMembers {
-                dispatchGroup.leave()
-            }
-        }
-        
-        // 全てのデータ読み込み完了後に画面を表示
-        dispatchGroup.notify(queue: .main) {
-            // 少し遅延を入れてスクロールが完了するのを待つ
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    self.isInitialLoadingComplete = true
+            self.loadMessages {
+                self.loadGroupMembers {
+                    DispatchQueue.main.async {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            self.isInitialLoadingComplete = true
+                        }
+                        
+                        // 画面表示後に既読マーク
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            self.markAsReadWhenAppear()
+                        }
+                    }
                 }
-                
-                // 画面表示後に既読マーク
-                self.markAsReadWhenAppear()
             }
         }
     }
@@ -548,18 +536,32 @@ struct OshiGroupChatView: View {
     }
     
     private func loadMessages(completion: @escaping () -> Void) {
+        print("メッセージ読み込み開始: \(groupId)")
+        
         groupChatManager.fetchMessages(for: groupId) { fetchedMessages, error in
             DispatchQueue.main.async {
-                if let messages = fetchedMessages {
-                    self.messages = messages
+                if let error = error {
+                    print("メッセージ読み込みエラー: \(error.localizedDescription)")
+                    self.messages = []
+                } else if let fetchedMessages = fetchedMessages {
+                    print("メッセージ読み込み成功: \(fetchedMessages.count)件")
+                    self.messages = fetchedMessages
+                    
+                    // 初回読み込み完了後のスクロール
+                    if !self.isInitialLoadingComplete {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            self.shouldScrollToBottom = true
+                        }
+                    }
                 } else {
                     self.messages = []
                 }
+                
                 completion()
             }
         }
     }
-    
+  
     private func loadGroupMembers(completion: @escaping () -> Void) {
         groupChatManager.fetchGroupMembers(for: groupId) { memberIds, error in
             DispatchQueue.main.async {
@@ -644,17 +646,23 @@ struct OshiGroupChatView: View {
     }
     
     private func sendMessage() {
-        guard !inputText.isEmpty, !selectedMembers.isEmpty else { return }
+        guard !inputText.isEmpty, !selectedMembers.isEmpty else {
+            print("送信条件不足: テキスト=\(inputText), メンバー数=\(selectedMembers.count)")
+            return
+        }
         
         // メッセージ制限チェック
         if MessageLimitManager.shared.hasReachedLimit() {
+            print("メッセージ制限に達しました")
             showMessageLimitModal = true
             return
         }
         
-        MessageLimitManager.shared.incrementCount()
+        print("メッセージ送信開始: \(inputText)")
         
-        // ユーザーメッセージを作成
+        MessageLimitManager.shared.incrementCount()
+        interstitialManager.incrementSendCount()
+        
         let userMessage = GroupChatMessage(
             id: UUID().uuidString,
             content: inputText,
@@ -667,19 +675,21 @@ struct OshiGroupChatView: View {
         let userInput = inputText
         inputText = ""
         
-        messages.append(userMessage)
-        shouldScrollToBottom = true
+        print("メッセージ保存開始: \(userMessage.id)")
         
-        // メッセージを保存
         groupChatManager.saveMessage(userMessage) { error in
-            if let error = error {
-                print("メッセージ保存エラー: \(error.localizedDescription)")
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("メッセージ保存エラー: \(error.localizedDescription)")
+                    self.inputText = userInput // エラー時は入力を復元
+                } else {
+                    print("メッセージ保存成功、AI返信生成開始")
+                    self.generateGroupResponse(for: userInput)
+                }
             }
         }
-        
-        // AI返信を生成（複数の推しから）
-        generateGroupResponse(for: userInput)
     }
+
     
     private func generateGroupResponse(for userInput: String) {
         guard !selectedMembers.isEmpty else { return }
@@ -735,25 +745,21 @@ struct OshiGroupChatView: View {
             guard let content = content,
                   !content.isEmpty else { return }
             
-            DispatchQueue.main.async {
-                let reactionMessage = GroupChatMessage(
-                    id: UUID().uuidString,
-                    content: content,
-                    isUser: false,
-                    timestamp: Date().timeIntervalSince1970,
-                    groupId: self.groupId,
-                    senderId: reactor.id,
-                    senderName: reactor.name,
-                    senderImageUrl: reactor.imageUrl
-                )
-                
-                self.messages.append(reactionMessage)
-                self.shouldScrollToBottom = true
-                
-                self.groupChatManager.saveMessage(reactionMessage) { error in
-                    if let error = error {
-                        print("AI反応保存エラー: \(error.localizedDescription)")
-                    }
+            let reactionMessage = GroupChatMessage(
+                id: UUID().uuidString,
+                content: content,
+                isUser: false,
+                timestamp: Date().timeIntervalSince1970,
+                groupId: self.groupId,
+                senderId: reactor.id,
+                senderName: reactor.name,
+                senderImageUrl: reactor.imageUrl
+            )
+            
+            // メッセージを保存（楽観的更新は行わない）
+            self.groupChatManager.saveMessage(reactionMessage) { error in
+                if let error = error {
+                    print("AI反応保存エラー: \(error.localizedDescription)")
                 }
             }
         }
@@ -790,45 +796,57 @@ struct OshiGroupChatView: View {
         dispatchGroup.notify(queue: .main) {
             self.isLoading = false
             
-            for (index, response) in responses.enumerated() {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 1.5) {
-                    let aiMessage = GroupChatMessage(
-                        id: UUID().uuidString,
-                        content: response.content,
-                        isUser: false,
-                        timestamp: Date().timeIntervalSince1970,
-                        groupId: self.groupId,
-                        senderId: response.oshi.id,
-                        senderName: response.oshi.name,
-                        senderImageUrl: response.oshi.imageUrl
-                    )
-                    
-                    self.messages.append(aiMessage)
-                    self.shouldScrollToBottom = true
-                    
-                    self.groupChatManager.saveMessage(aiMessage) { error in
-                        if let error = error {
-                            print("AI返信保存エラー: \(error.localizedDescription)")
-                        }
-                    }
-                }
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(responses.count) * 1.5 + 0.5) {
+            // レスポンスを順次送信（並行送信を避ける）
+            self.sendResponsesSequentially(responses: responses, index: 0, completion: completion)
+        }
+    }
+    
+    private func sendResponsesSequentially(responses: [(oshi: Oshi, content: String)], index: Int, completion: @escaping () -> Void) {
+        guard index < responses.count else {
+            // 全てのレスポンス送信完了
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 completion()
+            }
+            return
+        }
+        
+        let response = responses[index]
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 1.5) {
+            let aiMessage = GroupChatMessage(
+                id: UUID().uuidString,
+                content: response.content,
+                isUser: false,
+                timestamp: Date().timeIntervalSince1970,
+                groupId: self.groupId,
+                senderId: response.oshi.id,
+                senderName: response.oshi.name,
+                senderImageUrl: response.oshi.imageUrl
+            )
+            
+            // メッセージを保存（楽観的更新は行わない）
+            self.groupChatManager.saveMessage(aiMessage) { error in
+                if let error = error {
+                    print("AI返信保存エラー: \(error.localizedDescription)")
+                }
+                
+                // 次のレスポンスを送信
+                DispatchQueue.main.async {
+                    self.sendResponsesSequentially(responses: responses, index: index + 1, completion: completion)
+                }
             }
         }
     }
     
     private func scrollToBottom(proxy: ScrollViewProxy, animated: Bool = true) {
-        if !messages.isEmpty {
-            if animated {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    proxy.scrollTo("bottomMarker", anchor: .bottom)
-                }
-            } else {
+        guard !messages.isEmpty else { return }
+        
+        if animated {
+            withAnimation(.easeInOut(duration: 0.3)) {
                 proxy.scrollTo("bottomMarker", anchor: .bottom)
             }
+        } else {
+            proxy.scrollTo("bottomMarker", anchor: .bottom)
         }
     }
     
