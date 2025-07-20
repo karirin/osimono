@@ -74,20 +74,23 @@ struct EditGroupChatView: View {
     }
     
     private var headerView: some View {
-        HStack(spacing: 16) {
-            // Cancel button with modern design
-            Button(action: {
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 28))
-                    .foregroundStyle(.secondary)
-                    .symbolRenderingMode(.hierarchical)
+        HStack {
+            // 左側ボタンエリア（固定幅）
+            HStack {
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.secondary)
+                        .symbolRenderingMode(.hierarchical)
+                }
             }
+            .frame(width: 80, alignment: .leading) // 固定幅を設定
             
+            // 中央タイトルエリア
             Spacer()
             
-            // Title with modern typography
             VStack(spacing: 2) {
                 Text("グループ編集")
                     .font(.title3)
@@ -101,37 +104,33 @@ struct EditGroupChatView: View {
             
             Spacer()
             
-            // Save button with modern styling
-            Button(action: {
-                updateGroup()
-            }) {
-                HStack(spacing: 6) {
-                    if isUpdating {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16, weight: .medium))
+            // 右側ボタンエリア（固定幅）
+            HStack {
+                Button(action: {
+                    updateGroup()
+                }) {
+                    HStack(spacing: 6) {
+                        Text("保存")
+                            .font(.system(size: 16, weight: .semibold))
                     }
-                    Text("保存")
-                        .font(.system(size: 16, weight: .semibold))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: canUpdateGroup ? gradientColors : [Color.gray]),
-                        startPoint: .leading,
-                        endPoint: .trailing
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: canUpdateGroup ? gradientColors : [Color.gray]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-                .cornerRadius(20)
-                .shadow(color: canUpdateGroup ? accentColor.opacity(0.3) : .clear, radius: 8, x: 0, y: 4)
+                    .cornerRadius(20)
+                    .shadow(color: canUpdateGroup ? accentColor.opacity(0.3) : .clear, radius: 8, x: 0, y: 4)
+                }
+                .disabled(!canUpdateGroup || isUpdating)
+                .scaleEffect(canUpdateGroup ? 1.0 : 0.95)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: canUpdateGroup)
             }
-            .disabled(!canUpdateGroup || isUpdating)
-            .scaleEffect(canUpdateGroup ? 1.0 : 0.95)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: canUpdateGroup)
+            .frame(width: 80, alignment: .trailing) // 固定幅を設定
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -142,7 +141,6 @@ struct EditGroupChatView: View {
         .overlay(
             Rectangle()
                 .frame(height: 0.5),
-//                .foregroundColor(.separator.opacity(0.3)),
             alignment: .bottom
         )
     }

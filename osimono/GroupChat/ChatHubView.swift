@@ -106,9 +106,6 @@ struct ChatHubView: View {
         .onAppear {
             loadAllData()
         }
-        .refreshable {
-            loadAllData()
-        }
         .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
             loadAllData()
         }) {
@@ -167,28 +164,51 @@ struct ChatHubView: View {
     
     private var headerView: some View {
         HStack {
-            // 推し追加ボタン
-            Button(action: {
-                generateHapticFeedback()
-                showAddOshiForm = true
-            }) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(primaryColor)
+            // 左側ボタンエリア（固定幅）
+            HStack {
+                if selectedTab == .group {
+                    Button(action: {
+                        generateHapticFeedback()
+                        showCreateGroup = true
+                    }) {
+                        Image(systemName: "person.2.badge.plus")
+                            .font(.system(size: 20))
+                            .foregroundColor(primaryColor)
+                    }
+                } else {
+                    Button(action: {
+                        generateHapticFeedback()
+                        showAddOshiForm = true
+                    }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(primaryColor)
+                    }
+                }
             }
+            .frame(width: 60, alignment: .leading) // 固定幅を設定
             .padding(.leading)
             
+            // 中央タイトルエリア
             Spacer()
             
-            Text("チャット")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.black)
+            VStack(spacing: 0) {
+                if selectedTab == .group {
+                    Text("グループチャット")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.black)
+                } else {
+                    Text("個人チャット")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.black)
+                }
+            }
             
             Spacer()
             
-            // 編集ボタンまたはグループ作成ボタン
-            if selectedTab == .group {
-                HStack(spacing: 12) {
+            // 右側ボタンエリア（固定幅）
+            HStack {
+                if selectedTab == .group {
                     // 編集ボタン（グループがある場合のみ）
                     if !groupChats.isEmpty {
                         Button(action: {
@@ -199,37 +219,31 @@ struct ChatHubView: View {
                                 .font(.system(size: 16))
                                 .foregroundColor(.blue)
                         }
-                    }
-                    
-                    // グループ作成ボタン
-                    Button(action: {
-                        generateHapticFeedback()
-                        showCreateGroup = true
-                    }) {
-                        Image(systemName: "person.2.badge.plus")
-                            .font(.system(size: 20))
-                            .foregroundColor(primaryColor)
-                    }
-                }
-                .padding(.trailing)
-            } else {
-                // 個人チャットタブの編集ボタン
-                if hasIndividualChats {
-                    Button(action: {
-                        generateHapticFeedback()
-                        withAnimation(.spring()) { isEditingIndividual.toggle() }
-                    }) {
-                        Text(isEditingIndividual ? "完了" : "編集")
+                    } else {
+                        // 空のスペースを維持
+                        Text("")
                             .font(.system(size: 16))
-                            .foregroundColor(.blue)
                     }
-                    .padding(.trailing)
                 } else {
-                    Spacer()
-                        .frame(width: 44)
-                        .padding(.trailing)
+                    // 個人チャットタブの編集ボタン
+                    if hasIndividualChats {
+                        Button(action: {
+                            generateHapticFeedback()
+                            withAnimation(.spring()) { isEditingIndividual.toggle() }
+                        }) {
+                            Text(isEditingIndividual ? "完了" : "編集")
+                                .font(.system(size: 16))
+                                .foregroundColor(.blue)
+                        }
+                    } else {
+                        // 空のスペースを維持
+                        Text("")
+                            .font(.system(size: 16))
+                    }
                 }
             }
+            .frame(width: 60, alignment: .trailing) // 固定幅を設定
+            .padding(.trailing)
         }
         .padding(.vertical, 12)
         .background(Color.white)
@@ -464,10 +478,6 @@ struct ChatHubView: View {
                     }
                 }
                 .background(Color.white)
-                .refreshable {
-                    // グループチャット画面をプルして更新
-                    loadGroupUnreadCounts()
-                }
             }
         }
     }

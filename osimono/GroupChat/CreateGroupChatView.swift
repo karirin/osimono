@@ -77,20 +77,23 @@ struct CreateGroupChatView: View {
     }
     
     private var headerView: some View {
-        HStack(spacing: 16) {
-            // Cancel button with modern design
-            Button(action: {
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 28))
-                    .foregroundStyle(.secondary)
-                    .symbolRenderingMode(.hierarchical)
+        HStack {
+            // 左側ボタンエリア（固定幅）
+            HStack {
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.secondary)
+                        .symbolRenderingMode(.hierarchical)
+                }
             }
+            .frame(width: 80, alignment: .leading) // 固定幅を設定
             
+            // 中央タイトルエリア
             Spacer()
             
-            // Title with modern typography
             VStack(spacing: 2) {
                 Text("新しいグループ")
                     .font(.title3)
@@ -106,37 +109,33 @@ struct CreateGroupChatView: View {
             
             Spacer()
             
-            // Create button with modern styling
-            Button(action: {
-                createGroup()
-            }) {
-                HStack(spacing: 6) {
-                    if isCreating {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                    } else {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 16, weight: .medium))
+            // 右側ボタンエリア（固定幅）
+            HStack {
+                Button(action: {
+                    createGroup()
+                }) {
+                    HStack(spacing: 6) {
+                        Text("作成")
+                            .font(.system(size: 16, weight: .semibold))
                     }
-                    Text("作成")
-                        .font(.system(size: 16, weight: .semibold))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: canCreateGroup ? createGradient : [Color.gray]),
-                        startPoint: .leading,
-                        endPoint: .trailing
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: canCreateGroup ? createGradient : [Color.gray]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-                .cornerRadius(20)
-                .shadow(color: canCreateGroup ? Color.green.opacity(0.3) : .clear, radius: 8, x: 0, y: 4)
+                    .cornerRadius(20)
+                    .shadow(color: canCreateGroup ? Color.green.opacity(0.3) : .clear, radius: 8, x: 0, y: 4)
+                }
+                .disabled(!canCreateGroup || isCreating)
+                .scaleEffect(canCreateGroup ? 1.0 : 0.95)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: canCreateGroup)
             }
-            .disabled(!canCreateGroup || isCreating)
-            .scaleEffect(canCreateGroup ? 1.0 : 0.95)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: canCreateGroup)
+            .frame(width: 80, alignment: .trailing) // 固定幅を設定
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -147,7 +146,6 @@ struct CreateGroupChatView: View {
         .overlay(
             Rectangle()
                 .frame(height: 0.5),
-//                .foregroundColor(.separator.opacity(0.3)),
             alignment: .bottom
         )
     }
