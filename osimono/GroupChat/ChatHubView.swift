@@ -2,12 +2,13 @@
 //  ChatHubView.swift
 //  osimono
 //
-//  個人チャットとグループチャットを統合したハブ画面 - 通知バッジ修正版
+//  個人チャットとグループチャットを統合したハブ画面 - 編集機能付き
 //
 
 import SwiftUI
 import Firebase
 import FirebaseAuth
+import FirebaseStorage
 
 struct ChatHubView: View {
     @StateObject private var coordinator = OshiChatCoordinator.shared
@@ -30,6 +31,19 @@ struct ChatHubView: View {
     
     @State private var searchText = ""
     @Environment(\.presentationMode) var presentationMode
+    
+    // 編集機能関連の新しい状態
+    @State private var isEditingIndividual = false
+    @State private var isEditingGroup = false
+    @State private var showDeleteIndividualAlert = false
+    @State private var showDeleteGroupAlert = false
+    @State private var showDeleteOshiAlert = false
+    @State private var individualToDelete: Oshi?
+    @State private var groupToDelete: GroupChatInfo?
+    @State private var oshiToDeleteCompletely: Oshi?
+    @State private var isDeletingItem = false
+    @State private var showEditGroupSheet = false
+    @State private var groupToEdit: GroupChatInfo?
     
     // LINE風カラー設定
     let lineGrayBG = Color(UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0))
@@ -70,6 +84,22 @@ struct ChatHubView: View {
                         mainContentView
                     }
                 }
+                
+                // 削除中のオーバーレイ
+                if isDeletingItem {
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                        .overlay(
+                            VStack(spacing: 16) {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                                    .tint(.white)
+                                Text("削除中...")
+                                    .foregroundColor(.white)
+                                    .font(.headline)
+                            }
+                        )
+                }
             }
         }
         .navigationBarHidden(true)
@@ -91,6 +121,47 @@ struct ChatHubView: View {
                     loadGroupChats()
                 }
             )
+        }
+        .sheet(isPresented: $showEditGroupSheet) {
+            if let group = groupToEdit {
+                EditGroupChatView(
+                    group: group,
+                    allOshiList: oshiList,
+                    onUpdate: { updatedGroup in
+                        loadGroupChats()
+                    }
+                )
+            }
+        }
+        .alert("チャット履歴を削除", isPresented: $showDeleteIndividualAlert) {
+            Button("削除", role: .destructive) {
+                if let oshi = individualToDelete {
+                    deleteIndividualChatHistory(for: oshi)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("\(individualToDelete?.name ?? "")とのチャット履歴を削除しますか？この操作は元に戻せません。")
+        }
+        .alert("グループを削除", isPresented: $showDeleteGroupAlert) {
+            Button("削除", role: .destructive) {
+                if let group = groupToDelete {
+                    deleteGroup(group)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("\(groupToDelete?.name ?? "")を削除しますか？この操作は元に戻せません。")
+        }
+        .alert("推しを削除", isPresented: $showDeleteOshiAlert) {
+            Button("削除", role: .destructive) {
+                if let oshi = oshiToDeleteCompletely {
+                    deleteOshiCompletely(oshi)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("\(oshiToDeleteCompletely?.name ?? "")を完全に削除しますか？この操作は元に戻せません。\n関連するチャット履歴やアイテム記録もすべて削除されます。")
         }
     }
     
@@ -115,26 +186,64 @@ struct ChatHubView: View {
             
             Spacer()
             
-            // グループ作成ボタン（グループタブ選択時のみ表示）
+            // 編集ボタンまたはグループ作成ボタン
             if selectedTab == .group {
-                Button(action: {
-                    generateHapticFeedback()
-                    showCreateGroup = true
-                }) {
-                    Image(systemName: "person.2.badge.plus")
-                        .font(.system(size: 20))
-                        .foregroundColor(primaryColor)
+                HStack(spacing: 12) {
+                    // 編集ボタン（グループがある場合のみ）
+                    if !groupChats.isEmpty {
+                        Button(action: {
+                            generateHapticFeedback()
+                            withAnimation(.spring()) { isEditingGroup.toggle() }
+                        }) {
+                            Text(isEditingGroup ? "完了" : "編集")
+                                .font(.system(size: 16))
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    
+                    // グループ作成ボタン
+                    Button(action: {
+                        generateHapticFeedback()
+                        showCreateGroup = true
+                    }) {
+                        Image(systemName: "person.2.badge.plus")
+                            .font(.system(size: 20))
+                            .foregroundColor(primaryColor)
+                    }
                 }
                 .padding(.trailing)
             } else {
-                Spacer()
-                    .frame(width: 44)
+                // 個人チャットタブの編集ボタン
+                if hasIndividualChats {
+                    Button(action: {
+                        generateHapticFeedback()
+                        withAnimation(.spring()) { isEditingIndividual.toggle() }
+                    }) {
+                        Text(isEditingIndividual ? "完了" : "編集")
+                            .font(.system(size: 16))
+                            .foregroundColor(.blue)
+                    }
                     .padding(.trailing)
+                } else {
+                    Spacer()
+                        .frame(width: 44)
+                        .padding(.trailing)
+                }
             }
         }
         .padding(.vertical, 12)
         .background(Color.white)
         .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
+    }
+    
+    // 個人チャットが存在するかどうかを判定
+    private var hasIndividualChats: Bool {
+        return oshiList.contains { oshi in
+            if let lastTime = lastMessageTimes[oshi.id], lastTime > 0 {
+                return true
+            }
+            return false
+        }
     }
     
     private var tabSelectorView: some View {
@@ -144,6 +253,9 @@ struct ChatHubView: View {
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             selectedTab = tab
+                            // タブ変更時に編集モードを解除
+                            isEditingIndividual = false
+                            isEditingGroup = false
                         }
                         generateHapticFeedback()
                     }) {
@@ -252,17 +364,40 @@ struct ChatHubView: View {
                         
                         // 既存のチャット一覧
                         ForEach(filteredOshiList, id: \.id) { oshi in
-                            NavigationLink(destination: individualChatDestination(for: oshi)) {
-                                ChatRowView(
-                                    oshi: oshi,
-                                    unreadCount: unreadCounts[oshi.id] ?? 0,
-                                    lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
-                                    lastMessageTime: lastMessageTimes[oshi.id] ?? 0,
-                                    isSelected: oshi.id == selectedOshiId
-                                )
+                            if isEditingIndividual {
+                                HStack {
+                                    ChatRowView(
+                                        oshi: oshi,
+                                        unreadCount: unreadCounts[oshi.id] ?? 0,
+                                        lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
+                                        lastMessageTime: lastMessageTimes[oshi.id] ?? 0,
+                                        isSelected: oshi.id == selectedOshiId,
+                                        showEditButtons: true,
+                                        onDeleteChat: {
+                                            generateHapticFeedback()
+                                            individualToDelete = oshi
+                                            showDeleteIndividualAlert = true
+                                        },
+                                        onDeleteOshi: {
+                                            generateHapticFeedback()
+                                            oshiToDeleteCompletely = oshi
+                                            showDeleteOshiAlert = true
+                                        }
+                                    )
+                                }
+                            } else {
+                                NavigationLink(destination: individualChatDestination(for: oshi)) {
+                                    ChatRowView(
+                                        oshi: oshi,
+                                        unreadCount: unreadCounts[oshi.id] ?? 0,
+                                        lastMessage: lastMessages[oshi.id] ?? "まだメッセージがありません",
+                                        lastMessageTime: lastMessageTimes[oshi.id] ?? 0,
+                                        isSelected: oshi.id == selectedOshiId
+                                    )
+                                }
+                                .navigationBarHidden(true)
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .navigationBarHidden(true)
-                            .buttonStyle(PlainButtonStyle())
                             
                             if oshi.id != filteredOshiList.last?.id {
                                 Divider()
@@ -289,15 +424,36 @@ struct ChatHubView: View {
                         
                         // 既存のグループチャット一覧
                         ForEach(filteredGroupChats, id: \.id) { group in
-                            NavigationLink(destination: groupChatDestination(for: group)) {
-                                GroupChatRowView(
-                                    group: group,
-                                    unreadCount: groupUnreadCounts[group.id] ?? 0,
-                                    allOshiList: oshiList
-                                )
+                            if isEditingGroup {
+                                HStack {
+                                    GroupChatRowView(
+                                        group: group,
+                                        unreadCount: groupUnreadCounts[group.id] ?? 0,
+                                        allOshiList: oshiList,
+                                        showEditButtons: true,
+                                        onEdit: {
+                                            generateHapticFeedback()
+                                            groupToEdit = group
+                                            showEditGroupSheet = true
+                                        },
+                                        onDelete: {
+                                            generateHapticFeedback()
+                                            groupToDelete = group
+                                            showDeleteGroupAlert = true
+                                        }
+                                    )
+                                }
+                            } else {
+                                NavigationLink(destination: groupChatDestination(for: group)) {
+                                    GroupChatRowView(
+                                        group: group,
+                                        unreadCount: groupUnreadCounts[group.id] ?? 0,
+                                        allOshiList: oshiList
+                                    )
+                                }
+                                .navigationBarHidden(true)
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .navigationBarHidden(true)
-                            .buttonStyle(PlainButtonStyle())
                             
                             if group.id != filteredGroupChats.last?.id {
                                 Divider()
@@ -315,6 +471,8 @@ struct ChatHubView: View {
             }
         }
     }
+    
+    // 残りのメソッドは元のChatHubViewと同じものを使用...
     
     private var emptyIndividualChatView: some View {
         VStack(spacing: 20) {
@@ -579,6 +737,180 @@ struct ChatHubView: View {
             return unreadCounts.values.reduce(0, +)
         case .group:
             return groupUnreadCounts.values.reduce(0, +)
+        }
+    }
+    
+    // 削除関数
+    private func deleteIndividualChatHistory(for oshi: Oshi) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        isDeletingItem = true
+        
+        let chatRef = Database.database().reference()
+            .child("oshiChats")
+            .child(userId)
+            .child(oshi.id)
+        
+        chatRef.removeValue { error, _ in
+            DispatchQueue.main.async {
+                self.isDeletingItem = false
+                
+                if let error = error {
+                    print("チャット履歴削除エラー: \(error.localizedDescription)")
+                } else {
+                    print("チャット履歴を削除しました: \(oshi.name)")
+                    // ローカルの状態も更新
+                    self.lastMessages[oshi.id] = "まだメッセージがありません"
+                    self.lastMessageTimes[oshi.id] = 0
+                    self.unreadCounts[oshi.id] = 0
+                    
+                    // 最後に読んだタイムスタンプもリセット
+                    let userRef = Database.database().reference().child("users").child(userId)
+                    userRef.child("lastReadTimestamps").child(oshi.id).removeValue()
+                }
+            }
+        }
+    }
+    
+    private func deleteGroup(_ group: GroupChatInfo) {
+        isDeletingItem = true
+        
+        groupChatManager.deleteGroup(groupId: group.id) { error in
+            DispatchQueue.main.async {
+                self.isDeletingItem = false
+                
+                if let error = error {
+                    print("グループ削除エラー: \(error.localizedDescription)")
+                } else {
+                    print("グループを削除しました: \(group.name)")
+                    // ローカルの状態を更新
+                    if let index = self.groupChats.firstIndex(where: { $0.id == group.id }) {
+                        self.groupChats.remove(at: index)
+                    }
+                    self.groupUnreadCounts.removeValue(forKey: group.id)
+                    self.loadGroupChats()
+                }
+            }
+        }
+    }
+    
+    private func deleteOshiCompletely(_ oshi: Oshi) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        isDeletingItem = true
+        
+        let dispatchGroup = DispatchGroup()
+        var deletionError: Error? = nil
+        
+        // 1. 推しデータを削除
+        dispatchGroup.enter()
+        let oshiRef = Database.database().reference().child("oshis").child(userId).child(oshi.id)
+        oshiRef.removeValue { error, _ in
+            if let error = error {
+                deletionError = error
+                print("推しデータ削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 2. チャット履歴を削除
+        dispatchGroup.enter()
+        let chatRef = Database.database().reference().child("oshiChats").child(userId).child(oshi.id)
+        chatRef.removeValue { error, _ in
+            if let error = error {
+                deletionError = error
+                print("チャット履歴削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 3. アイテム記録を削除
+        dispatchGroup.enter()
+        let itemsRef = Database.database().reference().child("oshiItems").child(userId).child(oshi.id)
+        itemsRef.removeValue { error, _ in
+            if let error = error {
+                deletionError = error
+                print("アイテム記録削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 4. ストレージの画像を削除
+        dispatchGroup.enter()
+        let storageRef = Storage.storage().reference().child("oshis").child(userId).child(oshi.id)
+        storageRef.delete { error in
+            // 画像が存在しない場合のエラーは無視
+            if let error = error, (error as NSError).code != StorageErrorCode.objectNotFound.rawValue {
+                print("ストレージ削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 5. 最後に読んだタイムスタンプを削除
+        dispatchGroup.enter()
+        let userRef = Database.database().reference().child("users").child(userId)
+        userRef.child("lastReadTimestamps").child(oshi.id).removeValue { error, _ in
+            if let error = error {
+                print("タイムスタンプ削除エラー: \(error.localizedDescription)")
+            }
+            dispatchGroup.leave()
+        }
+        
+        // 6. 選択中の推しIDを更新（削除する推しが選択中の場合）
+        dispatchGroup.enter()
+        userRef.child("selectedOshiId").observeSingleEvent(of: .value) { snapshot in
+            if let selectedOshiId = snapshot.value as? String, selectedOshiId == oshi.id {
+                // 削除する推しが選択中の場合、他の推しに変更するか、デフォルトに戻す
+                let oshisRef = Database.database().reference().child("oshis").child(userId)
+                oshisRef.observeSingleEvent(of: .value) { oshiSnapshot in
+                    var newSelectedId = "default"
+                    
+                    // 他の推しが存在する場合、最初の推しを選択
+                    for child in oshiSnapshot.children {
+                        if let childSnapshot = child as? DataSnapshot,
+                           childSnapshot.key != oshi.id {
+                            newSelectedId = childSnapshot.key
+                            break
+                        }
+                    }
+                    
+                    userRef.updateChildValues(["selectedOshiId": newSelectedId]) { error, _ in
+                        if let error = error {
+                            print("選択中推しID更新エラー: \(error.localizedDescription)")
+                        }
+                        dispatchGroup.leave()
+                    }
+                }
+            } else {
+                dispatchGroup.leave()
+            }
+        }
+        
+        // すべての削除処理が完了したら
+        dispatchGroup.notify(queue: .main) {
+            self.isDeletingItem = false
+            
+            if let error = deletionError {
+                print("削除処理でエラーが発生しました: \(error.localizedDescription)")
+            } else {
+                print("推し「\(oshi.name)」を完全に削除しました")
+                
+                // ローカルの状態を更新
+                if let index = self.oshiList.firstIndex(where: { $0.id == oshi.id }) {
+                    self.oshiList.remove(at: index)
+                }
+                self.lastMessages.removeValue(forKey: oshi.id)
+                self.lastMessageTimes.removeValue(forKey: oshi.id)
+                self.unreadCounts.removeValue(forKey: oshi.id)
+                
+                // 選択中の推しIDが削除された場合はリセット
+                if self.selectedOshiId == oshi.id {
+                    self.selectedOshiId = self.oshiList.first?.id ?? ""
+                }
+                
+                // データを再読み込み
+                self.loadAllData()
+            }
         }
     }
     

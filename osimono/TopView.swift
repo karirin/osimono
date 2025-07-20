@@ -56,6 +56,35 @@ struct TopView: View {
                 }
                 ZStack {
                     TimelineView(oshiId: selectedOshiId ?? "default")
+//                    if let vm = viewModel {
+//                        if oshiList.isEmpty {
+//                            // 推しが登録されていない場合
+//                            OshiAlertView(
+//                                title: "推しを登録しよう！",
+//                                message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
+//                                buttonText: "推しを登録する",
+//                                action: {
+//                                    showAddOshiFlag = true
+//                                },
+//                                isShowing: $showAddOshiFlag
+//                            )
+//                            .transition(.opacity)
+//                        } else if vm.selectedOshi.id != "1" { // ダミー推しではない場合
+//                            OshiChatListView()
+//                        }
+//                    }else{
+//                        // 推しが登録されていない場合
+//                        OshiAlertView(
+//                            title: "推しを登録しよう！",
+//                            message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
+//                            buttonText: "推しを登録する",
+//                            action: {
+//                                showAddOshiFlag = true
+//                            },
+//                            isShowing: $showAddOshiFlag
+//                        )
+//                        .transition(.opacity)
+//                    }
                 }
                 .tabItem {
                     Image(systemName: "calendar.day.timeline.left")
@@ -63,36 +92,8 @@ struct TopView: View {
                     Text("タイムライン")
                 }
                 ZStack {
-//                    ChatHubView()
-                    if let vm = viewModel {
-                        if oshiList.isEmpty {
-                            // 推しが登録されていない場合
-                            OshiAlertView(
-                                title: "推しを登録しよう！",
-                                message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
-                                buttonText: "推しを登録する",
-                                action: {
-                                    showAddOshiFlag = true
-                                },
-                                isShowing: $showAddOshiFlag
-                            )
-                            .transition(.opacity)
-                        } else if vm.selectedOshi.id != "1" { // ダミー推しではない場合
-                            OshiChatListView()
-                        }
-                    }else{
-                        // 推しが登録されていない場合
-                        OshiAlertView(
-                            title: "推しを登録しよう！",
-                            message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
-                            buttonText: "推しを登録する",
-                            action: {
-                                showAddOshiFlag = true
-                            },
-                            isShowing: $showAddOshiFlag
-                        )
-                        .transition(.opacity)
-                    }
+                    ChatHubView()
+
                 }
                 .tabItem {
                     Image(systemName: "message")

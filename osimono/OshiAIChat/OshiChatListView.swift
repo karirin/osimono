@@ -782,7 +782,10 @@ struct ChatRowView: View {
     let unreadCount: Int
     let lastMessage: String
     let lastMessageTime: TimeInterval
-    let isSelected: Bool // 選択中かどうかのフラグを追加
+    let isSelected: Bool
+    var showEditButtons: Bool = false
+    var onDeleteChat: (() -> Void)? = nil
+    var onDeleteOshi: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -839,6 +842,42 @@ struct ChatRowView: View {
                         unreadBadge
                     }
                 }
+            }
+            
+            // 編集モード時の削除ボタン
+            if showEditButtons {
+                VStack(spacing: 5) {
+                    // チャット履歴削除ボタン
+                    Button(action: {
+                        onDeleteChat?()
+                    }) {
+                        VStack(spacing: 2) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 16))
+                                .foregroundColor(.orange)
+                            Text("履歴")
+                                .font(.system(size: 10))
+                                .foregroundColor(.orange)
+                        }
+//                        .padding(8)
+                    }
+                    
+                    // 推し完全削除ボタン
+                    Button(action: {
+                        onDeleteOshi?()
+                    }) {
+                        VStack(spacing: 2) {
+                            Image(systemName: "person.crop.circle.badge.minus")
+                                .font(.system(size: 16))
+                                .foregroundColor(.red)
+                            Text("推し")
+                                .font(.system(size: 10))
+                                .foregroundColor(.red)
+                        }
+//                        .padding(8)
+                    }
+                }
+//                .padding(.trailing, 12)
             }
         }
         .padding(.horizontal, 16)

@@ -2,7 +2,7 @@
 //  GroupChatRowView.swift
 //  osimono
 //
-//  改善されたグループチャット行ビュー - アイコン表示を強化
+//  改善されたグループチャット行ビュー - 編集機能付き
 //
 
 import SwiftUI
@@ -11,6 +11,9 @@ struct GroupChatRowView: View {
     let group: GroupChatInfo
     let unreadCount: Int
     let allOshiList: [Oshi]
+    var showEditButtons: Bool = false
+    var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
     
     var groupMembers: [Oshi] {
         return allOshiList.filter { group.memberIds.contains($0.id) }
@@ -57,6 +60,39 @@ struct GroupChatRowView: View {
                     .font(.system(size: 12))
                     .foregroundColor(.gray)
                     .lineLimit(1)
+            }
+            
+            // 編集モード時のボタン
+            if showEditButtons {
+                VStack(spacing: 5) {
+                    // グループ編集ボタン
+                    Button(action: {
+                        onEdit?()
+                    }) {
+                        VStack(spacing: 2) {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 16))
+                                .foregroundColor(.blue)
+                            Text("編集")
+                                .font(.system(size: 10))
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    
+                    // グループ削除ボタン
+                    Button(action: {
+                        onDelete?()
+                    }) {
+                        VStack(spacing: 2) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 16))
+                                .foregroundColor(.red)
+                            Text("削除")
+                                .font(.system(size: 10))
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
             }
         }
         .padding(.horizontal, 16)
@@ -239,6 +275,7 @@ struct GroupChatRowView: View {
                 Text(String(oshi.name.prefix(1)).uppercased())
                     .font(.system(size: size * 0.4, weight: .bold))
                     .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
             )
             .overlay(
                 Circle()
@@ -300,60 +337,43 @@ struct GroupChatRowView: View {
 // プレビュー用のサンプルデータ
 #Preview {
     VStack(spacing: 0) {
-        // 1人のグループ
-        GroupChatRowView(
-            group: GroupChatInfo(
-                id: "1",
-                name: "推し1とのチャット",
-                memberIds: ["oshi1"],
-                createdAt: Date().timeIntervalSince1970,
-                lastMessageTime: Date().timeIntervalSince1970,
-                lastMessage: "こんにちは！"
-            ),
-            unreadCount: 3,
-            allOshiList: [
-                Oshi(id: "oshi1", name: "田中さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil)
-            ]
-        )
+        // 通常モード
+//        GroupChatRowView(
+//            group: GroupChatInfo(
+//                id: "1",
+//                name: "推し2人チーム",
+//                memberIds: ["oshi1", "oshi2"],
+//                createdAt: Date().timeIntervalSince1970,
+//                lastMessageTime: Date().timeIntervalSince1970,
+//                lastMessage: "今度一緒にお出かけしましょう！"
+//            ),
+//            unreadCount: 3,
+//            allOshiList: [
+//                Oshi(id: "oshi1", name: "田中さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil),
+//                Oshi(id: "oshi2", name: "佐藤くん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil)
+//            ]
+//        )
         
         Divider()
         
-        // 2人のグループ
+        // 編集モード
         GroupChatRowView(
             group: GroupChatInfo(
                 id: "2",
-                name: "推し2人チーム",
+                name: "編集中のグループ",
                 memberIds: ["oshi1", "oshi2"],
                 createdAt: Date().timeIntervalSince1970,
                 lastMessageTime: Date().timeIntervalSince1970 - 3600,
-                lastMessage: "今度一緒にお出かけしましょう！"
+                lastMessage: "楽しかったね〜！"
             ),
             unreadCount: 0,
             allOshiList: [
-                Oshi(id: "oshi1", name: "田中さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil),
-                Oshi(id: "oshi2", name: "佐藤くん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil)
-            ]
-        )
-        
-        Divider()
-        
-        // 4人のグループ
-        GroupChatRowView(
-            group: GroupChatInfo(
-                id: "3",
-                name: "みんなでワイワイグループ",
-                memberIds: ["oshi1", "oshi2", "oshi3", "oshi4"],
-                createdAt: Date().timeIntervalSince1970,
-                lastMessageTime: Date().timeIntervalSince1970 - 86400,
-                lastMessage: "楽しかったね〜！"
-            ),
-            unreadCount: 15,
-            allOshiList: [
-                Oshi(id: "oshi1", name: "田中さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil),
-                Oshi(id: "oshi2", name: "佐藤くん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil),
-                Oshi(id: "oshi3", name: "山田ちゃん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil),
-                Oshi(id: "oshi4", name: "鈴木さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil, personality: nil, interests: nil, speaking_style: nil, birthday: nil, height: nil, favorite_color: nil, favorite_food: nil, disliked_food: nil, hometown: nil, gender: nil, user_nickname: nil)
-            ]
+                Oshi(id: "oshi1", name: "田中さん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil),
+                Oshi(id: "oshi2", name: "佐藤くん", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil)
+            ],
+            showEditButtons: true,
+            onEdit: { print("グループ編集") },
+            onDelete: { print("グループ削除") }
         )
     }
     .background(Color(.systemGroupedBackground))
