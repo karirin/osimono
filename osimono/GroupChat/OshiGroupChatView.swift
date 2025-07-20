@@ -2,7 +2,7 @@
 //  OshiGroupChatView.swift
 //  osimono
 //
-//  複数の推しとのグループチャット機能 - 編集機能修正版
+//  複数の推しとのグループチャット機能 - ローディング画面追加版
 //
 
 import SwiftUI
@@ -23,7 +23,7 @@ struct OshiGroupChatView: View {
     @State private var messages: [GroupChatMessage] = []
     @State private var inputText: String = ""
     @State private var isLoading: Bool = false
-    @State private var isInitialScrollComplete: Bool = false
+    @State private var isInitialLoadingComplete: Bool = false // ローディング完了フラグ
     @State private var shouldScrollToBottom: Bool = false
     @State private var showMemberSelection: Bool = false
     @State private var showMessageLimitModal = false
@@ -56,8 +56,18 @@ struct OshiGroupChatView: View {
     
     var body: some View {
         ZStack {
-            chatContent
+            // 背景色（ローディング中でも表示）
+            lineBgColor.edgesIgnoringSafeArea(.all)
             
+            if isInitialLoadingComplete {
+                // メインのチャット画面
+                chatContent
+            } else {
+                // ローディング画面
+                loadingView
+            }
+            
+            // モーダル系（ローディング完了後でも表示）
             if showMemberSelection {
                 GroupMemberSelectionView(
                     isPresented: $showMemberSelection,
@@ -85,7 +95,7 @@ struct OshiGroupChatView: View {
         .gesture(
             DragGesture()
                 .onEnded { value in
-                    if value.translation.width > 80 {
+                    if value.translation.width > 80 && isInitialLoadingComplete {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
@@ -95,7 +105,6 @@ struct OshiGroupChatView: View {
         }
         .onAppear {
             setupGroupChat()
-            markAsReadWhenAppear()
         }
         .onDisappear {
             markAsReadWhenDisappear()
@@ -111,28 +120,83 @@ struct OshiGroupChatView: View {
                         self.groupInfo = updatedGroup
                         self.groupName = updatedGroup.name
                         // メンバー情報を再読み込み
-                        self.loadGroupMembers()
+                        self.loadGroupMembers {
+                            // 完了処理
+                        }
                     }
                 )
             }
         }
     }
     
-    private var chatContent: some View {
-        ZStack {
-            lineBgColor.edgesIgnoringSafeArea(.all)
+    // MARK: - ローディング画面
+    private var loadingView: some View {
+        VStack(spacing: 0) {
+            // ヘッダー部分（ローディング中でも表示）
+            headerViewLoading
             
-            VStack(spacing: 0) {
-                // ヘッダー
-                headerView
+            // ローディング中のメインエリア
+            VStack(spacing: 24) {
+                Spacer()
                 
-                // チャットメッセージリスト
-                chatMessagesView
+                // ローディングアニメーション
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .progressViewStyle(CircularProgressViewStyle(tint: primaryColor))
+                    
+                    Text("グループチャットを準備中...")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.gray)
+                }
                 
-                // 入力エリア
-                inputAreaView
-                    .padding(.bottom, keyboardHeight > 0 ? 0 : 0)
+                Spacer()
             }
+        }
+    }
+    
+    // ローディング中のヘッダー（戻るボタンのみ）
+    private var headerViewLoading: some View {
+        HStack(spacing: 10) {
+            // 戻るボタン
+            Button(action: {
+                generateHapticFeedback()
+                presentationMode.wrappedValue.dismiss()
+            }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.blue)
+            }
+            
+            Spacer()
+            
+            Text("グループチャット")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(.black)
+            
+            Spacer()
+            
+            // 空のスペース（編集ボタンと同じ幅）
+            Color.clear
+                .frame(width: 30, height: 30)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 10)
+        .background(Color.white)
+        .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
+    }
+    
+    private var chatContent: some View {
+        VStack(spacing: 0) {
+            // ヘッダー
+            headerView
+            
+            // チャットメッセージリスト
+            chatMessagesView
+            
+            // 入力エリア
+            inputAreaView
+                .padding(.bottom, keyboardHeight > 0 ? 0 : 0)
         }
     }
     
@@ -285,7 +349,6 @@ struct OshiGroupChatView: View {
                     }
                 }
                 .padding()
-                .opacity(isInitialScrollComplete ? 1 : 0)
             }
             .onChange(of: messages.count) { _ in
                 scrollToBottom(proxy: proxy)
@@ -300,6 +363,14 @@ struct OshiGroupChatView: View {
             .onChange(of: keyboardHeight) { _ in
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     scrollToBottom(proxy: proxy)
+                }
+            }
+            .onAppear {
+                // メッセージが読み込まれた後に初回スクロール
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    if !messages.isEmpty {
+                        scrollToBottom(proxy: proxy, animated: false)
+                    }
                 }
             }
         }
@@ -348,7 +419,6 @@ struct OshiGroupChatView: View {
             .padding(.vertical, 12)
             .background(Color.white)
         }
-        .opacity(isInitialScrollComplete ? 1 : 0)
     }
     
     // MARK: - 既読マーク関連メソッド
@@ -390,16 +460,51 @@ struct OshiGroupChatView: View {
     // MARK: - セットアップ関連メソッド
     
     private func setupGroupChat() {
-        loadOshiList()
-        loadMessages()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.loadGroupMembers()
+        // 初期ローディング開始
+        isInitialLoadingComplete = false
+        
+        // 非同期で各データを読み込み
+        let dispatchGroup = DispatchGroup()
+        
+        // 推しリスト読み込み
+        dispatchGroup.enter()
+        loadOshiList {
+            dispatchGroup.leave()
         }
-        isInitialScrollComplete = true
+        
+        // メッセージ読み込み
+        dispatchGroup.enter()
+        loadMessages {
+            dispatchGroup.leave()
+        }
+        
+        // グループメンバー読み込み
+        dispatchGroup.enter()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.loadGroupMembers {
+                dispatchGroup.leave()
+            }
+        }
+        
+        // 全てのデータ読み込み完了後に画面を表示
+        dispatchGroup.notify(queue: .main) {
+            // 少し遅延を入れてスクロールが完了するのを待つ
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    self.isInitialLoadingComplete = true
+                }
+                
+                // 画面表示後に既読マーク
+                self.markAsReadWhenAppear()
+            }
+        }
     }
     
-    private func loadOshiList() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+    private func loadOshiList(completion: @escaping () -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion()
+            return
+        }
         
         let ref = Database.database().reference().child("oshis").child(userId)
         ref.observeSingleEvent(of: .value) { snapshot in
@@ -437,22 +542,25 @@ struct OshiGroupChatView: View {
             
             DispatchQueue.main.async {
                 self.allOshiList = oshis
+                completion()
             }
         }
     }
     
-    private func loadMessages() {
+    private func loadMessages(completion: @escaping () -> Void) {
         groupChatManager.fetchMessages(for: groupId) { fetchedMessages, error in
             DispatchQueue.main.async {
                 if let messages = fetchedMessages {
                     self.messages = messages
-                    self.markAsReadAfterDelay()
+                } else {
+                    self.messages = []
                 }
+                completion()
             }
         }
     }
     
-    private func loadGroupMembers() {
+    private func loadGroupMembers(completion: @escaping () -> Void) {
         groupChatManager.fetchGroupMembers(for: groupId) { memberIds, error in
             DispatchQueue.main.async {
                 if let memberIds = memberIds, !memberIds.isEmpty {
@@ -462,14 +570,19 @@ struct OshiGroupChatView: View {
                 }
                 
                 // グループ情報を読み込み（編集機能のため）
-                self.loadGroupInfo()
+                self.loadGroupInfo {
+                    completion()
+                }
             }
         }
     }
     
     // グループ情報を取得する修正版メソッド（編集用のgroupInfoも設定）
-    private func loadGroupInfo() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+    private func loadGroupInfo(completion: @escaping () -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion()
+            return
+        }
         
         let groupInfoRef = Database.database().reference()
             .child("groupChats")
@@ -484,6 +597,7 @@ struct OshiGroupChatView: View {
                     self.groupName = groupInfo.name
                     self.groupInfo = groupInfo // 編集用にグループ情報を保存
                     print("グループ情報読み込み完了: \(groupInfo.name)")
+                    completion()
                 }
             } else {
                 // グループ情報が存在しない場合は、デフォルトのグループ情報を作成
@@ -499,6 +613,7 @@ struct OshiGroupChatView: View {
                     self.groupInfo = defaultGroupInfo
                     self.groupName = defaultGroupInfo.name
                     print("デフォルトグループ情報作成: \(defaultGroupInfo.name)")
+                    completion()
                 }
             }
         }
@@ -565,8 +680,6 @@ struct OshiGroupChatView: View {
         // AI返信を生成（複数の推しから）
         generateGroupResponse(for: userInput)
     }
-    
-    // ... 残りのメソッドは既存のまま（generateGroupResponse等）...
     
     private func generateGroupResponse(for userInput: String) {
         guard !selectedMembers.isEmpty else { return }
@@ -707,9 +820,13 @@ struct OshiGroupChatView: View {
         }
     }
     
-    private func scrollToBottom(proxy: ScrollViewProxy) {
-        if !messages.isEmpty && isInitialScrollComplete {
-            withAnimation(.easeInOut(duration: 0.3)) {
+    private func scrollToBottom(proxy: ScrollViewProxy, animated: Bool = true) {
+        if !messages.isEmpty {
+            if animated {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    proxy.scrollTo("bottomMarker", anchor: .bottom)
+                }
+            } else {
                 proxy.scrollTo("bottomMarker", anchor: .bottom)
             }
         }
