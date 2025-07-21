@@ -117,7 +117,21 @@ struct ChatHubView: View {
             CreateGroupChatView(
                 allOshiList: oshiList,
                 onCreate: { groupInfo in
+                    // 新規作成されたグループを選択
+                    selectedGroupId = groupInfo.id
+                    
+                    // Firebaseに選択したグループIDを保存
+                    saveSelectedGroupId(groupInfo.id)
+                    
+                    // グループタブに切り替え
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedTab = .group
+                    }
+                    
+                    // データを再読み込み
                     loadGroupChats()
+                    
+                    print("新規グループ作成完了 - 選択ID: \(groupInfo.id)")
                 }
             )
         }
@@ -161,6 +175,20 @@ struct ChatHubView: View {
             Button("キャンセル", role: .cancel) {}
         } message: {
             Text("\(oshiToDeleteCompletely?.name ?? "")を完全に削除しますか？この操作は元に戻せません。\n関連するチャット履歴やアイテム記録もすべて削除されます。")
+        }
+    }
+    
+    // MARK: - グループID保存メソッド（新規追加）
+    private func saveSelectedGroupId(_ groupId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedGroupId": groupId]) { error, _ in
+            if let error = error {
+                print("❌ グループID保存エラー: \(error.localizedDescription)")
+            } else {
+                print("✅ グループID保存成功: \(groupId)")
+            }
         }
     }
     

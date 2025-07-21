@@ -63,7 +63,16 @@ struct GroupChatListModalView: View {
             CreateGroupChatView(
                 allOshiList: allOshiList,
                 onCreate: { groupInfo in
+                    // 新規作成されたグループを選択
+                    selectedGroupId = groupInfo.id
+                    
+                    // Firebaseに選択したグループIDを保存
+                    saveSelectedGroupId(groupInfo.id)
+                    
+                    // データを再読み込み
                     loadGroupChats()
+                    
+                    print("新規グループ作成完了（モーダル） - 選択ID: \(groupInfo.id)")
                 }
             )
         }
@@ -112,16 +121,6 @@ struct GroupChatListModalView: View {
                 
                 // グループ作成/編集ボタン
                 HStack(spacing: 8) {
-                    // グループ作成ボタン
-//                    Button(action: {
-//                        generateHapticFeedback()
-//                        showCreateGroup = true
-//                    }) {
-//                        Image(systemName: "person.2.badge.plus")
-//                            .font(.system(size: 20))
-//                            .foregroundColor(primaryColor)
-//                    }
-//                    
                     // 編集ボタン（グループがある場合のみ）
                     if !groupChats.isEmpty {
                         Button(action: {
@@ -340,7 +339,7 @@ struct GroupChatListModalView: View {
                 if group.id == selectedGroupId {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(primaryColor, lineWidth: 2)
-                        .padding(.horizontal, 6)
+                        .padding(.horizontal, 4)
                         .padding(.vertical, 4)
                 }
             }

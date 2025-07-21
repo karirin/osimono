@@ -70,7 +70,16 @@ struct GroupChatTabView: View {
             CreateGroupChatView(
                 allOshiList: allOshiList,
                 onCreate: { groupInfo in
+                    // 新規作成されたグループを選択
+                    openedGroupId = groupInfo.id
+                    
+                    // Firebaseに選択したグループIDを保存
+                    saveSelectedGroupId(groupInfo.id)
+                    
+                    // データを再読み込み
                     loadGroupChats()
+                    
+                    print("新規グループ作成完了 - 選択ID: \(groupInfo.id)")
                 }
             )
         }
@@ -94,6 +103,20 @@ struct GroupChatTabView: View {
             Button("キャンセル", role: .cancel) {}
         } message: {
             Text("\(groupToDelete?.name ?? "")を削除しますか？この操作は元に戻せません。")
+        }
+    }
+    
+    // MARK: - グループID保存メソッド（新規追加）
+    private func saveSelectedGroupId(_ groupId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedGroupId": groupId]) { error, _ in
+            if let error = error {
+                print("❌ グループID保存エラー: \(error.localizedDescription)")
+            } else {
+                print("✅ グループID保存成功: \(groupId)")
+            }
         }
     }
     
@@ -496,6 +519,13 @@ struct GroupChatTabView: View {
                     print("グループ削除エラー: \(error.localizedDescription)")
                 } else {
                     print("グループを削除しました: \(group.name)")
+                    
+                    // 削除されたグループが選択中の場合、他のグループを選択
+                    if self.openedGroupId == group.id {
+                        let remainingGroups = self.groupChats.filter { $0.id != group.id }
+                        self.openedGroupId = remainingGroups.first?.id ?? ""
+                    }
+                    
                     if let index = self.groupChats.firstIndex(where: { $0.id == group.id }) {
                         self.groupChats.remove(at: index)
                     }
