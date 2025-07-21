@@ -45,6 +45,8 @@ struct ChatHubView: View {
     @State private var showEditGroupSheet = false
     @State private var groupToEdit: GroupChatInfo?
     
+    @State private var selectedGroupId: String = ""
+    
     // LINE風カラー設定
     let lineGrayBG = Color(UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0))
     let primaryColor = Color(.systemPink)
@@ -722,9 +724,11 @@ struct ChatHubView: View {
     }
     
     private func groupChatDestination(for group: GroupChatInfo) -> some View {
-        return OshiGroupChatView(groupId: group.id)
-            .onDisappear {
-                // グループチャット画面から戻った時に未読数を更新
+        OshiGroupChatView(groupId: $selectedGroupId)   // ←Binding を渡す
+            .onAppear {                                // 画面遷移時に選択IDを更新
+                selectedGroupId = group.id
+            }
+            .onDisappear {                             // ※既存の未読数更新はそのまま
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     loadGroupUnreadCounts()
                 }

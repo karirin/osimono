@@ -25,6 +25,8 @@ struct GroupChatTabView: View {
     @State private var groupToEdit: GroupChatInfo?
     @State private var isDeletingGroup = false
     
+    @State private var openedGroupId: String = ""
+    
     // LINE風カラー設定
     let lineGrayBG = Color(UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0))
     let primaryColor = Color(.systemPink)
@@ -386,7 +388,8 @@ struct GroupChatTabView: View {
     }
     
     private func groupChatDestination(for group: GroupChatInfo) -> some View {
-        return OshiGroupChatView(groupId: group.id)
+        return  OshiGroupChatView(groupId: $openedGroupId)          // ←Binding を渡す
+            .onAppear { openedGroupId = group.id }          // ←遷移前にIDをセット
             .onDisappear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     loadGroupUnreadCounts()

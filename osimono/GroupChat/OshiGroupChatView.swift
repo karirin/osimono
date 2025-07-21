@@ -39,7 +39,8 @@ struct OshiGroupChatView: View {
     @State private var allOshiList: [Oshi] = []
     
     // グループチャット情報
-    let groupId: String
+    @Binding var groupId: String
+    @State private var currentGroupId = ""
     let onShowGroupList: (() -> Void)? // グループリスト表示用のクロージャ
     @State private var groupName: String = ""
     
@@ -56,9 +57,11 @@ struct OshiGroupChatView: View {
     let primaryColor = Color(.systemPink)
     
     // イニシャライザを修正
-    init(groupId: String, onShowGroupList: (() -> Void)? = nil) {
-        self.groupId = groupId
+    init(groupId: Binding<String>,          // ←型を Binding に
+         onShowGroupList: (() -> Void)? = nil) {
+        self._groupId = groupId             // ←Binding を保持
         self.onShowGroupList = onShowGroupList
+        _currentGroupId = State(initialValue: groupId.wrappedValue) // ←追加
     }
     
     var body: some View {
@@ -111,6 +114,21 @@ struct OshiGroupChatView: View {
             withAnimation(.easeInOut(duration: 0.3)) { keyboardHeight = height }
         }
         .onAppear {
+            setupGroupChat()
+        }
+        
+        .onChange(of: groupId) { newValue in
+            guard newValue != currentGroupId else { return }
+            // 古いリスナーを解除
+            groupChatManager.removeMessageListener(for: currentGroupId)
+            
+            // 状態をリセット（必要に応じて）
+            messages.removeAll()
+            selectedMembers.removeAll()
+            hasMarkedAsRead = false
+            
+            // 新しいグループをロード
+            currentGroupId = newValue
             setupGroupChat()
         }
         .onDisappear {
@@ -946,5 +964,5 @@ struct OshiGroupChatView: View {
 }
 
 #Preview {
-    OshiGroupChatView(groupId: "preview-group")
+    OshiGroupChatView(groupId: .constant("123"))
 }

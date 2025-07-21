@@ -158,18 +158,68 @@ struct TopView: View {
         }
     }
     
+    private func loadSelectedGroupId() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.child("selectedGroupId").observeSingleEvent(of: .value) { snapshot in
+            if let savedGroupId = snapshot.value as? String,
+               !savedGroupId.isEmpty {
+                DispatchQueue.main.async {
+                    print("✅ 保存済みグループID取得: \(savedGroupId)")
+                    self.selectedGroupId = savedGroupId
+                }
+            } else {
+                print("📝 保存済みグループIDなし、デフォルトを使用")
+            }
+        }
+    }
+    
+    private func saveSelectedGroupId(_ groupId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedGroupId": groupId]) { error, _ in
+            if let error = error {
+                print("❌ グループID保存エラー: \(error.localizedDescription)")
+            } else {
+                print("✅ グループID保存成功: \(groupId)")
+            }
+        }
+    }
+    
     // グループチャットデータを読み込み
     private func loadGroupChats() {
         groupChatManager.fetchGroupList { groups, error in
             DispatchQueue.main.async {
                 if let groups = groups {
                     self.groupChats = groups
-                    // 選択中のグループIDが設定されていない場合、最初のグループを選択
-                    if self.selectedGroupId.isEmpty && !groups.isEmpty {
-                        self.selectedGroupId = groups.first?.id ?? ""
+                    
+                    // 保存されたグループIDがある場合はそれを優先
+                    self.loadSelectedGroupId()
+                    
+                    // 少し遅延して、保存されたIDが有効かチェック
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        if !self.selectedGroupId.isEmpty {
+                            // 保存されたIDが現在のグループリストに存在するかチェック
+                            if !groups.contains(where: { $0.id == self.selectedGroupId }) {
+                                // 存在しない場合は最初のグループを選択
+                                self.selectedGroupId = groups.first?.id ?? ""
+                                if !self.selectedGroupId.isEmpty {
+//                                    self.saveSelectedGroupId(self.selectedGroupId)
+                                }
+                            }
+                        } else {
+                            // 保存されたIDがない場合は最初のグループを選択
+                            self.selectedGroupId = groups.first?.id ?? ""
+                            if !self.selectedGroupId.isEmpty {
+//                                self.saveSelectedGroupId(self.selectedGroupId)
+                            }
+                        }
                     }
                 } else {
                     self.groupChats = []
+                    self.selectedGroupId = ""
                 }
             }
         }
@@ -400,7 +450,7 @@ struct DirectGroupChatTabView: View {
                 } else {
                     // 選択中のグループチャット画面を直接表示
                     OshiGroupChatView(
-                        groupId: selectedGroupId,
+                        groupId: $selectedGroupId,
                         onShowGroupList: {
                             showGroupList = true
                         }
@@ -419,8 +469,81 @@ struct DirectGroupChatTabView: View {
                 allOshiList: allOshiList
             )
         }
+        // グループ選択変更を監視して保存
+        .onChange(of: selectedGroupId) { newGroupId in
+            if !newGroupId.isEmpty {
+                saveSelectedGroupId(newGroupId)
+            }
+        }
     }
     
+    // 選択中のグループIDを保存
+    private func saveSelectedGroupId(_ groupId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedGroupId": groupId]) { error, _ in
+            if let error = error {
+                print("❌ グループID保存エラー: \(error.localizedDescription)")
+            } else {
+                print("✅ グループID保存成功: \(groupId)")
+            }
+        }
+    }
+    
+    // 保存されたグループIDを取得
+    private func loadSelectedGroupId(completion: @escaping (String?) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            completion(nil)
+            return
+        }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.child("selectedGroupId").observeSingleEvent(of: .value) { snapshot in
+            let savedGroupId = snapshot.value as? String
+            completion(savedGroupId)
+        }
+    }
+    
+    private func loadInitialData() {
+        isLoading = true
+        
+        groupChatManager.fetchGroupList { groups, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                
+                if let groups = groups {
+                    self.groupChats = groups
+                    
+                    // 保存されたグループIDを取得して設定
+                    self.loadSelectedGroupId { savedGroupId in
+                        DispatchQueue.main.async {
+                            if let savedGroupId = savedGroupId,
+                               !savedGroupId.isEmpty,
+                               groups.contains(where: { $0.id == savedGroupId }) {
+                                // 保存されたIDが有効な場合はそれを使用
+                                self.selectedGroupId = savedGroupId
+                                print("✅ 保存済みグループを復元: \(savedGroupId)")
+                            } else {
+                                // 保存されたIDがないか無効な場合は最初のグループを選択
+                                let firstGroupId = groups.first?.id ?? ""
+                                self.selectedGroupId = firstGroupId
+                                if !firstGroupId.isEmpty {
+//                                    self.saveSelectedGroupId(firstGroupId)
+                                    print("✅ デフォルトグループを選択: \(firstGroupId)")
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    self.groupChats = []
+                    self.selectedGroupId = ""
+                }
+            }
+        }
+    }
+    
+    // 以下、既存のView定義は変更なし...
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
@@ -518,27 +641,6 @@ struct DirectGroupChatTabView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
-    private func loadInitialData() {
-        isLoading = true
-        
-        groupChatManager.fetchGroupList { groups, error in
-            DispatchQueue.main.async {
-                self.isLoading = false
-                
-                if let groups = groups {
-                    self.groupChats = groups
-                    
-                    // 選択中のグループIDが空か、存在しないグループの場合は最初のグループを選択
-                    if self.selectedGroupId.isEmpty || !groups.contains(where: { $0.id == self.selectedGroupId }) {
-                        self.selectedGroupId = groups.first?.id ?? ""
-                    }
-                } else {
-                    self.groupChats = []
-                }
-            }
-        }
     }
 }
 

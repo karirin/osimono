@@ -349,6 +349,20 @@ struct GroupChatListModalView: View {
         }
     }
     
+    // 選択中のグループIDを保存
+    private func saveSelectedGroupId(_ groupId: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let dbRef = Database.database().reference().child("users").child(userID)
+        dbRef.updateChildValues(["selectedGroupId": groupId]) { error, _ in
+            if let error = error {
+                print("❌ グループID保存エラー: \(error.localizedDescription)")
+            } else {
+                print("✅ グループID保存成功: \(groupId)")
+            }
+        }
+    }
+    
     private func editButtonsView(for group: GroupChatInfo) -> some View {
         VStack(spacing: 5) {
             Button(action: {
@@ -408,6 +422,9 @@ struct GroupChatListModalView: View {
     private func selectGroup(_ group: GroupChatInfo) {
         generateHapticFeedback()
         selectedGroupId = group.id
+        
+        // Firebaseに選択したグループIDを保存
+        saveSelectedGroupId(group.id)
         
         // 少し遅延してからモーダルを閉じる（選択の視覚的フィードバックのため）
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
