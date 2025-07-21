@@ -67,16 +67,14 @@ struct GroupChatListModalView: View {
                 }
             )
         }
-        .sheet(isPresented: $showEditGroupSheet) {
-            if let group = groupToEdit {
-                EditGroupChatView(
-                    group: group,
-                    allOshiList: allOshiList,
-                    onUpdate: { updatedGroup in
-                        loadGroupChats()
-                    }
-                )
-            }
+        .sheet(item: $groupToEdit) { group in            // ← item 版に変更
+            EditGroupChatView(
+                group: group,
+                allOshiList: allOshiList,
+                onUpdate: { _ in
+                    loadGroupChats()
+                }
+            )
         }
         .alert("グループを削除", isPresented: $showDeleteGroupAlert) {
             Button("削除", role: .destructive) {

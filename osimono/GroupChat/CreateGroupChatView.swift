@@ -652,10 +652,8 @@ struct CreateGroupChatView: View {
     }
     
     private func setupInitialData() {
-        // デフォルトで全ての推しを選択（2人以上の場合）
-        if allOshiList.count > 1 {
-            selectedMembers = allOshiList
-        }
+        // デフォルトでは誰も選択しない
+        selectedMembers = []
         
         // ステップ表示の判定
         showingSteps = allOshiList.isEmpty
