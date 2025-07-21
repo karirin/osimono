@@ -51,6 +51,8 @@ struct OshiGroupChatView: View {
     // 既読管理用
     @State private var hasMarkedAsRead: Bool = false
     
+    @StateObject private var interstitialManager = GroupChatInterstitialManager.shared
+    
     // LINE風カラー設定
     let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
     let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
@@ -115,8 +117,9 @@ struct OshiGroupChatView: View {
         }
         .onAppear {
             setupGroupChat()
+            // インタースティシャル広告を事前読み込み
+            interstitialManager.preloadInterstitialAd()
         }
-        
         .onChange(of: groupId) { newValue in
             guard newValue != currentGroupId else { return }
             // 古いリスナーを解除
@@ -477,6 +480,7 @@ struct OshiGroupChatView: View {
                 Button(action: {
                     if !inputText.isEmpty && !isLoading && !selectedMembers.isEmpty {
                         generateHapticFeedback()
+                        interstitialManager.incrementSendCount()
                         sendMessage()
                     }
                 }) {

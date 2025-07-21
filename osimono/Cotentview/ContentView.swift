@@ -285,10 +285,10 @@ struct ContentView: View {
         }
         .overlay(
             ZStack {
-                if showApologyModal {
-                    ApologyModalView(isPresented: $showApologyModal)
-                        .transition(.opacity)
-                }
+//                if showApologyModal {
+//                    ApologyModalView(isPresented: $showApologyModal)
+//                        .transition(.opacity)
+//                }
                 if isShowingOshiSelector {
                     oshiSelectorOverlay
                 }

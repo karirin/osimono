@@ -343,13 +343,6 @@ struct OshiCollectionView: View {
                     }
                     .padding()
                 } else {
-                    if !isAdmin {
-                        // コレクション表示
-                        NavigationLink(destination: ChatHubView()) {
-                            ChatBadgeView(count: totalUnreadCount, hasNewMessages: hasNewMessages)
-                        }
-                        .navigationBarHidden(true)
-                    }
                     ScrollView {
                         LazyVGrid(columns: [GridItem(.flexible()),GridItem(.flexible()), GridItem(.flexible())], spacing: 5) {
                             ForEach(filteredItems) { item in

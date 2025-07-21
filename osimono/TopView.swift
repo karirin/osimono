@@ -59,17 +59,6 @@ struct TopView: View {
                     Image(systemName: "mappin.and.ellipse")
                     Text("聖地巡礼")
                 }
-                
-//                ZStack {
-//                    TimelineView(oshiId: selectedOshiId ?? "default")
-//                }
-//                .tabItem {
-//                    Image(systemName: "calendar.day.timeline.left")
-//                        .frame(width:1,height:1)
-//                    Text("タイムライン")
-//                }
-                
-                // 個人チャットタブ
                 ZStack {
                     IndividualChatTabView()
                 }

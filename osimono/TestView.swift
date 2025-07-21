@@ -24,8 +24,8 @@ enum TutorialStep: Int, CaseIterable {
         case .selectOshi: return "推しを登録"
         case .addOshi: return "推しを追加"
         case .createPost: return "聖地巡礼"
-        case .categories: return "タイムライン"
-        case .message: return "メッセージ"
+        case .categories: return "チャット"
+        case .message: return "グループチャット"
         case .completed: return "完了"
         }
     }
@@ -41,9 +41,9 @@ enum TutorialStep: Int, CaseIterable {
         case .createPost:
             return "登録した推しの聖地巡礼をマップで見ることができます。"
         case .categories:
-            return "推しや自分の活動をタイムライン形式で記録・確認できます。"
-        case .message:
             return "推しとチャットでやり取りすることができます。記録した内容にメッセージを送ってきてくれることも！"
+        case .message:
+            return "登録した複数の推しとグループチャットをすることができます。"
         case .completed:
             return "これでチュートリアルは完了です！\nあなたの推し活ライフをお楽しみください！"
         }
@@ -55,8 +55,8 @@ enum TutorialStep: Int, CaseIterable {
         case .selectOshi: return "person.crop.circle.fill"
         case .addOshi: return "plus.circle.fill"
         case .createPost: return "mappin.and.ellipse"
-        case .categories: return "calendar.day.timeline.left"
-        case .message: return "message.fill"
+        case .categories: return "message.fill"
+        case .message: return "person.2"
         case .completed: return "checkmark.circle.fill"
         }
     }
