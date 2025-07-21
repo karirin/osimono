@@ -24,6 +24,11 @@ struct TopView: View {
     @State private var initialLoadCompleted = false
     @State private var observerHandle: DatabaseHandle? // 監視ハンドルを追加
     
+    // グループチャット関連の状態
+    @State private var selectedGroupId: String = ""
+    @State private var groupChats: [GroupChatInfo] = []
+    @StateObject private var groupChatManager = GroupChatManager()
+    
     let dummyOshi = Oshi(
         id: "1",
         name: "テストの推し",
@@ -40,13 +45,13 @@ struct TopView: View {
                     ContentView(oshiChange: $oshiChange)
                         .id(selectedOshiId)
                 }
-
                 .tabItem {
                     Image(systemName: "rectangle.split.2x2")
                         .padding()
                     Text("推しログ")
                         .padding()
                 }
+                
                 ZStack {
                     MapView(oshiId: selectedOshiId ?? "default")
                 }
@@ -54,52 +59,40 @@ struct TopView: View {
                     Image(systemName: "mappin.and.ellipse")
                     Text("聖地巡礼")
                 }
+                
+//                ZStack {
+//                    TimelineView(oshiId: selectedOshiId ?? "default")
+//                }
+//                .tabItem {
+//                    Image(systemName: "calendar.day.timeline.left")
+//                        .frame(width:1,height:1)
+//                    Text("タイムライン")
+//                }
+                
+                // 個人チャットタブ
                 ZStack {
-                    TimelineView(oshiId: selectedOshiId ?? "default")
-//                    if let vm = viewModel {
-//                        if oshiList.isEmpty {
-//                            // 推しが登録されていない場合
-//                            OshiAlertView(
-//                                title: "推しを登録しよう！",
-//                                message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
-//                                buttonText: "推しを登録する",
-//                                action: {
-//                                    showAddOshiFlag = true
-//                                },
-//                                isShowing: $showAddOshiFlag
-//                            )
-//                            .transition(.opacity)
-//                        } else if vm.selectedOshi.id != "1" { // ダミー推しではない場合
-//                            OshiChatListView()
-//                        }
-//                    }else{
-//                        // 推しが登録されていない場合
-//                        OshiAlertView(
-//                            title: "推しを登録しよう！",
-//                            message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
-//                            buttonText: "推しを登録する",
-//                            action: {
-//                                showAddOshiFlag = true
-//                            },
-//                            isShowing: $showAddOshiFlag
-//                        )
-//                        .transition(.opacity)
-//                    }
-                }
-                .tabItem {
-                    Image(systemName: "calendar.day.timeline.left")
-                        .frame(width:1,height:1)
-                    Text("タイムライン")
-                }
-                ZStack {
-                    ChatHubView()
-
+                    IndividualChatTabView()
                 }
                 .tabItem {
                     Image(systemName: "message")
                         .frame(width:1,height:1)
                     Text("チャット")
                 }
+                
+                // グループチャットタブ（直接チャット画面表示）
+                ZStack {
+                    DirectGroupChatTabView(
+                        selectedGroupId: $selectedGroupId,
+                        groupChats: $groupChats,
+                        allOshiList: oshiList
+                    )
+                }
+                .tabItem {
+                    Image(systemName: "person.2")
+                        .frame(width:1,height:1)
+                    Text("グループチャット")
+                }
+                
                 ZStack {
                     SettingsView(oshiChange: $oshiChange)
                 }
@@ -138,6 +131,7 @@ struct TopView: View {
                 // 初回のみ完全にロード
                 fetchOshiList()
                 observeSelectedOshiId()
+                loadGroupChats() // グループチャットデータも読み込み
                 initialLoadCompleted = true
                 
                 if !UserDefaults.standard.bool(forKey: "appLaunchedBefore") {
@@ -154,12 +148,30 @@ struct TopView: View {
             } else if oshiChange {
                 // 推し変更されたときのみ再ロード
                 fetchOshiList()
+                loadGroupChats() // グループチャットも再読み込み
                 oshiChange = false
             }
         }
         .onDisappear {
             // メモリリーク防止のために監視を解除
             removeObserver()
+        }
+    }
+    
+    // グループチャットデータを読み込み
+    private func loadGroupChats() {
+        groupChatManager.fetchGroupList { groups, error in
+            DispatchQueue.main.async {
+                if let groups = groups {
+                    self.groupChats = groups
+                    // 選択中のグループIDが設定されていない場合、最初のグループを選択
+                    if self.selectedGroupId.isEmpty && !groups.isEmpty {
+                        self.selectedGroupId = groups.first?.id ?? ""
+                    }
+                } else {
+                    self.groupChats = []
+                }
+            }
         }
     }
     
@@ -360,6 +372,170 @@ struct TopView: View {
                             self.fetchOshiList()
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - 直接グループチャット表示用のタブビュー
+struct DirectGroupChatTabView: View {
+    @Binding var selectedGroupId: String
+    @Binding var groupChats: [GroupChatInfo]
+    let allOshiList: [Oshi]
+    
+    @State private var showGroupList = false
+    @State private var isLoading = true
+    @StateObject private var groupChatManager = GroupChatManager()
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                if isLoading {
+                    loadingView
+                } else if groupChats.isEmpty {
+                    emptyGroupStateView
+                } else if selectedGroupId.isEmpty {
+                    noSelectedGroupView
+                } else {
+                    // 選択中のグループチャット画面を直接表示
+                    OshiGroupChatView(
+                        groupId: selectedGroupId,
+                        onShowGroupList: {
+                            showGroupList = true
+                        }
+                    )
+                }
+            }
+        }
+        .navigationBarHidden(true)
+        .onAppear {
+            loadInitialData()
+        }
+        .sheet(isPresented: $showGroupList) {
+            GroupChatListModalView(
+                groupChats: $groupChats,
+                selectedGroupId: $selectedGroupId,
+                allOshiList: allOshiList
+            )
+        }
+    }
+    
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+            Text("グループチャットを読み込み中...")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var emptyGroupStateView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "person.2.circle")
+                .font(.system(size: 60))
+                .foregroundColor(.gray.opacity(0.6))
+            
+            VStack(spacing: 8) {
+                Text("グループチャットがありません")
+                    .font(.headline)
+                    .foregroundColor(.black)
+                
+                Text("複数の推しとのグループチャットを作成しましょう")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Button(action: {
+                showGroupList = true
+            }) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 20))
+                    Text("グループを作成する")
+                        .font(.headline)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color(.systemPink), Color(.systemPink).opacity(0.8)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(20)
+                .shadow(color: Color(.systemPink).opacity(0.3), radius: 5, x: 0, y: 2)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var noSelectedGroupView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "person.2.circle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.gray.opacity(0.6))
+            
+            VStack(spacing: 8) {
+                Text("グループを選択してください")
+                    .font(.headline)
+                    .foregroundColor(.black)
+                
+                Text("グループ一覧からチャットするグループを選択してください")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Button(action: {
+                showGroupList = true
+            }) {
+                HStack {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 20))
+                    Text("グループ一覧を表示")
+                        .font(.headline)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color(.systemBlue), Color(.systemBlue).opacity(0.8)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(20)
+                .shadow(color: Color(.systemBlue).opacity(0.3), radius: 5, x: 0, y: 2)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private func loadInitialData() {
+        isLoading = true
+        
+        groupChatManager.fetchGroupList { groups, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                
+                if let groups = groups {
+                    self.groupChats = groups
+                    
+                    // 選択中のグループIDが空か、存在しないグループの場合は最初のグループを選択
+                    if self.selectedGroupId.isEmpty || !groups.contains(where: { $0.id == self.selectedGroupId }) {
+                        self.selectedGroupId = groups.first?.id ?? ""
+                    }
+                } else {
+                    self.groupChats = []
                 }
             }
         }

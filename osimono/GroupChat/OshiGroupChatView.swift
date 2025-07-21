@@ -2,7 +2,7 @@
 //  OshiGroupChatView.swift
 //  osimono
 //
-//  複数の推しとのグループチャット機能 - ローディング画面追加版
+//  複数の推しとのグループチャット機能 - メンバーボタン版
 //
 
 import SwiftUI
@@ -40,6 +40,7 @@ struct OshiGroupChatView: View {
     
     // グループチャット情報
     let groupId: String
+    let onShowGroupList: (() -> Void)? // グループリスト表示用のクロージャ
     @State private var groupName: String = ""
     
     // キーボード関連
@@ -53,6 +54,12 @@ struct OshiGroupChatView: View {
     let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
     let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
     let primaryColor = Color(.systemPink)
+    
+    // イニシャライザを修正
+    init(groupId: String, onShowGroupList: (() -> Void)? = nil) {
+        self.groupId = groupId
+        self.onShowGroupList = onShowGroupList
+    }
     
     var body: some View {
         ZStack {
@@ -159,33 +166,69 @@ struct OshiGroupChatView: View {
     
     // ローディング中のヘッダー（戻るボタンのみ）
     private var headerViewLoading: some View {
-        HStack(spacing: 10) {
-            // 戻るボタン
-            Button(action: {
-                generateHapticFeedback()
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.blue)
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                // 戻るボタン
+                Button(action: {
+                    generateHapticFeedback()
+                    isTextFieldFocused = false
+                    
+                    // 戻る前に既読マーク
+                    markAsReadWhenDisappear()
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.blue)
+                }
+                
+                Button(action: {
+                    generateHapticFeedback()
+                    onShowGroupList?()
+                }) {
+                    HStack(spacing: 10) {
+                        groupIconView
+                            .frame(width: 36, height: 36)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(groupName.isEmpty ? "グループチャット" : groupName)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(.black)
+                            
+                            HStack(spacing: 4) {
+                                Text("\(selectedMembers.count)人のメンバー")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.blue)
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Spacer()
+                
+                // 編集ボタン（新規追加）
+                Button(action: {
+                    generateHapticFeedback()
+                    showEditGroupSheet = true
+                }) {
+                    Text("編集")
+                        .font(.system(size: 16))
+                        .foregroundColor(.blue)
+                }
             }
-            
-            Spacer()
-            
-            Text("グループチャット")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.black)
-            
-            Spacer()
-            
-            // 空のスペース（編集ボタンと同じ幅）
-            Color.clear
-                .frame(width: 30, height: 30)
+            .padding(.horizontal)
+            .padding(.vertical, 10)
+            .background(Color.white)
+            .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
         }
-        .padding(.horizontal)
-        .padding(.vertical, 10)
-        .background(Color.white)
-        .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
     }
     
     private var chatContent: some View {
@@ -206,35 +249,49 @@ struct OshiGroupChatView: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 // 戻るボタン
+//                Button(action: {
+//                    generateHapticFeedback()
+//                    isTextFieldFocused = false
+//                    
+//                    // 戻る前に既読マーク
+//                    markAsReadWhenDisappear()
+//                    
+//                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+//                        presentationMode.wrappedValue.dismiss()
+//                    }
+//                }) {
+//                }
+                
                 Button(action: {
                     generateHapticFeedback()
-                    isTextFieldFocused = false
-                    
-                    // 戻る前に既読マーク
-                    markAsReadWhenDisappear()
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        presentationMode.wrappedValue.dismiss()
-                    }
+                    onShowGroupList?()
                 }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.blue)
+                    HStack(spacing: 10) {
+                        
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.blue)
+                        groupIconView
+                            .frame(width: 36, height: 36)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(groupName.isEmpty ? "グループチャット" : groupName)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(.black)
+                            
+                            HStack(spacing: 4) {
+                                Text("\(selectedMembers.count)人のメンバー")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.blue)
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    }
                 }
-                
-                // グループアイコン（複数の推しの画像を重ねて表示）
-                groupIconView
-                    .frame(width: 36, height: 36)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(groupName.isEmpty ? "グループチャット" : groupName)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(.black)
-                    
-                    Text("\(selectedMembers.count)人のメンバー")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
-                }
+                .buttonStyle(PlainButtonStyle())
                 
                 Spacer()
                 
@@ -243,9 +300,9 @@ struct OshiGroupChatView: View {
                     generateHapticFeedback()
                     showEditGroupSheet = true
                 }) {
-                    Image(systemName: "person.2.circle")
-                        .font(.system(size: 30))
-                        .foregroundColor(.blue)
+                    Text("編集")
+                       .font(.system(size: 16))
+                       .foregroundColor(.blue)
                 }
             }
             .padding(.horizontal)
@@ -484,6 +541,7 @@ struct OshiGroupChatView: View {
         }
     }
     
+    // 残りのメソッドは元のコードと同じ（省略）
     private func loadOshiList(completion: @escaping () -> Void) {
         guard let userId = Auth.auth().currentUser?.uid else {
             completion()
