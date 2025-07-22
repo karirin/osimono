@@ -68,7 +68,7 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
         isLoading = true
         
         let request = Request()
-        InterstitialAd.load(with: "ca-app-pub-3940256099942544/4411468910", // テスト用ID
+        InterstitialAd.load(with: "ca-app-pub-4898800212808837/1599022041", // テスト用ID
                               request: request) { [weak self] ad, error in
             DispatchQueue.main.async {
                 self?.isLoading = false
