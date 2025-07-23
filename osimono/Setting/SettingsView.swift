@@ -60,6 +60,10 @@ struct SettingsView: View {
     @State private var isAdmin = false
     @State private var isCheckingAdminStatus = true
     @State private var showingAdminChatAnalytics = false
+    @State private var showingAdminGroupChatAnalytics = false
+    @State private var showingAdminDataOverview: Bool = false
+    @State private var showingUserManagement: Bool = false
+    @State private var showingSystemSettings: Bool = false
     
     // 管理者UserIDのリスト
     private let adminUserIds = [
@@ -100,9 +104,10 @@ struct SettingsView: View {
                             }.padding(.leading)
                             
                             VStack(spacing: 15) {
+                                // データ分析（既存）
                                 SettingRow(
                                     icon: "chart.bar.doc.horizontal.fill",
-                                    title: "チャット分析",
+                                    title: "データ分析",
                                     color: .blue,
                                     action: {
                                         generateHapticFeedback()
@@ -110,25 +115,47 @@ struct SettingsView: View {
                                     }
                                 )
                                 
+                                // 新機能：全データ表示
                                 SettingRow(
-                                    icon: "person.3.fill",
-                                    title: "ユーザー管理",
-                                    color: .green,
-                                    action: {
-                                        generateHapticFeedback()
-                                        // ユーザー管理画面への遷移（未実装）
-                                        print("ユーザー管理画面を開く")
-                                    }
-                                )
-                                
-                                SettingRow(
-                                    icon: "gear.badge.questionmark",
-                                    title: "システム設定",
+                                    icon: "list.bullet.rectangle.portrait.fill",
+                                    title: "全データ表示",
                                     color: .purple,
                                     action: {
                                         generateHapticFeedback()
-                                        // システム設定画面への遷移（未実装）
-                                        print("システム設定画面を開く")
+                                        showingAdminDataOverview = true
+                                    }
+                                )
+                                
+                                // ユーザー管理（既存）
+                                SettingRow(
+                                    icon: "person.3.fill",
+                                    title: "チャット",
+                                    color: .green,
+                                    action: {
+                                        generateHapticFeedback()
+                                        showingAdminChatAnalytics = true
+                                    }
+                                )
+                                
+                                // システム設定（既存）
+                                SettingRow(
+                                    icon: "gear.badge.questionmark",
+                                    title: "グループチャット",
+                                    color: .orange,
+                                    action: {
+                                        generateHapticFeedback()
+                                        showingAdminGroupChatAnalytics = true
+                                    }
+                                )
+                                
+                                // 新機能：データエクスポート
+                                SettingRow(
+                                    icon: "square.and.arrow.up.fill",
+                                    title: "データエクスポート",
+                                    color: .indigo,
+                                    action: {
+                                        generateHapticFeedback()
+                                        exportAllDataToCSV()
                                     }
                                 )
                             }
@@ -488,6 +515,9 @@ struct SettingsView: View {
             .navigationDestination(isPresented: $showingNotificationSettings) {
                 WebView(urlString: "https://docs.google.com/forms/d/e/1FAIpQLSfHxhubkEjUw_gexZtQGU8ujZROUgBkBcIhB3R6b8KZpKtOEQ/viewform?embedded=true")
             }
+            .navigationDestination(isPresented: $showingAdminGroupChatAnalytics) {
+                AdminGroupChatAnalyticsView()
+            }
             .navigationDestination(isPresented: $showingPrivacySettings) {
                 PrivacyView()
             }
@@ -497,6 +527,15 @@ struct SettingsView: View {
             .navigationDestination(isPresented: $showingBugReportForm) {
                 BugReportView()
             }
+            .navigationDestination(isPresented: $showingAdminDataOverview) {
+                AdminDataOverviewView()
+            }
+//            .navigationDestination(isPresented: $showingUserManagement) {
+//                AdminUserManagementView()
+//            }
+//            .navigationDestination(isPresented: $showingSystemSettings) {
+//                AdminSystemSettingsView()
+//            }
             .navigationDestination(isPresented: $showingAdminChatAnalytics) {
                 AdminChatAnalyticsView()
             }
@@ -571,6 +610,113 @@ struct SettingsView: View {
                 },
                 secondaryButton: .cancel(Text("後で"))
             )
+        }
+    }
+    
+    private func exportAllDataToCSV() {
+        // CSV エクスポート機能
+        // 全データを取得してCSV形式で保存・共有する処理
+        
+        let db = Database.database().reference()
+        
+        // ユーザーデータを取得
+        db.child("users").observeSingleEvent(of: .value) { userSnapshot in
+            var csvContent = "UserID,Username,SelectedOshiID,CreatedAt\n"
+            
+            for userChild in userSnapshot.children {
+                guard let userSnap = userChild as? DataSnapshot,
+                      let userData = userSnap.value as? [String: Any] else { continue }
+                
+                let userId = userSnap.key
+                let username = userData["username"] as? String ?? ""
+                let selectedOshiId = userData["selectedOshiId"] as? String ?? ""
+                let createdAt = userData["createdAt"] as? TimeInterval ?? 0
+                
+                csvContent += "\"\(userId)\",\"\(username)\",\"\(selectedOshiId)\",\"\(Date(timeIntervalSince1970: createdAt))\"\n"
+            }
+            
+            // 推し活記録データを取得
+            db.child("oshiItems").observeSingleEvent(of: .value) { itemSnapshot in
+                csvContent += "\n\nOshiItems\n"
+                csvContent += "UserID,OshiID,ItemID,Title,ItemType,CreatedAt,Price\n"
+                
+                for userChild in itemSnapshot.children {
+                    guard let userSnap = userChild as? DataSnapshot else { continue }
+                    let userId = userSnap.key
+                    
+                    for oshiChild in userSnap.children {
+                        guard let oshiSnap = oshiChild as? DataSnapshot else { continue }
+                        let oshiId = oshiSnap.key
+                        
+                        for itemChild in oshiSnap.children {
+                            guard let itemSnap = itemChild as? DataSnapshot,
+                                  let itemData = itemSnap.value as? [String: Any] else { continue }
+                            
+                            let itemId = itemSnap.key
+                            let title = itemData["title"] as? String ?? ""
+                            let itemType = itemData["itemType"] as? String ?? ""
+                            let createdAt = itemData["createdAt"] as? TimeInterval ?? 0
+                            let price = itemData["price"] as? Int ?? 0
+                            
+                            csvContent += "\"\(userId)\",\"\(oshiId)\",\"\(itemId)\",\"\(title)\",\"\(itemType)\",\"\(Date(timeIntervalSince1970: createdAt))\",\"\(price)\"\n"
+                        }
+                    }
+                }
+                
+                // 聖地巡礼データを取得
+                db.child("locations").observeSingleEvent(of: .value) { locationSnapshot in
+                    csvContent += "\n\nLocations\n"
+                    csvContent += "UserID,OshiID,LocationID,Title,Category,Latitude,Longitude,Rating,CreatedAt\n"
+                    
+                    for userChild in locationSnapshot.children {
+                        guard let userSnap = userChild as? DataSnapshot else { continue }
+                        let userId = userSnap.key
+                        
+                        for oshiChild in userSnap.children {
+                            guard let oshiSnap = oshiChild as? DataSnapshot else { continue }
+                            let oshiId = oshiSnap.key
+                            
+                            for locationChild in oshiSnap.children {
+                                guard let locationSnap = locationChild as? DataSnapshot,
+                                      let locationData = locationSnap.value as? [String: Any] else { continue }
+                                
+                                let locationId = locationSnap.key
+                                let title = locationData["title"] as? String ?? ""
+                                let category = locationData["category"] as? String ?? ""
+                                let latitude = locationData["latitude"] as? Double ?? 0
+                                let longitude = locationData["longitude"] as? Double ?? 0
+                                let rating = locationData["ratingSum"] as? Int ?? 0
+                                let createdAt = locationData["createdAt"] as? TimeInterval ?? 0
+                                
+                                csvContent += "\"\(userId)\",\"\(oshiId)\",\"\(locationId)\",\"\(title)\",\"\(category)\",\"\(latitude)\",\"\(longitude)\",\"\(rating)\",\"\(Date(timeIntervalSince1970: createdAt))\"\n"
+                            }
+                        }
+                    }
+                    
+                    // CSVファイルを保存・共有
+                    DispatchQueue.main.async {
+                        self.shareCSVContent(csvContent)
+                    }
+                }
+            }
+        }
+    }
+
+    private func shareCSVContent(_ content: String) {
+        let fileName = "osimono_admin_data_\(DateFormatter.fileDate.string(from: Date())).csv"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        
+        do {
+            try content.write(to: tempURL, atomically: true, encoding: .utf8)
+            
+            let activityViewController = UIActivityViewController(activityItems: [tempURL], applicationActivities: nil)
+            
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootViewController = windowScene.windows.first?.rootViewController {
+                rootViewController.present(activityViewController, animated: true)
+            }
+        } catch {
+            print("CSV保存エラー: \(error.localizedDescription)")
         }
     }
     
@@ -784,6 +930,14 @@ struct SettingRow: View {
             .padding(.vertical, 8)
         }
     }
+}
+
+extension DateFormatter {
+    static let fileDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd_HHmmss"
+        return formatter
+    }()
 }
 
 #Preview {
