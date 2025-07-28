@@ -36,6 +36,37 @@ struct OshiChatListView: View {
     @State private var oshiToDeleteCompletely: Oshi?
     @State private var isDeletingOshi = false
     
+    private let adminUserIds = [
+        ""
+//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+//        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    ]
+    
+    private func checkAdminStatus() {
+          guard let userID = Auth.auth().currentUser?.uid else {
+              isAdmin = false
+              isCheckingAdminStatus = false
+              return
+          }
+          
+          // UserIDで管理者権限をチェック
+          isAdmin = adminUserIds.contains(userID)
+          isCheckingAdminStatus = false
+          
+          if isAdmin {
+              print("🔑 管理者としてログイン中: \(userID)")
+          }
+      }
+    
+    @State private var isCheckingAdminStatus = true
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    
+    private var shouldShowAd: Bool {
+        return !isAdmin && !subscriptionManager.isSubscribed
+    }
+    
+    @State private var isAdmin = false
+    
     // LINE風カラー設定
     let lineGrayBG = Color(UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0))
     let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
@@ -50,8 +81,12 @@ struct OshiChatListView: View {
                 VStack(spacing: 0) {
                     // ヘッダー
                     headerView
-                    BannerAdChatListView()
-                        .frame(height: 60)
+                    if !isAdmin {
+                        if shouldShowAd {
+                            BannerAdChatListView()
+                                .frame(height: 60)
+                        }
+                    }
                     // メインコンテンツ
                     if isLoading {
                         loadingView

@@ -51,6 +51,21 @@ struct ChatHubView: View {
     let lineGrayBG = Color(UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0))
     let primaryColor = Color(.systemPink)
     
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    
+    private var shouldShowAd: Bool {
+        return !isAdmin && !subscriptionManager.isSubscribed
+    }
+    
+    @State private var isAdmin = false
+    @State private var isCheckingAdminStatus = true
+    
+    private let adminUserIds = [
+        ""
+//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+//        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    ]
+    
     enum ChatTabType: String, CaseIterable {
         case individual = "個人"
         case group = "グループ"
@@ -63,6 +78,22 @@ struct ChatHubView: View {
         }
     }
     
+    private func checkAdminStatus() {
+          guard let userID = Auth.auth().currentUser?.uid else {
+              isAdmin = false
+              isCheckingAdminStatus = false
+              return
+          }
+          
+          // UserIDで管理者権限をチェック
+          isAdmin = adminUserIds.contains(userID)
+          isCheckingAdminStatus = false
+          
+          if isAdmin {
+              print("🔑 管理者としてログイン中: \(userID)")
+          }
+      }
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -74,10 +105,13 @@ struct ChatHubView: View {
                     
                     // タブセレクター
                     tabSelectorView
-                    
-                    // 広告バナー
-                    BannerAdChatListView()
-                        .frame(height: 60)
+                    if !isAdmin {
+                        if shouldShowAd {
+                            // 広告バナー
+                            BannerAdChatListView()
+                                .frame(height: 60)
+                        }
+                    }
                     
                     // メインコンテンツ
                     if isLoading {

@@ -80,9 +80,16 @@ struct OshiAIChatView: View {
     var isEmbedded: Bool = false
     
     private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+        ""
+//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+//        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
+    
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    
+    private var shouldShowAd: Bool {
+        return !isAdmin && !subscriptionManager.isSubscribed
+    }
     
     @State private var isAdmin = false
     @State private var isCheckingAdminStatus = true
@@ -279,8 +286,10 @@ struct OshiAIChatView: View {
     private var chatMessagesView: some View {
         ScrollViewReader { proxy in
             if !isAdmin {
-                BannerAdChatView()
-                    .frame(height: 60)
+                if shouldShowAd {
+                    BannerAdChatView()
+                        .frame(height: 60)
+                }
             }
             ScrollView {
                 VStack(spacing: 16) {

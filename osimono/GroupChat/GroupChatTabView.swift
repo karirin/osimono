@@ -27,6 +27,38 @@ struct GroupChatTabView: View {
     
     @State private var openedGroupId: String = ""
     
+    private let adminUserIds = [
+        ""
+//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+//        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    ]
+    
+    @State private var isCheckingAdminStatus = true
+    
+    private func checkAdminStatus() {
+          guard let userID = Auth.auth().currentUser?.uid else {
+              isAdmin = false
+              isCheckingAdminStatus = false
+              return
+          }
+          
+          // UserIDで管理者権限をチェック
+          isAdmin = adminUserIds.contains(userID)
+          isCheckingAdminStatus = false
+          
+          if isAdmin {
+              print("🔑 管理者としてログイン中: \(userID)")
+          }
+      }
+    
+    @State private var isAdmin = false
+    
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    
+    private var shouldShowAd: Bool {
+        return !isAdmin && !subscriptionManager.isSubscribed
+    }
+    
     // LINE風カラー設定
     let lineGrayBG = Color(UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0))
     let primaryColor = Color(.systemPink)
@@ -41,8 +73,12 @@ struct GroupChatTabView: View {
                     headerView
                     
                     // 広告バナー
-                    BannerAdChatListView()
-                        .frame(height: 60)
+                    if !isAdmin {
+                        if shouldShowAd {
+                            BannerAdChatListView()
+                                .frame(height: 60)
+                        }
+                    }
                     
                     // メインコンテンツ
                     if isLoading {

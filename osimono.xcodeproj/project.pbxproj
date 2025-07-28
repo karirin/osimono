@@ -11,6 +11,8 @@
 		1814B9322E22400E0034EE4C /* OpenAISwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1814B9312E22400E0034EE4C /* OpenAISwift */; };
 		18274FF82DE2C5AF00917A47 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */; };
 		182AD6682D8F50B9006F9F09 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 182AD6672D8F50B9006F9F09 /* Lottie */; };
+		183EA0A52E36616300BA48BD /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 183EA0A42E36616300BA48BD /* StoreKit.framework */; };
+		183EA0A72E37A7BC00BA48BD /* osirogu.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 183EA0A62E37A7BC00BA48BD /* osirogu.storekit */; };
 		1870B01A2D8BD224004B827B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0192D8BD224004B827B /* FirebaseAnalytics */; };
 		1870B01C2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B01B2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion */; };
 		1870B01E2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B01D2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport */; };
@@ -54,6 +56,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		183EA0A42E36616300BA48BD /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		183EA0A62E37A7BC00BA48BD /* osirogu.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = osirogu.storekit; sourceTree = "<group>"; };
 		1870AFB32D8BC85E004B827B /* osimono.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osimono.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1870AFC32D8BC860004B827B /* osimonoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = osimonoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1870AFCD2D8BC860004B827B /* osimonoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = osimonoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -111,6 +115,7 @@
 				1870B0222D8BD224004B827B /* FirebaseAppDistribution-Beta in Frameworks */,
 				1870B0382D8BD224004B827B /* FirebaseStorageCombine-Community in Frameworks */,
 				1870B01E2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
+				183EA0A52E36616300BA48BD /* StoreKit.framework in Frameworks */,
 				18F429E82DB291EE007C198B /* CropViewController in Frameworks */,
 				187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */,
 				18B9E1172E096099000F4B57 /* FirebaseAnalytics in Frameworks */,
@@ -146,6 +151,7 @@
 		1813D8332DAA1EB000AB8CDA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				183EA0A42E36616300BA48BD /* StoreKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -153,6 +159,7 @@
 		1870AFAA2D8BC85E004B827B = {
 			isa = PBXGroup;
 			children = (
+				183EA0A62E37A7BC00BA48BD /* osirogu.storekit */,
 				1870AFB52D8BC85E004B827B /* osimono */,
 				1870AFC62D8BC860004B827B /* osimonoTests */,
 				1870AFD02D8BC860004B827B /* osimonoUITests */,
@@ -329,6 +336,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				183EA0A72E37A7BC00BA48BD /* osirogu.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -65,9 +65,89 @@ struct SubscriptionPreView: View {
                             .font(.headline)
                             .fontWeight(.bold)
                         
-                        if subscriptionManager.subscriptionProducts.isEmpty {
-                            ProgressView("プランを読み込み中...")
-                                .frame(height: 100)
+                        if subscriptionManager.isLoading {
+                            VStack(spacing: 12) {
+                                ProgressView("プランを読み込み中...")
+                                    .frame(height: 60)
+                                
+                                Button("デバッグ情報を出力") {
+                                    subscriptionManager.printDebugInfo()
+                                }
+                                .font(.caption)
+                                .foregroundColor(.blue)
+                            }
+                        } else if let errorMessage = subscriptionManager.errorMessage {
+                            VStack(spacing: 16) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 50))
+                                    .foregroundColor(.orange)
+                                
+                                Text("商品の読み込みに失敗しました")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                
+                                Text(errorMessage)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                                
+                                Button("再試行") {
+                                    Task {
+                                        await subscriptionManager.requestProducts()
+                                    }
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(primaryColor)
+                                .cornerRadius(20)
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color(.systemBackground))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(Color.orange.opacity(0.5), lineWidth: 1)
+                                    )
+                            )
+                        } else if subscriptionManager.subscriptionProducts.isEmpty {
+                            VStack(spacing: 16) {
+                                Image(systemName: "cart.badge.questionmark")
+                                    .font(.system(size: 50))
+                                    .foregroundColor(.gray)
+                                
+                                Text("利用可能なプランがありません")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                
+                                Text("App Store Connectでサブスクリプション商品が正しく設定されているか確認してください")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                                
+                                VStack(spacing: 8) {
+                                    Button("再読み込み") {
+                                        Task {
+                                            await subscriptionManager.requestProducts()
+                                        }
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    .background(primaryColor)
+                                    .cornerRadius(20)
+                                    
+                                    Button("デバッグ情報") {
+                                        subscriptionManager.printDebugInfo()
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                                }
+                            }
+                            .padding()
                         } else {
                             ForEach(subscriptionManager.subscriptionProducts, id: \.id) { product in
                                 PlanCard(
@@ -142,7 +222,11 @@ struct SubscriptionPreView: View {
                 leading: Button("閉じる") {
                     presentationMode.wrappedValue.dismiss()
                 }
-                .foregroundColor(primaryColor)
+                .foregroundColor(primaryColor),
+                trailing: Button("🐛") {
+                    subscriptionManager.printDebugInfo()
+                }
+                .foregroundColor(.blue)
             )
         }
         .alert(isPresented: $showAlert) {

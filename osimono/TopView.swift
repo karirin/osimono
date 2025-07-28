@@ -53,7 +53,8 @@ struct TopView: View {
                 }
                 
                 ZStack {
-                    MapView(oshiId: selectedOshiId ?? "default")
+                    SubscriptionPreView()
+//                    MapView(oshiId: selectedOshiId ?? "default")
                 }
                 .tabItem {
                     Image(systemName: "mappin.and.ellipse")

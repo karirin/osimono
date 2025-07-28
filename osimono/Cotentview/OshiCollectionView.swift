@@ -42,6 +42,12 @@ struct OshiCollectionView: View {
     @Binding var navigateToItemForm: Bool
     @State private var navigateToAddOshiForm = false
     
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    
+    private var shouldShowAd: Bool {
+        return !isAdmin && !subscriptionManager.isSubscribed
+    }
+    
     // 色の定義 - 推し活向けカラー
     let primaryColor = Color(.systemPink) // ピンク
     let accentColor = Color(.purple) // 紫
@@ -125,8 +131,9 @@ struct OshiCollectionView: View {
     }
     
     private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+        ""
+//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+//        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
     
     @State private var isAdmin = false
@@ -155,8 +162,10 @@ struct OshiCollectionView: View {
         ZStack{
             VStack(spacing: -5) {
                 if !isAdmin {
-                    BannerAdView()
-                        .frame(height: 60)
+                    if shouldShowAd {
+                        BannerAdView()
+                            .frame(height: 60)
+                    }
                 }
                 
                 // 検索バーとフィルター
@@ -427,6 +436,9 @@ struct OshiCollectionView: View {
         .onAppear {
             fetchOshiItems()
             checkAdminStatus()
+            Task {
+                await subscriptionManager.updateSubscriptionStatus()
+            }
         }
         .onChange(of: oshiId) { newOshiId in
             fetchOshiItems()
