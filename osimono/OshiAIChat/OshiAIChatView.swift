@@ -63,6 +63,7 @@ struct OshiAIChatView: View {
     @State private var rewardAmount = 0
     @State private var helpFlag: Bool = false
     @ObservedObject var authManager = AuthManager()
+    @State private var showSubscriptionView = false
     
     // LINE風カラー設定
     let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
@@ -143,8 +144,13 @@ struct OshiAIChatView: View {
                 MessageLimitModal(
                     isPresented: $showMessageLimitModal,
                     onWatchAd: { showRewardAd() },
+                    onUpgrade: {
+                        showMessageLimitModal = false
+                        showSubscriptionView = true
+                    },
                     remainingMessages: remainingMessages
                 )
+                .zIndex(999)
             }
 
             if showRewardCompletedModal {
@@ -165,6 +171,19 @@ struct OshiAIChatView: View {
         .onAppear {
             setupView()
             checkAdminStatus()
+            
+            // サブスクリプション状態を強制的に同期
+            print("🔄 アプリ起動時のサブスクリプション状態確認:")
+            print("  - SubscriptionManager.isSubscribed: \(subscriptionManager.isSubscribed)")
+            
+            // キャッシュを強制更新
+            MessageLimitManager.shared.forceUpdateSubscriptionCache(isSubscribed: subscriptionManager.isSubscribed)
+            
+            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+            
+            // デバッグ情報を出力
+            MessageLimitManager.shared.printDebugInfo()
+            
             authManager.fetchUserFlag { userFlag, error in
                 if let error = error {
                     print(error.localizedDescription)
@@ -178,8 +197,47 @@ struct OshiAIChatView: View {
             }
         }
         .onChange(of: viewModel.selectedOshi.id) { handleOshiChange(newId: $0) }
+        .onChange(of: subscriptionManager.isSubscribed) { newValue in
+            print("🔄 サブスクリプション状態変更: \(newValue)")
+            
+            // 即座にキャッシュを更新
+            MessageLimitManager.shared.forceUpdateSubscriptionCache(isSubscribed: newValue)
+            
+            // UIを更新
+            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+            
+            // デバッグ情報を出力
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                MessageLimitManager.shared.printDebugInfo()
+            }
+        }
         .onDisappear { cleanup() }
         .navigationBarHidden(true)
+        .overlay(
+            Group {
+                if showMessageLimitModal {
+                    MessageLimitModal(
+                        isPresented: $showMessageLimitModal,
+                        onWatchAd: { showRewardAd() },
+                        onUpgrade: {
+                            showMessageLimitModal = false
+                            showSubscriptionView = true
+                        },
+                        remainingMessages: remainingMessages
+                    )
+                    .zIndex(999)
+                }
+            }
+        )
+        // サブスクリプション画面の表示
+        .sheet(isPresented: $showSubscriptionView) {
+            SubscriptionPreView()
+                .onDisappear {
+                    // サブスクリプション画面を閉じた後にキャッシュを更新
+                    MessageLimitManager.shared.updateSubscriptionCacheAsync()
+                    remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+                }
+        }
     }
     
     func executeProcessEveryfifTimes() {
@@ -248,7 +306,7 @@ struct OshiAIChatView: View {
             if showBackButton {
                 Button(action: {
                     generateHapticFeedback()
-                    isTextFieldFocused = false // キーボードを閉じる
+                    isTextFieldFocused = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -268,7 +326,7 @@ struct OshiAIChatView: View {
             
             Button(action: {
                 generateHapticFeedback()
-                isTextFieldFocused = false // キーボードを閉じる
+                isTextFieldFocused = false
                 showEditPersonality = true
             }) {
                 Image(systemName: "pencil")
@@ -276,6 +334,39 @@ struct OshiAIChatView: View {
                     .foregroundColor(.black)
             }
             Spacer()
+            // デバッグ情報を表示（修正版）
+            VStack(alignment: .leading, spacing: 2) {
+                // 実際のサブスクリプション状態
+                if subscriptionManager.isSubscribed {
+                    HStack(spacing: 4) {
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(.orange)
+                        Text("無制限")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.orange)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.orange.opacity(0.1))
+                    .cornerRadius(8)
+                } else {
+                    HStack(spacing: 0) {
+                        Text("残り")
+                            .font(.system(size: 10, weight: .medium))
+                            .padding(.top,2)
+                        Text("\(MessageLimitManager.shared.getRemainingMessagesText())")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+                }
+            }
+            
+//            Spacer()
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
@@ -421,11 +512,16 @@ struct OshiAIChatView: View {
                     }
             }
             
+            // メッセージ制限モーダル（修正版）
             if showMessageLimitModal {
                 MessageLimitModal(
                     isPresented: $showMessageLimitModal,
                     onWatchAd: {
                         showRewardAd()
+                    },
+                    onUpgrade: {
+                        showMessageLimitModal = false
+                        showSubscriptionView = true
                     },
                     remainingMessages: remainingMessages
                 )
@@ -548,22 +644,23 @@ struct OshiAIChatView: View {
     
     private func showRewardAd() {
         guard let rewardedAd = rewardedAd else {
-            print("リワード広告が準備できていません")
-            // 広告が準備できていない場合は再読み込み
+            print("❌ リワード広告が準備できていません")
             loadRewardedAd()
             return
         }
         
-        // rootViewControllerの取得方法を修正
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootViewController = windowScene.windows.first?.rootViewController else {
-            print("rootViewControllerが取得できません")
+            print("❌ rootViewControllerが取得できません")
             return
         }
         
+        print("🎬 リワード広告表示開始")
+        
         rewardedAd.present(from: rootViewController) {
-            // 広告視聴完了時の処理
             DispatchQueue.main.async {
+                print("🎁 リワード広告視聴完了")
+                
                 // まず制限をリセット
                 MessageLimitManager.shared.resetCountAfterReward()
                 self.remainingMessages = MessageLimitManager.shared.getRemainingMessages()
@@ -571,8 +668,8 @@ struct OshiAIChatView: View {
                 // メッセージ制限モーダルを閉じる
                 self.showMessageLimitModal = false
                 
-                // 報酬獲得数を設定（MessageLimitManagerから取得または固定値）
-                self.rewardAmount = 10 // または MessageLimitManager.shared.getRewardAmount()
+                // 報酬獲得数を設定
+                self.rewardAmount = 10
                 
                 // 少し遅延してからリワード完了モーダルを表示
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -931,21 +1028,42 @@ struct OshiAIChatView: View {
     // メッセージ送信
     private func sendMessage() {
         guard !inputText.isEmpty else { return }
-        print("タップ５！！！！！")
-        // メッセージ制限をチェック
-        if MessageLimitManager.shared.hasReachedLimit() {
-            print("sendMessage()!!!!")
-            showMessageLimitModal = true
-            return
+        print("📝 メッセージ送信開始: \(inputText.prefix(20))...")
+        
+        // デバッグ情報を出力
+        print("🔍 サブスクリプション状態確認:")
+        print("  - SubscriptionManager.isSubscribed: \(subscriptionManager.isSubscribed)")
+        print("  - MessageLimitManager.isUserSubscribed(): \(MessageLimitManager.shared.isUserSubscribed())")
+        print("  - キャッシュ値: \(UserDefaults.standard.bool(forKey: "isSubscribedCache"))")
+        
+        // 実際のサブスクリプション状態を使用（修正）
+        let isSubscribed = subscriptionManager.isSubscribed
+        print("👤 ユーザー種別: \(isSubscribed ? "サブスクリプション会員" : "無料ユーザー")")
+        
+        // キャッシュを強制的に同期
+        if isSubscribed != MessageLimitManager.shared.isUserSubscribed() {
+            print("⚠️ サブスクリプション状態の不整合を検出。キャッシュを更新中...")
+            MessageLimitManager.shared.forceUpdateSubscriptionCache(isSubscribed: isSubscribed)
         }
         
-        // メッセージカウントを増加
-        MessageLimitManager.shared.incrementCount()
+        if !isSubscribed {
+            // メッセージ制限をチェック
+            if MessageLimitManager.shared.hasReachedLimit() {
+                print("🚫 メッセージ制限に達したため、制限モーダルを表示")
+                showMessageLimitModal = true
+                return
+            }
+            
+            // メッセージカウントを増加
+            MessageLimitManager.shared.incrementCount()
+        } else {
+            print("👑 サブスクリプション会員のため、制限チェックをスキップ")
+        }
         
         // 残りのメッセージ数を更新
         remainingMessages = MessageLimitManager.shared.getRemainingMessages()
         
-        // ユーザーメッセージを作成
+        // 既存のメッセージ送信処理...
         let userMessageId = UUID().uuidString
         let userMessage = ChatMessage(
             id: userMessageId,
@@ -956,43 +1074,41 @@ struct OshiAIChatView: View {
             itemId: oshiItem?.id
         )
         
-        // 入力フィールドをクリア（メッセージ追加前に行う）
         let userInput = inputText
         DispatchQueue.main.async {
             self.inputText = ""
         }
         
-        // メッセージをUIに追加
         messages.append(userMessage)
-        
-        // 送信後にスクロールするようフラグをセット
         shouldScrollToBottom = true
         
-        // メッセージをデータベースに保存
         ChatDatabaseManager.shared.saveMessage(userMessage) { error in
             if let error = error {
-                print("ユーザーメッセージ保存エラー: \(error.localizedDescription)")
+                print("❌ ユーザーメッセージ保存エラー: \(error.localizedDescription)")
+            } else {
+                print("✅ ユーザーメッセージ保存完了")
             }
         }
         
-        // AIの返信を生成
         isLoading = true
+        print("🤖 AI返信生成開始...")
         
         AIMessageGenerator.shared.generateResponse(for: userInput, oshi: viewModel.selectedOshi, chatHistory: messages) { content, error in
             DispatchQueue.main.async {
                 isLoading = false
                 
                 if let error = error {
-                    print("AI返信生成エラー: \(error.localizedDescription)")
+                    print("❌ AI返信生成エラー: \(error.localizedDescription)")
                     return
                 }
                 
                 guard let content = content else {
-                    print("AI返信が空です")
+                    print("❌ AI返信が空です")
                     return
                 }
                 
-                // AIからの返信を作成
+                print("✅ AI返信生成完了: \(content.prefix(50))...")
+                
                 let aiMessageId = UUID().uuidString
                 let aiMessage = ChatMessage(
                     id: aiMessageId,
@@ -1003,16 +1119,14 @@ struct OshiAIChatView: View {
                     itemId: oshiItem?.id
                 )
                 
-                // メッセージをUIに追加
                 messages.append(aiMessage)
-                
-                // AI返信後にもスクロールするようフラグをセット
                 shouldScrollToBottom = true
                 
-                // メッセージをデータベースに保存
                 ChatDatabaseManager.shared.saveMessage(aiMessage) { error in
                     if let error = error {
-                        print("AI返信保存エラー: \(error.localizedDescription)")
+                        print("❌ AI返信保存エラー: \(error.localizedDescription)")
+                    } else {
+                        print("✅ AI返信保存完了")
                     }
                 }
             }

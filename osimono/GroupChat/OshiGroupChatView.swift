@@ -26,7 +26,6 @@ struct OshiGroupChatView: View {
     @State private var isInitialLoadingComplete: Bool = false // ローディング完了フラグ
     @State private var shouldScrollToBottom: Bool = false
     @State private var showMemberSelection: Bool = false
-    @State private var showMessageLimitModal = false
     @State private var showRewardCompletedModal = false
     @State private var rewardAmount = 0
     
@@ -90,14 +89,6 @@ struct OshiGroupChatView: View {
                     allOshiList: allOshiList,
                     selectedMembers: $selectedMembers,
                     onSave: { updateGroupMembers() }
-                )
-            }
-            
-            if showMessageLimitModal {
-                MessageLimitModal(
-                    isPresented: $showMessageLimitModal,
-                    onWatchAd: { showRewardAd() },
-                    remainingMessages: MessageLimitManager.shared.getRemainingMessages()
                 )
             }
             
