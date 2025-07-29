@@ -2,7 +2,7 @@
 //  OshiGroupChatView.swift
 //  osimono
 //
-//  複数の推しとのグループチャット機能 - メンバーボタン版
+//  複数の推しとのグループチャット機能 - サブスクリプション対応版
 //
 
 import SwiftUI
@@ -51,6 +51,24 @@ struct OshiGroupChatView: View {
     @State private var hasMarkedAsRead: Bool = false
     
     @StateObject private var interstitialManager = GroupChatInterstitialManager.shared
+    
+    // サブスクリプション管理を追加
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    
+    // 管理者権限チェック用
+    @State private var isAdmin = false
+    @State private var isCheckingAdminStatus = true
+    
+    private let adminUserIds = [
+        ""
+//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+//        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    ]
+    
+    // 広告表示判定のプロパティを追加
+    private var shouldShowAd: Bool {
+        return !isAdmin && !subscriptionManager.isSubscribed
+    }
     
     // LINE風カラー設定
     let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
@@ -119,9 +137,12 @@ struct OshiGroupChatView: View {
             withAnimation(.easeInOut(duration: 0.3)) { keyboardHeight = height }
         }
         .onAppear {
+            checkAdminStatus()
             setupGroupChat()
-            // インタースティシャル広告を事前読み込み
-            interstitialManager.preloadInterstitialAd()
+            // インタースティシャル広告を事前読み込み（サブスク状態を考慮）
+            if shouldShowAd {
+                interstitialManager.preloadInterstitialAd()
+            }
         }
         .onChange(of: groupId) { newValue in
             guard newValue != currentGroupId else { return }
@@ -159,6 +180,23 @@ struct OshiGroupChatView: View {
                     }
                 )
             }
+        }
+    }
+    
+    // 管理者権限チェック関数を追加
+    private func checkAdminStatus() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            isAdmin = false
+            isCheckingAdminStatus = false
+            return
+        }
+        
+        // UserIDで管理者権限をチェック
+        isAdmin = adminUserIds.contains(userID)
+        isCheckingAdminStatus = false
+        
+        if isAdmin {
+            print("🔑 管理者としてログイン中: \(userID)")
         }
     }
     
@@ -276,10 +314,10 @@ struct OshiGroupChatView: View {
 //                Button(action: {
 //                    generateHapticFeedback()
 //                    isTextFieldFocused = false
-//                    
+//
 //                    // 戻る前に既読マーク
 //                    markAsReadWhenDisappear()
-//                    
+//
 //                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
 //                        presentationMode.wrappedValue.dismiss()
 //                    }
@@ -495,7 +533,10 @@ struct OshiGroupChatView: View {
                 Button(action: {
                     if !inputText.isEmpty && !isLoading && !selectedMembers.isEmpty {
                         generateHapticFeedback()
-                        interstitialManager.incrementSendCount()
+                        // サブスクリプション状態を考慮してカウント処理
+                        if shouldShowAd {
+                            interstitialManager.incrementSendCount()
+                        }
                         sendMessage()
                     }
                 }) {
