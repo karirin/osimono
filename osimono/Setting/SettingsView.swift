@@ -291,7 +291,121 @@ struct SettingsView: View {
                             isShowingEditOshiView = true
                         }
                     }
-                    
+                    if !subscriptionManager.isSubscribed {
+                        VStack(spacing: 10) {
+                            HStack {
+                                Text("プレミアムプラン")
+                                    .foregroundColor(.secondary)
+                                    .frame(alignment: .leading)
+                                Spacer()
+                            }.padding(.horizontal)
+                            
+                            Button(action: {
+                                generateHapticFeedback()
+                                showSubscriptionView = true
+                            }) {
+                                VStack(spacing: 16) {
+                                    HStack(spacing: 12) {
+                                        // クラウンアイコン
+                                        ZStack {
+                                            Circle()
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [Color.orange, Color.yellow],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    )
+                                                )
+                                                .frame(width: 50, height: 50)
+                                            
+                                            Image(systemName: "crown.fill")
+                                                .font(.system(size: 22, weight: .medium))
+                                                .foregroundColor(.white)
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("プレミアムプランに加入")
+                                                .font(.system(size: 18, weight: .semibold))
+                                                .foregroundColor(.primary)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                            
+                                            Text("推しとの時間をより豊かに")
+                                                .font(.system(size: 16))
+                                                .foregroundColor(.secondary)
+                                                .multilineTextAlignment(.leading)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                                .lineLimit(2)
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.gray)
+                                    }
+                                    
+                                    // 特典一覧を簡潔に表示
+                                    HStack(spacing: 16) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.green)
+                                            Text("広告非表示")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.secondary)
+                                        }
+                                        
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.green)
+                                            Text("チャット無制限")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.secondary)
+                                        }
+                                        
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.green)
+                                            Text("推し無制限")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.secondary)
+                                        }
+                                        
+                                        Spacer()
+                                    }
+                                }
+                                .padding(20)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.orange.opacity(0.1),
+                                                    Color.yellow.opacity(0.1)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .stroke(
+                                                    LinearGradient(
+                                                        colors: [Color.orange.opacity(0.3), Color.yellow.opacity(0.3)],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    ),
+                                                    lineWidth: 1
+                                                )
+                                        )
+                                )
+                                .shadow(color: Color.orange.opacity(0.2), radius: 8, x: 0, y: 4)
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
                     VStack(spacing: 10) {
                         HStack {
                             Text("フィードバック")
@@ -546,6 +660,9 @@ struct SettingsView: View {
             }
             .navigationDestination(isPresented: $showingAdminDataOverview) {
                 AdminDataOverviewView()
+            }
+            .fullScreenCover(isPresented: $showSubscriptionView) {
+                SubscriptionPreView()
             }
 //            .navigationDestination(isPresented: $showingUserManagement) {
 //                AdminUserManagementView()

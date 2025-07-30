@@ -25,7 +25,9 @@ class SubscriptionManager: ObservableObject {
     
     // サブスクリプションのプロダクトID（App Store Connectで設定したID）
     private let subscriptionIDs = [
-        "monthlySub"
+        "weeklySub",
+        "monthlySub",
+        "yearlySub"
     ]
     
     @Published var debugSubscriptionEnabled: Bool = false {
@@ -80,7 +82,7 @@ class SubscriptionManager: ObservableObject {
         print("⚠️ シミュレーターで実行中 - StoreKit Configuration を使用")
         print("💡 確認事項:")
         print("   - Xcodeでスキーム編集 → Options → StoreKit Configuration が選択されているか")
-        print("   - .storekitファイルでプロダクトID 'monthly' が設定されているか")
+        print("   - .storekitファイルでプロダクトID 'weeklySub', 'monthlySub', 'yearlySub' が設定されているか")
         
         // StoreKit Configuration の状態をチェック
         if let url = Bundle.main.url(forResource: "Configuration", withExtension: "storekit") {
@@ -104,6 +106,13 @@ class SubscriptionManager: ObservableObject {
             // StoreKitの設定ファイルが存在するか確認（シミュレーター用）
             subscriptionProducts = try await SKProduct.products(for: subscriptionIDs)
             
+            // 期間順でソート（週間 → 月間 → 年間）
+            subscriptionProducts.sort { product1, product2 in
+                let order1 = getProductOrder(product1)
+                let order2 = getProductOrder(product2)
+                return order1 < order2
+            }
+            
             print("✅ 取得した商品数: \(subscriptionProducts.count)")
             
             if subscriptionProducts.isEmpty {
@@ -112,7 +121,7 @@ class SubscriptionManager: ObservableObject {
                 print("❌ シミュレーター：商品が見つかりません")
                 print("🔧 StoreKit Configuration トラブルシューティング:")
                 print("   1. Xcodeのスキーム設定でStoreKit Configurationファイルが選択されているか")
-                print("   2. .storekitファイルでプロダクトID 'monthly' が設定されているか")
+                print("   2. .storekitファイルでプロダクトID 'weeklySub', 'monthlySub', 'yearlySub' が設定されているか")
                 print("   3. .storekitファイルでサブスクリプションタイプが正しく設定されているか")
                 print("   4. Clean Build Folder後に再実行してみる")
                 print("   5. Product → Scheme → Edit Scheme → Run → Options → StoreKit Configuration を確認")
@@ -122,7 +131,7 @@ class SubscriptionManager: ObservableObject {
                 errorMessage = "商品が見つかりません。App Store Connectの設定を確認してください。"
                 print("❌ 実機：商品が見つかりません")
                 print("🔧 App Store Connect トラブルシューティング:")
-                print("   1. App Store ConnectでプロダクトID 'monthly' が正しく設定されているか")
+                print("   1. App Store ConnectでプロダクトID 'weeklySub', 'monthlySub', 'yearlySub' が正しく設定されているか")
                 print("   2. 商品のステータスが「準備完了」になっているか")
                 print("   3. 契約・税務・銀行情報が完了しているか")
                 print("   4. Bundle IDが一致しているか")
@@ -137,7 +146,11 @@ class SubscriptionManager: ObservableObject {
                     print("   表示名: \(product.displayName)")
                     print("   説明: \(product.description)")
                     print("   価格: \(product.displayPrice)")
+                    print("   生価格: \(product.price)")
+                    print("   通貨コード: \(product.priceFormatStyle.currencyCode)")
+                    print("   ロケール: \(product.priceFormatStyle.locale)")
                     print("   タイプ: \(product.type)")
+                    print("   期間: \(getPlanType(for: product))")
                 }
             }
             
@@ -173,6 +186,18 @@ class SubscriptionManager: ObservableObject {
         }
         
         isLoading = false
+    }
+    
+    // 商品の順序を取得（ソート用）
+    private func getProductOrder(_ product: SKProduct) -> Int {
+        if product.id.contains("weeklySub") {
+            return 1
+        } else if product.id.contains("monthlySub") {
+            return 2
+        } else if product.id.contains("yearlySub") {
+            return 3
+        }
+        return 4
     }
     
     // StoreKitエラーの詳細処理
@@ -330,14 +355,82 @@ class SubscriptionManager: ObservableObject {
         return product.displayPrice
     }
     
+    // 日本円フォーマットで価格を取得（デバッグ用途も含む）
+    func getJPYFormattedPrice(for product: SKProduct) -> String {
+        // まず製品の元の価格情報をログ出力
+        print("🪙 価格情報: \(product.id)")
+        print("   displayPrice: \(product.displayPrice)")
+        print("   price: \(product.price)")
+        print("   currencyCode: \(product.priceFormatStyle.currencyCode)")
+        print("   locale: \(product.priceFormatStyle.locale)")
+        
+        // 日本円フォーマッターを使用
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.currencyCode = "JPY"
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        
+        let nsDecimalNumber = NSDecimalNumber(decimal: product.price)
+        let formattedPrice = formatter.string(from: nsDecimalNumber)
+        
+        print("   JPY formatted: \(formattedPrice ?? "変換失敗")")
+        
+        return formattedPrice ?? product.displayPrice
+    }
+    
     // プランのタイプを判定
     func getPlanType(for product: SKProduct) -> String {
-        if product.id.contains("monthlySub") {
+        if product.id.contains("weeklySub") {
+            return "週間プラン"
+        } else if product.id.contains("monthlySub") {
             return "月額プラン"
-        } else if product.id.contains("yearly") {
+        } else if product.id.contains("yearlySub") {
             return "年額プラン"
         }
         return "プラン"
+    }
+    
+    // プランの特徴を取得
+    func getPlanDescription(for product: SKProduct) -> String {
+        if product.id.contains("weeklySub") {
+            return "お試しに最適"
+        } else if product.id.contains("monthlySub") {
+            return "最も人気"
+        } else if product.id.contains("yearlySub") {
+            return "最もお得"
+        }
+        return ""
+    }
+    
+    // 年額プランの月額換算価格を計算
+    func getMonthlyEquivalentPrice(for product: SKProduct) -> String? {
+        guard product.id.contains("yearlySub") else { return nil }
+        
+        // 価格を12で割って月額換算
+        let yearlyPrice = product.price
+        let monthlyEquivalent = yearlyPrice / 12
+        
+        print("💰 年額換算計算: \(product.id)")
+        print("   年額: \(yearlyPrice)")
+        print("   月額換算: \(monthlyEquivalent)")
+        
+        // 日本円フォーマッターを使用
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.currencyCode = "JPY"
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        
+        // DecimalをNSDecimalNumberに変換
+        let nsDecimalNumber = NSDecimalNumber(decimal: monthlyEquivalent)
+        let result = formatter.string(from: nsDecimalNumber)
+        
+        print("   フォーマット結果: \(result ?? "変換失敗")")
+        
+        return result
     }
     
     // サブスクリプションの詳細情報を取得

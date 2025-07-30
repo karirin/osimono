@@ -81,7 +81,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "5.00",
+          "displayPrice" : "9.80",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "AE3531EE",
@@ -95,7 +95,63 @@
           ],
           "productID" : "monthlySub",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "広告非表示プラン",
+          "referenceName" : "広告非表示プラン(月)",
+          "subscriptionGroupID" : "560BCA28",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.80",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "5BDBB5F2",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "広告非表示",
+              "displayName" : "広告非表示",
+              "locale" : "ja"
+            }
+          ],
+          "productID" : "weeklySub",
+          "recurringSubscriptionPeriod" : "P1W",
+          "referenceName" : "広告非表示プラン（週）",
+          "subscriptionGroupID" : "560BCA28",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "98.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "2DDFFDCE",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "広告非表示",
+              "displayName" : "広告非表示",
+              "locale" : "ja"
+            }
+          ],
+          "productID" : "yearlySub",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "広告非表示プラン（年）",
           "subscriptionGroupID" : "560BCA28",
           "type" : "RecurringSubscription",
           "winbackOffers" : [

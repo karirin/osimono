@@ -33,50 +33,12 @@ struct OshiLimitModal: View {
                 
                 // 説明文
                 VStack(spacing: 12) {
-                    Text(OshiLimitManager.shared.getLimitMessage(currentOshiCount: currentOshiCount))
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
                     
                     Text("プレミアムプランなら無制限で推しを登録できます！")
                         .font(.body)
                         .fontWeight(.medium)
                         .multilineTextAlignment(.center)
                 }
-                
-                // プレミアム特典
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("プレミアム特典")
-                        .font(.headline)
-                        .fontWeight(.bold)
-                    
-                    HStack {
-                        Image(systemName: "infinity")
-                            .foregroundColor(.green)
-                        Text("推しを無制限で登録")
-                    }
-                    
-                    HStack {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("すべての広告が非表示")
-                    }
-                    
-                    HStack {
-                        Image(systemName: "bubble.left.and.bubble.right.fill")
-                            .foregroundColor(.green)
-                        Text("無制限でAIチャット")
-                    }
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.green.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.green.opacity(0.3), lineWidth: 1)
-                        )
-                )
                 
                 // ボタン群
                 VStack(spacing: 12) {
