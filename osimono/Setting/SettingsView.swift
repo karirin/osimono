@@ -65,6 +65,9 @@ struct SettingsView: View {
     @State private var showingUserManagement: Bool = false
     @State private var showingSystemSettings: Bool = false
     
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    @State private var showSubscriptionView = false
+    
     // 管理者UserIDのリスト
     private let adminUserIds = [
         ""
@@ -183,8 +186,22 @@ struct SettingsView: View {
                             Text("推しを編集")
                                 .foregroundColor(.secondary)
                                 .frame(alignment: .leading)
+                            
                             Spacer()
-                        }.padding(.leading)
+                            
+                            // 推し数表示とプレミアム案内（新規追加）
+                            if subscriptionManager.isSubscribed {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "crown.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.orange)
+                                    Text("プレミアムプラン")
+                                        .font(.system(size: 16))
+                                        .fontWeight(.medium)
+                                        .foregroundColor(.orange)
+                                }
+                            }
+                        }.padding(.horizontal)
                         
                         VStack(spacing: 15) {
                             HStack {
@@ -218,7 +235,6 @@ struct SettingsView: View {
                                             .font(.headline)
                                             .foregroundColor(.primary)
                                         
-                                        // 管理者の場合はここにもバッジを表示
                                         if isAdmin {
                                             Image(systemName: "crown.fill")
                                                 .foregroundColor(.orange)

@@ -2,7 +2,7 @@
 //  AddOshiView.swift
 //  osimono
 //
-//  Created by Apple on 2025/04/13.
+//  推しの登録数制限機能を追加 + 画像登録機能完全実装
 //
 
 import SwiftUI
@@ -34,9 +34,28 @@ struct AddOshiView: View {
     // 性格関連の属性
     @State private var personality: String = ""
     @State private var speakingStyle: String = ""
-    @State private var showAdvancedOptions: Bool = false // 詳細設定表示トグル
+    @State private var showAdvancedOptions: Bool = false
     @State private var userNickname: String = ""
 
+    // 性別選択用の状態変数
+    @State private var gender: String = "男性"
+    @State private var genderDetail: String = ""
+    
+    // 新規追加：制限関連の状態変数
+    @State private var currentOshiCount: Int = 0
+    @State private var showOshiLimitModal = false
+    @State private var showManageOshiModal = false
+    @State private var showSubscriptionView = false
+    @State private var oshiList: [Oshi] = []
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    
+    // 性別選択肢
+    let genderOptions = ["男性", "女性", "その他"]
+    
+    // 色の定義
+    let primaryColor = Color(UIColor(red: 0.3, green: 0.6, blue: 0.9, alpha: 1.0))
+    let backgroundColor = Color(UIColor.systemGroupedBackground)
+    
     public struct Texts {
         public var cancelButton: String
         public var interactionInstructions: String
@@ -51,21 +70,9 @@ struct AddOshiView: View {
                 saveButton: "適用"
             )
         )
-        
         return cfg
     }
-    
-    // 性別選択用の状態変数
-    @State private var gender: String = "男性"  // デフォルトは「男性」
-    @State private var genderDetail: String = "" // 「その他」の場合の詳細
-    
-    // 性別選択肢
-    let genderOptions = ["男性", "女性", "その他"]
-    
-    // 色の定義
-    let primaryColor = Color(UIColor(red: 0.3, green: 0.6, blue: 0.9, alpha: 1.0))
-    let backgroundColor = Color(UIColor.systemGroupedBackground)
-    
+
     var body: some View {
         ZStack {
             backgroundColor.edgesIgnoringSafeArea(.all)
@@ -89,10 +96,9 @@ struct AddOshiView: View {
                     
                     Spacer()
                     
-                    // 右側のスペースを確保して中央揃えを維持
                     Button(action: {
                         generateHapticFeedback()
-                        saveOshi()
+                        checkLimitAndSaveOshi()
                     }) {
                         Text("登録")
                             .foregroundColor(primaryColor)
@@ -100,7 +106,7 @@ struct AddOshiView: View {
                     .padding()
                 }
                 .padding(.top, 8)
-                
+
                 ScrollView {
                     VStack(spacing: 20) {
                         // 推しプロフィール画像
@@ -227,20 +233,21 @@ struct AddOshiView: View {
                                 }
                                 .pickerStyle(SegmentedPickerStyle())
                                 .padding(.horizontal)
+                                
                                 if gender == "その他" {
-                                       TextField("詳細を入力（例：犬、ロボット、橋など）", text: $genderDetail)
-                                           .padding()
-                                           .background(Color.white)
-                                           .cornerRadius(10)
-                                           .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                                           .padding(.horizontal)
-                                           .padding(.top, 5)
-                                           .transition(.opacity.combined(with: .slide))
-                                           .animation(.easeInOut, value: gender)
-                                   }
+                                    TextField("詳細を入力（例：犬、ロボット、橋など）", text: $genderDetail)
+                                        .padding()
+                                        .background(Color.white)
+                                        .cornerRadius(10)
+                                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                                        .padding(.horizontal)
+                                        .padding(.top, 5)
+                                        .transition(.opacity.combined(with: .slide))
+                                        .animation(.easeInOut, value: gender)
+                                }
                             }
                             
-                            // 性格入力フィールド（新規追加）
+                            // 性格入力フィールド
                             VStack(alignment: .leading) {
                                 Text("推しの性格")
                                     .font(.headline)
@@ -254,7 +261,7 @@ struct AddOshiView: View {
                                     .padding(.horizontal)
                             }
                             
-                            // 話し方の特徴入力フィールド（新規追加）
+                            // 話し方の特徴入力フィールド
                             VStack(alignment: .leading) {
                                 Text("話し方の特徴")
                                     .font(.headline)
@@ -281,7 +288,7 @@ struct AddOshiView: View {
                                     .padding(.horizontal)
                             }
                             
-                            // 詳細設定への案内（新規追加）
+                            // 詳細設定への案内
                             HStack {
                                 Spacer()
                                 Text("詳細な性格設定は登録後に編集画面から設定できます")
@@ -296,7 +303,7 @@ struct AddOshiView: View {
                         // 追加ボタン
                         Button(action: {
                             generateHapticFeedback()
-                            saveOshi()
+                            checkLimitAndSaveOshi()
                         }) {
                             ZStack {
                                 if isLoading {
@@ -326,9 +333,33 @@ struct AddOshiView: View {
                     .padding(.bottom, 30)
                 }
             }
+            
+            // モーダル表示
+            if showOshiLimitModal {
+                OshiLimitModal(
+                    isPresented: $showOshiLimitModal,
+                    currentOshiCount: currentOshiCount,
+                    onUpgrade: {
+                        showOshiLimitModal = false
+                        showSubscriptionView = true
+                    }
+                )
+                .zIndex(999)
+            }
+            
+            if showManageOshiModal {
+                ManageOshiModal(
+                    isPresented: $showManageOshiModal,
+                    oshiList: $oshiList,
+                    onOshiDeleted: {
+                        // 推しが削除されたら、カウントを更新
+                        loadCurrentOshiCount()
+                    }
+                )
+                .zIndex(998)
+            }
         }
         .navigationBarBackButtonHidden(true)
-        // 画像選択用のシート
         .sheet(isPresented: $showImagePicker) {
             ImagePickerView { pickedImage in
                 self.selectedImageForCropping = pickedImage
@@ -351,8 +382,70 @@ struct AddOshiView: View {
             }
             .navigationBarHidden(true)
         }
+        .sheet(isPresented: $showSubscriptionView) {
+            SubscriptionPreView()
+        }
         .onTapGesture {
             hideKeyboard()
+        }
+        .onAppear {
+            loadCurrentOshiCount()
+        }
+    }
+    
+    
+    // 新規追加：制限チェック付きの保存処理
+    private func checkLimitAndSaveOshi() {
+        // サブスクリプション会員は制限なし
+        if subscriptionManager.isSubscribed {
+            saveOshi()
+            return
+        }
+        
+        // 制限チェック
+        if !OshiLimitManager.shared.canAddNewOshi(currentOshiCount: currentOshiCount, isSubscribed: false) {
+            showOshiLimitModal = true
+            return
+        }
+        
+        // 制限内なら保存
+        saveOshi()
+    }
+    
+    // 現在の推し数を取得
+    private func loadCurrentOshiCount() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        let ref = Database.database().reference().child("oshis").child(userId)
+        ref.observeSingleEvent(of: .value) { snapshot in
+            DispatchQueue.main.async {
+                self.currentOshiCount = Int(snapshot.childrenCount)
+                
+                // 推しリストも更新（管理モーダル用）
+                var newOshis: [Oshi] = []
+                for child in snapshot.children {
+                    if let childSnapshot = child as? DataSnapshot,
+                       let value = childSnapshot.value as? [String: Any] {
+                        let id = childSnapshot.key
+                        let name = value["name"] as? String ?? "名前なし"
+                        let imageUrl = value["imageUrl"] as? String
+                        let backgroundImageUrl = value["backgroundImageUrl"] as? String
+                        let memo = value["memo"] as? String
+                        let createdAt = value["createdAt"] as? TimeInterval
+                        
+                        let oshi = Oshi(
+                            id: id,
+                            name: name,
+                            imageUrl: imageUrl,
+                            backgroundImageUrl: backgroundImageUrl,
+                            memo: memo,
+                            createdAt: createdAt
+                        )
+                        newOshis.append(oshi)
+                    }
+                }
+                self.oshiList = newOshis
+            }
         }
     }
     
@@ -400,7 +493,6 @@ struct AddOshiView: View {
         let metadata = StorageMetadata()
         metadata.contentType = "image/jpeg"
         
-        // アップロード中の表示
         withAnimation {
             isLoading = true
         }
@@ -410,7 +502,6 @@ struct AddOshiView: View {
                 print("アップロードエラー: \(error.localizedDescription)")
             } else {
                 print("画像をアップロードしました")
-                // URLを取得
                 if type == .profile {
                     fetchUserImageURL(type: .profile) { url in
                         self.imageUrl = url
@@ -422,19 +513,16 @@ struct AddOshiView: View {
                 }
             }
             
-            // アップロード完了後
             withAnimation {
                 isLoading = false
             }
         }
     }
     
-    // キーボードを閉じる
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
-    // ハプティックフィードバックを生成する
     private func generateHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
@@ -470,12 +558,11 @@ struct AddOshiView: View {
             data["speaking_style"] = speakingStyle
         }
 
-        // ★新規追加：呼び方設定の保存
+        // 呼び方設定の保存
         if !userNickname.isEmpty {
             data["user_nickname"] = userNickname
         }
         
-        // 既存の画像アップロード処理...
         let dispatchGroup = DispatchGroup()
         
         // プロフィール画像をアップロード
@@ -547,7 +634,6 @@ struct AddOshiView: View {
         ref.setValue(data) { error, _ in
             DispatchQueue.main.async {
                 if error == nil {
-                    // 保存に成功したら、選択されたOshiIDとして保存
                     self.saveSelectedOshiId(oshiId)
                 } else {
                     self.isLoading = false
@@ -569,7 +655,6 @@ struct AddOshiView: View {
                 self.isLoading = false
                 
                 if error == nil {
-                    // 全ての処理が完了したらビューを閉じる
                     self.presentationMode.wrappedValue.dismiss()
                 } else {
                     print("推しID保存エラー: \(error!.localizedDescription)")
@@ -578,6 +663,7 @@ struct AddOshiView: View {
         }
     }
 }
+
 // ImagePickerViewの実装
 struct ImagePickerView: UIViewControllerRepresentable {
     let onImagePicked: (UIImage) -> Void

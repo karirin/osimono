@@ -26,6 +26,9 @@ struct OshiSelectorView: View {
     
     let primaryColor = Color(.systemPink)
     
+    @State private var showOshiLimitModal = false
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    
     var body: some View {
         ZStack {
             // 半透明の背景
@@ -126,6 +129,12 @@ struct OshiSelectorView: View {
                             generateHapticFeedback()
                             onAddOshi()
                             isPresented = false
+                            
+                            if !subscriptionManager.isSubscribed &&
+                               !OshiLimitManager.shared.canAddNewOshi(currentOshiCount: oshiList.count, isSubscribed: false) {
+                                showOshiLimitModal = true
+                                return
+                            }
                         }) {
                             VStack {
                                 ZStack {
@@ -351,6 +360,19 @@ struct OshiSelectorView: View {
                     .padding(.horizontal, 40)
                 }
                 .transition(.opacity.combined(with: .scale))
+            }
+            
+            if showOshiLimitModal {
+                OshiLimitModal(
+                    isPresented: $showOshiLimitModal,
+                    currentOshiCount: oshiList.count,
+                    onUpgrade: {
+                        showOshiLimitModal = false
+                        // サブスクリプション画面を表示する処理
+                        // 親ビューで処理するか、ここで直接表示
+                    }
+                )
+                .zIndex(1001)
             }
         }
         .alert("推しを削除", isPresented: $showDeleteAlert) {
