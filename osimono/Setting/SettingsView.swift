@@ -629,7 +629,7 @@ struct SettingsView: View {
                                 
                                 Spacer()
                                 
-                                Text("2.4.0")
+                                Text("2.9.0")
                                     .foregroundColor(.primary)
                             }
                             .padding(.vertical, 8)

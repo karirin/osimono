@@ -24,6 +24,9 @@ struct SubscriptionPreView: View {
     )
     let accentColor = Color(.systemPurple)
     
+    @State private var showingPrivacySettings = false
+    @State private var showingShareSettings = false
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -115,6 +118,7 @@ struct SubscriptionPreView: View {
                                 }
                             )
                         } else if subscriptionManager.subscriptionProducts.isEmpty {
+                        } else if subscriptionManager.subscriptionProducts.isEmpty {
                             EmptyStatePreView(
                                 primaryGradient: primaryGradient,
                                 onReload: {
@@ -188,17 +192,13 @@ struct SubscriptionPreView: View {
                         )
                         
                         HStack(spacing: 32) {
-                            Button("利用規約") {
-                                // 利用規約を表示
-                            }
-                            .foregroundColor(.secondary)
-                            .font(.subheadline)
+                            NavigationLink("利用規約", destination: TermsOfServiceView())
+                                .foregroundColor(.secondary)
+                                .font(.subheadline)
                             
-                            Button("プライバシーポリシー") {
-                                // プライバシーポリシーを表示
-                            }
-                            .foregroundColor(.secondary)
-                            .font(.subheadline)
+                            NavigationLink("プライバシーポリシー", destination: PrivacyView())
+                                .foregroundColor(.secondary)
+                                .font(.subheadline)
                         }
                         
                         Text("購読は自動更新されます。解約はApp Storeの設定から行えます。")
@@ -231,6 +231,12 @@ struct SubscriptionPreView: View {
                         .background(Circle().fill(Color(.systemGray5)))
                 }
             )
+//            .navigationDestination(isPresented: $showingPrivacySettings) {
+//                PrivacyView()
+//            }
+//            .navigationDestination(isPresented: $showingShareSettings) {
+//                TermsOfServiceView()
+//            }
         }
         .alert(isPresented: $showAlert) {
             Alert(title: Text("通知"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
@@ -453,7 +459,7 @@ struct ModernPlanCard: View {
                             // 料金の説明
                             if isYearly {
                                 if let monthlyPrice = subscriptionManager.getMonthlyEquivalentPrice(for: product) {
-                                    Text("2ヶ月分の料金が無料")
+                                    Text("月払いの2ヶ月分が無料")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 } else {
@@ -466,7 +472,7 @@ struct ModernPlanCard: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             } else if isMonthly {
-                                Text("人気の定番プラン")
+                                Text("週間プランの50％オフ")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
