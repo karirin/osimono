@@ -14,7 +14,10 @@ import FirebaseStorage
 struct ProfileSection: View {
     @State private var isLoading = true
     var profileSectionHeight: CGFloat {
-        isSmallDevice() ? 230 : 230
+        isSmallDevice() ? 230 : isIPad() ? 270 : 230
+    }
+    func isIPad() -> Bool {
+        return UIDevice.current.userInterfaceIdiom == .pad
     }
     let primaryColor = Color(.systemPink) // 明るいピンク
     let accentColor = Color(.purple) // 紫系

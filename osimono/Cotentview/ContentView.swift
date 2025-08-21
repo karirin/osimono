@@ -69,7 +69,11 @@ struct ContentView: View {
     
     // プロフィールセクションの高さ
     var profileSectionHeight: CGFloat {
-        isSmallDevice() ? 280 : 280
+        isSmallDevice() ? 280 : isIPad() ? 300 : 280
+    }
+    
+    func isIPad() -> Bool {
+        return UIDevice.current.userInterfaceIdiom == .pad
     }
     
     var body: some View {
