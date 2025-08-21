@@ -32,32 +32,32 @@ struct ApologyModalView: View {
                     .foregroundColor(.orange)
                 
                 // タイトル
-                Text("お詫び")
+                Text(L10n.apologyTitle)
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                 
                 // メッセージ
                 VStack(spacing: 12) {
-                    Text("AIメッセージ機能に不具合があり、")
+                    Text(L10n.apologyMessage1)
                         .font(.body)
                         .foregroundColor(.secondary)
                     
-                    Text("推しからのメッセージが正常に")
+                    Text(L10n.apologyMessage2)
                         .font(.body)
                         .foregroundColor(.secondary)
                     
-                    Text("届かない状況が発生していました。")
+                    Text(L10n.apologyMessage3)
                         .font(.body)
                         .foregroundColor(.secondary)
                     
-                    Text("現在は修正済みです。")
+                    Text(L10n.apologyMessage4)
                         .font(.body)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
                         .padding(.top, 8)
                     
-                    Text("ご迷惑をおかけして申し訳ございませんでした。")
+                    Text(L10n.apologyMessage5)
                         .font(.footnote)
                         .foregroundColor(.secondary)
                         .padding(.top, 4)
@@ -74,7 +74,7 @@ struct ApologyModalView: View {
                         isPresented = false
                     }
                 }) {
-                    Text("確認")
+                    Text(L10n.confirm)
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(.white)

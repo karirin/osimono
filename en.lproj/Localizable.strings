@@ -1,0 +1,118 @@
+/* 
+  Localizable.strings
+  osimono
+
+  Created by Apple on 2025/08/21.
+  
+*/
+
+"oshi_selection" = "Select Your Oshi";
+"add_new_oshi" = "Add New";
+"add_oshi" = "Add Oshi";
+"add_oshi_post" = "Add Oshi Post";
+"post_type" = "Post Type";
+"searchText" = "Search By Your Favorite Name";
+"edit" = "Edit";
+"save" = "Save";
+"cancel" = "Cancel";
+"back" = "Back";
+"delete" = "Delete";
+"confirm" = "Confirm";
+"close" = "Close";
+
+// Profile Section
+"profile_title" = "Profile";
+"username" = "Username";
+"favorite_oshi" = "Favorite Oshi";
+"select_oshi" = "Select Your Oshi";
+"please_select_oshi" = "Please select your oshi";
+
+// Item Types
+"goods" = "Goods";
+"pilgrimage" = "Pilgrimage";
+"live_record" = "Live Record";
+"sns_post" = "SNS Post";
+"other" = "Other";
+"all" = "All";
+
+// Form Fields
+"title" = "Title";
+"category" = "Category";
+"price" = "Price";
+"event_name" = "Event Name";
+"location" = "Location";
+"date" = "Date";
+"purchase_date" = "Purchase Date";
+"visit_date" = "Visit Date";
+"event_date" = "Event Date";
+"post_date" = "Post Date";
+"record_date" = "Record Date";
+"tags" = "Tags";
+"add_new_tag" = "Add new tag";
+"favorite_rating" = "Favorite Rating";
+"memo" = "Memo";
+"memories_episodes" = "Memories & Episodes";
+"details_memo" = "Details Memo";
+
+// Placeholders
+"title_placeholder_goods" = "e.g., BTS Official Light Stick Ver.3";
+"title_placeholder_pilgrimage" = "e.g., MV Location - Shibuya XX Cafe";
+"title_placeholder_live" = "e.g., Tokyo Dome Concert";
+"title_placeholder_sns" = "e.g., Instagram Story Post";
+"title_placeholder_other" = "e.g., Oshi's Birthday, Anniversary";
+"price_placeholder" = "e.g., 5500";
+"event_name_placeholder" = "e.g., BTS Live 'LOVE YOURSELF'";
+"location_placeholder" = "e.g., Tokyo, Shibuya XX";
+"memo_placeholder" = "Enter memo here";
+
+// Messages
+"no_records" = "No oshi records found";
+"add_items_message" = "Tap the '+' button in the bottom right to add oshi goods or SNS posts!";
+"add_item" = "Add Oshi Item";
+"post_item" = "Post";
+"saving" = "Saving...";
+"loading" = "Loading...";
+
+// Alerts
+"notification" = "Notification";
+"delete_confirmation_title" = "Delete Post";
+"delete_confirmation_message" = "Are you sure you want to delete this post? This action cannot be undone.";
+"ok" = "OK";
+
+// Categories
+"cd_dvd" = "CD・DVD";
+"magazine" = "Magazine";
+"photo_book" = "Photo Book";
+"acrylic_stand" = "Acrylic Stand";
+"plushie" = "Plushie";
+"t_shirt" = "T-Shirt";
+"towel" = "Towel";
+
+// Sorting
+"sort_newest" = "Newest First";
+"sort_oldest" = "Oldest First";
+"sort_price_high" = "Price High to Low";
+"sort_price_low" = "Price Low to High";
+"sort_favorite" = "Favorite Order";
+
+// Registration
+"register_oshi_first" = "Register Your Oshi First!";
+"register_oshi_message" = "Before recording oshi goods or SNS posts, please register your oshi first.";
+"register_oshi_button" = "Register Oshi";
+
+// Image
+"image" = "Image";
+"tap_to_select_image" = "Tap to select image";
+"change_image" = "Change Image";
+
+// Location
+"current_location" = "Set Current Location";
+"get_current_location" = "Get Current Location";
+
+// Apology Modal
+"apology_title" = "Apology";
+"apology_message_1" = "There was a bug in the AI message feature,";
+"apology_message_2" = "and messages from your oshi were not";
+"apology_message_3" = "being delivered properly.";
+"apology_message_4" = "This has now been fixed.";
+"apology_message_5" = "We apologize for any inconvenience caused.";

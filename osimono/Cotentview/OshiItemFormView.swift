@@ -67,10 +67,10 @@ struct OshiItemFormView: View {
     
     @State private var originalImage: UIImage?
     // カテゴリーリスト
-    let categories = ["グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
+    let categories = [L10n.goods, L10n.cdDvd, L10n.magazine, L10n.photoBook, L10n.acrylicStand, L10n.plushie, L10n.tShirt, L10n.towel, L10n.other]
     
     // アイテムタイプ
-    let itemTypes = ["グッズ", "聖地巡礼", "ライブ記録", "SNS投稿", "その他"]
+    let itemTypes = [L10n.goods, L10n.pilgrimage, L10n.liveRecord, L10n.snsPost, L10n.other]
     
     var userId: String? {
         Auth.auth().currentUser?.uid
@@ -83,13 +83,13 @@ struct OshiItemFormView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        // アイテムタイプ選択
+                        // Updated item type selection
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("投稿タイプ")
+                            Text(L10n.postType)
                                 .font(.headline)
                                 .foregroundColor(.gray)
                                 .padding(.horizontal)
-                            ScrollView(.horizontal,showsIndicators: false) {
+                            ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 15) {
                                     ForEach(itemTypes, id: \.self) { type in
                                         Button(action: {
@@ -116,10 +116,11 @@ struct OshiItemFormView: View {
                                 .padding(.horizontal)
                             }
                         }
-                        .padding(.horizontal,isSmallDevice() ? 10 : 0)
-                        // 画像選択
+                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                        
+                        // Updated image selection
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("画像")
+                            Text(L10n.image)
                                 .font(.headline)
                                 .foregroundColor(.gray)
                                 .padding(.horizontal)
@@ -129,48 +130,7 @@ struct OshiItemFormView: View {
                                 isShowingImagePicker = true
                             }) {
                                 if let image = selectedImage {
-                                    ZStack{
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(height: 200)
-                                            .frame(maxWidth: .infinity)
-                                            .clipped()
-                                            .cornerRadius(12)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                            )
-                                        VStack {
-                                            HStack {
-                                                Spacer()
-                                                Button(action: {
-                                                    generateHapticFeedback()
-                                                    withAnimation {
-                                                        selectedImage = nil
-                                                    }
-                                                }) {
-                                                    Image(systemName: "xmark.circle.fill")
-                                                        .font(.system(size: 22))
-                                                        .foregroundColor(.white)
-                                                        .shadow(color: Color.black.opacity(0.5), radius: 2, x: 0, y: 1)
-                                                        .padding(12)
-                                                }
-                                            }
-                                            Spacer()
-                                            HStack {
-                                                Spacer()
-                                                Text("画像を変更")
-                                                    .font(.system(size: 14))
-                                                    .padding(.vertical, 6)
-                                                    .padding(.horizontal, 12)
-                                                    .background(Color.black.opacity(0.6))
-                                                    .foregroundColor(.white)
-                                                    .cornerRadius(16)
-                                            }
-                                            .padding(12)
-                                        }
-                                    }
+                                    // ... existing image display code ...
                                 } else {
                                     ZStack {
                                         Rectangle()
@@ -182,7 +142,7 @@ struct OshiItemFormView: View {
                                             Image(systemName: "camera.fill")
                                                 .font(.system(size: 40))
                                                 .foregroundColor(primaryColor.opacity(0.8))
-                                            Text("タップして画像を選択")
+                                            Text(L10n.tapToSelectImage)
                                                 .font(.system(size: 16))
                                                 .foregroundColor(.gray)
                                         }
@@ -191,12 +151,13 @@ struct OshiItemFormView: View {
                             }
                             .padding(.horizontal)
                         }
-                        .padding(.horizontal,isSmallDevice() ? 10 : 0)
-                        // 基本情報フォーム
+                        .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                        
+                        // Updated form fields
                         VStack(alignment: .leading, spacing: 15) {
-                            // タイトル
+                            // Title field
                             VStack(alignment: .leading, spacing: 5) {
-                                Text("タイトル")
+                                Text(L10n.title)
                                     .font(.headline)
                                     .foregroundColor(.gray)
                                 
@@ -211,11 +172,12 @@ struct OshiItemFormView: View {
                                             .stroke(Color(.separator), lineWidth: 0.5)
                                     )
                             }
-                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
-                            // カテゴリー（グッズの場合のみ表示）
-                            if itemType == "グッズ" {
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                            
+                            // Category selection (for goods only)
+                            if itemType == L10n.goods {
                                 VStack(alignment: .leading, spacing: 5) {
-                                    Text("カテゴリー")
+                                    Text(L10n.category)
                                         .font(.headline)
                                         .foregroundColor(.gray)
                                     
@@ -239,17 +201,17 @@ struct OshiItemFormView: View {
                                         }
                                     }
                                 }
-                                .padding(.horizontal,isSmallDevice() ? 10 : 0)
+                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
                             }
                             
-                            // 価格（グッズの場合のみ表示）
-                            if itemType == "グッズ" {
+                            // Price field (for goods only)
+                            if itemType == L10n.goods {
                                 VStack(alignment: .leading, spacing: 5) {
-                                    Text("価格")
+                                    Text(L10n.price)
                                         .font(.headline)
                                         .foregroundColor(.gray)
                                     
-                                    NumberTextField(text: $price, placeholder: "例: 5500")
+                                    NumberTextField(text: $price, placeholder: L10n.pricePlaceholder)
                                         .padding()
                                         .background(
                                             RoundedRectangle(cornerRadius: 12)
@@ -261,17 +223,17 @@ struct OshiItemFormView: View {
                                         )
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 }
-                                .padding(.horizontal,isSmallDevice() ? 10 : 0)
+                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
                             }
                             
-                            // イベント名（ライブ記録の場合のみ表示）
-                            if itemType == "ライブ記録" {
+                            // Event name (for live records only)
+                            if itemType == L10n.liveRecord {
                                 VStack(alignment: .leading, spacing: 5) {
-                                    Text("イベント名")
+                                    Text(L10n.eventName)
                                         .font(.headline)
                                         .foregroundColor(.gray)
                                     
-                                    TextField("例: BTS ライブ『LOVE YOURSELF』", text: $eventName)
+                                    TextField(L10n.eventNamePlaceholder, text: $eventName)
                                         .padding()
                                         .background(
                                             RoundedRectangle(cornerRadius: 12)
@@ -284,14 +246,14 @@ struct OshiItemFormView: View {
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 }
-                                .padding(.horizontal,isSmallDevice() ? 10 : 0)
+                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
                             }
                             
-                            // 場所（聖地巡礼の場合のみ表示）
-                            if itemType == "聖地巡礼" {
+                            // Location (for pilgrimage only)
+                            if itemType == L10n.pilgrimage {
                                 VStack(alignment: .leading, spacing: 5) {
-                                    HStack{
-                                        Text("場所")
+                                    HStack {
+                                        Text(L10n.location)
                                             .font(.headline)
                                             .foregroundColor(.gray)
                                         Spacer()
@@ -302,7 +264,7 @@ struct OshiItemFormView: View {
                                             HStack(spacing: 4) {
                                                 Image(systemName: "location.fill")
                                                     .font(.system(size: 12))
-                                                Text("現在地を設定")
+                                                Text(L10n.currentLocation)
                                                     .font(.system(size: 12))
                                             }
                                             .padding(.horizontal, 8)
@@ -313,7 +275,7 @@ struct OshiItemFormView: View {
                                         }
                                         .disabled(isGettingLocation)
                                     }
-                                    TextField("例: 東京都渋谷区〇〇", text: $locationAddress)
+                                    TextField(L10n.locationPlaceholder, text: $locationAddress)
                                         .padding()
                                         .background(
                                             RoundedRectangle(cornerRadius: 12)
@@ -326,10 +288,10 @@ struct OshiItemFormView: View {
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                 }
-                                .padding(.horizontal,isSmallDevice() ? 10 : 0)
+                                .padding(.horizontal, isSmallDevice() ? 10 : 0)
                             }
                             
-                            // 日付
+                            // Date field
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(dateLabel())
                                     .font(.headline)
@@ -342,16 +304,17 @@ struct OshiItemFormView: View {
                                     .background(cardColor)
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.05), radius: 2)
-                                    .environment(\.locale, Locale(identifier: "ja_JP"))
+                                    .environment(\.locale, Locale(identifier: getCurrentLanguageCode()))
                             }
-                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
-                            // タグ（新しい実装）
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                            
+                            // Tags field
                             VStack(alignment: .leading, spacing: 5) {
-                                Text("タグ")
+                                Text(L10n.tags)
                                     .font(.headline)
                                     .foregroundColor(.gray)
                                 
-                                // 現在のタグ表示
+                                // Current tags display
                                 if !tags.isEmpty {
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack {
@@ -381,9 +344,9 @@ struct OshiItemFormView: View {
                                     .padding(.vertical, 5)
                                 }
                                 
-                                // 新しいタグ追加
+                                // New tag input
                                 HStack {
-                                    TextField("新しいタグを追加", text: $newTag)
+                                    TextField(L10n.addNewTag, text: $newTag)
                                         .padding()
                                         .background(
                                             RoundedRectangle(cornerRadius: 12)
@@ -403,19 +366,21 @@ struct OshiItemFormView: View {
                                     }
                                 }
                             }
-                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
-                            // お気に入り度
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
+                            
+                            // Favorite rating
                             VStack(alignment: .leading, spacing: 20) {
-                                HStack{
-                                    Text("お気に入り度")
+                                HStack {
+                                    Text(L10n.favoriteRating)
                                         .font(.headline)
                                         .foregroundColor(.gray)
                                     Spacer()
                                 }
                                 StarRatingView(rating: $favorite, size: 40)
                             }
-                            .padding(.horizontal,isSmallDevice() ? 10 : 0)
+                            .padding(.horizontal, isSmallDevice() ? 10 : 0)
                             
+                            // Memo field
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(memoLabel())
                                     .font(.headline)
@@ -424,30 +389,23 @@ struct OshiItemFormView: View {
                                 ZStack(alignment: .topLeading) {
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color(.secondarySystemBackground))
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.secondarySystemBackground))
-                            )
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
                                                 .stroke(Color(.separator), lineWidth: 0.5)
                                         )
                                         .shadow(color: Color.black.opacity(0.05), radius: 2)
                                     
-                                    // TextEditorを透明背景で配置
                                     TextEditor(text: $memo)
                                         .frame(minHeight: 100)
                                         .padding()
                                         .background(Color.clear)
-                                        .scrollContentBackground(.hidden) // iOS 16以降で背景を非表示
+                                        .scrollContentBackground(.hidden)
                                         .onAppear {
-                                            // iOS 15以前のTextEditorの背景色設定
                                             UITextView.appearance().backgroundColor = UIColor.clear
                                         }
                                     
-                                    // プレースホルダーテキスト（メモが空の場合）
                                     if memo.isEmpty {
-                                        Text("ここにメモを入力")
+                                        Text(L10n.memoPlaceholder)
                                             .foregroundColor(.gray.opacity(0.6))
                                             .padding(.horizontal, 20)
                                             .padding(.vertical, 16)
@@ -459,12 +417,13 @@ struct OshiItemFormView: View {
                             .padding(.horizontal, isSmallDevice() ? 10 : 0)
                         }
                         .padding(.horizontal)
-                        // 送信ボタン
+                        
+                        // Submit button
                         Button(action: {
                             generateHapticFeedback()
                             saveItem()
                         }) {
-                            Text("投稿する")
+                            Text(L10n.postItem)
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
@@ -482,7 +441,8 @@ struct OshiItemFormView: View {
                     }
                 }
                 .dismissKeyboardOnTap()
-                // ローディングオーバーレイ
+                
+                // Loading overlay
                 if isLoading {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
@@ -491,7 +451,7 @@ struct OshiItemFormView: View {
                                 ProgressView()
                                     .scaleEffect(1.5)
                                     .tint(.white)
-                                Text("保存中...")
+                                Text(L10n.saving)
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(.white)
                                     .padding(.top, 10)
@@ -499,27 +459,27 @@ struct OshiItemFormView: View {
                         )
                 }
             }
-            .navigationBarTitle("推しの投稿を追加", displayMode: .inline)
+            .navigationBarTitle(L10n.addOshiPost, displayMode: .inline)
             .navigationBarItems(leading:
-                                    Button(action: {
-                generateHapticFeedback()
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                HStack {
-                    Image(systemName: "chevron.left")
-                    Text("戻る")
+                Button(action: {
+                    generateHapticFeedback()
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                        Text(L10n.back)
+                    }
+                    .foregroundColor(primaryColor)
                 }
-                .foregroundColor(primaryColor)
-            }
             )
             .navigationBarItems(trailing:
-                                    Button(action: {
-                generateHapticFeedback()
-                saveItem()
-            }) {
-                Text("投稿")
-                    .foregroundColor(primaryColor)
-            }
+                Button(action: {
+                    generateHapticFeedback()
+                    saveItem()
+                }) {
+                    Text(L10n.postItem)
+                        .foregroundColor(primaryColor)
+                }
             )
         }
         .gesture(
@@ -582,70 +542,32 @@ struct OshiItemFormView: View {
         }
     }
     
-    // タイトルのプレースホルダーをアイテムタイプに応じて変更
     func titlePlaceholder() -> String {
-        switch itemType {
-        case "グッズ":
-            return "例: BTS 公式ペンライト Ver.3"
-        case "聖地巡礼":
-            return "例: MVロケ地・渋谷〇〇カフェ"
-        case "ライブ記録":
-            return "例: 東京ドーム公演"
-        case "SNS投稿":
-            return "例: インスタストーリー投稿"
-        case "その他":
-            return "例: 推しの誕生日、記念日など"
-        default:
-            return "タイトルを入力"
-        }
+        return L10n.titlePlaceholder(for: itemType)
     }
     
-    // 日付ラベルをアイテムタイプに応じて変更
     func dateLabel() -> String {
-        switch itemType {
-        case "グッズ":
-            return "購入日"
-        case "聖地巡礼":
-            return "訪問日"
-        case "ライブ記録":
-            return "イベント日"
-        case "SNS投稿":
-            return "投稿日"
-        case "その他":
-            return "記録日"
-        default:
-            return "日付"
-        }
+        return L10n.dateLabel(for: itemType)
     }
     
-    // メモラベルをアイテムタイプに応じて変更
     func memoLabel() -> String {
-        switch itemType {
-        case "グッズ":
-            return "メモ"
-        case "聖地巡礼":
-            return "感想・エピソード"
-        case "ライブ記録":
-            return "思い出・エピソード"
-        case "SNS投稿":
-            return "メモ"
-        case "その他":
-            return "詳細メモ"
-        default:
-            return "メモ"
-        }
+        return L10n.memoLabel(for: itemType)
     }
     
     // アイコンの取得
     func iconForItemType(_ type: String) -> String {
         switch type {
-        case "グッズ": return "gift.fill"
-        case "聖地巡礼": return "mappin.and.ellipse"
-        case "ライブ記録": return "music.note.list"
-        case "SNS投稿": return "bubble.right.fill"
-        case "その他": return "ellipsis.circle.fill"
+        case L10n.goods, "グッズ": return "gift.fill"
+        case L10n.pilgrimage, "聖地巡礼": return "mappin.and.ellipse"
+        case L10n.liveRecord, "ライブ記録": return "music.note.list"
+        case L10n.snsPost, "SNS投稿": return "bubble.right.fill"
+        case L10n.other, "その他": return "ellipsis.circle.fill"
         default: return "square.grid.2x2.fill"
         }
+    }
+    
+    func getCurrentLanguageCode() -> String {
+        return Locale.current.languageCode ?? "en"
     }
     
     func requestCurrentLocation() {

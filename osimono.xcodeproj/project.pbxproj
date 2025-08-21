@@ -33,6 +33,7 @@
 		187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE2592D8EFEE100D58928 /* ShimmerEffect */; };
 		187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE25C2D8F4AAF00D58928 /* Shimmer */; };
 		188C012C2DDF4FCC00B7ADB9 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */; };
+		18B8A37F2E5747E80068C455 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 18B8A37D2E5747E80068C455 /* Localizable.strings */; };
 		18B9E1172E096099000F4B57 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 18B9E1162E096099000F4B57 /* FirebaseAnalytics */; };
 		18F429E82DB291EE007C198B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E72DB291EE007C198B /* CropViewController */; };
 		18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E92DB291EE007C198B /* TOCropViewController */; };
@@ -61,6 +62,8 @@
 		1870AFB32D8BC85E004B827B /* osimono.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osimono.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1870AFC32D8BC860004B827B /* osimonoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = osimonoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1870AFCD2D8BC860004B827B /* osimonoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = osimonoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		18B8A37E2E5747E80068C455 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		18B8A3802E57485E0068C455 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -159,6 +162,7 @@
 		1870AFAA2D8BC85E004B827B = {
 			isa = PBXGroup;
 			children = (
+				18B8A37D2E5747E80068C455 /* Localizable.strings */,
 				183EA0A62E37A7BC00BA48BD /* osirogu.storekit */,
 				1870AFB52D8BC85E004B827B /* osimono */,
 				1870AFC62D8BC860004B827B /* osimonoTests */,
@@ -300,11 +304,12 @@
 				};
 			};
 			buildConfigurationList = 1870AFAE2D8BC85E004B827B /* Build configuration list for PBXProject "osimono" */;
-			developmentRegion = en;
+			developmentRegion = ja;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
+				ja,
 			);
 			mainGroup = 1870AFAA2D8BC85E004B827B;
 			minimizedProjectReferenceProxies = 1;
@@ -336,6 +341,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				18B8A37F2E5747E80068C455 /* Localizable.strings in Resources */,
 				183EA0A72E37A7BC00BA48BD /* osirogu.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -393,6 +399,18 @@
 		};
 /* End PBXTargetDependency section */
 
+/* Begin PBXVariantGroup section */
+		18B8A37D2E5747E80068C455 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				18B8A37E2E5747E80068C455 /* en */,
+				18B8A3802E57485E0068C455 /* ja */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
 		1870AFD52D8BC860004B827B /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -401,6 +419,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -466,6 +485,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";

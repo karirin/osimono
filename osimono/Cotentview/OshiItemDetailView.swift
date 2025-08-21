@@ -132,21 +132,18 @@ struct OshiItemDetailView: View {
                     
                     // 詳細情報
                     VStack(alignment: .leading, spacing: 15) {
-                        // カテゴリーまたはイベント名
                         if let category = item.category, !category.isEmpty {
-                            detailRow(title: "カテゴリー", value: category, icon: "tag.fill")
+                            detailRow(title: L10n.category, value: category, icon: "tag.fill")
                         }
                         
                         if let eventName = item.eventName, !eventName.isEmpty {
-                            detailRow(title: "イベント", value: eventName, icon: "music.note.list")
+                            detailRow(title: L10n.eventName, value: eventName, icon: "music.note.list")
                         }
                         
-                        // 価格
                         if let price = item.price, price > 0 {
-                            detailRow(title: "価格", value: "¥\(price)", icon: "yensign.circle.fill")
+                            detailRow(title: L10n.price, value: "¥\(price)", icon: "yensign.circle.fill")
                         }
                         
-                        // 日付
                         if let date = getItemDate() {
                             detailRow(
                                 title: getDateLabel(),
@@ -155,9 +152,8 @@ struct OshiItemDetailView: View {
                             )
                         }
                         
-                        // 場所
                         if let location = item.location, !location.isEmpty {
-                            detailRow(title: "購入場所", value: location, icon: "mappin.circle.fill")
+                            detailRow(title: "purchase_location", value: location, icon: "mappin.circle.fill")
                         }
                     }
                     
@@ -166,7 +162,7 @@ struct OshiItemDetailView: View {
                     // メモ・思い出
                     if let memo = item.memo, !memo.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text(item.itemType == "ライブ記録" ? "思い出・エピソード" : "メモ")
+                            Text(L10n.memoLabel(for: item.itemType ?? ""))
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.gray)
                             
@@ -191,7 +187,7 @@ struct OshiItemDetailView: View {
                             VStack {
                                 Image(systemName: "square.and.arrow.up")
                                     .font(.system(size: 20))
-                                Text("シェア")
+                                Text("share")
                                     .font(.system(size: 12))
                             }
                             .foregroundColor(accentColor)
@@ -210,7 +206,7 @@ struct OshiItemDetailView: View {
                             VStack {
                                 Image(systemName: "pencil")
                                     .font(.system(size: 20))
-                                Text("編集")
+                                Text(L10n.edit)
                                     .font(.system(size: 12))
                             }
                             .foregroundColor(primaryColor)
@@ -229,7 +225,7 @@ struct OshiItemDetailView: View {
                             VStack {
                                 Image(systemName: "trash")
                                     .font(.system(size: 20))
-                                Text("削除")
+                                Text(L10n.delete)
                                     .font(.system(size: 12))
                             }
                             .foregroundColor(.red)
@@ -295,12 +291,12 @@ struct OshiItemDetailView: View {
         )
         .alert(isPresented: $showDeleteConfirmation) {
             Alert(
-                title: Text("投稿を削除"),
-                message: Text("この投稿を削除してもよろしいですか？この操作は元に戻せません。"),
-                primaryButton: .destructive(Text("削除")) {
+                title: Text(L10n.deleteConfirmationTitle),
+                message: Text(L10n.deleteConfirmationMessage),
+                primaryButton: .destructive(Text(L10n.delete)) {
                     deleteItem()
                 },
-                secondaryButton: .cancel(Text("キャンセル"))
+                secondaryButton: .cancel(Text(L10n.cancel))
             )
         }
         .sheet(isPresented: $isShareSheetPresented) {
@@ -360,23 +356,9 @@ struct OshiItemDetailView: View {
     // 日付ラベル取得メソッドを追加
     func getDateLabel() -> String {
         guard let itemType = item.itemType else {
-            return "日付"
+            return NSLocalizedString("date", comment: "Date")
         }
-        
-        switch itemType {
-        case "グッズ":
-            return "購入日"
-        case "聖地巡礼":
-            return "訪問日"
-        case "ライブ記録":
-            return "イベント日"
-        case "SNS投稿":
-            return "投稿日"
-        case "その他":
-            return "記録日"
-        default:
-            return "日付"
-        }
+        return L10n.dateLabel(for: itemType)
     }
     
     // 詳細行

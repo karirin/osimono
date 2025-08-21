@@ -68,7 +68,7 @@ struct OshiCollectionView: View {
     let categories = ["すべて", "グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
     
     // アイテムタイプ（「聖地巡礼」と「その他」を追加）
-    let itemTypes = ["すべて", "グッズ", "聖地巡礼", "ライブ記録", "SNS投稿", "その他"]
+    let itemTypes = [L10n.all, L10n.goods, L10n.pilgrimage, L10n.liveRecord, L10n.snsPost, L10n.other]
     
     var userId: String? {
         Auth.auth().currentUser?.uid
@@ -170,14 +170,13 @@ struct OshiCollectionView: View {
                 
                 // 検索バーとフィルター
                 HStack(spacing: 12) {
-                    // 検索バー
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.gray)
                         
                         ZStack(alignment: .leading) {
                             if searchText.isEmpty {
-                                Text("推しの名前、グッズ名で検索")
+                                Text(L10n.searchText)
                                     .foregroundColor(.gray)
                                     .font(.system(size: 14))
                             }
@@ -219,9 +218,7 @@ struct OshiCollectionView: View {
                 // フィルターメニュー - itemTypesに変更
                 if showingFilterMenu {
                     VStack(alignment: .leading, spacing: 12) {
-                        // アイテムタイプ選択
                         VStack(alignment: .leading, spacing: 10) {
-                            // アイテムタイプボタン
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 10) {
                                     ForEach(itemTypes, id: \.self) { itemType in
@@ -237,8 +234,6 @@ struct OshiCollectionView: View {
                                             }
                                             .padding(.horizontal, 10)
                                             .padding(.vertical, 6)
-                                            
-                                            
                                             .background(
                                                 RoundedRectangle(cornerRadius: 20)
                                                     .stroke(selectedItemType == itemType ? Color.white : Color.gray.opacity(0.3), lineWidth: 1)
@@ -256,12 +251,11 @@ struct OshiCollectionView: View {
                             }
                         }
                         
-                        // 並び替え
+                        // Updated sorting options
                         VStack(alignment: .leading, spacing: 10) {
-                            // 並び替えオプション
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 10) {
-                                    ForEach(["新しい順", "古い順", "価格高い順", "価格安い順", "お気に入り順"], id: \.self) { option in
+                                    ForEach([L10n.sortNewest, L10n.sortOldest, L10n.sortPriceHigh, L10n.sortPriceLow, L10n.sortFavorite], id: \.self) { option in
                                         Button(action: {
                                             sortOption = option
                                             generateHapticFeedback()
@@ -295,14 +289,12 @@ struct OshiCollectionView: View {
                 
                 // メインコンテンツ
                 if isLoading {
-                    // ローディング表示
                     VStack {
                         Spacer()
                         LoadingView2()
                         Spacer()
                     }
                 } else if filteredItems.isEmpty {
-                    // 空の状態表示
                     VStack(spacing: isSmallDevice() ? 5 : 20) {
                         Spacer()
                         
@@ -313,11 +305,11 @@ struct OshiCollectionView: View {
                             .foregroundColor(primaryColor.opacity(0.3))
                         
                         VStack(spacing: 8) {
-                            Text("推しの記録がありません")
+                            Text(L10n.noRecords)
                                 .font(.system(size: 20, weight: .medium))
                                 .foregroundColor(.gray)
                             
-                            Text("右下の「+」ボタンから推しグッズやSNS投稿を追加してみましょう！")
+                            Text(L10n.addItemsMessage)
                                 .font(.system(size: 16))
                                 .foregroundColor(.gray.opacity(0.7))
                                 .multilineTextAlignment(.center)
@@ -334,7 +326,7 @@ struct OshiCollectionView: View {
                         }) {
                             HStack {
                                 Image(systemName: "plus")
-                                Text("推しアイテムを追加")
+                                Text(L10n.addItem)
                             }
                             .font(.system(size: isSmallDevice() ? 13 : 16, weight: .medium))
                             .foregroundColor(.white)
@@ -505,12 +497,20 @@ struct OshiCollectionView: View {
     // アイテムタイプのアイコンを取得
     func itemTypeIcon(for type: String) -> String {
         switch type {
-        case "グッズ": return "gift.fill"
-        case "聖地巡礼": return "mappin.and.ellipse"
-        case "ライブ記録": return "music.note.list"
-        case "SNS投稿": return "bubble.right.fill"
-        case "その他": return "ellipsis.circle.fill"
-        default: return "square.grid.2x2.fill"
+        case L10n.all, "すべて":
+            return "square.grid.2x2"
+        case L10n.goods, "グッズ":
+            return "gift.fill"
+        case L10n.pilgrimage, "聖地巡礼":
+            return "mappin.and.ellipse"
+        case L10n.liveRecord, "ライブ記録":
+            return "music.note"
+        case L10n.snsPost, "SNS投稿":
+            return "bubble.right.fill"
+        case L10n.other, "その他":
+            return "questionmark.circle"
+        default:
+            return "photo"
         }
     }
     

@@ -1,0 +1,118 @@
+/* 
+  Localizable.strings
+  osimono
+
+  Created by Apple on 2025/08/21.
+  
+*/
+
+"oshi_selection" = "推しを選択";
+"add_new_oshi" = "新規追加";
+"add_oshi" = "推しを追加";
+"add_oshi_post" = "推しの投稿を追加";
+"post_type" = "投稿タイプ";
+"searchText" = "推しの名前、グッズ名で検索";
+"edit" = "編集";
+"save" = "保存";
+"cancel" = "キャンセル";
+"back" = "戻る";
+"delete" = "削除";
+"confirm" = "確認";
+"close" = "閉じる";
+
+// Profile Section
+"profile_title" = "プロフィール";
+"username" = "ユーザー名";
+"favorite_oshi" = "推しの名前";
+"select_oshi" = "推しを選択";
+"please_select_oshi" = "推しを選択してください";
+
+// Item Types
+"goods" = "グッズ";
+"pilgrimage" = "聖地巡礼";
+"live_record" = "ライブ記録";
+"sns_post" = "SNS投稿";
+"other" = "その他";
+"all" = "すべて";
+
+// Form Fields
+"title" = "タイトル";
+"category" = "カテゴリー";
+"price" = "価格";
+"event_name" = "イベント名";
+"location" = "場所";
+"date" = "日付";
+"purchase_date" = "購入日";
+"visit_date" = "訪問日";
+"event_date" = "イベント日";
+"post_date" = "投稿日";
+"record_date" = "記録日";
+"tags" = "タグ";
+"add_new_tag" = "新しいタグを追加";
+"favorite_rating" = "お気に入り度";
+"memo" = "メモ";
+"memories_episodes" = "思い出・エピソード";
+"details_memo" = "詳細メモ";
+
+// Placeholders
+"title_placeholder_goods" = "例: BTS 公式ペンライト Ver.3";
+"title_placeholder_pilgrimage" = "例: MVロケ地・渋谷〇〇カフェ";
+"title_placeholder_live" = "例: 東京ドーム公演";
+"title_placeholder_sns" = "例: インスタストーリー投稿";
+"title_placeholder_other" = "例: 推しの誕生日、記念日など";
+"price_placeholder" = "例: 5500";
+"event_name_placeholder" = "例: BTS ライブ『LOVE YOURSELF』";
+"location_placeholder" = "例: 東京都渋谷区〇〇";
+"memo_placeholder" = "ここにメモを入力";
+
+// Messages
+"no_records" = "推しの記録がありません";
+"add_items_message" = "右下の「+」ボタンから推しグッズやSNS投稿を追加してみましょう！";
+"add_item" = "推しアイテムを追加";
+"post_item" = "投稿する";
+"saving" = "保存中...";
+"loading" = "読み込み中...";
+
+// Alerts
+"notification" = "通知";
+"delete_confirmation_title" = "投稿を削除";
+"delete_confirmation_message" = "この投稿を削除してもよろしいですか？この操作は元に戻せません。";
+"ok" = "OK";
+
+// Categories
+"cd_dvd" = "CD・DVD";
+"magazine" = "雑誌";
+"photo_book" = "写真集";
+"acrylic_stand" = "アクリルスタンド";
+"plushie" = "ぬいぐるみ";
+"t_shirt" = "Tシャツ";
+"towel" = "タオル";
+
+// Sorting
+"sort_newest" = "新しい順";
+"sort_oldest" = "古い順";
+"sort_price_high" = "価格高い順";
+"sort_price_low" = "価格安い順";
+"sort_favorite" = "お気に入り順";
+
+// Registration
+"register_oshi_first" = "推しを登録しよう！";
+"register_oshi_message" = "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。";
+"register_oshi_button" = "推しを登録する";
+
+// Image
+"image" = "画像";
+"tap_to_select_image" = "タップして画像を選択";
+"change_image" = "画像を変更";
+
+// Location
+"current_location" = "現在地を設定";
+"get_current_location" = "現在地を取得";
+
+// Apology Modal
+"apology_title" = "お詫び";
+"apology_message_1" = "AIメッセージ機能に不具合があり、";
+"apology_message_2" = "推しからのメッセージが正常に";
+"apology_message_3" = "届かない状況が発生していました。";
+"apology_message_4" = "現在は修正済みです。";
+"apology_message_5" = "ご迷惑をおかけして申し訳ございませんでした。";
