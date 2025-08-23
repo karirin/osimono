@@ -22,7 +22,7 @@ struct LanguageSelectionView: View {
                 }
             }
         }
-        .navigationTitle("Settings")
+        .navigationTitle(L10n.settings)
     }
     
     private func changeLanguage(to language: String) {
@@ -30,8 +30,8 @@ struct LanguageSelectionView: View {
         UserDefaults.standard.set([language], forKey: "AppleLanguages")
         UserDefaults.standard.synchronize()
         
-        // Restart app or reload views
-        // Note: Full implementation would require app restart
+        // Note: In a real app, you might want to show a restart prompt
+        // or reload the main view hierarchy
     }
 }
 

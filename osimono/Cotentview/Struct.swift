@@ -164,7 +164,7 @@ struct CategoryButton: View {
                     Text(category.name)
                         .font(.system(size: 14, weight: .medium))
                     
-                    Text("\(count)アイテム")
+                    Text(L10n.itemCount(count))
                         .font(.system(size: 12))
                         .opacity(0.7)
                 }
@@ -226,6 +226,10 @@ struct L10n {
     static let selectOshi = NSLocalizedString("select_oshi", comment: "Select oshi button")
     static let pleaseSelectOshi = NSLocalizedString("please_select_oshi", comment: "Please select oshi message")
     static let searchText = NSLocalizedString("searchText", comment: "Search Text")
+    
+    static let oshiSelection = NSLocalizedString("oshiSelection", comment: "Oshi Selection")
+    static let username = NSLocalizedString("username", comment: "User Name")
+    static let favoriteOshi = NSLocalizedString("favoriteOshi", comment: "Favorite Oshi")
     
     static let addOshiPost = NSLocalizedString("add_oshi_post", comment: "Add Oshi Post")
     static let postType = NSLocalizedString("post_type", comment: "Post Type")
@@ -375,6 +379,140 @@ struct L10n {
             return memo
         }
     }
+    
+    static let userNickname = NSLocalizedString("user_nickname", comment: "User nickname")
+    static let profileInfo = NSLocalizedString("profile_info", comment: "Profile information")
+    static let profileEdit = NSLocalizedString("profile_edit", comment: "Profile edit")
+    static let register = NSLocalizedString("register", comment: "Register")
+    static let oshiFanUser = NSLocalizedString("oshi_fan_user", comment: "Oshi fan user")
+    static let selectYourOshi = NSLocalizedString("select_your_oshi", comment: "Select your oshi")
+    static let addNew = NSLocalizedString("add_new", comment: "Add new")
+    static let addOshiItem = NSLocalizedString("add_oshi_item", comment: "Add oshi item")
+    static let unknownError = NSLocalizedString("unknown_error", comment: "Unknown error")
+    
+    // Additional Item and Categories
+    static let untitled = NSLocalizedString("untitled", comment: "Untitled")
+    static let noName = NSLocalizedString("no_name", comment: "No name")
+    static let purchaseLocation = NSLocalizedString("purchase_location", comment: "Purchase location")
+    
+    // Date and Time
+    static let justNow = NSLocalizedString("just_now", comment: "Just now")
+    
+    // Collection and Items
+    static let collection = NSLocalizedString("collection", comment: "Collection")
+    static let myCollection = NSLocalizedString("my_collection", comment: "My collection")
+    static let itemDetails = NSLocalizedString("item_details", comment: "Item details")
+    static let itemEdit = NSLocalizedString("item_edit", comment: "Item edit")
+    static let share = NSLocalizedString("share", comment: "Share")
+    static let oshiItem = NSLocalizedString("oshi_item", comment: "Oshi item")
+    
+    // Errors and Validation
+    static let error = NSLocalizedString("error", comment: "Error")
+    static let validationError = NSLocalizedString("validation_error", comment: "Validation error")
+    static let requiredField = NSLocalizedString("required_field", comment: "Required field")
+    static let invalidInput = NSLocalizedString("invalid_input", comment: "Invalid input")
+    static let networkError = NSLocalizedString("network_error", comment: "Network error")
+    static let uploadError = NSLocalizedString("upload_error", comment: "Upload error")
+    static let saveError = NSLocalizedString("save_error", comment: "Save error")
+    static let deleteError = NSLocalizedString("delete_error", comment: "Delete error")
+    
+    // Success Messages
+    static let success = NSLocalizedString("success", comment: "Success")
+    static let savedSuccessfully = NSLocalizedString("saved_successfully", comment: "Saved successfully")
+    static let deletedSuccessfully = NSLocalizedString("deleted_successfully", comment: "Deleted successfully")
+    static let uploadedSuccessfully = NSLocalizedString("uploaded_successfully", comment: "Uploaded successfully")
+    
+    // Locations and Address
+    static let addressFetchFailed = NSLocalizedString("address_fetch_failed", comment: "Address fetch failed")
+    static let locationFetchFailed = NSLocalizedString("location_fetch_failed", comment: "Location fetch failed")
+    static let addressFetchError = NSLocalizedString("address_fetch_error", comment: "Address fetch error")
+    
+    // Oshi Management
+    static let oshiList = NSLocalizedString("oshi_list", comment: "Oshi list")
+    static let oshiDetails = NSLocalizedString("oshi_details", comment: "Oshi details")
+    static let oshiAnniversary = NSLocalizedString("oshi_anniversary", comment: "Oshi anniversary")
+    static let congratulations = NSLocalizedString("congratulations", comment: "Congratulations")
+    
+    // Chat and AI
+    static let chat = NSLocalizedString("chat", comment: "Chat")
+    static let aiChat = NSLocalizedString("ai_chat", comment: "AI chat")
+    static let message = NSLocalizedString("message", comment: "Message")
+    static let sendMessage = NSLocalizedString("send_message", comment: "Send message")
+    static let typing = NSLocalizedString("typing", comment: "Typing")
+    
+    // Settings and Preferences
+    static let settings = NSLocalizedString("settings", comment: "Settings")
+    static let language = NSLocalizedString("language", comment: "Language")
+    static let theme = NSLocalizedString("theme", comment: "Theme")
+    static let notifications = NSLocalizedString("notifications", comment: "Notifications")
+    static let privacy = NSLocalizedString("privacy", comment: "Privacy")
+    static let about = NSLocalizedString("about", comment: "About")
+    static let version = NSLocalizedString("version", comment: "Version")
+    
+    // Permissions and Access
+    static let cameraPermission = NSLocalizedString("camera_permission", comment: "Camera permission")
+    static let photoLibraryPermission = NSLocalizedString("photo_library_permission", comment: "Photo library permission")
+    static let locationPermission = NSLocalizedString("location_permission", comment: "Location permission")
+    static let permissionDenied = NSLocalizedString("permission_denied", comment: "Permission denied")
+    static let permissionRequired = NSLocalizedString("permission_required", comment: "Permission required")
+    
+    // Loading and Status
+    static let pleaseWait = NSLocalizedString("please_wait", comment: "Please wait")
+    static let processing = NSLocalizedString("processing", comment: "Processing")
+    static let updating = NSLocalizedString("updating", comment: "Updating")
+    static let uploading = NSLocalizedString("uploading", comment: "Uploading")
+    static let downloading = NSLocalizedString("downloading", comment: "Downloading")
+    
+    // Help and Support
+    static let help = NSLocalizedString("help", comment: "Help")
+    static let support = NSLocalizedString("support", comment: "Support")
+    static let faq = NSLocalizedString("faq", comment: "FAQ")
+    static let contactUs = NSLocalizedString("contact_us", comment: "Contact us")
+    static let tutorial = NSLocalizedString("tutorial", comment: "Tutorial")
+    
+    static func itemCount(_ count: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("item_count", comment: "Item count"), count)
+    }
+    
+    static func yearsAgo(_ years: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("years_ago", comment: "Years ago"), years)
+    }
+    
+    static func monthsAgo(_ months: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("months_ago", comment: "Months ago"), months)
+    }
+    
+    static func daysAgo(_ days: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("days_ago", comment: "Days ago"), days)
+    }
+    
+    static func hoursAgo(_ hours: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("hours_ago", comment: "Hours ago"), hours)
+    }
+    
+    static func minutesAgo(_ minutes: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("minutes_ago", comment: "Minutes ago"), minutes)
+    }
+    
+    static func daysWithOshi(_ days: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("days_with_oshi", comment: "Days with oshi"), days)
+    }
+    
+    static func anniversaryMessage(_ days: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("anniversary_message", comment: "Anniversary message"), days)
+    }
+    
+    static func addressFetchFailedMessage(_ error: String) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("address_fetch_failed", comment: "Address fetch failed message"), error)
+    }
+    
+    static func aiMessageErrorMessage(_ error: String) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("ai_message_error", comment: "AI message error"), error)
+    }
+    
+    static func chatMessageSaveErrorMessage(_ error: String) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("chat_message_save_error", comment: "Chat message save error"), error)
+    }
 }
 
 func getCurrentLanguage() -> String {
@@ -384,4 +522,36 @@ func getCurrentLanguage() -> String {
 // Helper function to check if current language is Japanese
 func isJapanese() -> Bool {
     return getCurrentLanguage() == "ja"
+}
+
+extension Date {
+    func timeAgoDisplay() -> String {
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(self)
+        
+        let minute: TimeInterval = 60
+        let hour: TimeInterval = 60 * minute
+        let day: TimeInterval = 24 * hour
+        let month: TimeInterval = 30 * day
+        let year: TimeInterval = 365 * day
+        
+        if timeInterval < minute {
+            return L10n.justNow
+        } else if timeInterval < hour {
+            let minutes = Int(timeInterval / minute)
+            return L10n.minutesAgo(minutes)
+        } else if timeInterval < day {
+            let hours = Int(timeInterval / hour)
+            return L10n.hoursAgo(hours)
+        } else if timeInterval < month {
+            let days = Int(timeInterval / day)
+            return L10n.daysAgo(days)
+        } else if timeInterval < year {
+            let months = Int(timeInterval / month)
+            return L10n.monthsAgo(months)
+        } else {
+            let years = Int(timeInterval / year)
+            return L10n.yearsAgo(years)
+        }
+    }
 }

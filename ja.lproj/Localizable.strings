@@ -116,3 +116,105 @@
 "apology_message_3" = "届かない状況が発生していました。";
 "apology_message_4" = "現在は修正済みです。";
 "apology_message_5" = "ご迷惑をおかけして申し訳ございませんでした。";
+"oshi_selection" = "推しを選択";
+"user_name" = "ユーザー名";
+
+"user_nickname" = "ユーザーニックネーム";
+"profile_info" = "プロフィール情報";
+"profile_edit" = "プロフィール編集";
+"register" = "登録";
+"oshi_fan_user" = "推し活ユーザー";
+"select_your_oshi" = "推しを選択してください";
+"add_new" = "新規追加";
+"add_oshi_item" = "推しアイテムを追加";
+"unknown_error" = "不明なエラー";
+
+// Item Types and Categories (Extended)
+"untitled" = "無題";
+"no_name" = "名前なし";
+"purchase_location" = "購入場所";
+"item_count" = "%dアイテム";
+
+// Date and Time
+"years_ago" = "%d年前";
+"months_ago" = "%dヶ月前";
+"days_ago" = "%d日前";
+"hours_ago" = "%d時間前";
+"minutes_ago" = "%d分前";
+"just_now" = "たった今";
+
+// Collection and Items
+"collection" = "コレクション";
+"my_collection" = "マイコレクション";
+"item_details" = "アイテム詳細";
+"item_edit" = "アイテム編集";
+"share" = "シェア";
+"oshi_item" = "推しアイテム";
+
+// Errors and Validation
+"error" = "エラー";
+"validation_error" = "入力エラー";
+"required_field" = "必須項目";
+"invalid_input" = "無効な入力";
+"network_error" = "ネットワークエラー";
+"upload_error" = "アップロードエラー";
+"save_error" = "保存エラー";
+"delete_error" = "削除エラー";
+
+// Success Messages
+"success" = "成功";
+"saved_successfully" = "保存しました";
+"deleted_successfully" = "削除しました";
+"uploaded_successfully" = "アップロードしました";
+
+// Locations and Address
+"address_fetch_failed" = "住所の取得に失敗しました: %@";
+"location_fetch_failed" = "位置情報の取得に失敗しました。設定から位置情報の利用を許可してください。";
+"address_fetch_error" = "住所の取得に失敗しました";
+
+// Oshi Management
+"oshi_list" = "推しリスト";
+"oshi_details" = "推し詳細";
+"oshi_anniversary" = "推し記念日";
+"days_with_oshi" = "推しと%d日";
+"congratulations" = "おめでとうございます";
+"anniversary_message" = "推しを登録してから%d日が経ちました！";
+
+// Chat and AI
+"chat" = "チャット";
+"ai_chat" = "AIチャット";
+"message" = "メッセージ";
+"send_message" = "メッセージを送信";
+"typing" = "入力中...";
+"ai_message_error" = "AIメッセージ生成エラー: %@";
+"chat_message_save_error" = "チャットメッセージ保存エラー: %@";
+
+// Settings and Preferences
+"settings" = "設定";
+"language" = "言語";
+"theme" = "テーマ";
+"notifications" = "通知";
+"privacy" = "プライバシー";
+"about" = "このアプリについて";
+"version" = "バージョン";
+
+// Permissions and Access
+"camera_permission" = "カメラの許可";
+"photo_library_permission" = "フォトライブラリの許可";
+"location_permission" = "位置情報の許可";
+"permission_denied" = "許可が拒否されました";
+"permission_required" = "許可が必要です";
+
+// Loading and Status
+"please_wait" = "しばらくお待ちください...";
+"processing" = "処理中...";
+"updating" = "更新中...";
+"uploading" = "アップロード中...";
+"downloading" = "ダウンロード中...";
+
+// Help and Support
+"help" = "ヘルプ";
+"support" = "サポート";
+"faq" = "よくある質問";
+"contact_us" = "お問い合わせ";
+"tutorial" = "チュートリアル";

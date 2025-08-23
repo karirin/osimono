@@ -16,6 +16,18 @@ struct OshiItemCard: View {
     let primaryColor = Color(.systemPink)
     let cardColor = Color.white
     
+    // アイテムタイプのマッピング（OshiCollectionViewと同じ構造）
+    var itemTypeMappings: [ItemTypeMapping] {
+        [
+            ItemTypeMapping(key: "すべて", displayName: L10n.all, icon: "square.grid.2x2", color: Color(.systemBlue)),
+            ItemTypeMapping(key: "グッズ", displayName: L10n.goods, icon: "gift.fill", color: Color(.systemPink)),
+            ItemTypeMapping(key: "聖地巡礼", displayName: L10n.pilgrimage, icon: "mappin.and.ellipse", color: Color(.systemGreen)),
+            ItemTypeMapping(key: "ライブ記録", displayName: L10n.liveRecord, icon: "music.note", color: Color(.systemOrange)),
+            ItemTypeMapping(key: "SNS投稿", displayName: L10n.snsPost, icon: "bubble.right.fill", color: Color(.systemPurple)),
+            ItemTypeMapping(key: "その他", displayName: L10n.other, icon: "questionmark.circle", color: Color(.systemGray))
+        ]
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // 画像部分
@@ -38,24 +50,23 @@ struct OshiItemCard: View {
                     ZStack {
                         Rectangle()
                             .foregroundColor(Color.gray.opacity(0.1))
-                        //                .frame(maxWidth: .infinity)
                             .frame(width: 120,height: 120)
                         if let itemType = item.itemType {
                             Image(systemName: iconForItemType(itemType))
                                 .font(.system(size: 30))
                                 .foregroundColor(.gray)
-                            //                    placeholderImage
                         }
                     }
                 }
                 
-                // アイテムタイプバッジ
+                // アイテムタイプバッジ（多言語対応）
                 if let itemType = item.itemType {
                     HStack(spacing: 4) {
                         Image(systemName: iconForItemType(itemType))
                             .font(.system(size: 10))
                         
-                        Text(itemType)
+                        // データベース値を表示用テキストに変換
+                        Text(displayNameForItemType(itemType))
                             .font(.system(size: 10, weight: .semibold))
                     }
                     .padding(.horizontal, 8)
@@ -72,7 +83,7 @@ struct OshiItemCard: View {
             
             // 商品情報
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.title ?? "無題")
+                Text(item.title ?? L10n.untitled)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.black)
                     .lineLimit(1)
@@ -129,39 +140,26 @@ struct OshiItemCard: View {
         }
     }
     
+    // データベース値（日本語）からアイコンを取得
     func iconForItemType(_ type: String) -> String {
-        switch type {
-        case "すべて":
-            return "square.grid.2x2"        // 例：グリッド状のアイコン
-        case "グッズ":
-            return "gift.fill"
-        case "聖地巡礼":
-            return "mappin.and.ellipse"     // 例：地図ピンのアイコン
-        case "ライブ記録":
-            return "music.note"
-        case "SNS投稿":
-            return "bubble.right.fill"
-        case "その他":
-            return "questionmark.circle"     // 例：疑問符付き丸のアイコン
-        default:
-            return "photo"
-        }
+        return itemTypeMappings.first(where: { $0.key == type })?.icon ?? "photo"
     }
     
+    // データベース値（日本語）から表示用テキストを取得
+    func displayNameForItemType(_ type: String) -> String {
+        return itemTypeMappings.first(where: { $0.key == type })?.displayName ?? type
+    }
+    
+    // データベース値（日本語）からバッジ色を取得
     func badgeColor(for type: String) -> Color {
-        switch type {
-        case "グッズ": return Color(.systemPink)
-        case "SNS投稿": return Color(.systemPurple)
-        case "ライブ記録": return Color(.systemOrange)
-        case "聖地巡礼": return Color(.systemGreen)
-        default: return Color.gray
-        }
+        return itemTypeMappings.first(where: { $0.key == type })?.color ?? Color.gray
     }
     
     // 日付フォーマット
     func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/MM/dd"
+        formatter.locale = Locale.current
+        formatter.dateFormat = isJapanese() ? "yyyy/MM/dd" : "MM/dd/yyyy"
         return formatter.string(from: date)
     }
 }

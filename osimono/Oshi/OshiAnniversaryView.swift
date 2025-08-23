@@ -86,25 +86,23 @@ struct OshiAnniversaryView: View {
                     }.padding(.top)
                 }
                 
-                Text("🎉 おめでとう！ 🎉")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                
-                Text("\(oshiName)を推し続けて")
-                    .font(.title2)
-                    .foregroundColor(.white)
-                
-                Text("\(days)日")
-                    .font(.system(size: 50, weight: .bold))
-                    .foregroundColor(.pink)
-                    .padding(.vertical, 10)
-                
-                Text("これからも推し活を楽しんでください！")
-                    .font(.body)
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+                VStack(spacing: 15) {
+                    Text(L10n.congratulations)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    Text(L10n.anniversaryMessage(days))
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                    
+                    Text(L10n.daysWithOshi(days))
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .padding(.top, 8)
+                }
                 
                 // 日数に応じたメッセージを表示
                 if days % 100 == 0 {
@@ -139,7 +137,7 @@ struct OshiAnniversaryView: View {
                         isShowing = false
                     }
                 }) {
-                    Text("閉じる")
+                    Text(L10n.close)
                         .padding(.horizontal, 30)
                         .padding(.vertical, 12)
                         .background(Color.pink)

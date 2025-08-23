@@ -16,6 +16,13 @@ struct OshiCategory: Identifiable {
     var icon: String
 }
 
+struct ItemTypeMapping {
+    let key: String // データベースに保存される値
+    let displayName: String // 表示用テキスト
+    let icon: String
+    let color: Color
+}
+
 struct OshiCollectionView: View {
     @State private var oshiItems: [OshiItem] = []
     @State private var selectedImage: UIImage?
@@ -27,7 +34,7 @@ struct OshiCollectionView: View {
     @State private var showingFilterMenu = false
     @State private var sortOption = "新しい順"
     @State private var showingItemTypeFilter = false
-    @State private var selectedItemType: String = "すべて"
+    @State private var selectedItemType: String = "すべて" // データベース値を使用
     var oshiId: String
     var refreshTrigger: Bool
     @Binding var showingOshiAlert: Bool
@@ -54,21 +61,44 @@ struct OshiCollectionView: View {
     let backgroundColor = Color(.white) // 明るい背景色
     let cardColor = Color(.white) // カード背景色
     
-    // 各アイテムタイプごとの色定義
-    let itemTypeColors: [String: Color] = [
-        "すべて": Color(.systemBlue),
-        "グッズ": Color(.systemPink),
-        "聖地巡礼": Color(.systemGreen),
-        "ライブ記録": Color(.systemOrange),
-        "SNS投稿": Color(.systemPurple),
-        "その他": Color(.systemGray)
-    ]
+    // アイテムタイプのマッピングデータ
+    var itemTypeMappings: [ItemTypeMapping] {
+        [
+            ItemTypeMapping(key: "すべて", displayName: L10n.all, icon: "square.grid.2x2", color: Color(.systemBlue)),
+            ItemTypeMapping(key: "グッズ", displayName: L10n.goods, icon: "gift.fill", color: Color(.systemPink)),
+            ItemTypeMapping(key: "聖地巡礼", displayName: L10n.pilgrimage, icon: "mappin.and.ellipse", color: Color(.systemGreen)),
+            ItemTypeMapping(key: "ライブ記録", displayName: L10n.liveRecord, icon: "music.note", color: Color(.systemOrange)),
+            ItemTypeMapping(key: "SNS投稿", displayName: L10n.snsPost, icon: "bubble.right.fill", color: Color(.systemPurple)),
+            ItemTypeMapping(key: "その他", displayName: L10n.other, icon: "questionmark.circle", color: Color(.systemGray))
+        ]
+    }
     
-    // カテゴリーリスト - 推し活向けカテゴリー
-    let categories = ["すべて", "グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
+    // カテゴリーのマッピングデータ
+    var categoryMappings: [ItemTypeMapping] {
+        [
+            ItemTypeMapping(key: "すべて", displayName: L10n.all, icon: "", color: Color(.systemBlue)),
+            ItemTypeMapping(key: "グッズ", displayName: L10n.goods, icon: "", color: Color(.systemPink)),
+            ItemTypeMapping(key: "CD・DVD", displayName: L10n.cdDvd, icon: "", color: Color(.systemBlue)),
+            ItemTypeMapping(key: "雑誌", displayName: L10n.magazine, icon: "", color: Color(.systemGreen)),
+            ItemTypeMapping(key: "写真集", displayName: L10n.photoBook, icon: "", color: Color(.systemOrange)),
+            ItemTypeMapping(key: "アクリルスタンド", displayName: L10n.acrylicStand, icon: "", color: Color(.systemPurple)),
+            ItemTypeMapping(key: "ぬいぐるみ", displayName: L10n.plushie, icon: "", color: Color(.systemRed)),
+            ItemTypeMapping(key: "Tシャツ", displayName: L10n.tShirt, icon: "", color: Color(.systemTeal)),
+            ItemTypeMapping(key: "タオル", displayName: L10n.towel, icon: "", color: Color(.systemYellow)),
+            ItemTypeMapping(key: "その他", displayName: L10n.other, icon: "", color: Color(.systemGray))
+        ]
+    }
     
-    // アイテムタイプ（「聖地巡礼」と「その他」を追加）
-    let itemTypes = [L10n.all, L10n.goods, L10n.pilgrimage, L10n.liveRecord, L10n.snsPost, L10n.other]
+    // ソートオプションのマッピング
+    var sortMappings: [ItemTypeMapping] {
+        [
+            ItemTypeMapping(key: "新しい順", displayName: L10n.sortNewest, icon: "", color: Color.clear),
+            ItemTypeMapping(key: "古い順", displayName: L10n.sortOldest, icon: "", color: Color.clear),
+            ItemTypeMapping(key: "価格高い順", displayName: L10n.sortPriceHigh, icon: "", color: Color.clear),
+            ItemTypeMapping(key: "価格安い順", displayName: L10n.sortPriceLow, icon: "", color: Color.clear),
+            ItemTypeMapping(key: "お気に入り順", displayName: L10n.sortFavorite, icon: "", color: Color.clear)
+        ]
+    }
     
     var userId: String? {
         Auth.auth().currentUser?.uid
@@ -78,12 +108,12 @@ struct OshiCollectionView: View {
     var filteredItems: [OshiItem] {
         var result = oshiItems
         
-        // アイテムタイプフィルター
+        // アイテムタイプフィルター（データベース値で比較）
         if selectedItemType != "すべて" {
             result = result.filter { $0.itemType == selectedItemType }
         }
         
-        // カテゴリーフィルター
+        // カテゴリーフィルター（データベース値で比較）
         if selectedCategory != "すべて" {
             result = result.filter { $0.category == selectedCategory }
         }
@@ -99,7 +129,7 @@ struct OshiCollectionView: View {
             }
         }
         
-        // ソート
+        // ソート（データベース値で比較）
         switch sortOption {
         case "新しい順":
             result.sort { (a, b) -> Bool in
@@ -131,9 +161,8 @@ struct OshiCollectionView: View {
     }
     
     private let adminUserIds = [
-        ""
 //        "3UDNienzhkdheKIy77lyjMJhY4D3",
-//        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
     
     @State private var isAdmin = false
@@ -215,64 +244,63 @@ struct OshiCollectionView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 8)
                 
-                // フィルターメニュー - itemTypesに変更
+                // フィルターメニュー - 修正版
                 if showingFilterMenu {
                     VStack(alignment: .leading, spacing: 12) {
+                        // アイテムタイプフィルター
                         VStack(alignment: .leading, spacing: 10) {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 10) {
-                                    ForEach(itemTypes, id: \.self) { itemType in
+                                    ForEach(itemTypeMappings, id: \.key) { mapping in
                                         Button(action: {
-                                            selectedItemType = itemType
+                                            selectedItemType = mapping.key // データベース値を設定
                                             generateHapticFeedback()
                                         }) {
                                             HStack(spacing: 4) {
-                                                Image(systemName: itemTypeIcon(for: itemType))
+                                                Image(systemName: mapping.icon)
                                                     .font(.system(size: 10))
-                                                Text(itemType)
+                                                Text(mapping.displayName) // 表示用テキストを使用
                                                     .font(.system(size: 12))
                                             }
                                             .padding(.horizontal, 10)
                                             .padding(.vertical, 6)
                                             .background(
                                                 RoundedRectangle(cornerRadius: 20)
-                                                    .stroke(selectedItemType == itemType ? Color.white : Color.gray.opacity(0.3), lineWidth: 1)
+                                                    .stroke(selectedItemType == mapping.key ? Color.white : Color.gray.opacity(0.3), lineWidth: 1)
                                                     .background(
                                                         RoundedRectangle(cornerRadius: 20)
-                                                            .fill(selectedItemType == itemType ?
-                                                                  (itemTypeColors[itemType] ?? accentColor) :
-                                                                    (Color.white ?? Color.gray))
+                                                            .fill(selectedItemType == mapping.key ? mapping.color : Color.white)
                                                     )
                                             )
-                                            .foregroundColor(selectedItemType == itemType ? .white : .gray ?? .gray)
+                                            .foregroundColor(selectedItemType == mapping.key ? .white : .gray)
                                         }
                                     }
                                 }
                             }
                         }
                         
-                        // Updated sorting options
+                        // ソートオプション
                         VStack(alignment: .leading, spacing: 10) {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 10) {
-                                    ForEach([L10n.sortNewest, L10n.sortOldest, L10n.sortPriceHigh, L10n.sortPriceLow, L10n.sortFavorite], id: \.self) { option in
+                                    ForEach(sortMappings, id: \.key) { mapping in
                                         Button(action: {
-                                            sortOption = option
+                                            sortOption = mapping.key // データベース値を設定
                                             generateHapticFeedback()
                                         }) {
-                                            Text(option)
+                                            Text(mapping.displayName) // 表示用テキストを使用
                                                 .font(.system(size: 12))
                                                 .padding(.horizontal, 10)
                                                 .padding(.vertical, 6)
                                                 .background(
                                                     RoundedRectangle(cornerRadius: 20)
-                                                        .stroke(sortOption == option ? primaryColor : Color.gray.opacity(0.3), lineWidth: 1)
+                                                        .stroke(sortOption == mapping.key ? primaryColor : Color.gray.opacity(0.3), lineWidth: 1)
                                                         .background(
                                                             RoundedRectangle(cornerRadius: 20)
-                                                                .fill(sortOption == option ? primaryColor.opacity(0.1) : Color.clear)
+                                                                .fill(sortOption == mapping.key ? primaryColor.opacity(0.1) : Color.clear)
                                                         )
                                                 )
-                                                .foregroundColor(sortOption == option ? primaryColor : .gray)
+                                                .foregroundColor(sortOption == mapping.key ? primaryColor : .gray)
                                                 .padding(3)
                                         }
                                     }
@@ -494,29 +522,14 @@ struct OshiCollectionView: View {
         }
     }
     
-    // アイテムタイプのアイコンを取得
+    // アイテムタイプのアイコンを取得（マッピングを使用）
     func itemTypeIcon(for type: String) -> String {
-        switch type {
-        case L10n.all, "すべて":
-            return "square.grid.2x2"
-        case L10n.goods, "グッズ":
-            return "gift.fill"
-        case L10n.pilgrimage, "聖地巡礼":
-            return "mappin.and.ellipse"
-        case L10n.liveRecord, "ライブ記録":
-            return "music.note"
-        case L10n.snsPost, "SNS投稿":
-            return "bubble.right.fill"
-        case L10n.other, "その他":
-            return "questionmark.circle"
-        default:
-            return "photo"
-        }
+        return itemTypeMappings.first(where: { $0.key == type })?.icon ?? "photo"
     }
     
-    // 特定のアイテムタイプの色を取得
+    // 特定のアイテムタイプの色を取得（マッピングを使用）
     func colorForItemType(_ type: String) -> Color {
-        return itemTypeColors[type] ?? accentColor
+        return itemTypeMappings.first(where: { $0.key == type })?.color ?? accentColor
     }
     
     // データ取得

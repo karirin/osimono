@@ -8,20 +8,17 @@
 import SwiftUI
 
 struct OshiAlertView: View {
-    var title: String
-    var message: String
-    var buttonText: String
-    var action: () -> Void
+    let title: String
+    let message: String
+    let buttonText: String
+    let action: () -> Void
     @Binding var isShowing: Bool
     
-    // 色の定義 - 推し活向けカラー
-    let primaryColor = Color(.systemPink) // ピンク
-    let accentColor = Color(.purple) // 紫
+    let primaryColor = Color(.systemPink)
     
     var body: some View {
         ZStack {
-            // 半透明の背景
-            Color.black.opacity(0.4)
+            Color.black.opacity(0.5)
                 .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
                     withAnimation(.spring()) {
@@ -29,65 +26,64 @@ struct OshiAlertView: View {
                     }
                 }
             
-            // アラートカード
             VStack(spacing: 20) {
-                // アイコン
-                Image(systemName: "person.crop.circle.badge.plus")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 60, height: 60)
+                Image(systemName: "heart.circle.fill")
+                    .font(.system(size: 50))
                     .foregroundColor(primaryColor)
-                    .padding(.top, 30)
                 
-                // タイトル
                 Text(title)
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
                     .multilineTextAlignment(.center)
                 
-                // メッセージ
                 Text(message)
-                    .font(.system(size: 16))
+                    .font(.body)
+                    .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal, 20)
+                    .lineSpacing(2)
                 
-                // メインボタン
+                Button(action: {
+                    generateHapticFeedback()
+                    action()
+                    withAnimation(.spring()) {
+                        isShowing = false
+                    }
+                }) {
+                    Text(buttonText)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(primaryColor)
+                        .cornerRadius(12)
+                }
+                .padding(.top, 8)
+                
                 Button(action: {
                     generateHapticFeedback()
                     withAnimation(.spring()) {
                         isShowing = false
                     }
-                    action()
                 }) {
-                    Text(buttonText)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [primaryColor, accentColor]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(12)
+                    Text(L10n.cancel)
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 30)
+            .padding(24)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
             )
             .padding(.horizontal, 40)
-            .transition(.scale.combined(with: .opacity))
         }
+        .transition(.opacity.combined(with: .scale(scale: 0.8)))
     }
     
-    // 触覚フィードバック
-    func generateHapticFeedback() {
+    private func generateHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
     }

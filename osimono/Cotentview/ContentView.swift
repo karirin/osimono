@@ -298,9 +298,9 @@ struct ContentView: View {
                 }
                 if showingOshiAlert {
                     OshiAlertView(
-                        title: "推しを登録しよう！",
-                        message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
-                        buttonText: "推しを登録する",
+                        title: L10n.registerOshiFirst,
+                        message: L10n.registerOshiMessage,
+                        buttonText: L10n.registerOshiButton,
                         action: {
                             navigateToAddOshiForm = true
                         },
@@ -308,18 +308,21 @@ struct ContentView: View {
                     )
                     .transition(.opacity)
                 }
+                
                 if showingAnniversaryAlert {
                     OshiAnniversaryView(
                         isShowing: $showingAnniversaryAlert,
                         days: anniversaryDays,
-                        oshiName: selectedOshi?.name ?? "推し",
+                        oshiName: selectedOshi?.name ?? L10n.selectOshi,
                         imageUrl: selectedOshi?.imageUrl
                     )
                     .transition(.opacity)
                 }
+                
                 if firstOshiFlag {
                     FirstOshiCongratsView(
-                        isShowing: $firstOshiFlag, imageUrl: selectedOshi?.imageUrl
+                        isShowing: $firstOshiFlag,
+                        imageUrl: selectedOshi?.imageUrl
                     )
                     .transition(.opacity)
                 }
@@ -361,7 +364,6 @@ struct ContentView: View {
     
     var oshiSelectorOverlay: some View {
         ZStack {
-            // 半透明の背景
             Color.black.opacity(0.7)
                 .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
@@ -369,33 +371,32 @@ struct ContentView: View {
                         isShowingOshiSelector = false
                     }
                 }
-                VStack(spacing: 20) {
-                    // ヘッダー
-                    HStack {
-                        Text("推しを選択")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            generateHapticFeedback()
-                            withAnimation(.spring()) {
-                                isShowingOshiSelector = false
-                            }
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .padding()
-                ScrollView{
+            
+            VStack(spacing: 20) {
+                HStack {
+                    Text(L10n.oshiSelection)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
                     
-                    // 推しリスト - グリッドレイアウト
+                    Spacer()
+                    
+                    Button(action: {
+                        generateHapticFeedback()
+                        withAnimation(.spring()) {
+                            isShowingOshiSelector = false
+                        }
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding()
+                
+                ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
-                        // 新規追加ボタン
+                        // New addition button
                         Button(action: {
                             generateHapticFeedback()
                             navigateToAddOshiForm = true
@@ -412,7 +413,7 @@ struct ContentView: View {
                                         .foregroundColor(primaryColor)
                                 }
                                 
-                                Text("新規追加")
+                                Text(L10n.addNew)
                                     .font(.subheadline)
                                     .foregroundColor(.white)
                             }
@@ -567,10 +568,10 @@ struct ContentView: View {
         
         // AIメッセージ生成（シミュレーションの場合は固定メッセージを使用）
         generator.generateResponse(for: userPrompt, oshi: targetOshi, chatHistory: []) { content, error in
-            if let error = error {
-                print("AIメッセージ生成エラー: \(error.localizedDescription)")
-                return
-            }
+              if let error = error {
+                  print(L10n.aiMessageErrorMessage(error.localizedDescription))
+                  return
+              }
             
             guard let content = content else {
                 print("AIメッセージが空です")
@@ -589,7 +590,7 @@ struct ContentView: View {
             
             ChatDatabaseManager.shared.saveMessage(message) { error in
                 if let error = error {
-                    print("メッセージ保存エラー: \(error.localizedDescription)")
+                    print(L10n.chatMessageSaveErrorMessage(error.localizedDescription))
                 } else {
                     print("ランダムAIメッセージを送信しました: \(content)")
                 }

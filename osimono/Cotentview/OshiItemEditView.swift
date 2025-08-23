@@ -43,16 +43,20 @@ struct OshiItemEditView: View {
     
     var onSaveCompleted: ((OshiItem) -> Void)?
     
-    // アイテムタイプの選択肢
-    let itemTypes = ["グッズ", "聖地巡礼", "ライブ記録", "SNS投稿", "その他"]
+    // アイテムタイプの選択肢（多言語対応）
+    var itemTypes: [String] {
+        [L10n.goods, L10n.pilgrimage, L10n.liveRecord, L10n.snsPost, L10n.other]
+    }
     
-    // カテゴリーリスト
-    let categories = ["グッズ", "CD・DVD", "雑誌", "写真集", "アクリルスタンド", "ぬいぐるみ", "Tシャツ", "タオル", "その他"]
+    // カテゴリーリスト（多言語対応）
+    var categories: [String] {
+        [L10n.goods, L10n.cdDvd, L10n.magazine, L10n.photoBook, L10n.acrylicStand, L10n.plushie, L10n.tShirt, L10n.towel, L10n.other]
+    }
     
     init(item: OshiItem) {
         self.item = item
         _title = State(initialValue: item.title ?? "")
-        _itemType = State(initialValue: item.itemType ?? "グッズ")
+        _itemType = State(initialValue: item.itemType ?? L10n.goods)
         _category = State(initialValue: item.category ?? "")
         _eventName = State(initialValue: item.eventName ?? "")
         _price = State(initialValue: item.price != nil ? String(item.price!) : "")
@@ -61,26 +65,24 @@ struct OshiItemEditView: View {
         var initialDate = Date()
         if let itemType = item.itemType {
             switch itemType {
-            case "グッズ", "ライブ記録", "SNS投稿":
+            case L10n.goods, L10n.liveRecord, L10n.snsPost:
                 if let timestamp = item.purchaseDate {
                     initialDate = Date(timeIntervalSince1970: timestamp)
                 }
-            case "聖地巡礼":
+            case L10n.pilgrimage:
                 if let timestamp = item.visitDate {
                     initialDate = Date(timeIntervalSince1970: timestamp)
                 }
-            case "その他":
+            case L10n.other:
                 if let timestamp = item.recordDate {
                     initialDate = Date(timeIntervalSince1970: timestamp)
                 }
             default:
-                // フォールバック: createdAtまたは現在時刻
                 if let timestamp = item.createdAt {
                     initialDate = Date(timeIntervalSince1970: timestamp)
                 }
             }
         } else {
-            // アイテムタイプが不明な場合のフォールバック
             if let timestamp = item.createdAt {
                 initialDate = Date(timeIntervalSince1970: timestamp)
             }
@@ -103,7 +105,7 @@ struct OshiItemEditView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // アイテムタイプ選択
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("投稿タイプ")
+                        Text(L10n.postType)
                             .font(.headline)
                             .foregroundColor(.gray)
                             .padding(.horizontal)
@@ -138,7 +140,7 @@ struct OshiItemEditView: View {
                     
                     // 画像選択
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("画像")
+                        Text(L10n.image)
                             .font(.headline)
                             .foregroundColor(.gray)
                             .padding(.horizontal)
@@ -179,7 +181,7 @@ struct OshiItemEditView: View {
                                         Spacer()
                                         HStack {
                                             Spacer()
-                                            Text("画像を変更")
+                                            Text(L10n.changeImage)
                                                 .font(.system(size: 14))
                                                 .padding(.vertical, 6)
                                                 .padding(.horizontal, 12)
@@ -223,7 +225,7 @@ struct OshiItemEditView: View {
                                                 Spacer()
                                                 HStack {
                                                     Spacer()
-                                                    Text("画像を変更")
+                                                    Text(L10n.changeImage)
                                                         .font(.system(size: 14))
                                                         .padding(.vertical, 6)
                                                         .padding(.horizontal, 12)
@@ -250,7 +252,7 @@ struct OshiItemEditView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         // タイトル
                         VStack(alignment: .leading, spacing: 5) {
-                            Text("タイトル")
+                            Text(L10n.title)
                                 .font(.headline)
                                 .foregroundColor(.gray)
                             
@@ -270,9 +272,9 @@ struct OshiItemEditView: View {
                         .padding(.horizontal, isSmallDevice() ? 10 : 0)
                         
                         // カテゴリー（グッズの場合のみ表示）
-                        if itemType == "グッズ" {
+                        if itemType == L10n.goods {
                             VStack(alignment: .leading, spacing: 5) {
-                                Text("カテゴリー")
+                                Text(L10n.category)
                                     .font(.headline)
                                     .foregroundColor(.gray)
                                 
@@ -300,13 +302,13 @@ struct OshiItemEditView: View {
                         }
                         
                         // 価格（グッズの場合のみ表示）
-                        if itemType == "グッズ" {
+                        if itemType == L10n.goods {
                             VStack(alignment: .leading, spacing: 5) {
-                                Text("価格")
+                                Text(L10n.price)
                                     .font(.headline)
                                     .foregroundColor(.gray)
                                 
-                                NumberTextField(text: $price, placeholder: "例: 5500")
+                                NumberTextField(text: $price, placeholder: L10n.pricePlaceholder)
                                     .padding()
                                     .background(
                                         RoundedRectangle(cornerRadius: 12)
@@ -323,13 +325,13 @@ struct OshiItemEditView: View {
                         }
                         
                         // イベント名（ライブ記録の場合のみ表示）
-                        if itemType == "ライブ記録" {
+                        if itemType == L10n.liveRecord {
                             VStack(alignment: .leading, spacing: 5) {
-                                Text("イベント名")
+                                Text(L10n.eventName)
                                     .font(.headline)
                                     .foregroundColor(.gray)
                                 
-                                TextField("例: BTS ライブ『LOVE YOURSELF』", text: $eventName)
+                                TextField(L10n.eventNamePlaceholder, text: $eventName)
                                     .padding()
                                     .background(cardColor)
                                     .cornerRadius(12)
@@ -339,10 +341,10 @@ struct OshiItemEditView: View {
                         }
                         
                         // 場所（聖地巡礼の場合のみ表示）
-                        if itemType == "聖地巡礼" {
+                        if itemType == L10n.pilgrimage {
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
-                                    Text("場所")
+                                    Text(L10n.location)
                                         .font(.headline)
                                         .foregroundColor(.gray)
                                     Spacer()
@@ -353,7 +355,7 @@ struct OshiItemEditView: View {
                                         HStack(spacing: 4) {
                                             Image(systemName: "location.fill")
                                                 .font(.system(size: 12))
-                                            Text("現在地を設定")
+                                            Text(L10n.currentLocation)
                                                 .font(.system(size: 12))
                                         }
                                         .padding(.horizontal, 8)
@@ -364,7 +366,7 @@ struct OshiItemEditView: View {
                                     }
                                     .disabled(isGettingLocation)
                                 }
-                                TextField("例: 東京都渋谷区〇〇", text: $locationAddress)
+                                TextField(L10n.locationPlaceholder, text: $locationAddress)
                                     .padding()
                                     .background(cardColor)
                                     .cornerRadius(12)
@@ -386,13 +388,13 @@ struct OshiItemEditView: View {
                                 .background(cardColor)
                                 .cornerRadius(12)
                                 .shadow(color: Color.black.opacity(0.05), radius: 2)
-                                .environment(\.locale, Locale(identifier: "ja_JP"))
+                                .environment(\.locale, Locale.current)
                         }
                         .padding(.horizontal, isSmallDevice() ? 10 : 0)
                         
                         // タグ
                         VStack(alignment: .leading, spacing: 5) {
-                            Text("タグ")
+                            Text(L10n.tags)
                                 .font(.headline)
                                 .foregroundColor(.gray)
                             
@@ -428,7 +430,7 @@ struct OshiItemEditView: View {
                             
                             // 新しいタグ追加
                             HStack {
-                                TextField("新しいタグを追加", text: $newTag)
+                                TextField(L10n.addNewTag, text: $newTag)
                                     .padding()
                                     .background(
                                         RoundedRectangle(cornerRadius: 12)
@@ -453,7 +455,7 @@ struct OshiItemEditView: View {
                         // お気に入り度
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
-                                Text("お気に入り度")
+                                Text(L10n.favoriteRating)
                                     .font(.headline)
                                     .foregroundColor(.gray)
                                 Spacer()
@@ -491,7 +493,7 @@ struct OshiItemEditView: View {
                                 
                                 // プレースホルダーテキスト（メモが空の場合）
                                 if memo.isEmpty {
-                                    Text("ここにメモを入力")
+                                    Text(L10n.memoPlaceholder)
                                         .foregroundColor(.gray.opacity(0.6))
                                         .padding(.horizontal, 20)
                                         .padding(.vertical, 16)
@@ -509,7 +511,7 @@ struct OshiItemEditView: View {
                         generateHapticFeedback()
                         saveItem()
                     }) {
-                        Text("保存する")
+                        Text(L10n.save)
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -537,7 +539,7 @@ struct OshiItemEditView: View {
                             ProgressView()
                                 .scaleEffect(1.5)
                                 .tint(.white)
-                            Text("保存中...")
+                            Text(L10n.saving)
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white)
                                 .padding(.top, 10)
@@ -561,7 +563,7 @@ struct OshiItemEditView: View {
         }) {
             HStack {
                 Image(systemName: "chevron.left")
-                Text("戻る")
+                Text(L10n.back)
             }
             .foregroundColor(primaryColor)
         }
@@ -571,32 +573,16 @@ struct OshiItemEditView: View {
                 generateHapticFeedback()
                 saveItem()
             }) {
-                Text("保存")
+                Text(L10n.save)
                     .foregroundColor(primaryColor)
                     .frame(maxWidth: .infinity)
             }
         )
-//            .navigationBarTitle("アイテム編集", displayMode: .inline)
-//            .navigationBarItems(
-//                leading: Button(action: {
-//                    generateHapticFeedback()
-//                    presentationMode.wrappedValue.dismiss()
-//                }) {
-//                    Image(systemName: "xmark")
-//                        .font(.system(size: 16, weight: .medium))
-//                        .foregroundColor(.gray)
-//                },
-//                trailing: Button("保存") {
-//                    generateHapticFeedback()
-//                    saveItem()
-//                }
-//                    .disabled(isLoading || title.isEmpty)
-//            )
         .alert(isPresented: $showAlert) {
             Alert(
-                title: Text("通知"),
+                title: Text(L10n.notification),
                 message: Text(alertMessage),
-                dismissButton: .default(Text("OK"))
+                dismissButton: .default(Text(L10n.ok))
             )
         }
         .sheet(isPresented: $isImagePickerPresented) {
@@ -616,7 +602,7 @@ struct OshiItemEditView: View {
                 Image(systemName: "camera.fill")
                     .font(.system(size: 40))
                     .foregroundColor(primaryColor.opacity(0.8))
-                Text("タップして画像を選択")
+                Text(L10n.tapToSelectImage)
                     .font(.system(size: 16))
                     .foregroundColor(.gray)
             }
@@ -643,66 +629,27 @@ struct OshiItemEditView: View {
     
     // タイトルのプレースホルダーをアイテムタイプに応じて変更
     func titlePlaceholder() -> String {
-        switch itemType {
-        case "グッズ":
-            return "例: BTS 公式ペンライト Ver.3"
-        case "聖地巡礼":
-            return "例: MVロケ地・渋谷〇〇カフェ"
-        case "ライブ記録":
-            return "例: 東京ドーム公演"
-        case "SNS投稿":
-            return "例: インスタストーリー投稿"
-        case "その他":
-            return "例: 推しの誕生日、記念日など"
-        default:
-            return "タイトルを入力"
-        }
+        return L10n.titlePlaceholder(for: itemType)
     }
     
     // 日付ラベルをアイテムタイプに応じて変更
     func dateLabel() -> String {
-        switch itemType {
-        case "グッズ":
-            return "購入日"
-        case "聖地巡礼":
-            return "訪問日"
-        case "ライブ記録":
-            return "イベント日"
-        case "SNS投稿":
-            return "投稿日"
-        case "その他":
-            return "記録日"
-        default:
-            return "日付"
-        }
+        return L10n.dateLabel(for: itemType)
     }
     
     // メモラベルをアイテムタイプに応じて変更
     func memoLabel() -> String {
-        switch itemType {
-        case "グッズ":
-            return "メモ"
-        case "聖地巡礼":
-            return "感想・エピソード"
-        case "ライブ記録":
-            return "思い出・エピソード"
-        case "SNS投稿":
-            return "メモ"
-        case "その他":
-            return "詳細メモ"
-        default:
-            return "メモ"
-        }
+        return L10n.memoLabel(for: itemType)
     }
     
     // アイコンの取得
     func iconForItemType(_ type: String) -> String {
         switch type {
-        case "グッズ": return "gift.fill"
-        case "聖地巡礼": return "mappin.and.ellipse"
-        case "ライブ記録": return "music.note.list"
-        case "SNS投稿": return "bubble.right.fill"
-        case "その他": return "ellipsis.circle.fill"
+        case L10n.goods: return "gift.fill"
+        case L10n.pilgrimage: return "mappin.and.ellipse"
+        case L10n.liveRecord: return "music.note.list"
+        case L10n.snsPost: return "bubble.right.fill"
+        case L10n.other: return "ellipsis.circle.fill"
         default: return "square.grid.2x2.fill"
         }
     }
@@ -732,38 +679,55 @@ struct OshiItemEditView: View {
                         self.isGettingLocation = false
                         
                         if let error = error {
-                            self.alertMessage = "住所の取得に失敗しました: \(error.localizedDescription)"
+                            self.alertMessage = L10n.addressFetchFailedMessage(error.localizedDescription)
                             self.showAlert = true
                             return
                         }
                         
                         if let placemark = placemarks?.first {
-                            // 日本語住所の形式に整形
+                            // 住所の形式を現在のロケールに合わせて整形
                             var address = ""
                             
-                            if let administrativeArea = placemark.administrativeArea {
-                                address += administrativeArea // 都道府県
-                            }
-                            
-                            if let locality = placemark.locality {
-                                address += locality // 市区町村
-                            }
-                            
-                            if let subLocality = placemark.subLocality, !subLocality.isEmpty {
-                                address += subLocality // 町名
-                            }
-                            
-                            if let thoroughfare = placemark.thoroughfare, !thoroughfare.isEmpty {
-                                address += thoroughfare // 番地
-                            }
-                            
-                            if let subThoroughfare = placemark.subThoroughfare, !subThoroughfare.isEmpty {
-                                address += subThoroughfare // 建物など
+                            if isJapanese() {
+                                // 日本語住所の形式
+                                if let administrativeArea = placemark.administrativeArea {
+                                    address += administrativeArea // 都道府県
+                                }
+                                
+                                if let locality = placemark.locality {
+                                    address += locality // 市区町村
+                                }
+                                
+                                if let subLocality = placemark.subLocality, !subLocality.isEmpty {
+                                    address += subLocality // 町名
+                                }
+                                
+                                if let thoroughfare = placemark.thoroughfare, !thoroughfare.isEmpty {
+                                    address += thoroughfare // 番地
+                                }
+                                
+                                if let subThoroughfare = placemark.subThoroughfare, !subThoroughfare.isEmpty {
+                                    address += subThoroughfare // 建物など
+                                }
+                            } else {
+                                // 英語住所の形式
+                                if let subThoroughfare = placemark.subThoroughfare {
+                                    address += subThoroughfare + " "
+                                }
+                                if let thoroughfare = placemark.thoroughfare {
+                                    address += thoroughfare + ", "
+                                }
+                                if let locality = placemark.locality {
+                                    address += locality + ", "
+                                }
+                                if let administrativeArea = placemark.administrativeArea {
+                                    address += administrativeArea
+                                }
                             }
                             
                             self.locationAddress = address
                         } else {
-                            self.alertMessage = "住所の取得に失敗しました"
+                            self.alertMessage = L10n.addressFetchError
                             self.showAlert = true
                         }
                     }
@@ -771,7 +735,7 @@ struct OshiItemEditView: View {
             } else {
                 DispatchQueue.main.async {
                     self.isGettingLocation = false
-                    self.alertMessage = "位置情報の取得に失敗しました。設定から位置情報の利用を許可してください。"
+                    self.alertMessage = L10n.locationFetchFailed
                     self.showAlert = true
                 }
             }
@@ -789,7 +753,7 @@ struct OshiItemEditView: View {
         
         guard let userId = Auth.auth().currentUser?.uid else {
             isLoading = false
-            alertMessage = "ユーザー情報が取得できませんでした。"
+            alertMessage = L10n.unknownError
             showAlert = true
             return
         }
@@ -805,22 +769,22 @@ struct OshiItemEditView: View {
         
         // アイテムタイプに応じたデータを追加（日付フィールドを正しく設定）
         switch itemType {
-        case "グッズ":
+        case L10n.goods:
             itemData["category"] = category
             itemData["price"] = Int(price) ?? 0
             itemData["location"] = location
             itemData["purchaseDate"] = date.timeIntervalSince1970
-        case "ライブ記録":
+        case L10n.liveRecord:
             itemData["eventName"] = eventName
             itemData["purchaseDate"] = date.timeIntervalSince1970
             itemData["memories"] = memo
-        case "聖地巡礼":
+        case L10n.pilgrimage:
             itemData["locationAddress"] = locationAddress
             itemData["visitDate"] = date.timeIntervalSince1970
             itemData["memories"] = memo
-        case "SNS投稿":
+        case L10n.snsPost:
             itemData["purchaseDate"] = date.timeIntervalSince1970
-        case "その他":
+        case L10n.other:
             itemData["recordDate"] = date.timeIntervalSince1970
             itemData["details"] = memo
         default:
@@ -834,20 +798,19 @@ struct OshiItemEditView: View {
         
         guard let oshiId = item.oshiId else {
             isLoading = false
-            alertMessage = "推し情報が取得できませんでした。"
+            alertMessage = L10n.unknownError
             showAlert = true
             return
         }
         
         // 画像の処理
         let uploadCompletion: () -> Void = {
-            // Firebaseに保存
             let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(self.item.id)
             ref.updateChildValues(itemData) { error, _ in
                 self.isLoading = false
                 
                 if let error = error {
-                    self.alertMessage = "保存に失敗しました: \(error.localizedDescription)"
+                    self.alertMessage = L10n.saveError + ": \(error.localizedDescription)"
                     self.showAlert = true
                 } else {
                     // Create updated item with all the new values
@@ -860,22 +823,22 @@ struct OshiItemEditView: View {
                     
                     // Update type-specific fields including dates
                     switch self.itemType {
-                    case "グッズ":
+                    case L10n.goods:
                         updatedItem.category = self.category
                         updatedItem.price = Int(self.price) ?? 0
                         updatedItem.location = self.location
                         updatedItem.purchaseDate = self.date.timeIntervalSince1970
-                    case "ライブ記録":
+                    case L10n.liveRecord:
                         updatedItem.eventName = self.eventName
                         updatedItem.purchaseDate = self.date.timeIntervalSince1970
                         updatedItem.memories = self.memo
-                    case "聖地巡礼":
+                    case L10n.pilgrimage:
                         updatedItem.locationAddress = self.locationAddress
                         updatedItem.visitDate = self.date.timeIntervalSince1970
                         updatedItem.memories = self.memo
-                    case "SNS投稿":
+                    case L10n.snsPost:
                         updatedItem.purchaseDate = self.date.timeIntervalSince1970
-                    case "その他":
+                    case L10n.other:
                         updatedItem.recordDate = self.date.timeIntervalSince1970
                         updatedItem.details = self.memo
                     default:
@@ -892,11 +855,46 @@ struct OshiItemEditView: View {
             }
         }
         
-        // 残りのコードは既存のまま...
         // 新しい画像がある場合はアップロード
         if let selectedImage = selectedImage {
-            // 画像アップロード処理...
-            uploadCompletion()
+            // 画像アップロード処理
+            let imageData = selectedImage.jpegData(compressionQuality: 0.8)
+            guard let data = imageData else {
+                isLoading = false
+                alertMessage = L10n.uploadError
+                showAlert = true
+                return
+            }
+            
+            let fileName = "item_\(UUID().uuidString).jpg"
+            let storageRef = Storage.storage().reference().child("oshiItems").child(userId).child(oshiId).child(fileName)
+            
+            storageRef.putData(data, metadata: nil) { metadata, error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        self.alertMessage = L10n.uploadError + ": \(error.localizedDescription)"
+                        self.showAlert = true
+                    }
+                    return
+                }
+                
+                storageRef.downloadURL { url, error in
+                    DispatchQueue.main.async {
+                        if let error = error {
+                            self.isLoading = false
+                            self.alertMessage = L10n.uploadError + ": \(error.localizedDescription)"
+                            self.showAlert = true
+                            return
+                        }
+                        
+                        if let downloadURL = url {
+                            itemData["imageUrl"] = downloadURL.absoluteString
+                        }
+                        uploadCompletion()
+                    }
+                }
+            }
         } else {
             // 画像がない場合はそのまま保存
             itemData["imageUrl"] = imageUrl

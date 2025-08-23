@@ -19,6 +19,8 @@
 "delete" = "Delete";
 "confirm" = "Confirm";
 "close" = "Close";
+"oshiSelection" = "Oshi Selection";
+"user_name" = "User Name";
 
 // Profile Section
 "profile_title" = "Profile";
@@ -116,3 +118,103 @@
 "apology_message_3" = "being delivered properly.";
 "apology_message_4" = "This has now been fixed.";
 "apology_message_5" = "We apologize for any inconvenience caused.";
+
+"user_nickname" = "User Nickname";
+"profile_info" = "Profile Information";
+"profile_edit" = "Edit Profile";
+"register" = "Register";
+"oshi_fan_user" = "Oshi Fan User";
+"select_your_oshi" = "Select Your Oshi";
+"add_new" = "Add New";
+"add_oshi_item" = "Add Oshi Item";
+"unknown_error" = "Unknown error";
+
+// Item Types and Categories (Extended)
+"untitled" = "Untitled";
+"no_name" = "No Name";
+"purchase_location" = "Purchase Location";
+"item_count" = "%d items";
+
+// Date and Time
+"years_ago" = "%d years ago";
+"months_ago" = "%d months ago";
+"days_ago" = "%d days ago";
+"hours_ago" = "%d hours ago";
+"minutes_ago" = "%d minutes ago";
+"just_now" = "Just now";
+
+// Collection and Items
+"collection" = "Collection";
+"my_collection" = "My Collection";
+"item_details" = "Item Details";
+"item_edit" = "Edit Item";
+"share" = "Share";
+"oshi_item" = "Oshi Item";
+
+// Errors and Validation
+"error" = "Error";
+"validation_error" = "Validation Error";
+"required_field" = "Required field";
+"invalid_input" = "Invalid input";
+"network_error" = "Network error";
+"upload_error" = "Upload error";
+"save_error" = "Save error";
+"delete_error" = "Delete error";
+
+// Success Messages
+"success" = "Success";
+"saved_successfully" = "Saved successfully";
+"deleted_successfully" = "Deleted successfully";
+"uploaded_successfully" = "Uploaded successfully";
+
+// Locations and Address
+"address_fetch_failed" = "Failed to get address: %@";
+"location_fetch_failed" = "Failed to get location. Please allow location access in Settings.";
+"address_fetch_error" = "Failed to get address";
+
+// Oshi Management
+"oshi_list" = "Oshi List";
+"oshi_details" = "Oshi Details";
+"oshi_anniversary" = "Oshi Anniversary";
+"days_with_oshi" = "%d days with your oshi";
+"congratulations" = "Congratulations";
+"anniversary_message" = "It's been %d days since you registered your oshi!";
+
+// Chat and AI
+"chat" = "Chat";
+"ai_chat" = "AI Chat";
+"message" = "Message";
+"send_message" = "Send Message";
+"typing" = "Typing...";
+"ai_message_error" = "AI message generation error: %@";
+"chat_message_save_error" = "Chat message save error: %@";
+
+// Settings and Preferences
+"settings" = "Settings";
+"language" = "Language";
+"theme" = "Theme";
+"notifications" = "Notifications";
+"privacy" = "Privacy";
+"about" = "About";
+"version" = "Version";
+
+// Permissions and Access
+"camera_permission" = "Camera Permission";
+"photo_library_permission" = "Photo Library Permission";
+"location_permission" = "Location Permission";
+"permission_denied" = "Permission Denied";
+"permission_required" = "Permission Required";
+
+// Loading and Status
+"please_wait" = "Please wait...";
+"processing" = "Processing...";
+"updating" = "Updating...";
+"uploading" = "Uploading...";
+"downloading" = "Downloading...";
+
+// Help and Support
+"help" = "Help";
+"support" = "Support";
+"faq" = "FAQ";
+"contact_us" = "Contact Us";
+"tutorial" = "Tutorial";

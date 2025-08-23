@@ -573,23 +573,19 @@ struct OshiItemFormView: View {
     func requestCurrentLocation() {
         isGettingLocation = true
         
-        // 現在地の更新を開始
         locationManager.startUpdatingLocation()
         
-        // 位置情報の取得を待つ
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { // 2秒待機
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             if let location = self.locationManager.userLocation {
-                // 座標を保存
                 self.locationCoordinate = location.coordinate
                 
-                // 逆ジオコーディングで住所を取得
                 let geocoder = CLGeocoder()
                 geocoder.reverseGeocodeLocation(location) { (placemarks, error) in
                     DispatchQueue.main.async {
                         self.isGettingLocation = false
                         
                         if let error = error {
-                            self.alertMessage = "住所の取得に失敗しました: \(error.localizedDescription)"
+                            self.alertMessage = L10n.addressFetchFailedMessage(error.localizedDescription)
                             self.showAlert = true
                             return
                         }
@@ -620,7 +616,7 @@ struct OshiItemFormView: View {
                             
                             self.locationAddress = address
                         } else {
-                            self.alertMessage = "住所の取得に失敗しました"
+                            self.alertMessage = L10n.addressFetchError
                             self.showAlert = true
                         }
                     }
@@ -628,7 +624,7 @@ struct OshiItemFormView: View {
             } else {
                 DispatchQueue.main.async {
                     self.isGettingLocation = false
-                    self.alertMessage = "位置情報の取得に失敗しました。設定から位置情報の利用を許可してください。"
+                    self.alertMessage = L10n.locationFetchFailed
                     self.showAlert = true
                 }
             }
@@ -798,7 +794,7 @@ struct OshiItemFormView: View {
     func saveDataToFirebase(_ data: [String: Any]) {
         guard let userId = userId, let itemId = data["id"] as? String else {
             isLoading = false
-            alertMessage = "保存に失敗しました"
+            alertMessage = L10n.saveError
             showAlert = true
             return
         }
@@ -810,10 +806,9 @@ struct OshiItemFormView: View {
             DispatchQueue.main.async {
                 if let error = error {
                     self.isLoading = false
-                    self.alertMessage = "保存に失敗しました: \(error.localizedDescription)"
+                    self.alertMessage = "\(L10n.saveError): \(error.localizedDescription)"
                     self.showAlert = true
                 } else {
-                    // 保存成功したら、AIチャットメッセージを生成
                     self.createAIChatMessage(for: itemId, data: data)
                 }
             }
@@ -821,24 +816,22 @@ struct OshiItemFormView: View {
     }
     
     func createAIChatMessage(for itemId: String, data: [String: Any]) {
-        // OshiItem オブジェクトを作成
         let oshiItem = OshiItem(
             id: itemId,
             title: self.title,
-            category: self.itemType == "グッズ" ? self.category : nil,
+            category: self.itemType == L10n.goods ? self.category : nil,
             memo: self.memo,
             imageUrl: data["imageUrl"] as? String,
-            price: self.itemType == "グッズ" ? Int(self.price) : nil,
-            eventName: self.itemType == "ライブ記録" ? self.eventName : nil,
+            price: self.itemType == L10n.goods ? Int(self.price) : nil,
+            eventName: self.itemType == L10n.liveRecord ? self.eventName : nil,
             favorite: self.favorite,
             tags: self.tags.isEmpty ? nil : self.tags,
             itemType: self.itemType,
-            locationAddress: self.itemType == "聖地巡礼" ? self.locationAddress : nil,
+            locationAddress: self.itemType == L10n.pilgrimage ? self.locationAddress : nil,
             createdAt: Date().timeIntervalSince1970,
             oshiId: self.oshiId
         )
         
-        // 推しの情報を取得
         OshiChatCoordinator.shared.fetchOshiDetails(oshiId: self.oshiId) { oshi in
             guard let oshi = oshi else {
                 self.isLoading = false
@@ -847,10 +840,9 @@ struct OshiItemFormView: View {
                 return
             }
             
-            // AIに初期メッセージを生成させる
             AIMessageGenerator.shared.generateInitialMessage(for: oshi, item: oshiItem) { content, error in
                 if let error = error {
-                    print("AIメッセージ生成エラー: \(error.localizedDescription)")
+                    print(L10n.aiMessageErrorMessage(error.localizedDescription))
                     self.isLoading = false
                     self.presentationMode.wrappedValue.dismiss()
                     return
@@ -862,7 +854,6 @@ struct OshiItemFormView: View {
                     return
                 }
                 
-                // AIからのメッセージを作成
                 let messageId = UUID().uuidString
                 let message = ChatMessage(
                     id: messageId,
@@ -870,19 +861,17 @@ struct OshiItemFormView: View {
                     isUser: false,
                     timestamp: Date().timeIntervalSince1970,
                     oshiId: self.oshiId,
-                    itemId: itemId // 同じitemIdを使用して関連付け
+                    itemId: itemId
                 )
                 
-                // メッセージをデータベースに保存
                 ChatDatabaseManager.shared.saveMessage(message) { error in
                     DispatchQueue.main.async {
                         self.isLoading = false
                         
                         if let error = error {
-                            print("チャットメッセージ保存エラー: \(error.localizedDescription)")
+                            print(L10n.chatMessageSaveErrorMessage(error.localizedDescription))
                         }
                         
-                        // 保存成功後、画面を閉じる
                         self.presentationMode.wrappedValue.dismiss()
                     }
                 }
@@ -970,14 +959,14 @@ struct OshiItemFormView: View {
         
         imageRef.putData(imageData, metadata: metadata) { _, error in
             if let error = error {
-                print("画像アップロードエラー: \(error.localizedDescription)")
+                print("\(L10n.uploadError): \(error.localizedDescription)")
                 completion(nil)
                 return
             }
             
             imageRef.downloadURL { url, error in
                 if let error = error {
-                    print("URL取得エラー: \(error.localizedDescription)")
+                    print("\(L10n.networkError): \(error.localizedDescription)")
                     completion(nil)
                     return
                 }

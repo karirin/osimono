@@ -38,7 +38,7 @@ struct ProfileSection: View {
     @State private var oshiList: [Oshi] = []
     @State var backgroundImageUrl: URL?
     @State private var imageUrl: URL? = nil
-    @State private var userProfile = UserProfile(id: "", username: "推し活ユーザー", favoriteOshi: "")
+    @State private var userProfile = UserProfile(id: "", username: L10n.oshiFanUser, favoriteOshi: "")
     @State private var image: UIImage? = nil
     @Binding var isShowingEditOshiView: Bool
     var onOshiUpdated: (() -> Void)? = nil
@@ -83,7 +83,7 @@ struct ProfileSection: View {
         self._navigateToEditOshi = navigateToEditOshi
         
         // 初期Oshiオブジェクトを作成してViewModelを初期化
-        let initialOshi = Oshi(id: oshiId, name: "推しを選択してください", imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil)
+        let initialOshi = Oshi(id: oshiId, name: L10n.selectYourOshi, imageUrl: nil, backgroundImageUrl: nil, memo: nil, createdAt: nil)
         self._viewModel = State(initialValue: OshiViewModel(oshi: initialOshi))
     }
     
@@ -208,7 +208,7 @@ struct ProfileSection: View {
                     VStack(spacing: 4) {
                         if isEditingUsername {
                             HStack {
-                                TextField("推しの名前", text: $editingUsername)
+                                TextField(L10n.selectYourOshi, text: $editingUsername)
                                     .font(.system(size: 18, weight: .bold))
                                     .foregroundColor(.black)
                                     .padding(2)
@@ -225,7 +225,7 @@ struct ProfileSection: View {
                             }
                         } else {
                             // 表示モード: 通常のテキスト表示
-                            Text(viewModel?.selectedOshi.name ?? "推しを選択してください")
+                            Text(viewModel?.selectedOshi.name ?? L10n.selectYourOshi)
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
                         }
@@ -392,9 +392,6 @@ struct ProfileSection: View {
         }
     }
     
-    // その他の既存メソッドはそのまま...
-    // (checkForUnreadMessages, startMessageCheckTimer, uploadOshiImageToFirebase, checkForUnreadPosts, updateBadgeStatus, checkForAllUnreadItems, forceCheckUnreadMessages, startBadgeAnimation, chatButtonWithBadge, oshiSelectorOverlay, fetchOshiList, loadSelectedOshi, saveSelectedOshiId, saveOshiProfile, loadAllData, loadSettingAllData, fetchUserProfile, fetchUserImageURL, startEditing, profilePlaceholder)
-    
     var chatButtonWithBadge: some View {
         Button(action: {
             showChatAIView()
@@ -420,7 +417,7 @@ struct ProfileSection: View {
             VStack(spacing: 20) {
                 // ヘッダー
                 HStack {
-                    Text("推しを選択")
+                    Text(L10n.selectOshi)
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
@@ -460,7 +457,7 @@ struct ProfileSection: View {
                                         .foregroundColor(primaryColor)
                                 }
                                 
-                                Text("新規追加")
+                                Text(L10n.addNew)
                                     .font(.subheadline)
                                     .foregroundColor(.white)
                             }
@@ -579,7 +576,6 @@ struct ProfileSection: View {
             return
         }
         
-        // アップロード中の表示
         withAnimation {
             isLoading = true
         }
@@ -588,7 +584,6 @@ struct ProfileSection: View {
         let filename = type == .profile ? "profile.jpg" : "background.jpg"
         let imageRef = storageRef.child("oshis/\(userID)/\(oshi.id)/\(filename)")
         
-        // プロフィール画像と背景画像で圧縮率を調整
         let compressionQuality: CGFloat = type == .profile ? 0.8 : 0.7
         guard let imageData = image.jpegData(compressionQuality: compressionQuality) else { return }
         
@@ -597,14 +592,12 @@ struct ProfileSection: View {
         
         imageRef.putData(imageData, metadata: metadata) { _, error in
             if let error = error {
-                print("アップロードエラー: \(error.localizedDescription)")
+                print("\(L10n.uploadError): \(error.localizedDescription)")
             } else {
-                print("画像をアップロードしました")
+                print(L10n.uploadedSuccessfully)
                 
-                // 画像URL取得
                 imageRef.downloadURL { url, error in
                     if let url = url {
-                        // DBにURLを保存
                         let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
                         let updates: [String: Any] = type == .profile
                         ? ["imageUrl": url.absoluteString]
@@ -612,7 +605,6 @@ struct ProfileSection: View {
                         
                         dbRef.updateChildValues(updates) { error, _ in
                             if error == nil {
-                                // ローカルのviewModel?.selectedOshiを更新
                                 var updatedOshi = self.viewModel?.selectedOshi
                                 if type == .profile {
                                     updatedOshi?.imageUrl = url.absoluteString
@@ -621,7 +613,6 @@ struct ProfileSection: View {
                                 }
                                 self.viewModel?.selectedOshi = updatedOshi!
                                 
-                                // oshiListも更新
                                 if let index = self.oshiList.firstIndex(where: { $0.id == oshi.id }) {
                                     if type == .profile {
                                         self.oshiList[index].imageUrl = url.absoluteString
@@ -635,7 +626,6 @@ struct ProfileSection: View {
                 }
             }
             
-            // アップロード完了後
             withAnimation {
                 isLoading = false
             }
@@ -754,13 +744,13 @@ struct ProfileSection: View {
                 if let childSnapshot = child as? DataSnapshot {
                     if let value = childSnapshot.value as? [String: Any] {
                         let id = childSnapshot.key
-                        let name = value["name"] as? String ?? "名前なし"
+                        let name = value["name"] as? String ?? L10n.noName
                         let imageUrl = value["imageUrl"] as? String
                         let backgroundImageUrl = value["backgroundImageUrl"] as? String
                         let memo = value["memo"] as? String
                         let createdAt = value["createdAt"] as? TimeInterval
                         
-                        // 新しい属性を取得
+                        // 性格関連の属性を追加
                         let personality = value["personality"] as? String
                         let speaking_style = value["speaking_style"] as? String
                         let favorite_food = value["favorite_food"] as? String
@@ -775,7 +765,6 @@ struct ProfileSection: View {
                             backgroundImageUrl: backgroundImageUrl,
                             memo: memo,
                             createdAt: createdAt,
-                            // 属性を設定
                             personality: personality,
                             interests: interests,
                             speaking_style: speaking_style,
@@ -797,7 +786,6 @@ struct ProfileSection: View {
                     self.viewModel?.selectedOshi = matchingOshi
                     print("推しのデータを更新: \(matchingOshi.name), ID: \(matchingOshi.id)")
                 } else {
-                    // 選択中の推しIDから推しを設定
                     self.loadSelectedOshi()
                 }
             }
@@ -838,7 +826,7 @@ struct ProfileSection: View {
         let dbRef = Database.database().reference().child("users").child(userID)
         dbRef.updateChildValues(["selectedOshiId": oshiId]) { error, _ in
             if let error = error {
-                print("推しID保存エラー: \(error.localizedDescription)")
+                print("\(L10n.saveError): \(error.localizedDescription)")
             }
         }
     }

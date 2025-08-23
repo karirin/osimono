@@ -27,12 +27,15 @@ struct EditUserProfileView: View {
     
     var body: some View {
         Form {
-            Section(header: Text("プロフィール情報")) {
-                TextField("ユーザー名", text: $username)
+            Section {
+                TextField(L10n.username, text: $username)
                     .padding(.vertical, 8)
-                
-                TextField("推しの名前", text: $favoriteOshi)
+                TextField(L10n.favoriteOshi, text: $favoriteOshi)
                     .padding(.vertical, 8)
+            } header: {
+                Text(LocalizedStringKey(L10n.profileInfo))
+            } footer: {
+                EmptyView()
             }
             
             Section {
@@ -43,7 +46,7 @@ struct EditUserProfileView: View {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle())
                         } else {
-                            Text("保存")
+                            Text(L10n.save)
                                 .fontWeight(.bold)
                         }
                         Spacer()
@@ -57,9 +60,9 @@ struct EditUserProfileView: View {
                 .padding(.vertical, 6)
             }
         }
-        .navigationTitle("プロフィール編集")
+        .navigationTitle(L10n.profileEdit)
         .navigationBarItems(
-            leading: Button("キャンセル") {
+            leading: Button(L10n.cancel) {
                 generateHapticFeedback()
                 presentationMode.wrappedValue.dismiss()
             }
@@ -83,18 +86,14 @@ struct EditUserProfileView: View {
                 isLoading = false
                 generateHapticFeedback()
                 if error == nil {
-                    // 成功したら、親ビューのuserProfileを更新
                     userProfile.username = username
                     userProfile.favoriteOshi = favoriteOshi
-                    
-                    // ビューを閉じる
                     presentationMode.wrappedValue.dismiss()
                     
-                    // 触覚フィードバックを生成
                     let generator = UIImpactFeedbackGenerator(style: .medium)
                     generator.impactOccurred()
                 } else {
-                    print("プロフィール更新エラー: \(error?.localizedDescription ?? "不明なエラー")")
+                    print("\(L10n.saveError): \(error?.localizedDescription ?? L10n.unknownError)")
                 }
             }
         }

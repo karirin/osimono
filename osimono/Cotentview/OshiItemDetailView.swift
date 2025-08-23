@@ -29,6 +29,34 @@ struct OshiItemDetailView: View {
     let cardColor = Color(.white) // カード背景色
     let textColor = Color(.black) // テキスト色
     
+    // アイテムタイプのマッピング（他のViewと統一）
+    var itemTypeMappings: [ItemTypeMapping] {
+        [
+            ItemTypeMapping(key: "すべて", displayName: L10n.all, icon: "square.grid.2x2", color: Color(.systemBlue)),
+            ItemTypeMapping(key: "グッズ", displayName: L10n.goods, icon: "gift.fill", color: Color(.systemPink)),
+            ItemTypeMapping(key: "聖地巡礼", displayName: L10n.pilgrimage, icon: "mappin.and.ellipse", color: Color(.systemGreen)),
+            ItemTypeMapping(key: "ライブ記録", displayName: L10n.liveRecord, icon: "music.note", color: Color(.systemOrange)),
+            ItemTypeMapping(key: "SNS投稿", displayName: L10n.snsPost, icon: "bubble.right.fill", color: Color(.systemPurple)),
+            ItemTypeMapping(key: "その他", displayName: L10n.other, icon: "questionmark.circle", color: Color(.systemGray))
+        ]
+    }
+    
+    // カテゴリーのマッピング
+    var categoryMappings: [ItemTypeMapping] {
+        [
+            ItemTypeMapping(key: "すべて", displayName: L10n.all, icon: "", color: Color(.systemBlue)),
+            ItemTypeMapping(key: "グッズ", displayName: L10n.goods, icon: "", color: Color(.systemPink)),
+            ItemTypeMapping(key: "CD・DVD", displayName: L10n.cdDvd, icon: "", color: Color(.systemBlue)),
+            ItemTypeMapping(key: "雑誌", displayName: L10n.magazine, icon: "", color: Color(.systemGreen)),
+            ItemTypeMapping(key: "写真集", displayName: L10n.photoBook, icon: "", color: Color(.systemOrange)),
+            ItemTypeMapping(key: "アクリルスタンド", displayName: L10n.acrylicStand, icon: "", color: Color(.systemPurple)),
+            ItemTypeMapping(key: "ぬいぐるみ", displayName: L10n.plushie, icon: "", color: Color(.systemRed)),
+            ItemTypeMapping(key: "Tシャツ", displayName: L10n.tShirt, icon: "", color: Color(.systemTeal)),
+            ItemTypeMapping(key: "タオル", displayName: L10n.towel, icon: "", color: Color(.systemYellow)),
+            ItemTypeMapping(key: "その他", displayName: L10n.other, icon: "", color: Color(.systemGray))
+        ]
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -58,7 +86,6 @@ struct OshiItemDetailView: View {
                                 Image(systemName: iconForItemType(itemType))
                                     .font(.system(size: 30))
                                     .foregroundColor(.gray)
-                                //                    placeholderImage
                             }
                         }
                     }
@@ -70,9 +97,9 @@ struct OshiItemDetailView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         // アイテムタイプバッジとお気に入り
                         HStack {
-                            // アイテムタイプバッジ
+                            // アイテムタイプバッジ（多言語対応）
                             if let itemType = item.itemType {
-                                Text(itemType)
+                                Text(displayNameForItemType(itemType))
                                     .font(.system(size: 12, weight: .medium))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 4)
@@ -104,7 +131,7 @@ struct OshiItemDetailView: View {
                         }
                         
                         // タイトル
-                        Text(item.title ?? "無題")
+                        Text(item.title ?? L10n.untitled)
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(.black)
                         
@@ -133,7 +160,7 @@ struct OshiItemDetailView: View {
                     // 詳細情報
                     VStack(alignment: .leading, spacing: 15) {
                         if let category = item.category, !category.isEmpty {
-                            detailRow(title: L10n.category, value: category, icon: "tag.fill")
+                            detailRow(title: L10n.category, value: displayNameForCategory(category), icon: "tag.fill")
                         }
                         
                         if let eventName = item.eventName, !eventName.isEmpty {
@@ -141,7 +168,7 @@ struct OshiItemDetailView: View {
                         }
                         
                         if let price = item.price, price > 0 {
-                            detailRow(title: L10n.price, value: "¥\(price)", icon: "yensign.circle.fill")
+                            detailRow(title: L10n.price, value: formatPrice(price), icon: "yensign.circle.fill")
                         }
                         
                         if let date = getItemDate() {
@@ -153,7 +180,11 @@ struct OshiItemDetailView: View {
                         }
                         
                         if let location = item.location, !location.isEmpty {
-                            detailRow(title: "purchase_location", value: location, icon: "mappin.circle.fill")
+                            detailRow(title: L10n.purchaseLocation, value: location, icon: "mappin.circle.fill")
+                        }
+                        
+                        if let locationAddress = item.locationAddress, !locationAddress.isEmpty {
+                            detailRow(title: L10n.location, value: locationAddress, icon: "mappin.circle.fill")
                         }
                     }
                     
@@ -187,7 +218,7 @@ struct OshiItemDetailView: View {
                             VStack {
                                 Image(systemName: "square.and.arrow.up")
                                     .font(.system(size: 20))
-                                Text("share")
+                                Text(L10n.share)
                                     .font(.system(size: 12))
                             }
                             .foregroundColor(accentColor)
@@ -268,23 +299,23 @@ struct OshiItemDetailView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarTitle("", displayMode: .inline)
         .navigationBarItems(leading:
-                                Button(action: {
-            generateHapticFeedback()
-            presentationMode.wrappedValue.dismiss()
-        }) {
-            HStack {
-                Image(systemName: "chevron.left")
-                Text("戻る")
+            Button(action: {
+                generateHapticFeedback()
+                presentationMode.wrappedValue.dismiss()
+            }) {
+                HStack {
+                    Image(systemName: "chevron.left")
+                    Text(L10n.back)
+                }
+                .foregroundColor(primaryColor)
             }
-            .foregroundColor(primaryColor)
-        }
         )
         .navigationBarItems(
             trailing: Button(action: {
                 generateHapticFeedback()
                 isEditing = true
             }) {
-                Text("編集")
+                Text(L10n.edit)
                     .foregroundColor(primaryColor)
                     .frame(maxWidth: .infinity)
             }
@@ -303,7 +334,7 @@ struct OshiItemDetailView: View {
             if let imageUrl = item.imageUrl, let url = URL(string: imageUrl) {
                 ShareSheet(items: [url])
             } else {
-                ShareSheet(items: [item.title ?? "推しアイテム"])
+                ShareSheet(items: [item.title ?? L10n.oshiItem])
             }
         }
     }
@@ -359,6 +390,25 @@ struct OshiItemDetailView: View {
             return NSLocalizedString("date", comment: "Date")
         }
         return L10n.dateLabel(for: itemType)
+    }
+    
+    // データベース値からアイテムタイプの表示名を取得
+    func displayNameForItemType(_ type: String) -> String {
+        return itemTypeMappings.first(where: { $0.key == type })?.displayName ?? type
+    }
+    
+    // データベース値からカテゴリーの表示名を取得
+    func displayNameForCategory(_ category: String) -> String {
+        return categoryMappings.first(where: { $0.key == category })?.displayName ?? category
+    }
+    
+    // 価格のフォーマット（通貨記号を言語に合わせて調整）
+    func formatPrice(_ price: Int) -> String {
+        if isJapanese() {
+            return "¥\(price)"
+        } else {
+            return "$\(price)" // 英語圏向けの表示（必要に応じて調整）
+        }
     }
     
     // 詳細行
@@ -434,34 +484,26 @@ struct OshiItemDetailView: View {
         }
     }
     
-    // アイテムタイプによってアイコンを変更
+    // アイテムタイプによってアイコンを変更（マッピングを使用）
     func iconForItemType(_ type: String) -> String {
-        switch type {
-        case "グッズ": return "gift"
-        case "SNS投稿": return "bubble.right"
-        case "ライブ記録": return "music.note"
-        case "聖地巡礼": return "mappin.and.ellipse"
-        default: return "photo"
-        }
+        return itemTypeMappings.first(where: { $0.key == type })?.icon ?? "photo"
     }
     
     func badgeColor(for type: String) -> Color {
-        switch type {
-        case "すべて": return Color(.systemBlue)
-        case "グッズ": return Color(.systemPink)
-        case "聖地巡礼": return Color(.systemGreen)
-        case "ライブ記録": return Color(.systemOrange)
-        case "SNS投稿": return Color(.systemPurple)
-        case "その他": return Color(.systemGray)
-        default:
-            return Color(.systemGray)
-        }
+        return itemTypeMappings.first(where: { $0.key == type })?.color ?? Color(.systemGray)
     }
     
-    // 日付フォーマット
+    // 日付フォーマット（多言語対応）
     func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy年MM月dd日"
+        formatter.locale = Locale.current
+        
+        if isJapanese() {
+            formatter.dateFormat = "yyyy年MM月dd日"
+        } else {
+            formatter.dateStyle = .medium
+        }
+        
         return formatter.string(from: date)
     }
     
@@ -469,36 +511,39 @@ struct OshiItemDetailView: View {
     func deleteItem() {
         guard let userId = Auth.auth().currentUser?.uid,
               let oshiId = item.oshiId else {
-            print("削除エラー: ユーザーIDまたは推しIDが取得できません")
+            print("\(L10n.deleteError): ユーザーIDまたは推しIDが取得できません")
             return
         }
         
-        // Firebaseからアイテムを削除
         let ref = Database.database().reference().child("oshiItems").child(userId).child(oshiId).child(item.id)
         ref.removeValue { error, _ in
             if let error = error {
-                print("削除エラー: \(error.localizedDescription)")
+                print("\(L10n.deleteError): \(error.localizedDescription)")
             } else {
-                print("投稿を削除しました")
+                print(L10n.deletedSuccessfully)
                 
-                // 画像も削除
                 if let imageUrl = item.imageUrl, !imageUrl.isEmpty {
                     let storageRef = Storage.storage().reference(forURL: imageUrl)
                     storageRef.delete { error in
                         if let error = error {
-                            print("画像削除エラー: \(error.localizedDescription)")
+                            print("\(L10n.deleteError): \(error.localizedDescription)")
                         } else {
                             print("関連画像も削除しました")
                         }
                     }
                 }
                 
-                // 前の画面に戻る
                 DispatchQueue.main.async {
                     self.presentationMode.wrappedValue.dismiss()
                 }
             }
         }
+    }
+    
+    // 触覚フィードバック
+    func generateHapticFeedback() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
     }
 }
 

@@ -61,9 +61,8 @@ struct ChatHubView: View {
     @State private var isCheckingAdminStatus = true
     
     private let adminUserIds = [
-        ""
 //        "3UDNienzhkdheKIy77lyjMJhY4D3",
-//        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
     
     enum ChatTabType: String, CaseIterable {
