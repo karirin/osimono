@@ -531,3 +531,67 @@
 // Start Loading
 "app_title" = "Oshi Log";
 "app_starting" = "Starting app";
+
+"edit_oshi" = "Edit Oshi";
+"oshi_name" = "Oshi Name";
+"enter_name" = "Enter name";
+"background_image" = "Background Image";
+"select_background_image" = "Select background image";
+"change_oshi_image" = "You can change oshi image";
+"select_different_oshi" = "Select different oshi";
+"edit_personality_traits" = "Edit personality & traits";
+"edit_personality_description" = "Set oshi's personality and preferences for personalized chat";
+"current_settings" = "Current Settings";
+"delete_oshi" = "Delete Oshi";
+"register_oshi" = "Register Oshi";
+"save_changes" = "Save Changes";
+
+// Gender related
+"male_gender" = "Male";
+"female_gender" = "Female";
+"other_gender" = "Other";
+"gender_detail_placeholder" = "Enter details (e.g., dog, robot, bridge, etc.)";
+
+// Personality related
+"oshi_personality" = "Oshi's Personality";
+"personality_placeholder" = "Bright, kind, cool, etc.";
+"speaking_style_title" = "Speaking Style";
+"speaking_style_placeholder" = "Polite, casual, emoji heavy, etc.";
+"user_nickname_title" = "How to call you";
+"user_nickname_placeholder" = "e.g., ○○-chan, ○○-kun";
+"user_nickname_label" = "How to call you";
+"detailed_personality_note" = "Detailed personality settings can be configured in the edit screen after registration.";
+
+// Image related
+"oshi_image_description" = "You can register oshi's image";
+"apply" = "Apply";
+
+// Messages
+"delete_oshi_confirmation_message" = "Delete %@? This action cannot be undone.\nAll related chat history and item records will also be deleted.";
+
+// Labels
+"personality" = "Personality";
+"speaking_style" = "Speaking Style";
+"birthday" = "Birthday";
+"interests" = "Interests";
+
+"basic_info" = "Basic Information";
+"personality_traits" = "Personality & Traits";
+"speaking_style_features" = "Speaking Style Features";
+"user_relationship" = "User Relationship";
+"user_nickname_help" = "Set how your oshi calls you.";
+"profile_section" = "Profile";
+"birthday_placeholder" = "January 1st";
+"height_placeholder" = "e.g., 165";
+"hometown_placeholder" = "e.g., Tokyo";
+"interests_hobbies" = "Interests & Hobbies";
+"add_new_interest" = "Add new interest or hobby";
+"likes_dislikes_section" = "Likes & Dislikes";
+"favorite_color" = "Favorite Color";
+"favorite_color_placeholder" = "e.g., Pink";
+"favorite_food" = "Favorite Food";
+"favorite_food_placeholder" = "e.g., Ramen";
+"disliked_food" = "Disliked Food";
+"disliked_food_placeholder" = "e.g., Celery";
+
+"gender" = "Gender";

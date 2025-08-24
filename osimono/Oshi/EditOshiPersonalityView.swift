@@ -3,6 +3,7 @@
 //  osimono
 //
 //  Created by Apple on 2025/05/10.
+//  多言語対応版
 //
 
 import SwiftUI
@@ -27,10 +28,13 @@ struct EditOshiPersonalityView: View {
     @State private var initializationCompleted: Bool = false
     @State private var userNickname: String = ""
     // 性別選択用の状態変数を追加
-    @State private var gender: String = "男性"
+    @State private var gender: String = L10n.maleGender
     @State private var genderDetail: String = ""
-    // 性別選択肢
-    let genderOptions = ["男性", "女性", "その他"]
+    
+    // 性別選択肢（多言語対応）
+    private var genderOptions: [String] {
+        [L10n.maleGender, L10n.femaleGender, L10n.otherGender]
+    }
     
     @State private var isLoading = false
     @ObservedObject var viewModel: OshiViewModel
@@ -59,13 +63,12 @@ struct EditOshiPersonalityView: View {
         _dislikedFood = State(initialValue: viewModel.selectedOshi.disliked_food ?? "")
         _hometown = State(initialValue: viewModel.selectedOshi.hometown ?? "")
         _interests = State(initialValue: viewModel.selectedOshi.interests ?? [])
-        _personality = State(initialValue: viewModel.selectedOshi.personality ?? "")
-        _speakingStyle = State(initialValue: viewModel.selectedOshi.speaking_style ?? "")
         _userNickname = State(initialValue: viewModel.selectedOshi.user_nickname ?? "")
-        // 性別情報の処理
-        let genderValue = viewModel.selectedOshi.gender ?? "男性"
-        if genderValue.hasPrefix("その他：") {
-            _gender = State(initialValue: "その他")
+        
+        // 性別情報の処理（多言語対応）
+        let genderValue = viewModel.selectedOshi.gender ?? L10n.maleGender
+        if genderValue.hasPrefix("\(L10n.otherGender)：") {
+            _gender = State(initialValue: L10n.otherGender)
             let detailStartIndex = genderValue.index(genderValue.startIndex, offsetBy: 4)
             _genderDetail = State(initialValue: String(genderValue[detailStartIndex...]))
         } else {
@@ -84,14 +87,14 @@ struct EditOshiPersonalityView: View {
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
                     }) {
-                        Text("戻る")
+                        Text(L10n.back)
                             .foregroundColor(primaryColor)
                     }
                     .padding()
                     
                     Spacer()
                     
-                    Text("推しの性格を編集")
+                    Text(L10n.editPersonalityTraits)
                         .font(.headline)
                         .foregroundColor(.primary)
                     
@@ -101,7 +104,7 @@ struct EditOshiPersonalityView: View {
                         generateHapticFeedback()
                         savePersonality()
                     }) {
-                        Text("保存")
+                        Text(L10n.save)
                             .foregroundColor(primaryColor)
                     }
                     .padding()
@@ -155,24 +158,24 @@ struct EditOshiPersonalityView: View {
                             .padding(.bottom, 10)
                         
                         VStack(alignment: .leading, spacing: 15) {
-                            SectionHeader(title: "基本情報", icon: "person.fill")
+                            SectionHeader(title: L10n.basicInfo, icon: "person.fill")
                             
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("性別")
+                                Text(L10n.gender)
                                     .font(.subheadline)
-                                    .foregroundColor(.secondary) // .grayから変更
+                                    .foregroundColor(.secondary)
                                 
-                                Picker("性別", selection: $gender) {
+                                Picker(L10n.gender, selection: $gender) {
                                     ForEach(genderOptions, id: \.self) { option in
                                         Text(option).tag(option)
                                     }
                                 }
                                 .pickerStyle(SegmentedPickerStyle())
                                 
-                                if gender == "その他" {
-                                     TextField("詳細を入力（例：犬、ロボット、橋など）", text: $genderDetail)
+                                if gender == L10n.otherGender {
+                                     TextField(L10n.genderDetailPlaceholder, text: $genderDetail)
                                          .padding(10)
-                                         .background(Color(.tertiarySystemFill)) // ダークモード対応
+                                         .background(Color(.tertiarySystemFill))
                                          .cornerRadius(8)
                                          .padding(.top, 5)
                                          .transition(.opacity.combined(with: .slide))
@@ -181,7 +184,7 @@ struct EditOshiPersonalityView: View {
                             }
                         }
                         .padding()
-                        .background(cardBackgroundColor) // Color.whiteから変更
+                        .background(cardBackgroundColor)
                         .cornerRadius(12)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         .padding(.horizontal)
@@ -210,7 +213,7 @@ struct EditOshiPersonalityView: View {
                                     ProgressView()
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 } else {
-                                    Text("保存する")
+                                    Text(L10n.saveChanges)
                                         .font(.system(size: 16, weight: .bold))
                                 }
                             }
@@ -247,9 +250,10 @@ struct EditOshiPersonalityView: View {
                 loadDirectlyFromFirebase()
             }
             
-            // デバッグ出力
-            print("onAppear時 - 性格: \(viewModel.selectedOshi.personality ?? "なし")")
-            print("onAppear時 - 話し方: \(viewModel.selectedOshi.speaking_style ?? "なし")")
+            // 現在の言語に基づいて初期値を設定
+            if gender.isEmpty {
+                gender = L10n.maleGender
+            }
         }
         .onTapGesture {
             hideKeyboard()
@@ -259,18 +263,18 @@ struct EditOshiPersonalityView: View {
     // 性格セクション
     var personalitySection: some View {
         VStack(alignment: .leading, spacing: 15) {
-            SectionHeader(title: "性格・特徴", icon: "person.fill.questionmark")
+            SectionHeader(title: L10n.personalityTraits, icon: "person.fill.questionmark")
             
             CustomTextField(
-                title: "性格",
-                placeholder: "明るい、優しい、クールなど",
+                title: L10n.personality,
+                placeholder: L10n.personalityPlaceholder,
                 text: $personality,
                 iconName: "sparkles"
             )
             
             CustomTextField(
-                title: "話し方の特徴",
-                placeholder: "敬語、タメ口、絵文字多用など",
+                title: L10n.speakingStyleFeatures,
+                placeholder: L10n.speakingStylePlaceholder,
                 text: $speakingStyle,
                 iconName: "bubble.left.fill"
             )
@@ -284,17 +288,17 @@ struct EditOshiPersonalityView: View {
     
     var userInteractionSection: some View {
         VStack(alignment: .leading, spacing: 15) {
-            SectionHeader(title: "ユーザーとの関係性", icon: "person.2.fill")
+            SectionHeader(title: L10n.userRelationship, icon: "person.2.fill")
             
             CustomTextField(
-                title: "あなたの呼び方",
-                placeholder: "例：〇〇ちゃん、〇〇くん",
+                title: L10n.userNicknameTitle,
+                placeholder: L10n.userNicknamePlaceholder,
                 text: $userNickname,
                 iconName: "person.circle"
             )
             
             // ヘルプテキスト
-            Text("推しがあなたのことをどう呼ぶかを設定できます。")
+            Text(L10n.userNicknameHelp)
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 4)
@@ -309,32 +313,32 @@ struct EditOshiPersonalityView: View {
     // プロフィールセクション
     var profileSection: some View {
         VStack(alignment: .leading, spacing: 15) {
-            SectionHeader(title: "プロフィール", icon: "person.text.rectangle.fill")
+            SectionHeader(title: L10n.profileSection, icon: "person.text.rectangle.fill")
             
             CustomTextField(
-                title: "誕生日",
-                placeholder: "1月1日",
+                title: L10n.birthday,
+                placeholder: L10n.birthdayPlaceholder,
                 text: $birthday,
                 iconName: "gift.fill"
             )
             
             CustomTextField(
-                title: "身長",
-                placeholder: "例: 165",
+                title: L10n.height,
+                placeholder: L10n.heightPlaceholder,
                 text: $height,
                 iconName: "ruler.fill",
                 keyboardType: .numberPad
             )
             
             CustomTextField(
-                title: "出身地",
-                placeholder: "例: 東京都",
+                title: L10n.hometown,
+                placeholder: L10n.hometownPlaceholder,
                 text: $hometown,
                 iconName: "mappin.and.ellipse"
             )
         }
         .padding()
-        .background(cardBackgroundColor) // Color.whiteから変更
+        .background(cardBackgroundColor)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
@@ -343,7 +347,7 @@ struct EditOshiPersonalityView: View {
     // 趣味・興味セクション
     var interestsSection: some View {
         VStack(alignment: .leading, spacing: 15) {
-            SectionHeader(title: "趣味・興味", icon: "heart.fill")
+            SectionHeader(title: L10n.interestsHobbies, icon: "heart.fill")
             
             // 既存の興味タグ
             FlowLayout(
@@ -363,9 +367,9 @@ struct EditOshiPersonalityView: View {
             
             // 新しい興味を追加
             HStack {
-                TextField("新しい趣味・興味を追加", text: $newInterest)
+                TextField(L10n.addNewInterest, text: $newInterest)
                     .padding(10)
-                    .background(Color(.tertiarySystemFill)) // ダークモード対応
+                    .background(Color(.tertiarySystemFill))
                     .cornerRadius(8)
                 
                 Button(action: {
@@ -382,7 +386,7 @@ struct EditOshiPersonalityView: View {
             }
         }
         .padding()
-        .background(cardBackgroundColor) // Color.whiteから変更
+        .background(cardBackgroundColor)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
@@ -391,31 +395,31 @@ struct EditOshiPersonalityView: View {
     // 好き嫌いセクション
     var likesDislikesSection: some View {
         VStack(alignment: .leading, spacing: 15) {
-            SectionHeader(title: "好きなもの・苦手なもの", icon: "hand.thumbsup.fill")
+            SectionHeader(title: L10n.likesDislikesSection, icon: "hand.thumbsup.fill")
             
             CustomTextField(
-                title: "好きな色",
-                placeholder: "例: ピンク",
+                title: L10n.favoriteColor,
+                placeholder: L10n.favoriteColorPlaceholder,
                 text: $favoriteColor,
                 iconName: "paintpalette.fill"
             )
             
             CustomTextField(
-                title: "好きな食べ物",
-                placeholder: "例: ラーメン",
+                title: L10n.favoriteFood,
+                placeholder: L10n.favoriteFoodPlaceholder,
                 text: $favoriteFood,
                 iconName: "fork.knife"
             )
             
             CustomTextField(
-                title: "苦手な食べ物",
-                placeholder: "例: セロリ",
+                title: L10n.dislikedFood,
+                placeholder: L10n.dislikedFoodPlaceholder,
                 text: $dislikedFood,
                 iconName: "xmark.circle"
             )
         }
         .padding()
-        .background(cardBackgroundColor) // Color.whiteから変更
+        .background(cardBackgroundColor)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal)
@@ -440,10 +444,11 @@ struct EditOshiPersonalityView: View {
                self.hometown = data["hometown"] as? String ?? ""
                self.interests = data["interests"] as? [String] ?? []
                self.userNickname = data["user_nickname"] as? String ?? ""
-               // 性別の処理
-               let genderValue = data["gender"] as? String ?? "男性"
-               if genderValue.hasPrefix("その他：") {
-                   self.gender = "その他"
+               
+               // 性別の処理（多言語対応）
+               let genderValue = data["gender"] as? String ?? L10n.maleGender
+               if genderValue.hasPrefix("\(L10n.otherGender)：") {
+                   self.gender = L10n.otherGender
                    let detailStartIndex = genderValue.index(genderValue.startIndex, offsetBy: 4)
                    self.genderDetail = String(genderValue[detailStartIndex...])
                } else {
@@ -452,42 +457,8 @@ struct EditOshiPersonalityView: View {
                }
                
                self.initializationCompleted = true
-               print("Firebase直接取得 - 性格: \(self.personality)")
            }
        }
-    }
-    
-    // 現在のデータをロード
-    private func loadCurrentData() {
-        // ローカルのデータがすでに設定されている場合はロードしない
-        if !personality.isEmpty {
-            print("既存データあり - スキップ")
-            return
-        }
-        
-        print("loadCurrentData呼び出し - oshi: \(oshi)")
-        
-        personality = oshi.personality ?? ""
-        speakingStyle = oshi.speaking_style ?? ""
-        birthday = oshi.birthday ?? ""
-        height = oshi.height != nil ? "\(oshi.height!)" : ""
-        favoriteColor = oshi.favorite_color ?? ""
-        favoriteFood = oshi.favorite_food ?? ""
-        dislikedFood = oshi.disliked_food ?? ""
-        hometown = oshi.hometown ?? ""
-        interests = oshi.interests ?? []
-        
-        // 性別情報の処理
-        let genderValue = oshi.gender ?? "男性"
-        // 「その他：詳細」形式の場合を処理
-        if genderValue.hasPrefix("その他：") {
-            gender = "その他"
-            let detailStartIndex = genderValue.index(genderValue.startIndex, offsetBy: 4)
-            genderDetail = String(genderValue[detailStartIndex...])
-        } else {
-            gender = genderValue
-            genderDetail = ""
-        }
     }
     
     // データの保存
@@ -500,8 +471,8 @@ struct EditOshiPersonalityView: View {
         
         let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
         
-        // 性別情報を準備
-        let genderValue = gender == "その他" && !genderDetail.isEmpty ? "その他：\(genderDetail)" : gender
+        // 性別情報を準備（多言語対応）
+        let genderValue = gender == L10n.otherGender && !genderDetail.isEmpty ? "\(L10n.otherGender)：\(genderDetail)" : gender
         
         var updates: [String: Any] = [
             "personality": personality,
@@ -527,7 +498,6 @@ struct EditOshiPersonalityView: View {
                 
                 if error == nil {
                     // データを更新
-                    
                     var updatedOshi = viewModel.selectedOshi
                     
                     // 新しいデータを設定
@@ -545,6 +515,7 @@ struct EditOshiPersonalityView: View {
                     updatedOshi.gender = gender
                     updatedOshi.user_nickname = userNickname
                     viewModel.selectedOshi = updatedOshi
+                    
                     // Binding変数を明示的に更新
                     onSave(updatedOshi)
                     // 更新コールバックも呼び出し
@@ -568,7 +539,7 @@ struct EditOshiPersonalityView: View {
     }
 }
 
-// セクションヘッダー
+// セクションヘッダー（多言語対応）
 struct SectionHeader: View {
     let title: String
     let icon: String
@@ -598,17 +569,17 @@ struct CustomTextField: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(.secondary) // .grayから変更
+                .foregroundColor(.secondary)
             
             HStack {
                 Image(systemName: iconName)
-                    .foregroundColor(.secondary) // .grayから変更
+                    .foregroundColor(.secondary)
                 
                 TextField(placeholder, text: $text)
                     .keyboardType(keyboardType)
             }
             .padding(10)
-            .background(Color(.tertiarySystemFill)) // ダークモード対応
+            .background(Color(.tertiarySystemFill))
             .cornerRadius(8)
         }
     }
@@ -745,4 +716,3 @@ struct FlowLayout<T: Hashable, V: View>: View {
     )
     .preferredColorScheme(.light)
 }
-

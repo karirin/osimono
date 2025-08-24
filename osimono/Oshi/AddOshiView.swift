@@ -2,7 +2,7 @@
 //  AddOshiView.swift
 //  osimono
 //
-//  推しの登録数制限機能を追加 + 画像登録機能完全実装
+//  推しの登録数制限機能を追加 + 画像登録機能完全実装 + 多言語対応
 //
 
 import SwiftUI
@@ -38,7 +38,7 @@ struct AddOshiView: View {
     @State private var userNickname: String = ""
 
     // 性別選択用の状態変数
-    @State private var gender: String = "男性"
+    @State private var gender: String = L10n.maleGender
     @State private var genderDetail: String = ""
     
     // 新規追加：制限関連の状態変数
@@ -49,8 +49,10 @@ struct AddOshiView: View {
     @State private var oshiList: [Oshi] = []
     @StateObject private var subscriptionManager = SubscriptionManager()
     
-    // 性別選択肢
-    let genderOptions = ["男性", "女性", "その他"]
+    // 性別選択肢（多言語対応）
+    private var genderOptions: [String] {
+        [L10n.maleGender, L10n.femaleGender, L10n.otherGender]
+    }
     
     // 色の定義
     let primaryColor = Color(UIColor(red: 0.3, green: 0.6, blue: 0.9, alpha: 1.0))
@@ -65,9 +67,9 @@ struct AddOshiView: View {
     private var cropConfig: SwiftyCropConfiguration {
         var cfg = SwiftyCropConfiguration(
             texts: .init(
-                cancelButton: "キャンセル",
+                cancelButton: L10n.cancel,
                 interactionInstructions: "",
-                saveButton: "適用"
+                saveButton: L10n.apply
             )
         )
         return cfg
@@ -83,14 +85,14 @@ struct AddOshiView: View {
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
                     }) {
-                        Text("戻る")
+                        Text(L10n.back)
                             .foregroundColor(primaryColor)
                     }
                     .padding()
                     
                     Spacer()
                     
-                    Text("推しを登録")
+                    Text(L10n.addOshi)
                         .font(.headline)
                         .foregroundColor(.primary)
                     
@@ -100,7 +102,7 @@ struct AddOshiView: View {
                         generateHapticFeedback()
                         checkLimitAndSaveOshi()
                     }) {
-                        Text("登録")
+                        Text(L10n.register)
                             .foregroundColor(primaryColor)
                     }
                     .padding()
@@ -154,7 +156,7 @@ struct AddOshiView: View {
                             }
                             .padding(.top, 20)
                             
-                            Text("推しの画像を登録できます")
+                            Text(L10n.oshiImageDescription)
                                 .font(.caption)
                                 .foregroundColor(.gray)
                                 .padding(.top, 8)
@@ -162,7 +164,7 @@ struct AddOshiView: View {
                         
                         // 背景画像選択
                         VStack(alignment: .leading) {
-                            Text("背景画像")
+                            Text(L10n.backgroundImage)
                                 .font(.headline)
                                 .padding(.horizontal)
                             
@@ -195,7 +197,7 @@ struct AddOshiView: View {
                                                     .frame(width: 40)
                                                     .foregroundColor(primaryColor)
                                                 
-                                                Text("背景画像を選択")
+                                                Text(L10n.selectBackgroundImage)
                                                     .foregroundColor(primaryColor)
                                                     .padding(.top, 8)
                                             }
@@ -209,11 +211,11 @@ struct AddOshiView: View {
                         VStack(spacing: 20) {
                             // 名前フィールド
                             VStack(alignment: .leading) {
-                                Text("推しの名前")
+                                Text(L10n.oshiName)
                                     .font(.headline)
                                     .padding(.horizontal)
                                 
-                                TextField("名前を入力", text: $oshiName)
+                                TextField(L10n.enterName, text: $oshiName)
                                     .padding()
                                     .background(Color.white)
                                     .cornerRadius(10)
@@ -222,11 +224,11 @@ struct AddOshiView: View {
                             }
                             
                             VStack(alignment: .leading) {
-                                Text("性別")
+                                Text(L10n.gender)
                                     .font(.headline)
                                     .padding(.horizontal)
                                 
-                                Picker("性別", selection: $gender) {
+                                Picker(L10n.gender, selection: $gender) {
                                     ForEach(genderOptions, id: \.self) { option in
                                         Text(option).tag(option)
                                     }
@@ -234,8 +236,8 @@ struct AddOshiView: View {
                                 .pickerStyle(SegmentedPickerStyle())
                                 .padding(.horizontal)
                                 
-                                if gender == "その他" {
-                                    TextField("詳細を入力（例：犬、ロボット、橋など）", text: $genderDetail)
+                                if gender == L10n.otherGender {
+                                    TextField(L10n.genderDetailPlaceholder, text: $genderDetail)
                                         .padding()
                                         .background(Color.white)
                                         .cornerRadius(10)
@@ -249,11 +251,11 @@ struct AddOshiView: View {
                             
                             // 性格入力フィールド
                             VStack(alignment: .leading) {
-                                Text("推しの性格")
+                                Text(L10n.oshiPersonality)
                                     .font(.headline)
                                     .padding(.horizontal)
                                 
-                                TextField("明るい、優しい、クール など", text: $personality)
+                                TextField(L10n.personalityPlaceholder, text: $personality)
                                     .padding()
                                     .background(Color.white)
                                     .cornerRadius(10)
@@ -263,11 +265,11 @@ struct AddOshiView: View {
                             
                             // 話し方の特徴入力フィールド
                             VStack(alignment: .leading) {
-                                Text("話し方の特徴")
+                                Text(L10n.speakingStyleTitle)
                                     .font(.headline)
                                     .padding(.horizontal)
                                 
-                                TextField("敬語、タメ口、絵文字多用 など", text: $speakingStyle)
+                                TextField(L10n.speakingStylePlaceholder, text: $speakingStyle)
                                     .padding()
                                     .background(Color.white)
                                     .cornerRadius(10)
@@ -276,11 +278,11 @@ struct AddOshiView: View {
                             }
                             
                             VStack(alignment: .leading) {
-                                Text("あなたの呼び方")
+                                Text(L10n.userNicknameTitle)
                                     .font(.headline)
                                     .padding(.horizontal)
                                 
-                                TextField("〇〇ちゃん、〇〇くん など", text: $userNickname)
+                                TextField(L10n.userNicknamePlaceholder, text: $userNickname)
                                     .padding()
                                     .background(Color.white)
                                     .cornerRadius(10)
@@ -291,7 +293,7 @@ struct AddOshiView: View {
                             // 詳細設定への案内
                             HStack {
                                 Spacer()
-                                Text("詳細な性格設定は登録後に編集画面から設定できます")
+                                Text(L10n.detailedPersonalityNote)
                                     .font(.caption)
                                     .foregroundColor(.gray)
                                     .multilineTextAlignment(.center)
@@ -310,7 +312,7 @@ struct AddOshiView: View {
                                     ProgressView()
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 } else {
-                                    Text("登録する")
+                                    Text(L10n.registerOshi)
                                         .fontWeight(.bold)
                                 }
                             }
@@ -390,9 +392,12 @@ struct AddOshiView: View {
         }
         .onAppear {
             loadCurrentOshiCount()
+            // 現在の言語に基づいて初期値を設定
+            if gender.isEmpty {
+                gender = L10n.maleGender
+            }
         }
     }
-    
     
     // 新規追加：制限チェック付きの保存処理
     private func checkLimitAndSaveOshi() {
@@ -427,7 +432,7 @@ struct AddOshiView: View {
                     if let childSnapshot = child as? DataSnapshot,
                        let value = childSnapshot.value as? [String: Any] {
                         let id = childSnapshot.key
-                        let name = value["name"] as? String ?? "名前なし"
+                        let name = value["name"] as? String ?? L10n.noName
                         let imageUrl = value["imageUrl"] as? String
                         let backgroundImageUrl = value["backgroundImageUrl"] as? String
                         let memo = value["memo"] as? String
@@ -542,8 +547,8 @@ struct AddOshiView: View {
         ]
         
         // 性別情報の追加（「その他」の場合は詳細を含める）
-        if gender == "その他" && !genderDetail.isEmpty {
-            data["gender"] = "\(gender)：\(genderDetail)"
+        if gender == L10n.otherGender && !genderDetail.isEmpty {
+            data["gender"] = "\(L10n.otherGender)：\(genderDetail)"
         } else {
             data["gender"] = gender
         }

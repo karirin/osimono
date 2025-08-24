@@ -482,3 +482,68 @@
 // Start Loading
 "app_title" = "推し ログ";
 "app_starting" = "アプリ起動中";
+
+// 日本語版 (ja.lproj/Localizable.strings)
+"edit_oshi" = "推しを編集";
+"oshi_name" = "推しの名前";
+"enter_name" = "名前を入力";
+"background_image" = "背景画像";
+"select_background_image" = "背景画像を選択";
+"change_oshi_image" = "推しの画像を変更できます";
+"select_different_oshi" = "別の推しを選択";
+"edit_personality_traits" = "性格・特徴を編集";
+"edit_personality_description" = "推しの性格や好みを設定してチャットを個性的に";
+"current_settings" = "現在の設定";
+"delete_oshi" = "推しを削除";
+"register_oshi" = "登録する";
+"save_changes" = "保存する";
+
+// Gender related
+"male_gender" = "男性";
+"female_gender" = "女性";
+"other_gender" = "その他";
+"gender_detail_placeholder" = "詳細を入力（例：犬、ロボット、橋など）";
+
+// Personality related
+"oshi_personality" = "推しの性格";
+"personality_placeholder" = "明るい、優しい、クールなど";
+"speaking_style_title" = "話し方の特徴";
+"speaking_style_placeholder" = "敬語、タメ口、絵文字多用など";
+"user_nickname_title" = "あなたの呼び方";
+"user_nickname_placeholder" = "例：〇〇ちゃん、〇〇くん";
+"user_nickname_label" = "あなたの呼び方";
+"detailed_personality_note" = "詳細な性格設定は登録後に編集画面から設定できます。";
+
+// Image related
+"oshi_image_description" = "推しの画像を登録できます";
+"apply" = "適用";
+
+// Messages
+"delete_oshi_confirmation_message" = "%@を削除しますか？この操作は元に戻せません。\n関連するチャット履歴やアイテム記録もすべて削除されます。";
+
+// Labels
+"personality" = "性格";
+"speaking_style" = "話し方";
+"birthday" = "誕生日";
+"interests" = "趣味";
+
+"basic_info" = "基本情報";
+"personality_traits" = "性格・特徴";
+"speaking_style_features" = "話し方の特徴";
+"user_relationship" = "ユーザーとの関係性";
+"user_nickname_help" = "推しがあなたのことをどう呼ぶかを設定できます。";
+"profile_section" = "プロフィール";
+"birthday_placeholder" = "1月1日";
+"height_placeholder" = "例: 165";
+"hometown_placeholder" = "例: 東京都";
+"interests_hobbies" = "趣味・興味";
+"add_new_interest" = "新しい趣味・興味を追加";
+"likes_dislikes_section" = "好きなもの・苦手なもの";
+"favorite_color" = "好きな色";
+"favorite_color_placeholder" = "例: ピンク";
+"favorite_food" = "好きな食べ物";
+"favorite_food_placeholder" = "例: ラーメン";
+"disliked_food" = "苦手な食べ物";
+"disliked_food_placeholder" = "例: セロリ";
+
+"gender" = "性別";

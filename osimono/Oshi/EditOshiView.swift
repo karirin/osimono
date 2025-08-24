@@ -2,7 +2,7 @@
 //  EditOshiView.swift
 //  osimono
 //
-//  Updated to add delete functionality
+//  削除機能付き推し編集ビュー + 多言語対応
 //
 
 import SwiftUI
@@ -38,9 +38,9 @@ struct EditOshiView: View {
     
     private var cropConfig: SwiftyCropConfiguration {
         var cfg = SwiftyCropConfiguration(
-            texts: .init(cancelButton: "キャンセル",
+            texts: .init(cancelButton: L10n.cancel,
                          interactionInstructions: "",
-                         saveButton:   "適用")
+                         saveButton: L10n.apply)
         )
         return cfg
     }
@@ -59,14 +59,14 @@ struct EditOshiView: View {
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
                     }) {
-                        Text("戻る")
+                        Text(L10n.back)
                             .foregroundColor(primaryColor)
                     }
                     .padding()
                     
                     Spacer()
                     
-                    Text("推しを編集")
+                    Text(L10n.editOshi)
                         .font(.headline)
                         .foregroundColor(.primary)
                     
@@ -76,7 +76,7 @@ struct EditOshiView: View {
                         generateHapticFeedback()
                         updateOshi()
                     }) {
-                        Text("保存")
+                        Text(L10n.save)
                             .foregroundColor(primaryColor)
                     }
                     .padding()
@@ -156,7 +156,7 @@ struct EditOshiView: View {
                             }
                             .padding(.top, 20)
                             
-                            Text("推しの画像を変更できます")
+                            Text(L10n.changeOshiImage)
                                 .font(.caption)
                                 .foregroundColor(.gray)
                                 .padding(.top, 8)
@@ -171,7 +171,7 @@ struct EditOshiView: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: "arrow.triangle.2.circlepath")
                                         .font(.system(size: 14))
-                                    Text("別の推しを選択")
+                                    Text(L10n.selectDifferentOshi)
                                         .font(.system(size: 14, weight: .medium))
                                 }
                                 .padding(.horizontal, 16)
@@ -191,12 +191,12 @@ struct EditOshiView: View {
                         
                         // 名前フィールド
                         VStack(alignment: .leading) {
-                            Text("推しの名前")
+                            Text(L10n.oshiName)
                                 .font(.headline)
                                 .foregroundColor(.primary)
                                 .padding(.horizontal)
                             
-                            TextField("名前を入力", text: $oshiName)
+                            TextField(L10n.enterName, text: $oshiName)
                                 .padding()
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
@@ -214,7 +214,7 @@ struct EditOshiView: View {
                         
                         // 背景画像選択
                         VStack(alignment: .leading) {
-                            Text("背景画像")
+                            Text(L10n.backgroundImage)
                                 .font(.headline)
                                 .foregroundColor(.primary)
                                 .padding(.horizontal)
@@ -279,11 +279,11 @@ struct EditOshiView: View {
                                     )
                                 
                                 VStack(alignment: .leading) {
-                                    Text("性格・特徴を編集")
+                                    Text(L10n.editPersonalityTraits)
                                         .font(.headline)
-                                        .foregroundColor(.black)
+                                        .foregroundColor(.primary)
                                     
-                                    Text("推しの性格や好みを設定してチャットを個性的に")
+                                    Text(L10n.editPersonalityDescription)
                                         .font(.caption)
                                         .foregroundColor(.gray)
                                 }
@@ -294,7 +294,7 @@ struct EditOshiView: View {
                                     .foregroundColor(.gray)
                             }
                             .padding()
-                            .background(Color.white)
+                            .background(Color(.secondarySystemBackground))
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         }
@@ -318,7 +318,7 @@ struct EditOshiView: View {
                                     ProgressView()
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 } else {
-                                    Text("保存する")
+                                    Text(L10n.saveChanges)
                                         .font(.system(size: 16, weight: .bold))
                                 }
                             }
@@ -345,7 +345,7 @@ struct EditOshiView: View {
                             HStack {
                                 Image(systemName: "trash.fill")
                                     .font(.system(size: 16))
-                                Text("推しを削除")
+                                Text(L10n.deleteOshi)
                                     .font(.system(size: 16, weight: .medium))
                             }
                             .frame(maxWidth: .infinity)
@@ -419,13 +419,13 @@ struct EditOshiView: View {
             }
             .navigationBarHidden(true)
         }
-        .alert("推しを削除", isPresented: $showDeleteAlert) {
-            Button("削除", role: .destructive) {
+        .alert(L10n.deleteOshi, isPresented: $showDeleteAlert) {
+            Button(L10n.delete, role: .destructive) {
                 deleteOshi()
             }
-            Button("キャンセル", role: .cancel) {}
+            Button(L10n.cancel, role: .cancel) {}
         } message: {
-            Text("\(oshi.name)を削除しますか？この操作は元に戻せません。\n関連するチャット履歴やアイテム記録もすべて削除されます。")
+            Text(L10n.deleteOshiConfirmationMessage(oshi.name))
         }
     }
     
@@ -553,7 +553,7 @@ struct EditOshiView: View {
     // 性格設定プレビュー
     var personalityPreview: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("現在の設定")
+            Text(L10n.currentSettings)
                 .font(.subheadline)
                 .foregroundColor(.gray)
             
@@ -564,9 +564,9 @@ struct EditOshiView: View {
                             .font(.system(size: 12))
                             .foregroundColor(primaryColor.opacity(0.8))
                         
-                        Text("あなたの呼び方：\(userNickname)")
+                        Text("\(L10n.userNicknameLabel): \(userNickname)")
                             .font(.system(size: 14))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                     }
                 }
                 
@@ -577,16 +577,16 @@ struct EditOshiView: View {
                             .font(.system(size: 12))
                             .foregroundColor(primaryColor.opacity(0.8))
                         
-                        if gender.hasPrefix("その他：") {
+                        if gender.hasPrefix("\(L10n.otherGender)：") {
                             let detailStartIndex = gender.index(gender.startIndex, offsetBy: 4)
                             let genderDetail = String(gender[detailStartIndex...])
-                            Text("性別：\(genderDetail)")
+                            Text("\(L10n.gender): \(genderDetail)")
                                 .font(.system(size: 14))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                         } else {
-                            Text("性別：\(gender)")
+                            Text("\(L10n.gender): \(gender)")
                                 .font(.system(size: 14))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                         }
                     }
                 }
@@ -597,9 +597,9 @@ struct EditOshiView: View {
                             .font(.system(size: 12))
                             .foregroundColor(primaryColor.opacity(0.8))
                         
-                        Text("性格: \(personality)")
+                        Text("\(L10n.personality): \(personality)")
                             .font(.system(size: 14))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                     }
                 }
                 
@@ -609,9 +609,9 @@ struct EditOshiView: View {
                             .font(.system(size: 12))
                             .foregroundColor(primaryColor.opacity(0.8))
                         
-                        Text("話し方: \(speakingStyle)")
+                        Text("\(L10n.speakingStyle): \(speakingStyle)")
                             .font(.system(size: 14))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                     }
                 }
                 
@@ -621,9 +621,9 @@ struct EditOshiView: View {
                             .font(.system(size: 12))
                             .foregroundColor(primaryColor.opacity(0.8))
                         
-                        Text("誕生日: \(birthday)")
+                        Text("\(L10n.birthday): \(birthday)")
                             .font(.system(size: 14))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                     }
                 }
                 
@@ -633,15 +633,15 @@ struct EditOshiView: View {
                             .font(.system(size: 12))
                             .foregroundColor(primaryColor.opacity(0.8))
                         
-                        Text("趣味: \(interests.joined(separator: "、"))")
+                        Text("\(L10n.interests): \(interests.joined(separator: "、"))")
                             .font(.system(size: 14))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                             .lineLimit(1)
                     }
                 }
             }
             .padding(12)
-            .background(Color.white)
+            .background(Color(.secondarySystemBackground))
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
@@ -683,7 +683,7 @@ struct EditOshiView: View {
                         .frame(width: 40)
                         .foregroundColor(primaryColor)
                     
-                    Text("背景画像を選択")
+                    Text(L10n.selectBackgroundImage)
                         .foregroundColor(primaryColor)
                         .padding(.top, 8)
                 }
@@ -722,7 +722,7 @@ struct EditOshiView: View {
                 if let childSnapshot = child as? DataSnapshot {
                     if let value = childSnapshot.value as? [String: Any] {
                         let id = childSnapshot.key
-                        let name = value["name"] as? String ?? "名前なし"
+                        let name = value["name"] as? String ?? L10n.noName
                         let imageUrl = value["imageUrl"] as? String
                         let backgroundImageUrl = value["backgroundImageUrl"] as? String
                         let memo = value["memo"] as? String
@@ -738,7 +738,7 @@ struct EditOshiView: View {
                         let dislikedFood = value["disliked_food"] as? String
                         let hometown = value["hometown"] as? String
                         let interests = value["interests"] as? [String]
-                        let gender = value["gender"] as? String ?? "男性" // 性別情報を追加（デフォルトは男性）
+                        let gender = value["gender"] as? String ?? L10n.maleGender // 性別情報を追加（デフォルトは男性）
                         
                         let oshi = Oshi(
                             id: id,
@@ -901,6 +901,8 @@ struct EditOshiView: View {
             completion(nil)
             return
         }
+        
+        isLoading = true
         
         let storageRef = Storage.storage().reference()
         let filename = type == .profile ? "profile.jpg" : "background.jpg"

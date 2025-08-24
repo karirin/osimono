@@ -2,7 +2,7 @@
 //  OshiAlertView.swift
 //  osimono
 //
-//  Created by Apple on 2025/04/29.
+//  多言語対応版
 //
 
 import SwiftUI
@@ -91,9 +91,9 @@ struct OshiAlertView: View {
 
 #Preview {
     OshiAlertView(
-        title: "推しを登録しよう！",
-        message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
-        buttonText: "推しを登録する",
+        title: L10n.registerOshiFirst,
+        message: L10n.registerOshiMessage,
+        buttonText: L10n.registerOshiButton,
         action: { },
         isShowing: .constant(true)
     )

@@ -705,6 +705,76 @@ struct L10n {
     // Start Loading
     static let appTitle = NSLocalizedString("app_title", comment: "")
     static let appStarting = NSLocalizedString("app_starting", comment: "")
+    
+    // MARK: - Oshi Management (新規追加)
+    static let editOshi = NSLocalizedString("edit_oshi", comment: "Edit oshi")
+    static let oshiName = NSLocalizedString("oshi_name", comment: "Oshi name")
+    static let enterName = NSLocalizedString("enter_name", comment: "Enter name")
+    static let backgroundImage = NSLocalizedString("background_image", comment: "Background image")
+    static let selectBackgroundImage = NSLocalizedString("select_background_image", comment: "Select background image")
+    static let changeOshiImage = NSLocalizedString("change_oshi_image", comment: "Change oshi image")
+    static let selectDifferentOshi = NSLocalizedString("select_different_oshi", comment: "Select different oshi")
+    static let editPersonalityTraits = NSLocalizedString("edit_personality_traits", comment: "Edit personality traits")
+    static let editPersonalityDescription = NSLocalizedString("edit_personality_description", comment: "Edit personality description")
+    static let currentSettings = NSLocalizedString("current_settings", comment: "Current settings")
+    static let deleteOshi = NSLocalizedString("delete_oshi", comment: "Delete oshi")
+    static let registerOshi = NSLocalizedString("register_oshi", comment: "Register oshi")
+    
+    // MARK: - Gender (新規追加)
+    static let maleGender = NSLocalizedString("male_gender", comment: "Male gender")
+    static let femaleGender = NSLocalizedString("female_gender", comment: "Female gender")
+    static let otherGender = NSLocalizedString("other_gender", comment: "Other gender")
+    static let genderDetailPlaceholder = NSLocalizedString("gender_detail_placeholder", comment: "Gender detail placeholder")
+    
+    // MARK: - Personality (新規追加)
+    static let oshiPersonality = NSLocalizedString("oshi_personality", comment: "Oshi personality")
+    static let personalityPlaceholder = NSLocalizedString("personality_placeholder", comment: "Personality placeholder")
+    static let speakingStyleTitle = NSLocalizedString("speaking_style_title", comment: "Speaking style title")
+    static let speakingStylePlaceholder = NSLocalizedString("speaking_style_placeholder", comment: "Speaking style placeholder")
+    static let userNicknameTitle = NSLocalizedString("user_nickname_title", comment: "User nickname title")
+    static let userNicknamePlaceholder = NSLocalizedString("user_nickname_placeholder", comment: "User nickname placeholder")
+    static let userNicknameLabel = NSLocalizedString("user_nickname_label", comment: "User nickname label")
+    static let detailedPersonalityNote = NSLocalizedString("detailed_personality_note", comment: "Detailed personality note")
+    
+    // MARK: - Image (新規追加)
+    static let oshiImageDescription = NSLocalizedString("oshi_image_description", comment: "Oshi image description")
+    static let apply = NSLocalizedString("apply", comment: "Apply")
+    
+    // MARK: - Labels (新規追加)
+    static let speakingStyle = NSLocalizedString("speaking_style", comment: "Speaking style")
+    static let interests = NSLocalizedString("interests", comment: "Interests")
+    
+    // MARK: - Helper functions (新規追加)
+    static func deleteOshiConfirmationMessage(_ oshiName: String) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("delete_oshi_confirmation_message", comment: "Delete oshi confirmation message"), oshiName)
+    }
+    
+    static let basicInfo = NSLocalizedString("basic_info", comment: "Basic information")
+    static let personalityTraits = NSLocalizedString("personality_traits", comment: "Personality traits")
+    static let speakingStyleFeatures = NSLocalizedString("speaking_style_features", comment: "Speaking style features")
+    static let userRelationship = NSLocalizedString("user_relationship", comment: "User relationship")
+    static let userNicknameHelp = NSLocalizedString("user_nickname_help", comment: "User nickname help")
+    static let profileSection = NSLocalizedString("profile_section", comment: "Profile section")
+    static let birthdayPlaceholder = NSLocalizedString("birthday_placeholder", comment: "Birthday placeholder")
+    static let heightPlaceholder = NSLocalizedString("height_placeholder", comment: "Height placeholder")
+    static let hometownPlaceholder = NSLocalizedString("hometown_placeholder", comment: "Hometown placeholder")
+    static let interestsHobbies = NSLocalizedString("interests_hobbies", comment: "Interests hobbies")
+    static let addNewInterest = NSLocalizedString("add_new_interest", comment: "Add new interest")
+    static let likesDislikesSection = NSLocalizedString("likes_dislikes_section", comment: "Likes dislikes section")
+    static let favoriteColor = NSLocalizedString("favorite_color", comment: "Favorite color")
+    static let favoriteColorPlaceholder = NSLocalizedString("favorite_color_placeholder", comment: "Favorite color placeholder")
+    static let favoriteFood = NSLocalizedString("favorite_food", comment: "Favorite food")
+    static let favoriteFoodPlaceholder = NSLocalizedString("favorite_food_placeholder", comment: "Favorite food placeholder")
+    static let dislikedFood = NSLocalizedString("disliked_food", comment: "Disliked food")
+    static let dislikedFoodPlaceholder = NSLocalizedString("disliked_food_placeholder", comment: "Disliked food placeholder")
+    
+    static let gender = NSLocalizedString("gender", comment: "Gender")
+    static let addOshi = NSLocalizedString("add_oshi", comment: "addOshi")
+    static let saveChanges = NSLocalizedString("save_changes", comment: "saveChanges")
+    static let personality = NSLocalizedString("personality", comment: "personality")
+    static let birthday = NSLocalizedString("birthday", comment: "birthday")
+    static let height = NSLocalizedString("height", comment: "height")
+    static let hometown = NSLocalizedString("hometown", comment: "hometown")
 }
 
 func getCurrentLanguage() -> String {
