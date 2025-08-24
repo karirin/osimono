@@ -776,3 +776,16 @@
 "ai_reply_generation_start" = "AI reply generation started";
 "ai_reply_generation_complete" = "AI reply generation completed";
 "ai_reply_save_complete" = "AI reply saved successfully";
+
+"new_message_from_oshi" = "You have a message from your oshi";
+"no_valid_oshi_selected" = "No valid oshi selected";
+"ai_message_generation_error" = "AI message generation error";
+"ai_message_empty" = "AI message is empty";
+"message_save_error" = "Message save error";
+"random_ai_message_sent" = "Random AI message sent";
+"random_message_prompt_greeting" = "Send an energetic greeting message to the fan";
+"random_message_prompt_encouragement" = "Send a warm encouraging message to the fan";
+"random_message_prompt_update" = "Share a recent update and express gratitude to the fan";
+"random_message_prompt_question" = "Ask the fan a simple question to start a conversation";
+"test_message_prompt" = "Send a test message to the fan";
+"test_message_sent" = "Test message sent";

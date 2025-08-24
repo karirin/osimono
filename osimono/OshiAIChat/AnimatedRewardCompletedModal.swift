@@ -39,29 +39,43 @@ struct AnimatedRewardCompletedModal: View {
                         .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.2), value: showCheckmark)
                 }
                 
-                // テキストアニメーション
+                // テキストアニメーション - 多言語化対応
                 if showText {
                     VStack(spacing: 8) {
-                        Text("報酬獲得！")
+                        Text(L10n.rewardObtained)
                             .font(.title2)
                             .fontWeight(.bold)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                         
-                        Text("\(rewardAmount)回分のメッセージが追加されました ✨")
-                            .font(.headline)
-                            .multilineTextAlignment(.center)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        VStack(spacing: 4) {
+                            Text(L10n.thankYouForWatching)
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                            
+                            Text(L10n.toTheEnd)
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                            
+                            Text(L10n.messagesAddedFormat(rewardAmount))
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                            
+                            Text(L10n.haveBeenAdded)
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                        }
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                     .animation(.easeOut(duration: 0.5).delay(0.5), value: showText)
                 }
                 
-                // ボタン
+                // ボタン - 多言語化対応
                 if showText {
                     Button(action: {
                         generateHapticFeedback()
                         isPresented = false
                     }) {
-                        Text("OK")
+                        Text(L10n.ok)
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)

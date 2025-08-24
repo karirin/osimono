@@ -78,7 +78,7 @@ class RandomMessageManager {
     // AIメッセージを送信する
     private func sendRandomAIMessage(for oshi: Oshi) {
         guard !oshi.id.isEmpty else {
-            print("有効な推しが選択されていません")
+            print(L10n.noValidOshiSelected) // 多言語化対応
             return
         }
         
@@ -92,12 +92,12 @@ class RandomMessageManager {
         // AIメッセージ生成（シミュレーションの場合は固定メッセージを使用）
         generator.generateResponse(for: userPrompt, oshi: oshi, chatHistory: []) { content, error in
             if let error = error {
-                print("AIメッセージ生成エラー: \(error.localizedDescription)")
+                print("\(L10n.aiMessageGenerationError): \(error.localizedDescription)") // 多言語化対応
                 return
             }
             
             guard let content = content else {
-                print("AIメッセージが空です")
+                print(L10n.aiMessageEmpty) // 多言語化対応
                 return
             }
             
@@ -113,9 +113,9 @@ class RandomMessageManager {
             
             ChatDatabaseManager.shared.saveMessage(message) { error in
                 if let error = error {
-                    print("メッセージ保存エラー: \(error.localizedDescription)")
+                    print("\(L10n.messageSaveError): \(error.localizedDescription)") // 多言語化対応
                 } else {
-                    print("ランダムAIメッセージを送信しました: \(content)")
+                    print("\(L10n.randomAiMessageSent): \(content)") // 多言語化対応
                 }
             }
         }
@@ -127,19 +127,19 @@ class RandomMessageManager {
         return messageTypes.randomElement() ?? "greeting"
     }
     
-    // メッセージタイプに応じたプロンプトを取得
+    // メッセージタイプに応じたプロンプトを取得 - 多言語化対応
     private func getPromptForMessageType(_ type: String) -> String {
         switch type {
         case "greeting":
-            return "ファンに対して元気な挨拶メッセージを送ります"
+            return L10n.randomMessagePromptGreeting
         case "encouragement":
-            return "ファンを応援する暖かいメッセージを送ります"
+            return L10n.randomMessagePromptEncouragement
         case "update":
-            return "最近の近況報告を一つだけして、ファンに感謝の気持ちを伝えます"
+            return L10n.randomMessagePromptUpdate
         case "question":
-            return "ファンに対して簡単な質問をして、会話を始めます"
+            return L10n.randomMessagePromptQuestion
         default:
-            return "ファンに対して元気な挨拶メッセージを送ります"
+            return L10n.randomMessagePromptGreeting
         }
     }
     
@@ -148,19 +148,19 @@ class RandomMessageManager {
         // AIメッセージ生成クラスのインスタンスを取得
         let generator = AIMessageGenerator.shared
         
-        // テスト用プロンプト
-        let userPrompt = "ファンに対してテスト用のメッセージを送ります"
+        // テスト用プロンプト - 多言語化対応
+        let userPrompt = L10n.testMessagePrompt
         
         // AIメッセージ生成
         generator.generateResponse(for: userPrompt, oshi: oshi, chatHistory: []) { content, error in
             if let error = error {
-                print("AIメッセージ生成エラー: \(error.localizedDescription)")
+                print("\(L10n.aiMessageGenerationError): \(error.localizedDescription)") // 多言語化対応
                 completion(false)
                 return
             }
             
             guard let content = content else {
-                print("AIメッセージが空です")
+                print(L10n.aiMessageEmpty) // 多言語化対応
                 completion(false)
                 return
             }
@@ -177,10 +177,10 @@ class RandomMessageManager {
             
             ChatDatabaseManager.shared.saveMessage(message) { error in
                 if let error = error {
-                    print("メッセージ保存エラー: \(error.localizedDescription)")
+                    print("\(L10n.messageSaveError): \(error.localizedDescription)") // 多言語化対応
                     completion(false)
                 } else {
-                    print("テストメッセージを送信しました: \(content)")
+                    print("\(L10n.testMessageSent): \(content)") // 多言語化対応
                     completion(true)
                 }
             }

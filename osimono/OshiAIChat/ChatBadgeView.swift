@@ -89,9 +89,7 @@ struct ChatBadgeView: View {
             // 未読メッセージがある場合にバッジを表示
             if hasNewMessages {
                 ZStack {
-//                            .offset(x: -10,y: 10)
-                        
-                    // カウント表示を改良
+                    // カウント表示を改良（必要に応じてコメントアウトを解除）
 //                    if count > 0 {
 //                        Text("\(count > 99 ? "99+" : "\(count)")")
 //                            .font(.system(size: count > 99 ? 12 : 16, weight: .bold))
@@ -107,21 +105,21 @@ struct ChatBadgeView: View {
         }
         .overlay(
             Group {
-                // ツールチップ改良版
+                // ツールチップ改良版 - 多言語化対応
                 if hasNewMessages {
                     TooltipView(
                         isVisible: showTooltip,
-                        text: "推しからメッセージが届いています",
+                        text: L10n.newMessageFromOshi,
                         tooltipColor: tooltipColor
                     )
-                    .offset(x: 50,y: 60)
+                    .offset(x: 50, y: 60)
                     .zIndex(1) // 確実に前面に表示
                     
                     // 自動的に消える
                     .onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                             withAnimation {
-//                                showTooltip = false
+                                // showTooltip = false
                             }
                         }
                     }
@@ -146,7 +144,7 @@ struct TooltipView: View {
                     .padding(.horizontal, 8)
                     .padding(.vertical, 8)
             }
-            .frame(width: 140,height: 50)
+            .frame(width: 140, height: 50)
             .background(
                 ZStack {
                     // ツールチップの背景
@@ -168,7 +166,7 @@ struct TooltipView: View {
     }
 }
 
-//// 三角形の形状を定義（吹き出しの矢印用）
+// 三角形の形状を定義（吹き出しの矢印用）
 struct TriangleBadge: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -183,14 +181,6 @@ struct TriangleBadge: Shape {
 // プレビュー
 struct ChatBadgeView_Previews: PreviewProvider {
     static var previews: some View {
-//        VStack(spacing: 20) {
-//            ChatBadgeView(count: 3, hasNewMessages: true)
-//            ChatBadgeView(count: 25, hasNewMessages: true)
-//            ChatBadgeView(count: 0, hasNewMessages: true)
-//            ChatBadgeView(count: 0, hasNewMessages: false)
-//        }
-//        .padding()
-//        .previewLayout(.sizeThatFits)
         TopView()
     }
 }

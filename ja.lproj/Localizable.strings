@@ -780,3 +780,16 @@
 "ai_reply_generation_start" = "AI返信生成開始";
 "ai_reply_generation_complete" = "AI返信生成完了";
 "ai_reply_save_complete" = "AI返信保存完了";
+
+"new_message_from_oshi" = "推しからメッセージが届いています";
+"no_valid_oshi_selected" = "有効な推しが選択されていません";
+"ai_message_generation_error" = "AIメッセージ生成エラー";
+"ai_message_empty" = "AIメッセージが空です";
+"message_save_error" = "メッセージ保存エラー";
+"random_ai_message_sent" = "ランダムAIメッセージを送信しました";
+"random_message_prompt_greeting" = "ファンに対して元気な挨拶メッセージを送ります";
+"random_message_prompt_encouragement" = "ファンを応援する暖かいメッセージを送ります";
+"random_message_prompt_update" = "最近の近況報告を一つだけして、ファンに感謝の気持ちを伝えます";
+"random_message_prompt_question" = "ファンに対して簡単な質問をして、会話を始めます";
+"test_message_prompt" = "ファンに対してテスト用のメッセージを送ります";
+"test_message_sent" = "テストメッセージを送信しました";

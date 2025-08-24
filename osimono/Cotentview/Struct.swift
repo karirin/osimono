@@ -775,6 +775,36 @@ struct L10n {
     static let birthday = NSLocalizedString("birthday", comment: "birthday")
     static let height = NSLocalizedString("height", comment: "height")
     static let hometown = NSLocalizedString("hometown", comment: "hometown")
+    
+    static let newMessageFromOshi = NSLocalizedString("new_message_from_oshi", comment: "Tooltip message for new oshi message")
+    
+    // MARK: - Random Message Manager
+    static let noValidOshiSelected = NSLocalizedString("no_valid_oshi_selected", comment: "No valid oshi selected error")
+    static let aiMessageGenerationError = NSLocalizedString("ai_message_generation_error", comment: "AI message generation error")
+    static let aiMessageEmpty = NSLocalizedString("ai_message_empty", comment: "AI message is empty error")
+    static let messageSaveError = NSLocalizedString("message_save_error", comment: "Message save error")
+    static let randomAiMessageSent = NSLocalizedString("random_ai_message_sent", comment: "Random AI message sent success")
+    
+    // MARK: - Message Prompts
+    static let randomMessagePromptGreeting = NSLocalizedString("random_message_prompt_greeting", comment: "Greeting message prompt")
+    static let randomMessagePromptEncouragement = NSLocalizedString("random_message_prompt_encouragement", comment: "Encouragement message prompt")
+    static let randomMessagePromptUpdate = NSLocalizedString("random_message_prompt_update", comment: "Update message prompt")
+    static let randomMessagePromptQuestion = NSLocalizedString("random_message_prompt_question", comment: "Question message prompt")
+    static let testMessagePrompt = NSLocalizedString("test_message_prompt", comment: "Test message prompt")
+    static let testMessageSent = NSLocalizedString("test_message_sent", comment: "Test message sent success")
+    
+    // MARK: - Reward Modal (already exist, but for completeness)
+    // Note: These should already exist in the current Localizable.strings files
+    // If not, add them to both language files
+    static let rewardObtained = NSLocalizedString("reward_obtained", comment: "Reward obtained title")
+    static let thankYouForWatching = NSLocalizedString("thank_you_for_watching", comment: "Thank you for watching ad")
+    static let toTheEnd = NSLocalizedString("to_the_end", comment: "To the end")
+    static let haveBeenAdded = NSLocalizedString("have_been_added", comment: "Have been added")
+    
+    // MARK: - Helper functions for dynamic content
+    static func messagesAddedFormat(_ count: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("messages_added_format", comment: "Messages added format"), count)
+    }
 }
 
 func getCurrentLanguage() -> String {

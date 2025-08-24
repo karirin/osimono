@@ -103,7 +103,7 @@ class OshiChatCoordinator: ObservableObject {
             
             let oshi = Oshi(
                 id: oshiId,
-                name: data["name"] as? String ?? "名前なし",
+                name: data["name"] as? String ?? L10n.noName, // 多言語化対応
                 imageUrl: data["imageUrl"] as? String,
                 backgroundImageUrl: data["backgroundImageUrl"] as? String,
                 memo: data["memo"] as? String,
@@ -114,7 +114,7 @@ class OshiChatCoordinator: ObservableObject {
                 speaking_style: data["speaking_style"] as? String,
                 favorite_food: data["favorite_food"] as? String,
                 disliked_food: data["disliked_food"] as? String,
-                gender: data["gender"] as? String ?? "男性" // 性別情報を追加（デフォルトは男性）
+                gender: data["gender"] as? String ?? L10n.maleGender // 性別情報を追加（デフォルトは「男性」の多言語表記）
             )
             
             completion(oshi)
