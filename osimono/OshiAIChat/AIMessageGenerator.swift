@@ -60,9 +60,131 @@ class AIClient {
     }
 }
 
+// MARK: - Localization Helper
+class LocalizedPromptManager {
+    static let shared = LocalizedPromptManager()
+    
+    private init() {}
+    
+    // 感情分析キーワードを取得（完全にローカライズファイルから）
+    func getEmotionKeywords() -> [String: [String]] {
+        let tiredKeywords = NSLocalizedString("emotion_keywords_tired", comment: "tired,exhausted,difficult,hard").components(separatedBy: ",")
+        let happyKeywords = NSLocalizedString("emotion_keywords_happy", comment: "happy,fun,great,amazing").components(separatedBy: ",")
+        let consultativeKeywords = NSLocalizedString("emotion_keywords_consultative", comment: "what do you think,advice,help,opinion").components(separatedBy: ",")
+        
+        return [
+            "tired": tiredKeywords,
+            "happy": happyKeywords,
+            "consultative": consultativeKeywords
+        ]
+    }
+    
+    // 感情に応じたフォールバック応答を取得
+    func getEmotionalFallback(mood: ConversationContext.Mood, userName: String) -> String {
+        let namePrefix = userName.isEmpty ? "" : userName + NSLocalizedString("name_separator", comment: "、")
+        
+        switch mood {
+        case .supportive:
+            return namePrefix + NSLocalizedString("fallback_supportive", comment: "Good job today! Don't push yourself too hard~")
+        case .happy:
+            return namePrefix + NSLocalizedString("fallback_happy", comment: "I'm happy too! That's great!")
+        case .consultative:
+            return namePrefix + NSLocalizedString("fallback_consultative", comment: "Yeah, what's going on? I'm listening~")
+        case .neutral:
+            return namePrefix + NSLocalizedString("fallback_neutral", comment: "What's up?")
+        }
+    }
+    
+    // プロンプトテンプレートを取得
+    func getSystemPromptTemplate() -> String {
+        return NSLocalizedString("ai_system_prompt_template", comment: "System prompt template for AI")
+    }
+    
+    func getConversationRules() -> String {
+        return NSLocalizedString("ai_conversation_rules", comment: "Conversation rules for AI")
+    }
+    
+    func getConversationGuidelines() -> String {
+        return NSLocalizedString("ai_conversation_guidelines", comment: "Conversation guidelines for AI")
+    }
+    
+    // 特別指示のテンプレート
+    func getSpecialInstruction(for mood: ConversationContext.Mood) -> String {
+        switch mood {
+        case .supportive:
+            return NSLocalizedString("special_instruction_supportive", comment: "The user seems tired, so please encourage them gently.")
+        case .happy:
+            return NSLocalizedString("special_instruction_happy", comment: "The user seems happy, so please share in their joy.")
+        case .consultative:
+            return NSLocalizedString("special_instruction_consultative", comment: "The user seems to be seeking consultation.")
+        case .neutral:
+            return ""
+        }
+    }
+    
+    func getFrequentChatInstruction() -> String {
+        return NSLocalizedString("special_instruction_frequent", comment: "Since you've been talking frequently recently, please speak more intimately.")
+    }
+    
+    // 性格・話し方の説明マッピング
+    func getPersonalityEnhancement(for personality: String) -> String {
+        // ローカライズキーを動的に作成
+        let personalityKey = "personality_\(personality.lowercased().replacingOccurrences(of: " ", with: "_"))"
+        let enhanced = NSLocalizedString(personalityKey, value: personality, comment: "Enhanced personality description")
+        return enhanced != personality ? enhanced : personality
+    }
+    
+    func getSpeakingStyleEnhancement(for style: String) -> String {
+        // ローカライズキーを動的に作成
+        let styleKey = "speaking_style_\(style.lowercased().replacingOccurrences(of: " ", with: "_"))"
+        let enhanced = NSLocalizedString(styleKey, value: style, comment: "Enhanced speaking style description")
+        return enhanced != style ? enhanced : style
+    }
+    
+    // 初期メッセージのプロンプト
+    func getInitialPrompt(for itemType: String, itemTitle: String?, eventName: String?, location: String?) -> String {
+        switch itemType {
+        case NSLocalizedString("goods", comment: ""):
+            return String(format: NSLocalizedString("initial_prompt_goods", comment: "Fan bought goods prompt"), itemTitle ?? NSLocalizedString("goods", comment: ""))
+        case NSLocalizedString("live_record", comment: ""):
+            return String(format: NSLocalizedString("initial_prompt_live", comment: "Fan attended live prompt"), eventName ?? NSLocalizedString("live_record", comment: ""))
+        case NSLocalizedString("pilgrimage", comment: ""):
+            return String(format: NSLocalizedString("initial_prompt_pilgrimage", comment: "Fan went to pilgrimage prompt"), location ?? NSLocalizedString("location", comment: ""))
+        default:
+            return NSLocalizedString("initial_prompt_default", comment: "Fan made a new post prompt")
+        }
+    }
+    
+    // シミュレートされた応答
+    func getSimulatedResponse(for itemType: String, userName: String, itemTitle: String?, eventName: String?, location: String?) -> String {
+        let namePrefix = userName.isEmpty ? "" : userName + NSLocalizedString("name_separator", comment: "、")
+        
+        switch itemType {
+        case NSLocalizedString("goods", comment: ""):
+            return String(format: NSLocalizedString("simulated_response_goods", comment: "Simulated response for goods"),
+                         namePrefix, itemTitle ?? NSLocalizedString("goods", comment: ""))
+        case NSLocalizedString("live_record", comment: ""):
+            return String(format: NSLocalizedString("simulated_response_live", comment: "Simulated response for live"),
+                         namePrefix, eventName ?? NSLocalizedString("live_record", comment: ""))
+        case NSLocalizedString("pilgrimage", comment: ""):
+            return String(format: NSLocalizedString("simulated_response_pilgrimage", comment: "Simulated response for pilgrimage"),
+                         location ?? NSLocalizedString("location", comment: ""))
+        default:
+            let defaultGreeting = userName.isEmpty ? NSLocalizedString("default_greeting", comment: "Good job") :
+                                  String(format: NSLocalizedString("default_greeting_with_name", comment: "Good job with name"), userName)
+            return defaultGreeting + NSLocalizedString("post_seen_suffix", comment: "! I saw your post~")
+        }
+    }
+    
+    func getFallbackWelcome(for oshiName: String) -> String {
+        return String(format: NSLocalizedString("fallback_welcome_message", comment: "Hello! I'm %@! Feel free to talk to me!"), oshiName)
+    }
+}
+
 class AIMessageGenerator {
     static let shared = AIMessageGenerator()
     private let client = AIClient.shared
+    private let promptManager = LocalizedPromptManager.shared
     
     func generateContextAwareResponse(for userMessage: String, oshi: Oshi, chatHistory: [ChatMessage], completion: @escaping (String?, Error?) -> Void) {
         
@@ -77,7 +199,10 @@ class AIMessageGenerator {
         )
         
         guard let client = client else {
-            let fallbackMessage = generateContextualFallback(for: oshi, userMessage: userMessage, context: conversationContext)
+            let fallbackMessage = promptManager.getEmotionalFallback(
+                mood: conversationContext.mood,
+                userName: oshi.user_nickname ?? ""
+            )
             completion(fallbackMessage, nil)
             return
         }
@@ -102,18 +227,23 @@ class AIMessageGenerator {
     
     private func analyzeConversationContext(chatHistory: [ChatMessage]) -> ConversationContext {
         let recentMessages = Array(chatHistory.suffix(5))
-        
         var context = ConversationContext()
         
-        // 会話の雰囲気を判定
+        // ローカライズされたキーワードを取得
+        let emotionKeywords = promptManager.getEmotionKeywords()
+        
         for message in recentMessages {
             let content = message.content.lowercased()
             
-            if content.contains("疲れ") || content.contains("大変") || content.contains("しんどい") {
+            // 各感情カテゴリーをチェック
+            if let tiredKeywords = emotionKeywords["tired"],
+               tiredKeywords.contains(where: { content.contains($0.lowercased().trimmingCharacters(in: .whitespaces)) }) {
                 context.mood = .supportive
-            } else if content.contains("嬉しい") || content.contains("楽しい") || content.contains("最高") {
+            } else if let happyKeywords = emotionKeywords["happy"],
+                      happyKeywords.contains(where: { content.contains($0.lowercased().trimmingCharacters(in: .whitespaces)) }) {
                 context.mood = .happy
-            } else if content.contains("どう思う") || content.contains("相談") {
+            } else if let consultativeKeywords = emotionKeywords["consultative"],
+                      consultativeKeywords.contains(where: { content.contains($0.lowercased().trimmingCharacters(in: .whitespaces)) }) {
                 context.mood = .consultative
             }
         }
@@ -130,45 +260,25 @@ class AIMessageGenerator {
     private func createContextAwarePrompt(oshi: Oshi, userMessage: String, context: ConversationContext) -> String {
         var basePrompt = createNaturalSystemPrompt(oshi: oshi)
         
-        // 会話の雰囲気に応じて追加指示
-        switch context.mood {
-        case .supportive:
-            basePrompt += "\n\n【特別指示】相手が疲れているようなので、優しく励ましてあげてください。無理をしないように気遣いの言葉をかけてください。"
-        case .happy:
-            basePrompt += "\n\n【特別指示】相手が嬉しそうなので、一緒に喜んであげてください。ポジティブな反応をしてください。"
-        case .consultative:
-            basePrompt += "\n\n【特別指示】相手が相談を持ちかけているようなので、親身になって聞いてあげてください。アドバイスよりも共感を重視してください。"
-        case .neutral:
-            break
+        // 会話の雰囲気に応じて特別指示を追加
+        let specialInstruction = promptManager.getSpecialInstruction(for: context.mood)
+        if !specialInstruction.isEmpty {
+            basePrompt += "\n\n【" + NSLocalizedString("special_instructions_header", comment: "Special Instructions") + "】" + specialInstruction
         }
         
         // 頻繁な会話の場合
         if context.frequency == .frequent {
-            basePrompt += "\n\n【特別指示】最近よく話しているので、より親密な話し方をしてください。前の会話を覚えているような反応をしてください。"
+            let frequentInstruction = promptManager.getFrequentChatInstruction()
+            basePrompt += "\n\n【" + NSLocalizedString("special_instructions_header", comment: "Special Instructions") + "】" + frequentInstruction
         }
         
         return basePrompt
     }
-    
-    private func generateContextualFallback(for oshi: Oshi, userMessage: String, context: ConversationContext) -> String {
-        let userName = oshi.user_nickname ?? ""
-        let namePrefix = userName.isEmpty ? "" : "\(userName)、"
-        
-        switch context.mood {
-        case .supportive:
-            return "\(namePrefix)お疲れさま！無理しちゃだめだよ〜"
-        case .happy:
-            return "\(namePrefix)私も嬉しい！良かったね"
-        case .consultative:
-            return "\(namePrefix)うんうん、どうしたの？聞くよ〜"
-        case .neutral:
-            return "\(namePrefix)どうしたの？"
-        }
-    }
 
     func generateResponse(for userMessage: String, oshi: Oshi, chatHistory: [ChatMessage], completion: @escaping (String?, Error?) -> Void) {
         guard let client = client else {
-            completion("こんにちは！\(oshi.name)だよ！何か質問があれば話しかけてね！", nil)
+            let fallbackMessage = promptManager.getFallbackWelcome(for: oshi.name)
+            completion(fallbackMessage, nil)
             return
         }
 
@@ -191,127 +301,93 @@ class AIMessageGenerator {
         client.sendChat(messages: messages, completion: completion)
     }
 
-    // より自然な会話を生成するシステムプロンプト
+    // より自然な会話を生成するシステムプロンプト（完全ローカライズ対応）
     private func createNaturalSystemPrompt(oshi: Oshi) -> String {
-        var prompt = """
-        あなたは\(oshi.name)として、推しとファンという親しい関係で自然に会話してください。
+        var prompt = String(format: promptManager.getSystemPromptTemplate(), oshi.name)
         
-        【重要な会話ルール】
-        • 短く自然に返答する（1〜2文程度）
-        • AIっぽい丁寧すぎる返答は避ける
-        • 「何かお手伝いできることはありますか」のような定型文は使わない
-        • 相手の話をよく聞いて、それに対する自然な反応をする
-        • 時々質問を混ぜて会話を続ける
-        • 絵文字は使わないか、特別な時だけ1個まで（使いすぎ禁止）
-        """
+        prompt += "\n\n" + promptManager.getConversationRules()
 
         // ユーザーの呼び方設定
         if let userNickname = oshi.user_nickname, !userNickname.isEmpty {
-            prompt += "\n• ファンのことは「\(userNickname)」と呼んでください"
+            let nicknameInstruction = String(format: NSLocalizedString("nickname_instruction", comment: "Please call your fan \"%@\""), userNickname)
+            prompt += "\n• " + nicknameInstruction
         }
 
         // 性別に応じた話し方調整
         if let gender = oshi.gender {
-            if gender.hasPrefix("その他：") {
-                let detail = String(gender.dropFirst(4))
-                prompt += "\n• あなたは\(detail)として、その特徴に合った話し方をしてください"
+            let otherPrefix = NSLocalizedString("gender_other_prefix", comment: "その他：")
+            if gender.hasPrefix(otherPrefix) {
+                let detail = String(gender.dropFirst(otherPrefix.count))
+                let genderInstruction = String(format: NSLocalizedString("gender_other_instruction", comment: "You are %@, please speak in a way that matches those characteristics"), detail)
+                prompt += "\n• " + genderInstruction
             } else {
-                prompt += "\n• あなたは\(gender)として、自然な話し方をしてください"
+                let genderInstruction = String(format: NSLocalizedString("gender_instruction", comment: "You are %@, please speak naturally"), gender)
+                prompt += "\n• " + genderInstruction
             }
         }
 
         // 性格設定の詳細化
         if let personality = oshi.personality, !personality.isEmpty {
-            let processedPersonality = enhancePersonalityDescription(personality)
-            prompt += "\n• あなたの性格: \(processedPersonality)"
+            let processedPersonality = promptManager.getPersonalityEnhancement(for: personality)
+            let personalityInstruction = String(format: NSLocalizedString("personality_instruction", comment: "Your personality: %@"), processedPersonality)
+            prompt += "\n• " + personalityInstruction
         }
 
         // 話し方の特徴を自然に反映
         if let speakingStyle = oshi.speaking_style, !speakingStyle.isEmpty {
-            let processedStyle = enhanceSpeakingStyle(speakingStyle)
-            prompt += "\n• 話し方の特徴: \(processedStyle)"
+            let processedStyle = promptManager.getSpeakingStyleEnhancement(for: speakingStyle)
+            let styleInstruction = String(format: NSLocalizedString("speaking_style_instruction", comment: "Speaking style characteristics: %@"), processedStyle)
+            prompt += "\n• " + styleInstruction
         }
 
         // その他の特徴を会話に活かす
         var personalDetails: [String] = []
         
         if let favoriteFood = oshi.favorite_food, !favoriteFood.isEmpty {
-            personalDetails.append("好きな食べ物は\(favoriteFood)")
+            let foodDetail = String(format: NSLocalizedString("favorite_food_detail", comment: "favorite food is %@"), favoriteFood)
+            personalDetails.append(foodDetail)
         }
         if let interests = oshi.interests, !interests.isEmpty {
-            personalDetails.append("趣味は\(interests.joined(separator: "、"))")
+            let interestsDetail = String(format: NSLocalizedString("interests_detail", comment: "hobbies are %@"), interests.joined(separator: NSLocalizedString("list_separator", comment: "、")))
+            personalDetails.append(interestsDetail)
         }
         if let birthday = oshi.birthday, !birthday.isEmpty {
-            personalDetails.append("誕生日は\(birthday)")
+            let birthdayDetail = String(format: NSLocalizedString("birthday_detail", comment: "birthday is %@"), birthday)
+            personalDetails.append(birthdayDetail)
         }
         
         if !personalDetails.isEmpty {
-            prompt += "\n• あなたについて: \(personalDetails.joined(separator: "、"))"
-            prompt += "\n• これらの情報を自然な会話の中で時々触れてください"
+            let aboutYou = String(format: NSLocalizedString("about_you_instruction", comment: "About you: %@"), personalDetails.joined(separator: NSLocalizedString("list_separator", comment: "、")))
+            prompt += "\n• " + aboutYou
+            prompt += "\n• " + NSLocalizedString("mention_info_naturally", comment: "Please naturally mention this information occasionally in conversation")
         }
 
-        prompt += """
-        
-        【会話の心がけ】
-        • 推しとしての親しみやすさを大切にする
-        • 相手の気持ちに寄り添う返答をする
-        • 時には少し甘えたり、励ましたりする
-        • 自分の日常や気持ちも素直に表現する
-        • 長すぎる説明は避け、会話のキャッチボールを意識する
-        • 絵文字は基本的に使わない。どうしても必要な時だけ1個まで
-        • 「〜」「！」「？」などの文字で感情を表現する
-        """
+        prompt += "\n\n" + promptManager.getConversationGuidelines()
 
         return prompt
     }
 
-    // 性格描写を強化
-    private func enhancePersonalityDescription(_ personality: String) -> String {
-        let personalityMap = [
-            "明るい": "いつも元気で前向き、楽しいことが大好き",
-            "優しい": "思いやりがあって、相手のことを大切にする",
-            "クール": "冷静で落ち着いている、でも心の中は温かい",
-            "天然": "ちょっと抜けているところがある、天真爛漫",
-            "しっかり者": "責任感が強くて、きちんとしている",
-            "甘えん坊": "時々甘えたくなる、素直で可愛らしい",
-            "ツンデレ": "素直になれないところがある、でも本当は甘えたい"
-        ]
-        
-        for (key, value) in personalityMap {
-            if personality.contains(key) {
-                return personality.replacingOccurrences(of: key, with: value)
-            }
-        }
-        return personality
-    }
-
-    // 話し方の特徴を自然に反映
-    private func enhanceSpeakingStyle(_ style: String) -> String {
-        let styleMap = [
-            "タメ口": "親しみやすくフレンドリーに話す（「だよね」「そうなの」「〜だよ」など）",
-            "敬語": "丁寧だけど距離を感じさせない話し方",
-            "絵文字多用": "時々感情を込めて話す（絵文字は使わない）",
-            "関西弁": "関西弁の温かみのある話し方（標準語ベース）",
-            "方言": "地方の温かみのある話し方（標準語ベース）"
-        ]
-        
-        var processedStyle = style
-        for (key, value) in styleMap {
-            processedStyle = processedStyle.replacingOccurrences(of: key, with: value)
-        }
-        return processedStyle
-    }
-
-    // 初期メッセージ生成も自然に
+    // 初期メッセージ生成も自然に（完全ローカライズ対応）
     func generateInitialMessage(for oshi: Oshi, item: OshiItem, completion: @escaping (String?, Error?) -> Void) {
         guard let client = client else {
-            let message = generateNaturalSimulatedResponse(for: oshi, item: item)
+            let message = promptManager.getSimulatedResponse(
+                for: item.itemType!,
+                userName: oshi.user_nickname ?? "",
+                itemTitle: item.title,
+                eventName: item.eventName,
+                location: item.locationAddress
+            )
             completion(message, nil)
             return
         }
 
         let systemPrompt = createNaturalSystemPrompt(oshi: oshi)
-        let userPrompt = createNaturalInitialPrompt(for: item)
+        let userPrompt = promptManager.getInitialPrompt(
+            for: item.itemType!,
+            itemTitle: item.title,
+            eventName: item.eventName,
+            location: item.locationAddress
+        )
 
         let messages: [[String: String]] = [
             ["role": "system", "content": systemPrompt],
@@ -319,34 +395,6 @@ class AIMessageGenerator {
         ]
 
         client.sendChat(messages: messages, completion: completion)
-    }
-
-    private func createNaturalInitialPrompt(for item: OshiItem) -> String {
-        switch item.itemType {
-        case "グッズ":
-            return "ファンが\(item.title ?? "グッズ")を買ってくれました！自然に喜んで、感謝の気持ちを表現してください。"
-        case "ライブ記録":
-            return "ファンが\(item.eventName ?? "ライブ")に来てくれました！一緒にその時間を過ごせた喜びを自然に表現してください。"
-        case "聖地巡礼":
-            return "ファンが\(item.locationAddress ?? "場所")に聖地巡礼してくれました！その場所への思いを込めて自然に話しかけてください。"
-        default:
-            return "ファンが新しい投稿をしてくれました！自然に反応して会話を始めてください。"
-        }
-    }
-
-    private func generateNaturalSimulatedResponse(for oshi: Oshi, item: OshiItem) -> String {
-        let userName = oshi.user_nickname ?? ""
-        
-        switch item.itemType {
-        case "グッズ":
-            return "\(userName.isEmpty ? "" : "\(userName)、")\(item.title ?? "グッズ")買ってくれたんだ！ありがとう\nすごく嬉しいよ〜"
-        case "ライブ記録":
-            return "\(userName.isEmpty ? "" : "\(userName)！")\(item.eventName ?? "ライブ")お疲れさま\n一緒に盛り上がってくれて最高だった！"
-        case "聖地巡礼":
-            return "わあ、\(item.locationAddress ?? "あの場所")に行ってくれたんだね！\n私も大好きな場所なの"
-        default:
-            return "\(userName.isEmpty ? "おつかれさま" : "\(userName)、おつかれさま")！\n投稿見たよ〜"
-        }
     }
 }
 
@@ -363,23 +411,12 @@ struct ConversationContext {
     var frequency: Frequency = .normal
 }
 
-// より自然な感情表現のヘルパー
+// より自然な感情表現のヘルパー（完全ローカライズ対応）
 struct EmotionHelper {
     static func getEmotionalResponse(for emotion: String, oshi: Oshi) -> String {
-        let userName = oshi.user_nickname ?? ""
-        let namePrefix = userName.isEmpty ? "" : "\(userName)、"
-        
-        switch emotion.lowercased() {
-        case "嬉しい", "happy":
-            return "\(namePrefix)私も嬉しい！"
-        case "悲しい", "sad":
-            return "\(namePrefix)大丈夫？"
-        case "疲れた", "tired":
-            return "\(namePrefix)お疲れさま！"
-        case "楽しい", "fun":
-            return "\(namePrefix)楽しそう！"
-        default:
-            return "\(namePrefix)そうなんだ〜"
-        }
+        return LocalizedPromptManager.shared.getEmotionalFallback(
+            mood: .neutral, // emotionから適切なmoodを推定する場合は別途ロジックを追加
+            userName: oshi.user_nickname ?? ""
+        )
     }
 }

@@ -319,6 +319,56 @@
 "rating_very_good" = "良い";
 "rating_excellent" = "最高の推しスポット！";
 
+// Prefectures (日本語表記)
+"prefecture" = "都道府県";
+"hokkaido" = "北海道";
+"aomori" = "青森県";
+"iwate" = "岩手県";
+"miyagi" = "宮城県";
+"akita" = "秋田県";
+"yamagata" = "山形県";
+"fukushima" = "福島県";
+"ibaraki" = "茨城県";
+"tochigi" = "栃木県";
+"gunma" = "群馬県";
+"saitama" = "埼玉県";
+"chiba" = "千葉県";
+"tokyo" = "東京都";
+"kanagawa" = "神奈川県";
+"niigata" = "新潟県";
+"toyama" = "富山県";
+"ishikawa" = "石川県";
+"fukui" = "福井県";
+"yamanashi" = "山梨県";
+"nagano" = "長野県";
+"gifu" = "岐阜県";
+"shizuoka" = "静岡県";
+"aichi" = "愛知県";
+"mie" = "三重県";
+"shiga" = "滋賀県";
+"kyoto" = "京都府";
+"osaka" = "大阪府";
+"hyogo" = "兵庫県";
+"nara" = "奈良県";
+"wakayama" = "和歌山県";
+"tottori" = "鳥取県";
+"shimane" = "島根県";
+"okayama" = "岡山県";
+"hiroshima" = "広島県";
+"yamaguchi" = "山口県";
+"tokushima" = "徳島県";
+"kagawa" = "香川県";
+"ehime" = "愛媛県";
+"kochi" = "高知県";
+"fukuoka" = "福岡県";
+"saga" = "佐賀県";
+"nagasaki" = "長崎県";
+"kumamoto" = "熊本県";
+"oita" = "大分県";
+"miyazaki" = "宮崎県";
+"kagoshima" = "鹿児島県";
+"okinawa" = "沖縄県";
+
 // Categories (Japanese)
 "pilgrimage_ja" = "聖地巡礼";
 "photo_spot_ja" = "撮影スポット";
@@ -547,3 +597,186 @@
 "disliked_food_placeholder" = "例: セロリ";
 
 "gender" = "性別";
+
+"unlimited" = "無制限";
+"remaining" = "残り";
+"start_conversation" = "会話を始めましょう！";
+"talk_to_oshi_placeholder" = "%@に話しかけてみよう";
+"loading_chat" = "チャットを読み込み中...";
+"creating_reply" = "返信を作成中...";
+
+// MARK: - Individual Chat Tab
+"individual_chat" = "個人チャット";
+"no_chats_yet" = "まだ推しとのチャットがありません";
+"register_oshi_to_chat" = "推しを登録してチャットを始めよう！";
+"chat_history_short" = "履歴";
+"deleting_oshi" = "推しを削除中...";
+"delete_chat_history" = "チャット履歴を削除";
+"delete_chat_history_message" = "%@とのチャット履歴を削除しますか？この操作は元に戻せません。";
+
+// MARK: - Message Limit Modal
+"daily_limit_reached_title" = "本日の会話回数が上限に達しました";
+"free_plan_limit_description" = "無料プランでは1日10回まで推しと会話できます";
+"premium_unlimited_description" = "プレミアムプランなら無制限で会話できます！";
+"premium_plan_upgrade" = "プレミアムプランで";
+"unlimited_chat" = "無制限チャット";
+"watch_ad_for_messages" = "動画を見て10回追加";
+"talk_again_tomorrow" = "また明日話そう";
+
+// MARK: - Reward Modal
+"reward_obtained" = "報酬獲得！";
+"thank_you_for_watching" = "広告を最後まで視聴していただき";
+"to_the_end" = "ありがとうございました！";
+"messages_added_format" = "%d回分のメッセージが";
+"have_been_added" = "追加されました ✨";
+
+// MARK: - Chat Row
+"yesterday" = "昨日";
+"selected" = "選択中";
+
+// MARK: - Random Messages
+"random_message_greeting" = "こんにちは！元気にしてる？";
+"random_message_encouragement" = "今日もお疲れさま！頑張ってるね";
+"random_message_update" = "最近どう？私は元気だよ！";
+"random_message_question" = "今日はどんな一日だった？";
+
+"ai_message_generation_error" = "AIメッセージ生成エラー";
+"chat_message_save_error" = "チャットメッセージ保存エラー";
+"message_saved_successfully" = "メッセージを保存しました";
+"subscription_member" = "サブスクリプション会員";
+"free_user" = "無料ユーザー";
+"message_limit_check_skip" = "制限チェックをスキップ";
+"message_count_increased" = "メッセージカウントを増加";
+"ai_reply_generation_start" = "AI返信生成開始";
+"ai_reply_generation_complete" = "AI返信生成完了";
+"ai_reply_save_complete" = "AI返信保存完了";
+
+"emotion_keywords_tired" = "疲れ,大変,しんどい,つらい,きつい";
+"emotion_keywords_happy" = "嬉しい,楽しい,最高,素晴らしい,良い";
+"emotion_keywords_consultative" = "どう思う,相談,アドバイス,意見,助けて";
+
+// MARK: - AI Fallback Responses
+"name_separator" = "、";
+"fallback_supportive" = "お疲れさま！無理しちゃだめだよ〜";
+"fallback_happy" = "私も嬉しい！良かったね";
+"fallback_consultative" = "うんうん、どうしたの？聞くよ〜";
+"fallback_neutral" = "どうしたの？";
+
+// MARK: - AI System Prompt Templates
+"ai_system_prompt_template" = "あなたは%@として、推しとファンという親しい関係で自然に会話してください。";
+
+"ai_conversation_rules" = "【重要な会話ルール】\n• 短く自然に返答する（1〜2文程度）\n• AIっぽい丁寧すぎる返答は避ける\n• 「何かお手伝いできることはありますか」のような定型文は使わない\n• 相手の話をよく聞いて、それに対する自然な反応をする\n• 時々質問を混ぜて会話を続ける\n• 絵文字は使わないか、特別な時だけ1個まで（使いすぎ禁止）";
+
+"ai_conversation_guidelines" = "【会話の心がけ】\n• 推しとしての親しみやすさを大切にする\n• 相手の気持ちに寄り添う返答をする\n• 時には少し甘えたり、励ましたりする\n• 自分の日常や気持ちも素直に表現する\n• 長すぎる説明は避け、会話のキャッチボールを意識する\n• 絵文字は基本的に使わない。どうしても必要な時だけ1個まで\n• 「〜」「！」「？」などの文字で感情を表現する";
+
+// MARK: - Special Instructions
+"special_instructions_header" = "特別指示";
+"special_instruction_supportive" = "相手が疲れているようなので、優しく励ましてあげてください。無理をしないように気遣いの言葉をかけてください。";
+"special_instruction_happy" = "相手が嬉しそうなので、一緒に喜んであげてください。ポジティブな反応をしてください。";
+"special_instruction_consultative" = "相手が相談を持ちかけているようなので、親身になって聞いてあげてください。アドバイスよりも共感を重視してください。";
+"special_instruction_frequent" = "最近よく話しているので、より親密な話し方をしてください。前の会話を覚えているような反応をしてください。";
+
+// MARK: - User Instructions
+"nickname_instruction" = "ファンのことは「%@」と呼んでください";
+"gender_other_prefix" = "その他：";
+"gender_other_instruction" = "あなたは%@として、その特徴に合った話し方をしてください";
+"gender_instruction" = "あなたは%@として、自然な話し方をしてください";
+"personality_instruction" = "あなたの性格: %@";
+"speaking_style_instruction" = "話し方の特徴: %@";
+
+// MARK: - Personal Details
+"favorite_food_detail" = "好きな食べ物は%@";
+"interests_detail" = "趣味は%@";
+"birthday_detail" = "誕生日は%@";
+"list_separator" = "、";
+"about_you_instruction" = "あなたについて: %@";
+"mention_info_naturally" = "これらの情報を自然な会話の中で時々触れてください";
+
+// MARK: - Enhanced Personalities (Japanese)
+"personality_明るい" = "いつも元気で前向き、楽しいことが大好き";
+"personality_優しい" = "思いやりがあって、相手のことを大切にする";
+"personality_クール" = "冷静で落ち着いている、でも心の中は温かい";
+"personality_天然" = "ちょっと抜けているところがある、天真爛漫";
+"personality_しっかり者" = "責任感が強くて、きちんとしている";
+"personality_甘えん坊" = "時々甘えたくなる、素直で可愛らしい";
+"personality_ツンデレ" = "素直になれないところがある、でも本当は甘えたい";
+
+// MARK: - Enhanced Speaking Styles (Japanese)
+"speaking_style_タメ口" = "親しみやすくフレンドリーに話す（「だよね」「そうなの」「〜だよ」など）";
+"speaking_style_敬語" = "丁寧だけど距離を感じさせない話し方";
+"speaking_style_絵文字多用" = "時々感情を込めて話す（絵文字は使わない）";
+"speaking_style_関西弁" = "関西弁の温かみのある話し方（標準語ベース）";
+"speaking_style_方言" = "地方の温かみのある話し方（標準語ベース）";
+
+// MARK: - Initial Prompts
+"initial_prompt_goods" = "ファンが%@を買ってくれました！自然に喜んで、感謝の気持ちを表現してください。";
+"initial_prompt_live" = "ファンが%@に来てくれました！一緒にその時間を過ごせた喜びを自然に表現してください。";
+"initial_prompt_pilgrimage" = "ファンが%@に聖地巡礼してくれました！その場所への思いを込めて自然に話しかけてください。";
+"initial_prompt_default" = "ファンが新しい投稿をしてくれました！自然に反応して会話を始めてください。";
+
+// MARK: - Simulated Responses
+"simulated_response_goods" = "%@%@買ってくれたんだ！ありがとう\nすごく嬉しいよ〜";
+"simulated_response_live" = "%@%@お疲れさま\n一緒に盛り上がってくれて最高だった！";
+"simulated_response_pilgrimage" = "わあ、%@に行ってくれたんだね！\n私も大好きな場所なの";
+"default_greeting" = "おつかれさま";
+"default_greeting_with_name" = "%@、おつかれさま";
+"post_seen_suffix" = "！\n投稿見たよ〜";
+
+// MARK: - Fallback Messages
+"fallback_welcome_message" = "こんにちは！%@だよ！何か質問があれば話しかけてね！";
+
+// MARK: - Chat AI Features (日本語)
+"unlimited" = "無制限";
+"remaining" = "残り";
+"start_conversation" = "会話を始めましょう！";
+"talk_to_oshi_placeholder" = "%@に話しかけてみよう";
+"loading_chat" = "チャットを読み込み中...";
+"creating_reply" = "返信を作成中...";
+"no_messages_yet" = "まだメッセージがありません";
+
+// MARK: - Individual Chat Tab (日本語)
+"individual_chat" = "個人チャット";
+"no_chats_yet" = "まだ推しとのチャットがありません";
+"register_oshi_to_chat" = "推しを登録してチャットを始めよう！";
+"chat_history_short" = "履歴";
+"deleting_oshi" = "推しを削除中...";
+"delete_chat_history" = "チャット履歴を削除";
+"delete_chat_history_message" = "%@とのチャット履歴を削除しますか？この操作は元に戻せません。";
+
+// MARK: - Message Limit Modal (日本語)
+"daily_limit_reached_title" = "本日の会話回数が上限に達しました";
+"free_plan_limit_description" = "無料プランでは1日10回まで推しと会話できます";
+"premium_unlimited_description" = "プレミアムプランなら無制限で会話できます！";
+"premium_plan_upgrade" = "プレミアムプランで";
+"unlimited_chat" = "無制限チャット";
+"watch_ad_for_messages" = "動画を見て10回追加";
+"talk_again_tomorrow" = "また明日話そう";
+
+// MARK: - Reward Modal (日本語)
+"reward_obtained" = "報酬獲得！";
+"thank_you_for_watching" = "広告を最後まで視聴していただき";
+"to_the_end" = "ありがとうございました！";
+"messages_added_format" = "%d回分のメッセージが";
+"have_been_added" = "追加されました ✨";
+
+// MARK: - Chat Row (日本語)
+"yesterday" = "昨日";
+"selected" = "選択中";
+
+// MARK: - Random Messages (日本語)
+"random_message_greeting" = "こんにちは！元気にしてる？";
+"random_message_encouragement" = "今日もお疲れさま！頑張ってるね";
+"random_message_update" = "最近どう？私は元気だよ！";
+"random_message_question" = "今日はどんな一日だった？";
+
+// MARK: - Error and Status Messages (日本語)
+"ai_message_generation_error" = "AIメッセージ生成エラー";
+"chat_message_save_error" = "チャットメッセージ保存エラー";
+"message_saved_successfully" = "メッセージを保存しました";
+"subscription_member" = "サブスクリプション会員";
+"free_user" = "無料ユーザー";
+"message_limit_check_skip" = "制限チェックをスキップ";
+"message_count_increased" = "メッセージカウントを増加";
+"ai_reply_generation_start" = "AI返信生成開始";
+"ai_reply_generation_complete" = "AI返信生成完了";
+"ai_reply_save_complete" = "AI返信保存完了";

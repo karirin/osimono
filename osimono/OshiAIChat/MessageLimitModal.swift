@@ -24,17 +24,17 @@ struct MessageLimitModal: View {
                     .font(.system(size: 50))
                     .foregroundColor(.pink)
                 
-                Text("本日の会話回数が上限に達しました")
+                Text(NSLocalizedString("daily_limit_reached_title", comment: "Daily conversation limit reached"))
                     .font(.title2)
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
                 
                 VStack(spacing: 10) {
-                    Text("無料プランでは1日10回まで推しと会話できます")
+                    Text(NSLocalizedString("free_plan_limit_description", comment: "Free plan allows up to 10 conversations per day"))
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                     
-                    Text("プレミアムプランなら無制限で会話できます！")
+                    Text(NSLocalizedString("premium_unlimited_description", comment: "Premium plan allows unlimited conversations!"))
                         .fontWeight(.medium)
                         .multilineTextAlignment(.center)
                 }
@@ -49,9 +49,9 @@ struct MessageLimitModal: View {
                             Image(systemName: "crown.fill")
                                 .font(.system(size: 24))
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("プレミアムプランで")
+                                Text(NSLocalizedString("premium_plan_upgrade", comment: "Upgrade to Premium"))
                                     .font(.system(size: 16, weight: .medium))
-                                Text("無制限チャット")
+                                Text(NSLocalizedString("unlimited_chat", comment: "Unlimited Chat"))
                                     .font(.system(size: 18, weight: .bold))
                             }
                         }
@@ -76,7 +76,7 @@ struct MessageLimitModal: View {
                         HStack {
                             Image(systemName: "play.circle")
                                 .font(.system(size: 20))
-                            Text("動画を見て10回追加")
+                            Text(NSLocalizedString("watch_ad_for_messages", comment: "Watch video to add 10 messages"))
                                 .font(.system(size: 16, weight: .medium))
                         }
                         .foregroundColor(.blue)
@@ -90,7 +90,7 @@ struct MessageLimitModal: View {
                     }
                     
                     Button(action: { isPresented = false }) {
-                        Text("また明日話そう")
+                        Text(NSLocalizedString("talk_again_tomorrow", comment: "Let's talk again tomorrow"))
                             .foregroundColor(.gray)
                             .padding()
                     }

@@ -154,10 +154,16 @@ class MessageLimitManager {
     // サブスクリプション状態の表示用文字列を取得
     func getRemainingMessagesText() -> String {
         if checkSubscriptionStatus() {
-            return "無制限"
+            return NSLocalizedString("unlimited", comment: "unlimited")
         } else {
             let remaining = getRemainingMessages()
-            return "\(remaining)回"
+            let currentLanguage = Locale.current.languageCode ?? "en"
+            
+            if currentLanguage == "ja" {
+                return "\(remaining)回"
+            } else {
+                return remaining == 1 ? "\(remaining) time" : "\(remaining) times"
+            }
         }
     }
     

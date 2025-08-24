@@ -595,3 +595,184 @@
 "disliked_food_placeholder" = "e.g., Celery";
 
 "gender" = "Gender";
+
+"unlimited" = "Unlimited";
+"remaining" = "Remaining";
+"start_conversation" = "Let's start a conversation!";
+"talk_to_oshi_placeholder" = "Try talking to %@";
+"loading_chat" = "Loading chat...";
+"creating_reply" = "Creating reply...";
+
+// MARK: - Individual Chat Tab
+"individual_chat" = "Individual Chat";
+"no_chats_yet" = "No chats with oshi yet";
+"register_oshi_to_chat" = "Register your oshi to start chatting!";
+"chat_history_short" = "History";
+"deleting_oshi" = "Deleting oshi...";
+"delete_chat_history" = "Delete Chat History";
+"delete_chat_history_message" = "Delete chat history with %@? This action cannot be undone.";
+
+// MARK: - Message Limit Modal
+"daily_limit_reached_title" = "Daily conversation limit reached";
+"free_plan_limit_description" = "Free plan allows up to 10 conversations per day";
+"premium_unlimited_description" = "Premium plan allows unlimited conversations!";
+"premium_plan_upgrade" = "Upgrade to Premium";
+"unlimited_chat" = "Unlimited Chat";
+"watch_ad_for_messages" = "Watch video to add 10 messages";
+"talk_again_tomorrow" = "Let's talk again tomorrow";
+
+// MARK: - Reward Modal
+"reward_obtained" = "Reward Obtained!";
+"thank_you_for_watching" = "Thank you for watching the ad";
+"to_the_end" = "to the end!";
+"messages_added_format" = "%d messages";
+"have_been_added" = "have been added ✨";
+
+// MARK: - Chat Row
+"yesterday" = "Yesterday";
+"selected" = "Selected";
+
+"random_message_greeting" = "Hello! How have you been?";
+"random_message_encouragement" = "Good job today! You're doing great.";
+"random_message_update" = "How have you been lately? I'm doing well!";
+"random_message_question" = "How was your day?";
+
+"ai_message_generation_error" = "AI message generation error";
+"chat_message_save_error" = "Chat message save error";
+"message_saved_successfully" = "Message saved successfully";
+"subscription_member" = "Subscription member";
+"free_user" = "Free user";
+"message_limit_check_skip" = "Skip limit check";
+"message_count_increased" = "Message count increased";
+"ai_reply_generation_start" = "AI reply generation started";
+"ai_reply_generation_complete" = "AI reply generation completed";
+"ai_reply_save_complete" = "AI reply saved successfully";
+
+"emotion_keywords_tired" = "tired,exhausted,difficult,hard,tough";
+"emotion_keywords_happy" = "happy,fun,great,amazing,wonderful";
+"emotion_keywords_consultative" = "what do you think,advice,help,opinion,suggest";
+
+// MARK: - AI Fallback Responses
+"name_separator" = ", ";
+"fallback_supportive" = "Good job today! Don't push yourself too hard~";
+"fallback_happy" = "I'm happy too! That's great!";
+"fallback_consultative" = "Yeah, what's going on? I'm listening~";
+"fallback_neutral" = "What's up?";
+
+// MARK: - AI System Prompt Templates
+"ai_system_prompt_template" = "You are %@, and please have natural conversations with your fan in a close relationship.";
+
+"ai_conversation_rules" = "【Important Conversation Rules】\n• Reply briefly and naturally (1-2 sentences)\n• Avoid overly polite AI-like responses\n• Don't use template phrases like \"Is there anything I can help you with?\"\n• Listen carefully to what they say and give natural reactions\n• Mix in questions occasionally to keep the conversation going\n• Use no emojis or at most 1 emoji for special occasions (no overuse)";
+
+"ai_conversation_guidelines" = "【Conversation Guidelines】\n• Value approachability as an oshi\n• Respond in a way that empathizes with their feelings\n• Sometimes be a little sweet or encouraging\n• Express your daily life and feelings honestly\n• Avoid long explanations and focus on conversational back-and-forth\n• Basically don't use emojis. Only 1 emoji maximum when absolutely necessary\n• Express emotions with characters like \"~\", \"!\", \"?\" etc.";
+
+// MARK: - Special Instructions
+"special_instructions_header" = "Special Instructions";
+"special_instruction_supportive" = "The user seems tired, so please encourage them gently. Offer caring words and remind them not to overwork themselves.";
+"special_instruction_happy" = "The user seems happy, so please share in their joy. Give a positive reaction.";
+"special_instruction_consultative" = "The user seems to be seeking consultation, so please listen attentively. Focus on empathy rather than advice.";
+"special_instruction_frequent" = "Since you've been talking frequently recently, please speak more intimately. React as if you remember previous conversations.";
+
+// MARK: - User Instructions
+"nickname_instruction" = "Please call your fan \"%@\"";
+"gender_other_prefix" = "Other: ";
+"gender_other_instruction" = "You are %@, please speak in a way that matches those characteristics";
+"gender_instruction" = "You are %@, please speak naturally";
+"personality_instruction" = "Your personality: %@";
+"speaking_style_instruction" = "Speaking style characteristics: %@";
+
+// MARK: - Personal Details
+"favorite_food_detail" = "favorite food is %@";
+"interests_detail" = "hobbies are %@";
+"birthday_detail" = "birthday is %@";
+"list_separator" = ", ";
+"about_you_instruction" = "About you: %@";
+"mention_info_naturally" = "Please naturally mention this information occasionally in conversation";
+
+// MARK: - Enhanced Personalities (English)
+"personality_bright" = "always energetic and positive, loves fun things";
+"personality_kind" = "thoughtful and caring about others";
+"personality_cool" = "calm and collected, but warm-hearted inside";
+"personality_airhead" = "a bit absent-minded, innocent and pure";
+"personality_reliable" = "responsible and well-organized";
+"personality_clingy" = "sometimes wants to be spoiled, honest and cute";
+"personality_tsundere" = "has trouble being honest, but actually wants to be sweet";
+
+// MARK: - Enhanced Speaking Styles (English)
+"speaking_style_casual" = "speak in a friendly and approachable way";
+"speaking_style_polite" = "polite but not distant way of speaking";
+"speaking_style_emoji_heavy" = "speak with emotion occasionally (no emojis used)";
+"speaking_style_dialect" = "warm regional way of speaking";
+
+// MARK: - Initial Prompts
+"initial_prompt_goods" = "Your fan bought %@! Please naturally express joy and gratitude.";
+"initial_prompt_live" = "Your fan came to %@! Please naturally express the joy of spending that time together.";
+"initial_prompt_pilgrimage" = "Your fan went on a pilgrimage to %@! Please naturally talk to them with your feelings about that place.";
+"initial_prompt_default" = "Your fan made a new post! Please react naturally and start a conversation.";
+
+// MARK: - Simulated Responses
+"simulated_response_goods" = "%@you bought %@! Thank you\nI'm so happy~";
+"simulated_response_live" = "%@Good job at %@\nIt was amazing having you there with me!";
+"simulated_response_pilgrimage" = "Wow, you went to %@!\nI love that place too";
+"default_greeting" = "Good job";
+"default_greeting_with_name" = "%@, good job";
+"post_seen_suffix" = "!\nI saw your post~";
+
+// MARK: - Fallback Messages
+"fallback_welcome_message" = "Hello! I'm %@! Feel free to talk to me if you have any questions!";
+
+// MARK: - Chat AI Features (English)
+"unlimited" = "Unlimited";
+"remaining" = "Remaining";
+"start_conversation" = "Let's start a conversation!";
+"talk_to_oshi_placeholder" = "Try talking to %@";
+"loading_chat" = "Loading chat...";
+"creating_reply" = "Creating reply...";
+"no_messages_yet" = "No messages yet";
+
+// MARK: - Individual Chat Tab (English)
+"individual_chat" = "Individual Chat";
+"no_chats_yet" = "No chats with oshi yet";
+"register_oshi_to_chat" = "Register your oshi to start chatting!";
+"chat_history_short" = "History";
+"deleting_oshi" = "Deleting oshi...";
+"delete_chat_history" = "Delete Chat History";
+"delete_chat_history_message" = "Delete chat history with %@? This action cannot be undone.";
+
+// MARK: - Message Limit Modal (English)
+"daily_limit_reached_title" = "Daily conversation limit reached";
+"free_plan_limit_description" = "Free plan allows up to 10 conversations per day";
+"premium_unlimited_description" = "Premium plan allows unlimited conversations!";
+"premium_plan_upgrade" = "Upgrade to Premium";
+"unlimited_chat" = "Unlimited Chat";
+"watch_ad_for_messages" = "Watch video to add 10 messages";
+"talk_again_tomorrow" = "Let's talk again tomorrow";
+
+// MARK: - Reward Modal (English)
+"reward_obtained" = "Reward Obtained!";
+"thank_you_for_watching" = "Thank you for watching the ad";
+"to_the_end" = "to the end!";
+"messages_added_format" = "%d messages";
+"have_been_added" = "have been added ✨";
+
+// MARK: - Chat Row (English)
+"yesterday" = "Yesterday";
+"selected" = "Selected";
+
+// MARK: - Random Messages (English)
+"random_message_greeting" = "Hello! How are you doing?";
+"random_message_encouragement" = "Good job today! You're doing great";
+"random_message_update" = "How have you been? I'm doing well!";
+"random_message_question" = "How was your day today?";
+
+// MARK: - Error and Status Messages (English)
+"ai_message_generation_error" = "AI message generation error";
+"chat_message_save_error" = "Chat message save error";
+"message_saved_successfully" = "Message saved successfully";
+"subscription_member" = "Subscription member";
+"free_user" = "Free user";
+"message_limit_check_skip" = "Skip limit check";
+"message_count_increased" = "Message count increased";
+"ai_reply_generation_start" = "AI reply generation started";
+"ai_reply_generation_complete" = "AI reply generation completed";
+"ai_reply_save_complete" = "AI reply saved successfully";

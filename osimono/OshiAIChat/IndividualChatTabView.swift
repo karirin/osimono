@@ -124,25 +124,25 @@ struct IndividualChatTabView: View {
         .refreshable {
             loadData()
         }
-        .alert("チャット履歴を削除", isPresented: $showDeleteAlert) {
-            Button("削除", role: .destructive) {
+        .alert(NSLocalizedString("delete_chat_history", comment: "Delete Chat History"), isPresented: $showDeleteAlert) {
+            Button(NSLocalizedString("delete", comment: "Delete"), role: .destructive) {
                 if let oshi = oshiToDelete {
                     deleteChatHistory(for: oshi)
                 }
             }
-            Button("キャンセル", role: .cancel) {}
+            Button(NSLocalizedString("cancel", comment: "Cancel"), role: .cancel) {}
         } message: {
-            Text("\(oshiToDelete?.name ?? "")とのチャット履歴を削除しますか？この操作は元に戻せません。")
+            Text(String(format: NSLocalizedString("delete_chat_history_message", comment: "Delete chat history with %@? This action cannot be undone."), oshiToDelete?.name ?? ""))
         }
-        .alert("推しを削除", isPresented: $showDeleteOshiAlert) {
-            Button("削除", role: .destructive) {
+        .alert(NSLocalizedString("delete_oshi", comment: "Delete Oshi"), isPresented: $showDeleteOshiAlert) {
+            Button(NSLocalizedString("delete", comment: "Delete"), role: .destructive) {
                 if let oshi = oshiToDeleteCompletely {
                     deleteOshiCompletely(oshi)
                 }
             }
-            Button("キャンセル", role: .cancel) {}
+            Button(NSLocalizedString("cancel", comment: "Cancel"), role: .cancel) {}
         } message: {
-            Text("\(oshiToDeleteCompletely?.name ?? "")を完全に削除しますか？この操作は元に戻せません。\n関連するチャット履歴やアイテム記録もすべて削除されます。")
+            Text(String(format: NSLocalizedString("delete_oshi_confirmation_message", comment: "Delete %@? This action cannot be undone.\nAll related chat history and item records will also be deleted."), oshiToDeleteCompletely?.name ?? ""))
         }
         .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
             loadData()
@@ -185,7 +185,7 @@ struct IndividualChatTabView: View {
                 
                 Spacer()
                 
-                Text("個人チャット")
+                Text(NSLocalizedString("individual_chat", comment: "Individual Chat"))
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.black)
                 
@@ -196,7 +196,7 @@ struct IndividualChatTabView: View {
                         generateHapticFeedback()
                         withAnimation(.spring()) { isEditing.toggle() }
                     }) {
-                        Text(isEditing ? "完了" : "編集")
+                        Text(isEditing ? NSLocalizedString("done", comment: "Done") : NSLocalizedString("edit", comment: "Edit"))
                             .font(.system(size: 16))
                             .foregroundColor(.blue)
                     }
@@ -228,7 +228,7 @@ struct IndividualChatTabView: View {
                 .foregroundColor(.gray)
                 .padding(.leading, 8)
             
-            TextField("推しを検索", text: $searchText)
+            TextField(NSLocalizedString("search_oshi", comment: "Search oshi"), text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
                 .padding(.vertical, 8)
             
@@ -251,7 +251,7 @@ struct IndividualChatTabView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.2)
-            Text("読み込み中...")
+            Text(NSLocalizedString("loading", comment: "Loading..."))
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
@@ -265,11 +265,11 @@ struct IndividualChatTabView: View {
                 .foregroundColor(.gray.opacity(0.6))
             
             VStack(spacing: 8) {
-                Text("まだ推しとのチャットがありません")
+                Text(NSLocalizedString("no_chats_yet", comment: "No chats with oshi yet"))
                     .font(.headline)
                     .foregroundColor(.black)
                 
-                Text("推しを登録してチャットを始めよう！")
+                Text(NSLocalizedString("register_oshi_to_chat", comment: "Register your oshi to start chatting!"))
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -282,7 +282,7 @@ struct IndividualChatTabView: View {
                 HStack {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 20))
-                    Text("推しを登録する")
+                    Text(NSLocalizedString("register_oshi_button", comment: "Register Oshi"))
                         .font(.headline)
                 }
                 .foregroundColor(.white)
@@ -366,11 +366,11 @@ struct IndividualChatTabView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("新しい推しを追加")
+                        Text(NSLocalizedString("add_new_oshi", comment: "Add new oshi"))
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.primary)
                         
-                        Text("推しを登録してチャットを始めよう")
+                        Text(NSLocalizedString("register_oshi_to_chat", comment: "Register your oshi to start chatting"))
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                     }
@@ -402,7 +402,7 @@ struct IndividualChatTabView: View {
                     Image(systemName: "trash")
                         .font(.system(size: 16))
                         .foregroundColor(.orange)
-                    Text("履歴")
+                    Text(NSLocalizedString("chat_history_short", comment: "History"))
                         .font(.system(size: 10))
                         .foregroundColor(.orange)
                 }
@@ -418,7 +418,7 @@ struct IndividualChatTabView: View {
                     Image(systemName: "person.crop.circle.badge.minus")
                         .font(.system(size: 16))
                         .foregroundColor(.red)
-                    Text("推し")
+                    Text(NSLocalizedString("oshi", comment: "Oshi"))
                         .font(.system(size: 10))
                         .foregroundColor(.red)
                 }
@@ -436,7 +436,7 @@ struct IndividualChatTabView: View {
                     ProgressView()
                         .scaleEffect(1.5)
                         .tint(.white)
-                    Text("推しを削除中...")
+                    Text(NSLocalizedString("deleting_oshi", comment: "Deleting oshi..."))
                         .foregroundColor(.white)
                         .font(.headline)
                 }

@@ -847,7 +847,7 @@ struct ChatRowView: View {
                         
                         // 選択中の推しにはバッジを表示
                         if isSelected {
-                            Text("選択中")
+                            Text(NSLocalizedString("selected", comment: "Selected"))
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 6)
@@ -865,7 +865,9 @@ struct ChatRowView: View {
                 }
                 
                 HStack {
-                    Text(lastMessage)
+                    Text(lastMessage == "まだメッセージがありません" ?
+                         NSLocalizedString("no_messages_yet", comment: "No messages yet") :
+                         lastMessage)
                         .font(.system(size: 14))
                         .foregroundColor(.gray)
                         .lineLimit(1)
@@ -889,11 +891,10 @@ struct ChatRowView: View {
                             Image(systemName: "trash")
                                 .font(.system(size: 16))
                                 .foregroundColor(.orange)
-                            Text("履歴")
+                            Text(NSLocalizedString("chat_history_short", comment: "History"))
                                 .font(.system(size: 10))
                                 .foregroundColor(.orange)
                         }
-//                        .padding(8)
                     }
                     
                     // 推し完全削除ボタン
@@ -904,14 +905,12 @@ struct ChatRowView: View {
                             Image(systemName: "person.crop.circle.badge.minus")
                                 .font(.system(size: 16))
                                 .foregroundColor(.red)
-                            Text("推し")
+                            Text(NSLocalizedString("oshi", comment: "Oshi"))
                                 .font(.system(size: 10))
                                 .foregroundColor(.red)
                         }
-//                        .padding(8)
                     }
                 }
-//                .padding(.trailing, 12)
             }
         }
         .padding(.horizontal, 16)
@@ -962,7 +961,7 @@ struct ChatRowView: View {
             .scaleEffect(0.9)
     }
     
-    // 時間フォーマット
+    // 時間フォーマット（多言語対応）
     private func formatTime(_ timestamp: TimeInterval) -> String {
         if timestamp == 0 {
             return ""
@@ -972,20 +971,38 @@ struct ChatRowView: View {
         let calendar = Calendar.current
         let now = Date()
         
+        // 現在の言語を取得
+        let currentLanguage = Locale.current.languageCode ?? "en"
+        
         if calendar.isDateInToday(date) {
             let formatter = DateFormatter()
             formatter.dateFormat = "HH:mm"
+            if currentLanguage == "ja" {
+                formatter.locale = Locale(identifier: "ja_JP")
+            } else {
+                formatter.locale = Locale(identifier: "en_US")
+            }
             return formatter.string(from: date)
         } else if calendar.isDateInYesterday(date) {
-            return "昨日"
+            return NSLocalizedString("yesterday", comment: "Yesterday")
         } else if calendar.dateInterval(of: .weekOfYear, for: now)?.contains(date) == true {
             let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE"
-            formatter.locale = Locale(identifier: "ja_JP")
+            if currentLanguage == "ja" {
+                formatter.dateFormat = "EEEE"
+                formatter.locale = Locale(identifier: "ja_JP")
+            } else {
+                formatter.dateFormat = "EEEE"
+                formatter.locale = Locale(identifier: "en_US")
+            }
             return formatter.string(from: date)
         } else {
             let formatter = DateFormatter()
             formatter.dateFormat = "MM/dd"
+            if currentLanguage == "ja" {
+                formatter.locale = Locale(identifier: "ja_JP")
+            } else {
+                formatter.locale = Locale(identifier: "en_US")
+            }
             return formatter.string(from: date)
         }
     }

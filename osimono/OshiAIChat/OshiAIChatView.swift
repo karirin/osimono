@@ -333,6 +333,7 @@ struct OshiAIChatView: View {
                     .foregroundColor(.black)
             }
             Spacer()
+            
             // デバッグ情報を表示（修正版）
             VStack(alignment: .leading, spacing: 2) {
                 // 実際のサブスクリプション状態
@@ -341,7 +342,7 @@ struct OshiAIChatView: View {
                         Image(systemName: "crown.fill")
                             .font(.system(size: 12))
                             .foregroundColor(.orange)
-                        Text("無制限")
+                        Text(NSLocalizedString("unlimited", comment: "unlimited"))
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(.orange)
                     }
@@ -351,7 +352,7 @@ struct OshiAIChatView: View {
                     .cornerRadius(8)
                 } else {
                     HStack(spacing: 0) {
-                        Text("残り")
+                        Text(NSLocalizedString("remaining", comment: "remaining"))
                             .font(.system(size: 10, weight: .medium))
                             .padding(.top,2)
                         Text("\(MessageLimitManager.shared.getRemainingMessagesText())")
@@ -364,8 +365,6 @@ struct OshiAIChatView: View {
                     .cornerRadius(8)
                 }
             }
-            
-//            Spacer()
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
@@ -384,7 +383,7 @@ struct OshiAIChatView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     if messages.isEmpty {
-                        Text("会話を始めましょう！")
+                        Text(NSLocalizedString("start_conversation", comment: "Let's start a conversation!"))
                             .foregroundColor(.gray)
                             .padding(.top, 40)
                     } else {
@@ -435,7 +434,7 @@ struct OshiAIChatView: View {
             Divider()
             HStack(spacing: 12) {
                 // テキストフィールド
-                TextField("\(viewModel.selectedOshi.name)に話しかけてみよう", text: $inputText)
+                TextField(String(format: NSLocalizedString("talk_to_oshi_placeholder", comment: "Talk to %@"), viewModel.selectedOshi.name), text: $inputText)
                     .focused($isTextFieldFocused)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
@@ -501,7 +500,9 @@ struct OshiAIChatView: View {
                             ProgressView()
                                 .scaleEffect(1.5)
                                 .tint(.white)
-                            Text(!isInitialScrollComplete ? "チャットを読み込み中..." : "返信を作成中...")
+                            Text(!isInitialScrollComplete ?
+                                 NSLocalizedString("loading_chat", comment: "Loading chat...") :
+                                 NSLocalizedString("creating_reply", comment: "Creating reply..."))
                                 .foregroundColor(.white)
                                 .padding(.top, 10)
                         }
@@ -1226,13 +1227,24 @@ struct LineChatBubble: View {
     private func formatDate(timestamp: TimeInterval) -> String {
         let date = Date(timeIntervalSince1970: timestamp)
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
+        
+        // 現在の言語に応じてロケールを設定
+        let currentLanguage = Locale.current.languageCode ?? "en"
+        if currentLanguage == "ja" {
+            formatter.locale = Locale(identifier: "ja_JP")
+        } else {
+            formatter.locale = Locale(identifier: "en_US")
+        }
         
         // 今日の日付と比較
         if Calendar.current.isDateInToday(date) {
             formatter.dateFormat = "HH:mm"
         } else {
-            formatter.dateFormat = "MM/dd HH:mm"
+            if currentLanguage == "ja" {
+                formatter.dateFormat = "MM/dd HH:mm"
+            } else {
+                formatter.dateFormat = "MM/dd HH:mm"
+            }
         }
         
         return formatter.string(from: date)
