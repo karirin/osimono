@@ -1,4 +1,4 @@
-/* 
+/*
   Localizable.strings
   osimono
 
@@ -6,6 +6,7 @@
   
 */
 
+// MARK: - Basic Navigation
 "oshi_selection" = "Select Your Oshi";
 "add_new_oshi" = "Add New";
 "add_oshi" = "Add Oshi";
@@ -21,15 +22,26 @@
 "close" = "Close";
 "oshiSelection" = "Oshi Selection";
 "user_name" = "User Name";
+"next" = "Next";
+"update" = "Update";
+"retry" = "Retry";
+"register" = "Register";
+"reset" = "Reset";
 
-// Profile Section
+// MARK: - Profile Section
 "profile_title" = "Profile";
 "username" = "Username";
+"user_nickname" = "User Nickname";
+"profile_info" = "Profile Information";
+"profile_edit" = "Edit Profile";
 "favorite_oshi" = "Favorite Oshi";
 "select_oshi" = "Select Your Oshi";
+"select_your_oshi" = "Select Your Oshi";
 "please_select_oshi" = "Please select your oshi";
+"oshi_fan_user" = "Oshi Fan User";
+"add_new" = "Add New";
 
-// Item Types
+// MARK: - Item Types
 "goods" = "Goods";
 "pilgrimage" = "Pilgrimage";
 "live_record" = "Live Record";
@@ -37,7 +49,14 @@
 "other" = "Other";
 "all" = "All";
 
-// Form Fields
+// MARK: - Pin Types / Categories
+"live_venue" = "Live Venue";
+"cafe_restaurant" = "Cafe・Restaurant";
+"goods_shop" = "Goods Shop";
+"photo_spot" = "Photo Spot";
+"sacred_place" = "Pilgrimage";
+
+// MARK: - Form Fields
 "title" = "Title";
 "category" = "Category";
 "price" = "Price";
@@ -55,33 +74,50 @@
 "memo" = "Memo";
 "memories_episodes" = "Memories & Episodes";
 "details_memo" = "Details Memo";
+"purchase_location" = "Purchase Location";
 
-// Placeholders
+// MARK: - Placeholders
 "title_placeholder_goods" = "e.g., BTS Official Light Stick Ver.3";
 "title_placeholder_pilgrimage" = "e.g., MV Location - Shibuya XX Cafe";
 "title_placeholder_live" = "e.g., Tokyo Dome Concert";
 "title_placeholder_sns" = "e.g., Instagram Story Post";
 "title_placeholder_other" = "e.g., Oshi's Birthday, Anniversary";
+"title_placeholder_example" = "e.g., XX Oshi Live Venue";
 "price_placeholder" = "e.g., 5500";
 "event_name_placeholder" = "e.g., BTS Live 'LOVE YOURSELF'";
 "location_placeholder" = "e.g., Tokyo, Shibuya XX";
 "memo_placeholder" = "Enter memo here";
+"spot_name_placeholder" = "Enter spot name";
+"prefecture_placeholder" = "Prefecture";
+"street_address_placeholder" = "City, district, street number";
+"building_name_placeholder" = "Building name, floor (optional)";
 
-// Messages
+// MARK: - Messages
 "no_records" = "No oshi records found";
 "add_items_message" = "Tap the '+' button in the bottom right to add oshi goods or SNS posts!";
 "add_item" = "Add Oshi Item";
+"add_oshi_item" = "Add Oshi Item";
 "post_item" = "Post";
 "saving" = "Saving...";
 "loading" = "Loading...";
+"please_wait" = "Please wait...";
+"processing" = "Processing...";
+"updating" = "Updating...";
+"uploading" = "Uploading...";
+"downloading" = "Downloading...";
+"searching_location" = "Searching for location...";
+"loading_spots" = "Loading spots...";
+"loading_spot_info" = "Loading spot information";
 
-// Alerts
+// MARK: - Alerts & Confirmations
 "notification" = "Notification";
 "delete_confirmation_title" = "Delete Post";
 "delete_confirmation_message" = "Are you sure you want to delete this post? This action cannot be undone.";
+"delete_spot_confirmation" = "Delete \"%@\"? This action cannot be undone.";
+"location_info_update_message" = "New location information obtained from address. Update location information?";
 "ok" = "OK";
 
-// Categories
+// MARK: - Categories
 "cd_dvd" = "CD・DVD";
 "magazine" = "Magazine";
 "photo_book" = "Photo Book";
@@ -90,28 +126,45 @@
 "t_shirt" = "T-Shirt";
 "towel" = "Towel";
 
-// Sorting
+// MARK: - Sorting
 "sort_newest" = "Newest First";
 "sort_oldest" = "Oldest First";
 "sort_price_high" = "Price High to Low";
 "sort_price_low" = "Price Low to High";
 "sort_favorite" = "Favorite Order";
 
-// Registration
+// MARK: - Registration
 "register_oshi_first" = "Register Your Oshi First!";
 "register_oshi_message" = "Before recording oshi goods or SNS posts, please register your oshi first.";
 "register_oshi_button" = "Register Oshi";
+"register_oshi_spot" = "Register Oshi Spot";
 
-// Image
+// MARK: - Image
 "image" = "Image";
 "tap_to_select_image" = "Tap to select image";
+"tap_to_add_image" = "Tap to add image";
+"tap_to_change_image" = "Tap to change image";
 "change_image" = "Change Image";
+"delete_image" = "Delete Image";
 
-// Location
+// MARK: - Location & Address
 "current_location" = "Set Current Location";
 "get_current_location" = "Get Current Location";
+"move_to_current_location" = "Move to Current Location";
+"enter_current_location" = "Enter Current Location";
+"location_info" = "Location Information";
+"location_confirmation" = "Location Confirmation";
+"confirm_address" = "Confirm Address";
+"address_input" = "Address Input";
+"prefecture" = "Prefecture";
+"prefecture_selection" = "Prefecture Selection";
+"building_floor" = "Building Name & Floor";
+"building_example" = "Digital Port 6F";
+"address_map_prompt" = "Map will appear when address is entered";
+"pin_location_correct" = "Is the pin location correct?";
+"update_location_info" = "Update Location Information";
 
-// Apology Modal
+// MARK: - Apology Modal
 "apology_title" = "Apology";
 "apology_message_1" = "There was a bug in the AI message feature,";
 "apology_message_2" = "and messages from your oshi were not";
@@ -119,23 +172,13 @@
 "apology_message_4" = "This has now been fixed.";
 "apology_message_5" = "We apologize for any inconvenience caused.";
 
-"user_nickname" = "User Nickname";
-"profile_info" = "Profile Information";
-"profile_edit" = "Edit Profile";
-"register" = "Register";
-"oshi_fan_user" = "Oshi Fan User";
-"select_your_oshi" = "Select Your Oshi";
-"add_new" = "Add New";
-"add_oshi_item" = "Add Oshi Item";
+// MARK: - General Items
 "unknown_error" = "Unknown error";
-
-// Item Types and Categories (Extended)
 "untitled" = "Untitled";
 "no_name" = "No Name";
-"purchase_location" = "Purchase Location";
 "item_count" = "%d items";
 
-// Date and Time
+// MARK: - Date and Time
 "years_ago" = "%d years ago";
 "months_ago" = "%d months ago";
 "days_ago" = "%d days ago";
@@ -143,7 +186,7 @@
 "minutes_ago" = "%d minutes ago";
 "just_now" = "Just now";
 
-// Collection and Items
+// MARK: - Collection and Items
 "collection" = "Collection";
 "my_collection" = "My Collection";
 "item_details" = "Item Details";
@@ -151,7 +194,7 @@
 "share" = "Share";
 "oshi_item" = "Oshi Item";
 
-// Errors and Validation
+// MARK: - Errors and Validation
 "error" = "Error";
 "validation_error" = "Validation Error";
 "required_field" = "Required field";
@@ -160,19 +203,22 @@
 "upload_error" = "Upload error";
 "save_error" = "Save error";
 "delete_error" = "Delete error";
+"address_fetch_failed" = "Failed to get address: %@";
+"location_fetch_failed" = "Failed to get location. Please allow location access in Settings.";
+"address_fetch_error" = "Failed to get address";
+"failed_to_load_spot_info" = "Failed to load spot information";
+"ai_message_error" = "AI message generation error: %@";
+"chat_message_save_error" = "Chat message save error: %@";
 
-// Success Messages
+// MARK: - Success Messages
 "success" = "Success";
 "saved_successfully" = "Saved successfully";
 "deleted_successfully" = "Deleted successfully";
 "uploaded_successfully" = "Uploaded successfully";
+"save_changes" = "Save Changes";
+"spots_loaded_successfully" = "Spots loaded successfully";
 
-// Locations and Address
-"address_fetch_failed" = "Failed to get address: %@";
-"location_fetch_failed" = "Failed to get location. Please allow location access in Settings.";
-"address_fetch_error" = "Failed to get address";
-
-// Oshi Management
+// MARK: - Oshi Management
 "oshi_list" = "Oshi List";
 "oshi_details" = "Oshi Details";
 "oshi_anniversary" = "Oshi Anniversary";
@@ -180,16 +226,14 @@
 "congratulations" = "Congratulations";
 "anniversary_message" = "It's been %d days since you registered your oshi!";
 
-// Chat and AI
+// MARK: - Chat and AI
 "chat" = "Chat";
 "ai_chat" = "AI Chat";
 "message" = "Message";
 "send_message" = "Send Message";
 "typing" = "Typing...";
-"ai_message_error" = "AI message generation error: %@";
-"chat_message_save_error" = "Chat message save error: %@";
 
-// Settings and Preferences
+// MARK: - Settings and Preferences
 "settings" = "Settings";
 "language" = "Language";
 "theme" = "Theme";
@@ -198,23 +242,137 @@
 "about" = "About";
 "version" = "Version";
 
-// Permissions and Access
+// MARK: - Permissions and Access
 "camera_permission" = "Camera Permission";
 "photo_library_permission" = "Photo Library Permission";
 "location_permission" = "Location Permission";
 "permission_denied" = "Permission Denied";
 "permission_required" = "Permission Required";
 
-// Loading and Status
-"please_wait" = "Please wait...";
-"processing" = "Processing...";
-"updating" = "Updating...";
-"uploading" = "Uploading...";
-"downloading" = "Downloading...";
-
-// Help and Support
+// MARK: - Help and Support
 "help" = "Help";
 "support" = "Support";
 "faq" = "FAQ";
 "contact_us" = "Contact Us";
 "tutorial" = "Tutorial";
+
+// MARK: - Map View & Spots
+"no_oshi_spots" = "No oshi spots registered yet";
+"spot_management" = "Spot Management";
+"delete_spot" = "Delete Spot";
+"edit_spot" = "Edit Spot";
+"add_spot" = "Add Spot";
+"no_spots_loaded" = "No spots found";
+"edit_oshi_spot" = "Edit Oshi Spot";
+
+// MARK: - Distance
+"km_away" = "%.1f km";
+"m_away" = "%.0f m";
+"distance_unknown" = "--";
+
+// MARK: - Rating Modal
+"rate_location_title" = "Rate \"%@\"";
+"rate_button" = "Rate";
+"tap_to_rate" = "Tap to rate";
+"rating_poor" = "Poor";
+"rating_fair" = "Fair";
+"rating_good" = "Good";
+"rating_very_good" = "Very Good";
+"rating_excellent" = "Excellent oshi spot!";
+
+// MARK: - Accessibility
+"selected_pin_hint" = "Selected pin";
+"unselected_pin_hint" = "Tap to select";
+
+// MARK: - Filter
+"filter" = "Filter";
+
+// MARK: - User Profile
+"oshi_activity_status" = "Oshi activity: 10 spots visited";
+"spots" = "Spots";
+"check_ins" = "Check-ins";
+"posts" = "Posts";
+"saved_spots" = "Saved Spots";
+"post_history" = "Post History";
+"logout" = "Logout";
+
+// MARK: - Common UI
+"close_button" = "Close";
+
+// Location registration
+"register_oshi_spot" = "Register Oshi Spot";
+"example_oshi_spot" = "e.g., XX Oshi Live Venue";
+"address" = "Address";
+"street_address" = "City/Town・Address";
+"building_name" = "Building Name・Floor (Optional)";
+"location_confirmation" = "Location Confirmation";
+"enter_address_to_show_map" = "Map will be displayed when address is entered";
+"searching_location" = "Searching location...";
+"apply" = "Apply";
+
+// Rating descriptions
+"tap_to_rate" = "Tap to rate";
+"rating_poor" = "Poor";
+"rating_fair" = "Fair";
+"rating_good" = "Good";
+"rating_very_good" = "Very Good";
+"rating_excellent" = "Best Oshi Spot!";
+
+// Prefectures (English equivalents or romanized names)
+"prefecture" = "Prefecture";
+"hokkaido" = "Hokkaido";
+"aomori" = "Aomori";
+"iwate" = "Iwate";
+"miyagi" = "Miyagi";
+"akita" = "Akita";
+"yamagata" = "Yamagata";
+"fukushima" = "Fukushima";
+"ibaraki" = "Ibaraki";
+"tochigi" = "Tochigi";
+"gunma" = "Gunma";
+"saitama" = "Saitama";
+"chiba" = "Chiba";
+"tokyo" = "Tokyo";
+"kanagawa" = "Kanagawa";
+"niigata" = "Niigata";
+"toyama" = "Toyama";
+"ishikawa" = "Ishikawa";
+"fukui" = "Fukui";
+"yamanashi" = "Yamanashi";
+"nagano" = "Nagano";
+"gifu" = "Gifu";
+"shizuoka" = "Shizuoka";
+"aichi" = "Aichi";
+"mie" = "Mie";
+"shiga" = "Shiga";
+"kyoto" = "Kyoto";
+"osaka" = "Osaka";
+"hyogo" = "Hyogo";
+"nara" = "Nara";
+"wakayama" = "Wakayama";
+"tottori" = "Tottori";
+"shimane" = "Shimane";
+"okayama" = "Okayama";
+"hiroshima" = "Hiroshima";
+"yamaguchi" = "Yamaguchi";
+"tokushima" = "Tokushima";
+"kagawa" = "Kagawa";
+"ehime" = "Ehime";
+"kochi" = "Kochi";
+"fukuoka" = "Fukuoka";
+"saga" = "Saga";
+"nagasaki" = "Nagasaki";
+"kumamoto" = "Kumamoto";
+"oita" = "Oita";
+"miyazaki" = "Miyazaki";
+"kagoshima" = "Kagoshima";
+"okinawa" = "Okinawa";
+
+// Categories (English)
+"pilgrimage_en" = "Pilgrimage";
+"photo_spot_en" = "Photo Spot";
+"cafe_restaurant_en" = "Cafe/Restaurant";
+"live_venue_en" = "Live Venue";
+"goods_shop_en" = "Goods Shop";
+"other_en" = "Other";
+

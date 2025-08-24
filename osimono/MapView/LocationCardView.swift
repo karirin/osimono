@@ -19,19 +19,19 @@ struct LocationCardView: View {
     @State private var userRating: Int = 0
     @State private var showRatingModal: Bool = false
     var oshiId: String
-    var onEditTapped: (() -> Void)? // 編集ボタンタップ時のコールバック
+    var onEditTapped: (() -> Void)? // Edit button tap callback
     
     var distanceText: String {
         if let userLoc = userLocation {
             let eventLoc = CLLocation(latitude: location.latitude, longitude: location.longitude)
             let distance = eventLoc.distance(from: userLoc)
             if distance >= 1000 {
-                return String(format: "%.1f km", distance / 1000)
+                return String(format: NSLocalizedString("km_away", comment: "Distance in kilometers"), distance / 1000)
             } else {
-                return String(format: "%.0f m", distance)
+                return String(format: NSLocalizedString("m_away", comment: "Distance in meters"), distance)
             }
         } else {
-            return "--"
+            return NSLocalizedString("distance_unknown", comment: "Distance unknown")
         }
     }
     
@@ -71,7 +71,7 @@ struct LocationCardView: View {
                 
                 // Category badge
                 HStack{
-                    Text(pinType.label)
+                    Text(localizedPinTypeLabel(for: pinType))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(pinType.color.opacity(2.0))
                         .padding(.horizontal, 8)
@@ -81,7 +81,7 @@ struct LocationCardView: View {
                         .cornerRadius(10)
                         .padding(8)
                     Spacer()
-                    // 編集ボタン（選択時のみ表示）
+                    // Edit button (only shown when selected)
                     if isSelected {
                         Button(action: {
                             generateHapticFeedback()
@@ -99,6 +99,7 @@ struct LocationCardView: View {
                                     .rotationEffect(.degrees(90))
                             }
                         }
+                        .accessibilityLabel(NSLocalizedString("edit", comment: "Edit"))
                         .offset(x: -6, y: 0)
                         .transition(.scale.combined(with: .opacity))
                     }
@@ -159,7 +160,7 @@ struct LocationCardView: View {
             )
         }
         .onAppear {
-            // ユーザーの既存評価をロード
+            // Load user's existing rating
             if let locationId = location.id {
                 viewModel.getUserRating(for: locationId, oshiId: oshiId) { rating in
                     if let rating = rating {
@@ -167,6 +168,24 @@ struct LocationCardView: View {
                     }
                 }
             }
+        }
+    }
+    
+    // Get localized pin type label
+    private func localizedPinTypeLabel(for pinType: MapPinView.PinType) -> String {
+        switch pinType {
+        case .live:
+            return NSLocalizedString("live_venue", comment: "Live Venue")
+        case .cafe:
+            return NSLocalizedString("cafe_restaurant", comment: "Cafe・Restaurant")
+        case .shop:
+            return NSLocalizedString("goods_shop", comment: "Goods Shop")
+        case .photo:
+            return NSLocalizedString("photo_spot", comment: "Photo Spot")
+        case .sacred:
+            return NSLocalizedString("sacred_place", comment: "Pilgrimage")
+        case .other:
+            return NSLocalizedString("other", comment: "Other")
         }
     }
 }
@@ -180,7 +199,7 @@ struct RatingModalView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("「\(location.title)」を評価")
+            Text(String(format: NSLocalizedString("rate_location_title", comment: "Rate location"), location.title))
                 .font(.system(size: 18, weight: .bold))
                 .multilineTextAlignment(.center)
                 .padding(.top, 20)
@@ -201,7 +220,7 @@ struct RatingModalView: View {
             
             HStack(spacing: 20) {
                 Button(action: onCancel) {
-                    Text("キャンセル")
+                    Text(NSLocalizedString("cancel", comment: "Cancel"))
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.gray)
                         .padding(.vertical, 12)
@@ -214,7 +233,7 @@ struct RatingModalView: View {
                     generateHapticFeedback()
                     onRate(userRating)
                 }) {
-                    Text("評価する")
+                    Text(NSLocalizedString("rate_button", comment: "Rate"))
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.vertical, 12)
@@ -234,13 +253,20 @@ struct RatingModalView: View {
     
     var ratingDescriptionText: String {
         switch userRating {
-        case 0: return "タップして評価してください"
-        case 1: return "イマイチ"
-        case 2: return "まあまあ"
-        case 3: return "普通"
-        case 4: return "良い"
-        case 5: return "最高の推しスポット！"
-        default: return ""
+        case 0:
+            return NSLocalizedString("tap_to_rate", comment: "Tap to rate")
+        case 1:
+            return NSLocalizedString("rating_poor", comment: "Poor")
+        case 2:
+            return NSLocalizedString("rating_fair", comment: "Fair")
+        case 3:
+            return NSLocalizedString("rating_good", comment: "Good")
+        case 4:
+            return NSLocalizedString("rating_very_good", comment: "Very Good")
+        case 5:
+            return NSLocalizedString("rating_excellent", comment: "Excellent oshi spot!")
+        default:
+            return ""
         }
     }
 }

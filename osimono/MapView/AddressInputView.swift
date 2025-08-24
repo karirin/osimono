@@ -12,7 +12,6 @@ import MapKit
 
 struct AddressInputView: View {
     @State private var city = ""
-    
     @State private var prefectures = ["東京都", "大阪府", "神奈川県", "その他"]
     @State private var showAddLocation = false
     @State private var isAddressValidated = false
@@ -25,19 +24,19 @@ struct AddressInputView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("所在地情報")) {
-                    Picker("都道府県", selection: $prefecture) {
+                Section(header: Text(NSLocalizedString("location_info", comment: "Location Information"))) {
+                    Picker(NSLocalizedString("prefecture", comment: "Prefecture"), selection: $prefecture) {
                         ForEach(prefectures, id: \.self) { pref in
                             Text(pref)
                         }
                     }
                     
-                    TextField("市区町村・番地", text: $streetAddress)
+                    TextField(NSLocalizedString("street_address_placeholder", comment: "City, district, street number"), text: $streetAddress)
                         .foregroundColor(streetAddress.isEmpty ? .red : .primary)
                 }
                 
-                Section(header: Text("ビル名・階数")) {
-                    TextField("デジタルポート6F", text: $buildingName)
+                Section(header: Text(NSLocalizedString("building_floor", comment: "Building Name & Floor"))) {
+                    TextField(NSLocalizedString("building_example", comment: "Digital Port 6F"), text: $buildingName)
                 }
                 
                 Section {
@@ -45,7 +44,7 @@ struct AddressInputView: View {
                         generateHapticFeedback()
                         useCurrentLocation()
                     }) {
-                        Text("現在地を入力")
+                        Text(NSLocalizedString("enter_current_location", comment: "Enter Current Location"))
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.green)
@@ -59,7 +58,7 @@ struct AddressInputView: View {
                         generateHapticFeedback()
                         validateAddress()
                     }) {
-                        Text("住所を確認")
+                        Text(NSLocalizedString("confirm_address", comment: "Confirm Address"))
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.blue)
@@ -68,7 +67,7 @@ struct AddressInputView: View {
                     }
                 }
             }
-            .navigationTitle("住所入力")
+            .navigationTitle(NSLocalizedString("address_input", comment: "Address Input"))
             .sheet(isPresented: $isAddressValidated) {
                 AddressConfirmationView(
                     prefecture: prefecture,
@@ -81,11 +80,8 @@ struct AddressInputView: View {
     }
     
     func validateAddress() {
-        // Basic validation logic
         if !streetAddress.isEmpty && !prefecture.isEmpty {
             isAddressValidated = true
-        } else {
-            // Show an error alert if needed
         }
     }
     
@@ -99,12 +95,10 @@ struct AddressInputView: View {
                         if let locality = placemark.locality,
                            let thoroughfare = placemark.thoroughfare,
                            let subThoroughfare = placemark.subThoroughfare {
-                            print("現在地  ：\(locality) \(thoroughfare) \(subThoroughfare)")
                             streetAddress = "\(locality) \(thoroughfare) \(subThoroughfare)"
                         } else if let name = placemark.name {
                             streetAddress = name
                         }
-                        // 逆ジオコーディング成功後、AddressConfirmationViewに遷移するためにフラグをON
                         isAddressValidated = true
                     }
                 } else {
@@ -115,5 +109,4 @@ struct AddressInputView: View {
             print("現在地が取得できません")
         }
     }
-    
 }

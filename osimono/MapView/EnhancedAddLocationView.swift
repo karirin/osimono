@@ -22,7 +22,7 @@ struct EnhancedAddLocationView: View {
     @State private var selectedImage: UIImage? = nil
     @State private var isShowingImagePicker: Bool = false
     @State private var note: String = ""
-    @State private var selectedCategory: String = "聖地巡礼"
+    @State private var selectedCategory: String = ""
     @State private var isShowingCategoryPicker = false
     @State private var coordinate: CLLocationCoordinate2D?
     @StateObject private var locationManager = LocationManager()
@@ -41,31 +41,66 @@ struct EnhancedAddLocationView: View {
     
     var cfg = SwiftyCropConfiguration(
         texts: .init(
-            cancelButton: "キャンセル",
+            cancelButton: L10n.cancel,
             interactionInstructions: "",
-            saveButton: "適用"
+            saveButton: NSLocalizedString("apply", comment: "Apply button")
         )
     )
     
     private var cropConfig: SwiftyCropConfiguration {
         var cfg = SwiftyCropConfiguration(
             texts: .init(
-                cancelButton: "キャンセル",
+                cancelButton: L10n.cancel,
                 interactionInstructions: "",
-                saveButton: "適用"
+                saveButton: NSLocalizedString("apply", comment: "Apply button")
             )
         )
         
         return cfg
     }
     
-    //    let categories = ["ライブ", "広告", "カフェ", "その他"]
-    let categories = ["聖地巡礼", "撮影スポット", "カフェ・飲食店", "ライブ会場", "グッズショップ", "その他"]
+    // Categories with localized strings
+    let categories: [String]
+    let categoryLabels: [String: String]
+    
+    init(viewModel: LocationViewModel, onLocationAdded: @escaping (String) -> Void) {
+        self.viewModel = viewModel
+        self.onLocationAdded = onLocationAdded
+        
+        // Initialize categories based on current language
+        if isJapanese() {
+            self.categories = ["聖地巡礼", "撮影スポット", "カフェ・飲食店", "ライブ会場", "グッズショップ", "その他"]
+            self.categoryLabels = [
+                "聖地巣礼": "聖地巡礼",
+                "撮影スポット": "撮影スポット",
+                "カフェ・飲食店": "カフェ・飲食店",
+                "ライブ会場": "ライブ会場",
+                "グッズショップ": "グッズショップ",
+                "その他": "その他"
+            ]
+            self._selectedCategory = State(initialValue: "聖地巡礼")
+        } else {
+            self.categories = ["Pilgrimage", "Photo Spot", "Cafe/Restaurant", "Live Venue", "Goods Shop", "Other"]
+            self.categoryLabels = [
+                "Pilgrimage": "Pilgrimage",
+                "Photo Spot": "Photo Spot",
+                "Cafe/Restaurant": "Cafe/Restaurant",
+                "Live Venue": "Live Venue",
+                "Goods Shop": "Goods Shop",
+                "Other": "Other"
+            ]
+            self._selectedCategory = State(initialValue: "Pilgrimage")
+        }
+        
+        // Set default prefecture text based on language
+        self._prefecture = State(initialValue: isJapanese() ? "都道府県" : "Prefecture")
+    }
     
     // Computed property for the current address
     var currentAddress: String {
         var address = ""
-        if prefecture != "都道府県" { address += prefecture + " " }
+        let prefectureDefault = isJapanese() ? "都道府県" : "Prefecture"
+        if prefecture != prefectureDefault { address += prefecture + " " }
         if !streetAddress.isEmpty { address += streetAddress + " " }
         if !buildingName.isEmpty { address += buildingName }
         return address.trimmingCharacters(in: .whitespaces)
@@ -73,18 +108,18 @@ struct EnhancedAddLocationView: View {
     
     // Category color
     func categoryColor(_ category: String) -> Color {
-        switch category {
-        case "ライブ会場": return Color(hex: "6366F1")  // インディゴ/青紫
-        case "聖地巡礼": return Color(hex: "EF4444")      // バイオレット/紫
-        case "カフェ・飲食店": return Color(hex: "10B981") // エメラルド/緑
-        case "グッズショップ": return Color(hex: "F59E0B") // アンバー/オレンジ
-        case "撮影スポット": return Color(hex: "EC4899")  // ピンク
-            //        case "聖地巡礼": return Color(hex: "EF4444")        // レッド/赤
-        case "その他": return Color(hex: "6B7280")      // グレー
+        let normalizedCategory = categoryLabels[category] ?? category
+        switch normalizedCategory {
+        case "ライブ会場", "Live Venue": return Color(hex: "6366F1")
+        case "聖地巡礼", "Pilgrimage": return Color(hex: "EF4444")
+        case "カフェ・飲食店", "Cafe/Restaurant": return Color(hex: "10B981")
+        case "グッズショップ", "Goods Shop": return Color(hex: "F59E0B")
+        case "撮影スポット", "Photo Spot": return Color(hex: "EC4899")
+        case "その他", "Other": return Color(hex: "6B7280")
         default: return Color(hex: "6366F1")
         }
     }
-    
+
     var body: some View {
         ZStack{
             VStack(spacing: 0) {
@@ -113,7 +148,7 @@ struct EnhancedAddLocationView: View {
                         
                         Spacer()
                         
-                        Text("推しスポット登録")
+                        Text(NSLocalizedString("register_oshi_spot", comment: "Register oshi spot title"))
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.leading,20)
@@ -140,7 +175,7 @@ struct EnhancedAddLocationView: View {
                                 }
                             }
                         }) {
-                            Text("保存")
+                            Text(L10n.save)
                                 .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 12)
@@ -191,7 +226,7 @@ struct EnhancedAddLocationView: View {
                                                     .font(.system(size: 40))
                                                     .foregroundColor(.gray)
                                                 
-                                                Text("タップして画像を追加")
+                                                Text(L10n.tapToSelectImage)
                                                     .font(.system(size: 16))
                                                     .foregroundColor(.gray)
                                             }
@@ -221,7 +256,7 @@ struct EnhancedAddLocationView: View {
                                                 generateHapticFeedback()
                                                 isShowingImagePicker = true
                                             }) {
-                                                Text("画像を変更")
+                                                Text(L10n.changeImage)
                                                     .font(.system(size: 14))
                                                     .padding(.vertical, 6)
                                                     .padding(.horizontal, 12)
@@ -239,7 +274,7 @@ struct EnhancedAddLocationView: View {
                         
                         // Category Selector
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("カテゴリー")
+                            Text(L10n.category)
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.black)
                             
@@ -287,7 +322,7 @@ struct EnhancedAddLocationView: View {
                         // Title Field
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-                                Text("タイトル")
+                                Text(L10n.title)
                                     .font(.system(size: 16, weight: .medium))
                                 
                                 Spacer()
@@ -297,7 +332,7 @@ struct EnhancedAddLocationView: View {
                                     .foregroundColor(.gray)
                             }
                             
-                            TextField("例：XX推しライブ会場", text: $title)
+                            TextField(NSLocalizedString("example_oshi_spot", comment: "Example oshi spot title"), text: $title)
                                 .padding()
                                 .background(Color(UIColor.systemGray6))
                                 .cornerRadius(12)
@@ -307,7 +342,7 @@ struct EnhancedAddLocationView: View {
                         // New 5-Star Rating System
                         VStack(alignment: .leading, spacing: 12) {
                             HStack{
-                                Text("評価")
+                                Text(L10n.favoriteRating)
                                     .font(.system(size: 16, weight: .medium))
                                 Spacer()
                             }
@@ -318,7 +353,7 @@ struct EnhancedAddLocationView: View {
                         // Address inputs
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
-                                Text("住所")
+                                Text(NSLocalizedString("address", comment: "Address"))
                                     .font(.system(size: 16, weight: .medium))
                                 
                                 Spacer()
@@ -331,7 +366,7 @@ struct EnhancedAddLocationView: View {
                                         Image(systemName: "location.fill")
                                             .font(.system(size: 12))
                                         
-                                        Text("現在地を使用")
+                                        Text(L10n.currentLocation)
                                             .font(.system(size: 14))
                                     }
                                     .foregroundColor(Color(hex: "6366F1"))
@@ -342,14 +377,14 @@ struct EnhancedAddLocationView: View {
                                 // Prefecture picker
                                 Menu {
                                     Picker("", selection: $prefecture) {
-                                        ForEach(["都道府県"] + prefectures, id: \.self) { pref in
+                                        ForEach([isJapanese() ? "都道府県" : "Prefecture"] + prefectures, id: \.self) { pref in
                                             Text(pref).tag(pref)
                                         }
                                     }
                                 } label: {
                                     HStack {
                                         Text(prefecture)
-                                            .foregroundColor(prefecture == "都道府県" ? .gray : .black)
+                                            .foregroundColor((prefecture == "都道府県" || prefecture == "Prefecture") ? .gray : .black)
                                         
                                         Spacer()
                                         
@@ -363,13 +398,13 @@ struct EnhancedAddLocationView: View {
                                 }
                                 
                                 // Street address
-                                TextField("市区町村・番地", text: $streetAddress)
+                                TextField(NSLocalizedString("street_address", comment: "Street address placeholder"), text: $streetAddress)
                                     .padding()
                                     .background(Color(UIColor.systemGray6))
                                     .cornerRadius(12)
                                 
                                 // Building name
-                                TextField("ビル名・階数（任意）", text: $buildingName)
+                                TextField(NSLocalizedString("building_name", comment: "Building name placeholder"), text: $buildingName)
                                     .padding()
                                     .background(Color(UIColor.systemGray6))
                                     .cornerRadius(12)
@@ -379,7 +414,7 @@ struct EnhancedAddLocationView: View {
                         
                         // Map preview
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("場所の確認")
+                            Text(NSLocalizedString("location_confirmation", comment: "Location confirmation"))
                                 .font(.system(size: 16, weight: .medium))
                             
                             if let coordinate = coordinate {
@@ -410,48 +445,15 @@ struct EnhancedAddLocationView: View {
                                         )
                                     
                                     if currentAddress.isEmpty {
-                                        Text("住所を入力すると地図が表示されます")
+                                        Text(NSLocalizedString("enter_address_to_show_map", comment: "Enter address message"))
                                             .foregroundColor(.gray)
                                     } else {
-                                        ProgressView("位置情報を検索中...")
+                                        ProgressView(NSLocalizedString("searching_location", comment: "Searching location"))
                                     }
                                 }
                             }
                         }
                         .padding(.horizontal)
-                        
-                        // Note Field
-//                        VStack(alignment: .leading, spacing: 8) {
-//                            HStack {
-//                                Text("メモ")
-//                                    .font(.system(size: 16, weight: .medium))
-//                                
-//                                Spacer()
-//                                
-//                                Text("\(note.count) / 200")
-//                                    .font(.system(size: 14))
-//                                    .foregroundColor(.gray)
-//                            }
-//                            
-//                            ZStack(alignment: .topLeading) {
-//                                if note.isEmpty {
-//                                    Text("どんな推しスポットか簡単に説明しましょう")
-//                                        .foregroundColor(.gray)
-//                                        .padding(.horizontal, 8)
-//                                        .padding(.vertical, 12)
-//                                }
-//                                
-//                                TextEditor(text: $note)
-//                                    .padding(4)
-//                                    .frame(height: 100)
-//                                    .background(Color(UIColor.systemGray6))
-//                                    .cornerRadius(12)
-//                                    .opacity(note.isEmpty ? 0.25 : 1)
-//                            }
-//                            .background(Color(UIColor.systemGray6))
-//                            .cornerRadius(12)
-//                        }
-//                        .padding(.horizontal)
                         
                         Spacer(minLength: 40)
                     }
@@ -467,7 +469,7 @@ struct EnhancedAddLocationView: View {
                             ProgressView()
                                 .scaleEffect(1.5)
                                 .tint(.white)
-                            Text("保存中...")
+                            Text(L10n.saving)
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white)
                                 .padding(.top, 10)
@@ -496,7 +498,6 @@ struct EnhancedAddLocationView: View {
             geocodeAddress()
         }
         .sheet(isPresented: $isShowingImagePicker) {
-//               ImageTimeLinePicker(selectedImage: $selectedImageForCropping)
             ImagePickerView { pickedImage in
                 self.selectedImageForCropping = pickedImage
             }
@@ -547,12 +548,12 @@ struct EnhancedAddLocationView: View {
     // Rating description text based on the selected rating
     var ratingDescriptionText: String {
         switch userRating {
-        case 0: return "タップして評価してください"
-        case 1: return "イマイチ"
-        case 2: return "まあまあ"
-        case 3: return "普通"
-        case 4: return "良い"
-        case 5: return "最高の推しスポット！"
+        case 0: return NSLocalizedString("tap_to_rate", comment: "Tap to rate")
+        case 1: return NSLocalizedString("rating_poor", comment: "Poor rating")
+        case 2: return NSLocalizedString("rating_fair", comment: "Fair rating")
+        case 3: return NSLocalizedString("rating_good", comment: "Good rating")
+        case 4: return NSLocalizedString("rating_very_good", comment: "Very good rating")
+        case 5: return NSLocalizedString("rating_excellent", comment: "Excellent rating")
         default: return ""
         }
     }
@@ -572,7 +573,7 @@ struct EnhancedAddLocationView: View {
             "title": title.isEmpty ? selectedCategory : title,
             "memo": note,
             "favorite": userRating,
-            "itemType": "聖地巡礼", // OshiItemFormViewのタイプに合わせる
+            "itemType": isJapanese() ? "聖地巡礼" : "Pilgrimage", // Localized item type
             "oshiId": viewModel.currentOshiId,
             "createdAt": currentDate.timeIntervalSince1970,
             "visitDate": currentDate.timeIntervalSince1970,
@@ -669,8 +670,9 @@ struct EnhancedAddLocationView: View {
             note: note.isEmpty ? nil : note,
             image: selectedImage
         ) { newLocationId in
-            // 次にoshiItemsテーブルにも保存
-            if selectedCategory == "聖地巡礼" {
+            // 次にoshiItemsテーブルにも保存（聖地巡礼の場合）
+            let pilgrimageCategory = isJapanese() ? "聖地巡礼" : "Pilgrimage"
+            if selectedCategory == pilgrimageCategory {
                 self.saveToOshiItems(
                     coordinate: coordinate,
                     locationId: newLocationId
@@ -707,16 +709,16 @@ struct EnhancedAddLocationView: View {
     // Convert the selected category to pin type
     func getPinType(for category: String) -> MapPinView.PinType {
         switch category {
-        case "ライブ会場": return .live
-        case "聖地巡礼": return .sacred
-        case "カフェ・飲食店": return .cafe
-        case "グッズショップ": return .shop
-        case "撮影スポット": return .photo
-            //        case "聖地巡礼": return .sacred
-        case "その他": return .other
+        case "ライブ会場", "Live Venue": return .live
+        case "聖地巡礼", "Pilgrimage": return .sacred
+        case "カフェ・飲食店", "Cafe/Restaurant": return .cafe
+        case "グッズショップ", "Goods Shop": return .shop
+        case "撮影スポット", "Photo Spot": return .photo
+        case "その他", "Other": return .other
         default: return .other
         }
     }
+    
     // Geocode the address to get coordinates
     func geocodeAddress() {
         guard !currentAddress.isEmpty else { return }
@@ -762,17 +764,32 @@ struct EnhancedAddLocationView: View {
         }
     }
     
-    // Array of prefectures for the picker
-    let prefectures = [
-        "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
-        "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
-        "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県",
-        "岐阜県", "静岡県", "愛知県", "三重県",
-        "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県",
-        "鳥取県", "島根県", "岡山県", "広島県", "山口県",
-        "徳島県", "香川県", "愛媛県", "高知県",
-        "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
-    ]
+    // Array of prefectures for the picker - localized based on current language
+    var prefectures: [String] {
+        if isJapanese() {
+            return [
+                "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
+                "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
+                "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県",
+                "岐阜県", "静岡県", "愛知県", "三重県",
+                "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県",
+                "鳥取県", "島根県", "岡山県", "広島県", "山口県",
+                "徳島県", "香川県", "愛媛県", "高知県",
+                "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
+            ]
+        } else {
+            return [
+                "Hokkaido", "Aomori", "Iwate", "Miyagi", "Akita", "Yamagata", "Fukushima",
+                "Ibaraki", "Tochigi", "Gunma", "Saitama", "Chiba", "Tokyo", "Kanagawa",
+                "Niigata", "Toyama", "Ishikawa", "Fukui", "Yamanashi", "Nagano",
+                "Gifu", "Shizuoka", "Aichi", "Mie",
+                "Shiga", "Kyoto", "Osaka", "Hyogo", "Nara", "Wakayama",
+                "Tottori", "Shimane", "Okayama", "Hiroshima", "Yamaguchi",
+                "Tokushima", "Kagawa", "Ehime", "Kochi",
+                "Fukuoka", "Saga", "Nagasaki", "Kumamoto", "Oita", "Miyazaki", "Kagoshima", "Okinawa"
+            ]
+        }
+    }
 }
 
 #Preview {

@@ -16,14 +16,14 @@ struct MapView: View {
     )
     @State private var selectedLocationId: String? = nil
     @StateObject private var locationManager = LocationManager()
-    @State private var selectedCategories: Set<String> = ["ライブ会場", "ロケ地", "カフェ・飲食店", "グッズショップ", "撮影スポット", "聖地巡礼", "その他"]
+    @State private var selectedCategories: Set<String> = []
     @State private var showUserProfile = false
     var oshiId: String
     @State private var showAddOshiForm = false
     @State private var showingOshiAlert = false
     @State private var isAddLocationActive = false
     
-    // 編集機能用の状態
+    // Edit functionality states
     @State private var showEditActionSheet = false
     @State private var showEditView = false
     @State private var showDeleteAlert = false
@@ -139,7 +139,7 @@ struct MapView: View {
     }
     
     private var emptyStateView: some View {
-        Text("推しスポットはまだ登録されていません")
+        Text(NSLocalizedString("no_records", comment: "No oshi records found"))
             .padding()
             .background(Color.white.opacity(0.9))
             .cornerRadius(10)
@@ -230,6 +230,7 @@ struct MapView: View {
         }
         .padding(.trailing, 16)
         .padding(.bottom, 10)
+        .accessibilityLabel(NSLocalizedString("current_location", comment: "Set Current Location"))
     }
     
     private var addLocationButton: some View {
@@ -253,15 +254,16 @@ struct MapView: View {
         }
         .padding(.trailing, 16)
         .padding(.bottom, 190)
+        .accessibilityLabel(NSLocalizedString("add_oshi_item", comment: "Add Oshi Item"))
     }
     
     private var alertOverlay: some View {
         ZStack {
             if showingOshiAlert {
                 OshiAlertView(
-                    title: "推しを登録しよう！",
-                    message: "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。",
-                    buttonText: "推しを登録する",
+                    title: NSLocalizedString("register_oshi_first", comment: "Register Your Oshi First!"),
+                    message: NSLocalizedString("register_oshi_message", comment: "Before recording oshi goods or SNS posts, please register your oshi first."),
+                    buttonText: NSLocalizedString("register_oshi_button", comment: "Register Oshi"),
                     action: {
                         showAddOshiForm = true
                     },
@@ -321,6 +323,14 @@ struct MapView: View {
     private func handleViewAppear() {
         print("oshiId: \(oshiId)")
         
+        // Initialize selected categories with localized values
+        selectedCategories = Set([
+            NSLocalizedString("live_record", comment: "Live Record"),
+            NSLocalizedString("pilgrimage", comment: "Pilgrimage"),
+            NSLocalizedString("goods", comment: "Goods"),
+            NSLocalizedString("other", comment: "Other")
+        ])
+        
         if let userLocation = locationManager.userLocation {
             withAnimation {
                 region.center = userLocation.coordinate
@@ -351,18 +361,18 @@ struct MapView: View {
     
     private func editActionSheet() -> ActionSheet {
         ActionSheet(
-            title: Text("スポットの操作"),
+            title: Text(NSLocalizedString("notification", comment: "Notification")),
             message: Text(selectedEditLocation?.title ?? ""),
             buttons: [
-                .default(Text("編集")) {
+                .default(Text(NSLocalizedString("edit", comment: "Edit"))) {
                     generateHapticFeedback()
                     showEditView = true
                 },
-                .destructive(Text("削除")) {
+                .destructive(Text(NSLocalizedString("delete", comment: "Delete"))) {
                     generateHapticFeedback()
                     showDeleteAlert = true
                 },
-                .cancel(Text("キャンセル")) {
+                .cancel(Text(NSLocalizedString("cancel", comment: "Cancel"))) {
                     selectedEditLocation = nil
                 }
             ]
@@ -371,9 +381,9 @@ struct MapView: View {
     
     private func deleteAlert() -> Alert {
         Alert(
-            title: Text("スポットを削除"),
-            message: Text("「\(selectedEditLocation?.title ?? "")」を削除しますか？この操作は取り消せません。"),
-            primaryButton: .destructive(Text("削除")) {
+            title: Text(NSLocalizedString("delete_confirmation_title", comment: "Delete Post")),
+            message: Text(String(format: NSLocalizedString("delete_confirmation_message", comment: "Are you sure you want to delete this post? This action cannot be undone."), selectedEditLocation?.title ?? "")),
+            primaryButton: .destructive(Text(NSLocalizedString("delete", comment: "Delete"))) {
                 if let location = selectedEditLocation,
                    let locationId = location.id {
                     viewModel.deleteLocation(locationId: locationId, oshiId: oshiId)
@@ -381,7 +391,7 @@ struct MapView: View {
                 }
                 selectedEditLocation = nil
             },
-            secondaryButton: .cancel(Text("キャンセル")) {
+            secondaryButton: .cancel(Text(NSLocalizedString("cancel", comment: "Cancel"))) {
                 selectedEditLocation = nil
             }
         )
@@ -410,27 +420,40 @@ struct MapView: View {
     
     func getPinType(for location: EventLocation) -> MapPinView.PinType {
         if let category = location.category as String? {
+            // Get localized category names for comparison
+            let liveRecord = NSLocalizedString("live_record", comment: "Live Record")
+            let pilgrimage = NSLocalizedString("pilgrimage", comment: "Pilgrimage")
+            let goods = NSLocalizedString("goods", comment: "Goods")
+            let other = NSLocalizedString("other", comment: "Other")
+            
             switch category {
-            case "ライブ会場": return .live
-            case "カフェ・飲食店": return .cafe
-            case "グッズショップ": return .shop
-            case "撮影スポット": return .photo
-            case "聖地巡礼": return .sacred
-            case "その他": return .other
-            default: break
+            case liveRecord, "ライブ会場", "Live Record":
+                return .live
+            case "カフェ・飲食店", "Cafe・Restaurant":
+                return .cafe
+            case "グッズショップ", "Goods Shop":
+                return .shop
+            case "撮影スポット", "Photo Spot":
+                return .photo
+            case pilgrimage, "聖地巡礼", "Pilgrimage":
+                return .sacred
+            case other, "その他", "Other":
+                return .other
+            default:
+                break
             }
         }
         
         // Fallback to checking title
-        if location.title.contains("ライブ") || location.title.contains("コンサート") {
+        if location.title.contains("ライブ") || location.title.contains("コンサート") || location.title.contains("Live") || location.title.contains("Concert") {
             return .live
-        } else if location.title.contains("カフェ") || location.title.contains("レストラン") || location.title.contains("cafe") {
+        } else if location.title.contains("カフェ") || location.title.contains("レストラン") || location.title.contains("cafe") || location.title.contains("Cafe") {
             return .cafe
-        } else if location.title.contains("ショップ") || location.title.contains("グッズ") || location.title.contains("shop") {
+        } else if location.title.contains("ショップ") || location.title.contains("グッズ") || location.title.contains("shop") || location.title.contains("Shop") {
             return .shop
-        } else if location.title.contains("撮影") || location.title.contains("写真") {
+        } else if location.title.contains("撮影") || location.title.contains("写真") || location.title.contains("Photo") {
             return .photo
-        } else if location.title.contains("聖地巡礼") {
+        } else if location.title.contains("聖地巡礼") || location.title.contains("Pilgrimage") {
             return .sacred
         } else {
             return .other

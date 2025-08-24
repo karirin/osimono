@@ -56,12 +56,18 @@ struct MapPinView: View {
         
         var label: String {
             switch self {
-            case .live: return "ライブ会場"
-            case .cafe: return "カフェ・飲食店"
-            case .shop: return "グッズショップ"
-            case .photo: return "撮影スポット"
-            case .sacred: return "聖地巡礼"
-            case .other: return "その他"
+            case .live:
+                return NSLocalizedString("live_venue", comment: "Live Venue")
+            case .cafe:
+                return NSLocalizedString("cafe_restaurant", comment: "Cafe・Restaurant")
+            case .shop:
+                return NSLocalizedString("goods_shop", comment: "Goods Shop")
+            case .photo:
+                return NSLocalizedString("photo_spot", comment: "Photo Spot")
+            case .sacred:
+                return NSLocalizedString("sacred_place", comment: "Pilgrimage")
+            case .other:
+                return NSLocalizedString("other", comment: "Other")
             }
         }
     }
@@ -96,12 +102,14 @@ struct MapPinView: View {
                                         .foregroundColor(pinType.color)
                                 }
                                 .shimmering(active: true)
+                                .accessibilityLabel(NSLocalizedString("loading", comment: "Loading..."))
                             case .success(let image):
                                 // Success state
                                 image
                                     .resizable()
                                     .scaledToFill()
                                     .transition(.opacity)
+                                    .accessibilityLabel(pinType.label)
                             case .failure:
                                 // Failure state
                                 ZStack {
@@ -111,6 +119,7 @@ struct MapPinView: View {
                                         .font(.system(size: isSelected ? 24 : 18))
                                         .foregroundColor(pinType.color)
                                 }
+                                .accessibilityLabel(pinType.label)
                             @unknown default:
                                 // Unknown state
                                 ZStack {
@@ -120,6 +129,7 @@ struct MapPinView: View {
                                         .font(.system(size: isSelected ? 24 : 18))
                                         .foregroundColor(pinType.color)
                                 }
+                                .accessibilityLabel(pinType.label)
                             }
                         }
                         .frame(width: isSelected ? 85 : 55, height: isSelected ? 85 : 55)
@@ -134,6 +144,7 @@ struct MapPinView: View {
                                 .foregroundColor(pinType.color)
                         }
                         .frame(width: isSelected ? 85 : 55, height: isSelected ? 85 : 55)
+                        .accessibilityLabel(pinType.label)
                     }
                 }
                 
@@ -150,6 +161,7 @@ struct MapPinView: View {
                     }
                     .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
                     .offset(x: 40, y: -40)
+                    .accessibilityLabel(pinType.label)
                 }
             }
             .scaleEffect(isSelected ? 1.1 : 1.0)
@@ -165,6 +177,11 @@ struct MapPinView: View {
         }
         .shadow(color: Color.black.opacity(0.2), radius: isSelected ? 8 : 4, x: 0, y: 4)
         .zIndex(isSelected ? 10 : 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(pinType.label)
+        .accessibilityHint(isSelected ?
+                           NSLocalizedString("selected_pin_hint", comment: "Selected pin") :
+                           NSLocalizedString("unselected_pin_hint", comment: "Tap to select"))
     }
 }
 

@@ -14,23 +14,44 @@ struct FilterSheetView: View {
     @Binding var selectedCategories: Set<String>
     @Environment(\.presentationMode) var presentationMode
     
-    let categories = ["ライブ", "広告", "カフェ", "その他"]
-    let categoryColors = [
-        "ライブ": Color(hex: "6366F1"),
-        "広告": Color(hex: "EC4899"),
-        "カフェ": Color(hex: "10B981"),
-        "その他": Color(hex: "6366F1")
-    ]
+    // Localized categories
+    private var categories: [String] {
+        return [
+            NSLocalizedString("live_venue", comment: "Live Venue"),
+            NSLocalizedString("pilgrimage", comment: "Pilgrimage"),
+            NSLocalizedString("cafe_restaurant", comment: "Cafe・Restaurant"),
+            NSLocalizedString("goods_shop", comment: "Goods Shop"),
+            NSLocalizedString("photo_spot", comment: "Photo Spot"),
+            NSLocalizedString("other", comment: "Other")
+        ]
+    }
+    
+    private var categoryColors: [String: Color] {
+        let liveVenue = NSLocalizedString("live_venue", comment: "Live Venue")
+        let pilgrimage = NSLocalizedString("pilgrimage", comment: "Pilgrimage")
+        let cafeRestaurant = NSLocalizedString("cafe_restaurant", comment: "Cafe・Restaurant")
+        let goodsShop = NSLocalizedString("goods_shop", comment: "Goods Shop")
+        let photoSpot = NSLocalizedString("photo_spot", comment: "Photo Spot")
+        let other = NSLocalizedString("other", comment: "Other")
+        
+        return [
+            liveVenue: Color(hex: "6366F1"),
+            pilgrimage: Color(hex: "EF4444"),
+            cafeRestaurant: Color(hex: "10B981"),
+            goodsShop: Color(hex: "F59E0B"),
+            photoSpot: Color(hex: "EC4899"),
+            other: Color(hex: "6B7280")
+        ]
+    }
     
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("カテゴリー")) {
+                Section(header: Text(NSLocalizedString("category", comment: "Category"))) {
                     ForEach(categories, id: \.self) { category in
                         Button(action: {
                             generateHapticFeedback()
                             if selectedCategories.contains(category) {
-                                // Only remove if it wouldn't make the selection empty
                                 if selectedCategories.count > 1 {
                                     selectedCategories.remove(category)
                                 }
@@ -54,16 +75,17 @@ struct FilterSheetView: View {
                                 }
                             }
                         }
+                        .accessibilityLabel(category)
                     }
                 }
             }
             .listStyle(InsetGroupedListStyle())
-            .navigationTitle("フィルター")
+            .navigationTitle(NSLocalizedString("filter", comment: "Filter"))
             .navigationBarItems(
-                leading: Button("リセット") {
+                leading: Button(NSLocalizedString("reset", comment: "Reset")) {
                     selectedCategories = Set(categories)
                 },
-                trailing: Button("閉じる") {
+                trailing: Button(NSLocalizedString("close", comment: "Close")) {
                     presentationMode.wrappedValue.dismiss()
                 }
             )

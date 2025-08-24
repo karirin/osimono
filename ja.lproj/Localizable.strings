@@ -1,4 +1,4 @@
-/* 
+/*
   Localizable.strings
   osimono
 
@@ -6,6 +6,7 @@
   
 */
 
+// MARK: - Basic Navigation
 "oshi_selection" = "推しを選択";
 "add_new_oshi" = "新規追加";
 "add_oshi" = "推しを追加";
@@ -19,15 +20,29 @@
 "delete" = "削除";
 "confirm" = "確認";
 "close" = "閉じる";
+"oshiSelection" = "推しを選択";
+"user_name" = "ユーザー名";
+"next" = "次へ";
+"update" = "更新";
+"retry" = "再試行";
+"register" = "登録";
+"reset" = "リセット";
 
-// Profile Section
+// MARK: - Profile Section
 "profile_title" = "プロフィール";
 "username" = "ユーザー名";
+"user_name" = "ユーザー名";
+"user_nickname" = "ユーザーニックネーム";
+"profile_info" = "プロフィール情報";
+"profile_edit" = "プロフィール編集";
 "favorite_oshi" = "推しの名前";
 "select_oshi" = "推しを選択";
+"select_your_oshi" = "推しを選択してください";
 "please_select_oshi" = "推しを選択してください";
+"oshi_fan_user" = "推し活ユーザー";
+"add_new" = "新規追加";
 
-// Item Types
+// MARK: - Item Types
 "goods" = "グッズ";
 "pilgrimage" = "聖地巡礼";
 "live_record" = "ライブ記録";
@@ -35,7 +50,14 @@
 "other" = "その他";
 "all" = "すべて";
 
-// Form Fields
+// MARK: - Pin Types / Categories
+"live_venue" = "ライブ会場";
+"cafe_restaurant" = "カフェ・飲食店";
+"goods_shop" = "グッズショップ";
+"photo_spot" = "撮影スポット";
+"sacred_place" = "聖地巡礼";
+
+// MARK: - Form Fields
 "title" = "タイトル";
 "category" = "カテゴリー";
 "price" = "価格";
@@ -53,33 +75,50 @@
 "memo" = "メモ";
 "memories_episodes" = "思い出・エピソード";
 "details_memo" = "詳細メモ";
+"purchase_location" = "購入場所";
 
-// Placeholders
+// MARK: - Placeholders
 "title_placeholder_goods" = "例: BTS 公式ペンライト Ver.3";
 "title_placeholder_pilgrimage" = "例: MVロケ地・渋谷〇〇カフェ";
 "title_placeholder_live" = "例: 東京ドーム公演";
 "title_placeholder_sns" = "例: インスタストーリー投稿";
 "title_placeholder_other" = "例: 推しの誕生日、記念日など";
+"title_placeholder_example" = "例：XX推しライブ会場";
 "price_placeholder" = "例: 5500";
 "event_name_placeholder" = "例: BTS ライブ『LOVE YOURSELF』";
 "location_placeholder" = "例: 東京都渋谷区〇〇";
 "memo_placeholder" = "ここにメモを入力";
+"spot_name_placeholder" = "スポット名を入力";
+"prefecture_placeholder" = "都道府県";
+"street_address_placeholder" = "市区町村・番地";
+"building_name_placeholder" = "ビル名・階数（任意）";
 
-// Messages
+// MARK: - Messages
 "no_records" = "推しの記録がありません";
 "add_items_message" = "右下の「+」ボタンから推しグッズやSNS投稿を追加してみましょう！";
 "add_item" = "推しアイテムを追加";
+"add_oshi_item" = "推しアイテムを追加";
 "post_item" = "投稿する";
 "saving" = "保存中...";
 "loading" = "読み込み中...";
+"please_wait" = "しばらくお待ちください...";
+"processing" = "処理中...";
+"updating" = "更新中...";
+"uploading" = "アップロード中...";
+"downloading" = "ダウンロード中...";
+"searching_location" = "位置情報を検索中...";
+"loading_spots" = "スポットを読み込み中...";
+"loading_spot_info" = "スポット情報を取得しています";
 
-// Alerts
+// MARK: - Alerts & Confirmations
 "notification" = "通知";
 "delete_confirmation_title" = "投稿を削除";
 "delete_confirmation_message" = "この投稿を削除してもよろしいですか？この操作は元に戻せません。";
+"delete_spot_confirmation" = "「%@」を削除しますか？この操作は取り消せません。";
+"location_info_update_message" = "住所から新しい位置情報を取得しました。位置情報を更新しますか？";
 "ok" = "OK";
 
-// Categories
+// MARK: - Categories
 "cd_dvd" = "CD・DVD";
 "magazine" = "雑誌";
 "photo_book" = "写真集";
@@ -88,54 +127,59 @@
 "t_shirt" = "Tシャツ";
 "towel" = "タオル";
 
-// Sorting
+// MARK: - Sorting
 "sort_newest" = "新しい順";
 "sort_oldest" = "古い順";
 "sort_price_high" = "価格高い順";
 "sort_price_low" = "価格安い順";
 "sort_favorite" = "お気に入り順";
 
-// Registration
+// MARK: - Registration
 "register_oshi_first" = "推しを登録しよう！";
 "register_oshi_message" = "推しグッズやSNS投稿を記録する前に、まずは推しを登録してください。";
 "register_oshi_button" = "推しを登録する";
+"register_oshi_spot" = "推しスポット登録";
 
-// Image
+// MARK: - Image
 "image" = "画像";
 "tap_to_select_image" = "タップして画像を選択";
+"tap_to_add_image" = "タップして画像を追加";
+"tap_to_change_image" = "タップして画像を変更";
 "change_image" = "画像を変更";
+"delete_image" = "画像を削除";
 
-// Location
+// MARK: - Location & Address
 "current_location" = "現在地を設定";
 "get_current_location" = "現在地を取得";
+"move_to_current_location" = "現在地に移動";
+"enter_current_location" = "現在地を入力";
+"location_info" = "所在地情報";
+"location_confirmation" = "場所の確認";
+"confirm_address" = "住所を確認";
+"address_input" = "住所入力";
+"prefecture" = "都道府県";
+"prefecture_selection" = "都道府県選択";
+"building_floor" = "ビル名・階数";
+"building_example" = "デジタルポート6F";
+"address_map_prompt" = "住所を入力すると地図が表示されます";
+"pin_location_correct" = "ピンの位置は正しいですか?";
+"update_location_info" = "位置情報を更新";
 
-// Apology Modal
+// MARK: - Apology Modal
 "apology_title" = "お詫び";
 "apology_message_1" = "AIメッセージ機能に不具合があり、";
 "apology_message_2" = "推しからのメッセージが正常に";
 "apology_message_3" = "届かない状況が発生していました。";
 "apology_message_4" = "現在は修正済みです。";
 "apology_message_5" = "ご迷惑をおかけして申し訳ございませんでした。";
-"oshi_selection" = "推しを選択";
-"user_name" = "ユーザー名";
 
-"user_nickname" = "ユーザーニックネーム";
-"profile_info" = "プロフィール情報";
-"profile_edit" = "プロフィール編集";
-"register" = "登録";
-"oshi_fan_user" = "推し活ユーザー";
-"select_your_oshi" = "推しを選択してください";
-"add_new" = "新規追加";
-"add_oshi_item" = "推しアイテムを追加";
+// MARK: - General Items
 "unknown_error" = "不明なエラー";
-
-// Item Types and Categories (Extended)
 "untitled" = "無題";
 "no_name" = "名前なし";
-"purchase_location" = "購入場所";
 "item_count" = "%dアイテム";
 
-// Date and Time
+// MARK: - Date and Time
 "years_ago" = "%d年前";
 "months_ago" = "%dヶ月前";
 "days_ago" = "%d日前";
@@ -143,7 +187,7 @@
 "minutes_ago" = "%d分前";
 "just_now" = "たった今";
 
-// Collection and Items
+// MARK: - Collection and Items
 "collection" = "コレクション";
 "my_collection" = "マイコレクション";
 "item_details" = "アイテム詳細";
@@ -151,7 +195,7 @@
 "share" = "シェア";
 "oshi_item" = "推しアイテム";
 
-// Errors and Validation
+// MARK: - Errors and Validation
 "error" = "エラー";
 "validation_error" = "入力エラー";
 "required_field" = "必須項目";
@@ -160,19 +204,22 @@
 "upload_error" = "アップロードエラー";
 "save_error" = "保存エラー";
 "delete_error" = "削除エラー";
+"address_fetch_failed" = "住所の取得に失敗しました: %@";
+"location_fetch_failed" = "位置情報の取得に失敗しました。設定から位置情報の利用を許可してください。";
+"address_fetch_error" = "住所の取得に失敗しました";
+"failed_to_load_spot_info" = "スポット情報の読み込みに失敗しました";
+"ai_message_error" = "AIメッセージ生成エラー: %@";
+"chat_message_save_error" = "チャットメッセージ保存エラー: %@";
 
-// Success Messages
+// MARK: - Success Messages
 "success" = "成功";
 "saved_successfully" = "保存しました";
 "deleted_successfully" = "削除しました";
 "uploaded_successfully" = "アップロードしました";
+"save_changes" = "保存する";
+"spots_loaded_successfully" = "スポットの読み込みが完了しました";
 
-// Locations and Address
-"address_fetch_failed" = "住所の取得に失敗しました: %@";
-"location_fetch_failed" = "位置情報の取得に失敗しました。設定から位置情報の利用を許可してください。";
-"address_fetch_error" = "住所の取得に失敗しました";
-
-// Oshi Management
+// MARK: - Oshi Management
 "oshi_list" = "推しリスト";
 "oshi_details" = "推し詳細";
 "oshi_anniversary" = "推し記念日";
@@ -180,16 +227,14 @@
 "congratulations" = "おめでとうございます";
 "anniversary_message" = "推しを登録してから%d日が経ちました！";
 
-// Chat and AI
+// MARK: - Chat and AI
 "chat" = "チャット";
 "ai_chat" = "AIチャット";
 "message" = "メッセージ";
 "send_message" = "メッセージを送信";
 "typing" = "入力中...";
-"ai_message_error" = "AIメッセージ生成エラー: %@";
-"chat_message_save_error" = "チャットメッセージ保存エラー: %@";
 
-// Settings and Preferences
+// MARK: - Settings and Preferences
 "settings" = "設定";
 "language" = "言語";
 "theme" = "テーマ";
@@ -198,23 +243,88 @@
 "about" = "このアプリについて";
 "version" = "バージョン";
 
-// Permissions and Access
+// MARK: - Permissions and Access
 "camera_permission" = "カメラの許可";
 "photo_library_permission" = "フォトライブラリの許可";
 "location_permission" = "位置情報の許可";
 "permission_denied" = "許可が拒否されました";
 "permission_required" = "許可が必要です";
 
-// Loading and Status
-"please_wait" = "しばらくお待ちください...";
-"processing" = "処理中...";
-"updating" = "更新中...";
-"uploading" = "アップロード中...";
-"downloading" = "ダウンロード中...";
-
-// Help and Support
+// MARK: - Help and Support
 "help" = "ヘルプ";
 "support" = "サポート";
 "faq" = "よくある質問";
 "contact_us" = "お問い合わせ";
 "tutorial" = "チュートリアル";
+
+// MARK: - Map View & Spots
+"no_oshi_spots" = "推しスポットはまだ登録されていません";
+"spot_management" = "スポットの操作";
+"delete_spot" = "スポットを削除";
+"edit_spot" = "スポット編集";
+"add_spot" = "スポットを追加";
+"no_spots_loaded" = "スポットが見つかりません";
+"edit_oshi_spot" = "推しスポット編集";
+
+// MARK: - Distance
+"km_away" = "%.1f km";
+"m_away" = "%.0f m";
+"distance_unknown" = "--";
+
+// MARK: - Rating Modal
+"rate_location_title" = "「%@」を評価";
+"rate_button" = "評価する";
+"tap_to_rate" = "タップして評価してください";
+"rating_poor" = "イマイチ";
+"rating_fair" = "まあまあ";
+"rating_good" = "普通";
+"rating_very_good" = "良い";
+"rating_excellent" = "最高の推しスポット！";
+
+// MARK: - Accessibility
+"selected_pin_hint" = "選択されたピン";
+"unselected_pin_hint" = "タップして選択";
+
+// MARK: - Filter
+"filter" = "フィルター";
+
+// MARK: - User Profile
+"oshi_activity_status" = "推し活中：10カ所訪問済み";
+"spots" = "スポット";
+"check_ins" = "チェックイン";
+"posts" = "投稿";
+"saved_spots" = "保存したスポット";
+"post_history" = "投稿履歴";
+"logout" = "ログアウト";
+
+// MARK: - Common UI
+"close_button" = "閉じる";
+
+// 日本語版 (ja.lproj/Localizable.strings) に追加するキー
+
+// Location registration
+"register_oshi_spot" = "推しスポット登録";
+"example_oshi_spot" = "例：XX推しライブ会場";
+"address" = "住所";
+"street_address" = "市区町村・番地";
+"building_name" = "ビル名・階数（任意）";
+"location_confirmation" = "場所の確認";
+"enter_address_to_show_map" = "住所を入力すると地図が表示されます";
+"searching_location" = "位置情報を検索中...";
+"apply" = "適用";
+
+// Rating descriptions
+"tap_to_rate" = "タップして評価してください";
+"rating_poor" = "イマイチ";
+"rating_fair" = "まあまあ";
+"rating_good" = "普通";
+"rating_very_good" = "良い";
+"rating_excellent" = "最高の推しスポット！";
+
+// Categories (Japanese)
+"pilgrimage_ja" = "聖地巡礼";
+"photo_spot_ja" = "撮影スポット";
+"cafe_restaurant_ja" = "カフェ・飲食店";
+"live_venue_ja" = "ライブ会場";
+"goods_shop_ja" = "グッズショップ";
+"other_ja" = "その他";

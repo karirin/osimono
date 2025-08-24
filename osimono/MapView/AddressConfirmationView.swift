@@ -23,6 +23,7 @@ struct AddressConfirmationView: View {
     @State private var coordinate: CLLocationCoordinate2D?
     @Environment(\.presentationMode) var presentationMode
     @State private var selectedLocationId: String? = nil
+    
     // フルアドレスを組み立てる
     var fullAddress: String {
         if buildingName.isEmpty {
@@ -34,21 +35,20 @@ struct AddressConfirmationView: View {
     
     var body: some View {
         VStack {
-            Text("ピンの位置は正しいですか?")
+            Text(NSLocalizedString("pin_location_correct", comment: "Is the pin location correct?"))
                 .font(.headline)
                 .padding()
             
             if let coordinate = coordinate {
-                //                .cornerRadius(10)
                 Map(coordinateRegion: $region, annotationItems: [MapAnnotationItem(coordinate: coordinate)]) { item in
                     MapAnnotation(coordinate: item.coordinate, anchorPoint: CGPoint(x: 0.5, y: 1.0)) {
                         AddressMapPinView(image: image, isSelected: false)
                     }
                 }
-                .frame(height: 400) // ここを300から400に変更
+                .frame(height: 400)
                 .cornerRadius(10)
             } else {
-                ProgressView("位置を検索中...")
+                ProgressView(NSLocalizedString("searching_location", comment: "Searching for location..."))
                     .frame(height: 300)
             }
             
@@ -56,14 +56,14 @@ struct AddressConfirmationView: View {
                 .padding()
             
             HStack {
-                Button("キャンセル") {
+                Button(NSLocalizedString("cancel", comment: "Cancel")) {
                     presentationMode.wrappedValue.dismiss()
                 }
                 .padding()
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(10)
                 
-                Button("次へ") {
+                Button(NSLocalizedString("next", comment: "Next")) {
                     // 確認後の次の処理を追加
                 }
                 .padding()

@@ -22,11 +22,11 @@ struct UserProfileView: View {
                         .font(.system(size: 80))
                         .foregroundColor(Color(hex: "6366F1"))
                     
-                    Text("ユーザー名")
+                    Text(NSLocalizedString("username", comment: "Username"))
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Text("推し活中：10カ所訪問済み")
+                    Text(NSLocalizedString("oshi_activity_status", comment: "Oshi activity: 10 spots visited"))
                         .font(.subheadline)
                         .foregroundColor(.gray)
                 }
@@ -39,7 +39,7 @@ struct UserProfileView: View {
                         Text("10")
                             .font(.title)
                             .fontWeight(.bold)
-                        Text("スポット")
+                        Text(NSLocalizedString("spots", comment: "Spots"))
                             .font(.caption)
                             .foregroundColor(.gray)
                     }
@@ -48,7 +48,7 @@ struct UserProfileView: View {
                         Text("5")
                             .font(.title)
                             .fontWeight(.bold)
-                        Text("チェックイン")
+                        Text(NSLocalizedString("check_ins", comment: "Check-ins"))
                             .font(.caption)
                             .foregroundColor(.gray)
                     }
@@ -57,7 +57,7 @@ struct UserProfileView: View {
                         Text("3")
                             .font(.title)
                             .fontWeight(.bold)
-                        Text("投稿")
+                        Text(NSLocalizedString("posts", comment: "Posts"))
                             .font(.caption)
                             .foregroundColor(.gray)
                     }
@@ -69,32 +69,32 @@ struct UserProfileView: View {
                 // Menu options
                 List {
                     Button(action: {}) {
-                        Label("保存したスポット", systemImage: "bookmark.fill")
+                        Label(NSLocalizedString("saved_spots", comment: "Saved Spots"), systemImage: "bookmark.fill")
                     }
                     
                     Button(action: {}) {
-                        Label("投稿履歴", systemImage: "photo.on.rectangle")
+                        Label(NSLocalizedString("post_history", comment: "Post History"), systemImage: "photo.on.rectangle")
                     }
                     
                     Button(action: {}) {
-                        Label("設定", systemImage: "gear")
+                        Label(NSLocalizedString("settings", comment: "Settings"), systemImage: "gear")
                     }
                     
                     Button(action: {}) {
-                        Label("ヘルプ", systemImage: "questionmark.circle")
+                        Label(NSLocalizedString("help", comment: "Help"), systemImage: "questionmark.circle")
                     }
                     
                     // Logout button with warning color
                     Button(action: {}) {
-                        Label("ログアウト", systemImage: "rectangle.portrait.and.arrow.right")
+                        Label(NSLocalizedString("logout", comment: "Logout"), systemImage: "rectangle.portrait.and.arrow.right")
                             .foregroundColor(.red)
                     }
                 }
                 .listStyle(InsetGroupedListStyle())
             }
-            .navigationTitle("プロフィール")
+            .navigationTitle(NSLocalizedString("profile_title", comment: "Profile"))
             .navigationBarItems(
-                trailing: Button("閉じる") {
+                trailing: Button(NSLocalizedString("close", comment: "Close")) {
                     presentationMode.wrappedValue.dismiss()
                 }
             )
