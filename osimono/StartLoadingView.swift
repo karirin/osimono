@@ -90,16 +90,18 @@ struct StartLoadingView: View {
             VStack(spacing: -90) {
                 
                 // より可愛いアニメーションテキスト
-                HStack(spacing: 5) {
-                    ForEach(0..<title.count, id: \.self) { index in
-                        Text(String(Array(title)[index]))
-                            .font(.system(size: 40, weight: .black, design: .rounded))
-                            .foregroundColor(Color.white)
-                            .shadow(color: colorPalette[index % colorPalette.count].opacity(0.7), radius: 5, x: 0, y: 0)
-                            .opacity(textOpacity[index])
-                            .scaleEffect(textScales[index])
-                            .rotationEffect(.degrees(textRotations[index]))
-                            .offset(y: textOffsets[index])
+                if isJapanese() {
+                    HStack(spacing: 5) {
+                        ForEach(0..<title.count, id: \.self) { index in
+                            Text(String(Array(title)[index]))
+                                .font(.system(size: 40, weight: .black, design: .rounded))
+                                .foregroundColor(Color.white)
+                                .shadow(color: colorPalette[index % colorPalette.count].opacity(0.7), radius: 5, x: 0, y: 0)
+                                .opacity(textOpacity[index])
+                                .scaleEffect(textScales[index])
+                                .rotationEffect(.degrees(textRotations[index]))
+                                .offset(y: textOffsets[index])
+                        }
                     }
                 }
                 

@@ -457,3 +457,28 @@
 // MARK: - Tutorial and Onboarding
 "tutorial_starting" = "チュートリアルを開始します";
 "welcome_to_app" = "アプリへようこそ";
+
+"inquiry_title" = "お問い合わせ";
+"inquiry_body" = "ご意見やご要望がありましたら、お気軽にお知らせください。可能な限り対応いたします。";
+"inquiry_field_label" = "問い合わせ内容";
+"inquiry_placeholder" = "例）推しの記録が登録できない";
+"send" = "送信する";
+"sent_title" = "送信されました";
+"sent_message" = "お問い合わせいただきありがとうございます。";
+"do_not_show_again" = "今後は表示しない";
+
+// Review / Feedback
+"feedback_title" = "フィードバックをお聞かせください";
+"feedback_subtitle" = "あなたの体験を教えてください";
+"satisfied" = "満足";
+"satisfied_desc" = "アプリの使い心地が良い";
+"dissatisfied" = "不満";
+"dissatisfied_desc" = "改善してほしい点がある";
+"thank_you_title" = "ありがとうございます！";
+"thank_you_review_message" = "サービス向上の励みになりますので、よろしければレビューお願いします🙇‍♂️";
+"thank_you_anyway_title" = "回答ありがとうございます！";
+"thank_you_feedback_message" = "サービス向上のためご意見お聞かせください🙇‍♂️";
+
+// Start Loading
+"app_title" = "推し ログ";
+"app_starting" = "アプリ起動中";

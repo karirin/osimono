@@ -506,3 +506,28 @@
 // MARK: - Tutorial and Onboarding
 "tutorial_starting" = "Starting tutorial";
 "welcome_to_app" = "Welcome to the app";
+
+"inquiry_title" = "Contact Us";
+"inquiry_body" = "If you have any feedback or requests, please let us know. We will respond as much as possible.";
+"inquiry_field_label" = "Inquiry";
+"inquiry_placeholder" = "e.g., I can't register my oshi record";
+"send" = "Send";
+"sent_title" = "Sent";
+"sent_message" = "Thank you for contacting us.";
+"do_not_show_again" = "Don't show again";
+
+// Review / Feedback
+"feedback_title" = "Tell us your feedback";
+"feedback_subtitle" = "Share your experience";
+"satisfied" = "Satisfied";
+"satisfied_desc" = "The app feels good to use";
+"dissatisfied" = "Dissatisfied";
+"dissatisfied_desc" = "There are things to improve";
+"thank_you_title" = "Thank you!";
+"thank_you_review_message" = "Your feedback helps us improve. If you like, please leave a review 🙇";
+"thank_you_anyway_title" = "Thanks for your answer!";
+"thank_you_feedback_message" = "Please tell us your opinion to help us improve 🙇";
+
+// Start Loading
+"app_title" = "Oshi Log";
+"app_starting" = "Starting app";

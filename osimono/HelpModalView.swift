@@ -33,11 +33,11 @@ struct HelpModalView: View {
             VStack(spacing: 10) {
                 // ヘッダー部分
                 VStack(alignment: .center, spacing: 15) {
-                    Text("お問い合せ")
+                    Text(L10n.inquiryTitle)
                         .font(.headline)
                         .fontWeight(.bold)
                         .foregroundStyle(.black)
-                    Text("ご意見やご要望がありましたら、\nお気軽にお知らせください。\n可能な限り対応いたします。")
+                    Text(L10n.inquiryBody)
                         .font(.system(size: isSmallDevice() ? 16 : 17))
                         .multilineTextAlignment(.leading)
                         .padding(.bottom, 5)
@@ -46,12 +46,12 @@ struct HelpModalView: View {
                 
                 // テキスト入力エリア - より洗練されたデザイン
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("問い合わせ内容")
+                    Text(L10n.inquiryFieldLabel)
                         .font(.subheadline)
                         .foregroundStyle(.black)
                     ZStack(alignment: .topLeading) {
                         if text.isEmpty && !isFocused {
-                            Text("例）推しの記録が登録できない")
+                            Text(L10n.inquiryPlaceholder)
                                 .foregroundColor(Color(.gray))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -88,7 +88,7 @@ struct HelpModalView: View {
                         }
                     }
                 }) {
-                    Text("送信する")
+                    Text(L10n.send)
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
@@ -102,7 +102,7 @@ struct HelpModalView: View {
                 
                 // トグルスイッチ - より整理されたデザイン
                 HStack {
-                    Toggle("今後は表示しない", isOn: $toggle)
+                    Toggle(L10n.doNotShowAgain, isOn: $toggle)
                         .toggleStyle(SwitchToggleStyle(tint: .blue))
                         .font(.subheadline)
                         .foregroundStyle(.black)
@@ -142,8 +142,8 @@ struct HelpModalView: View {
         .dismissKeyboardOnTap()
         .alert(isPresented: $showAlert) { // アラートを表示する
             Alert(
-                title: Text("送信されました"),
-                message: Text("お問い合わせいただきありがとうございます。"),
+                title: Text(L10n.sentTitle),
+                message: Text(L10n.sentMessage),
                 dismissButton: .default(Text("OK")) {
                     isPresented = false
                 }

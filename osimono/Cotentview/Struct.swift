@@ -680,6 +680,31 @@ struct L10n {
     // MARK: - Tutorial and Onboarding
     static let tutorialStarting = NSLocalizedString("tutorial_starting", comment: "Tutorial starting")
     static let welcomeToApp = NSLocalizedString("welcome_to_app", comment: "Welcome to app")
+    
+    static let inquiryTitle = NSLocalizedString("inquiry_title", comment: "")
+    static let inquiryBody = NSLocalizedString("inquiry_body", comment: "")
+    static let inquiryFieldLabel = NSLocalizedString("inquiry_field_label", comment: "")
+    static let inquiryPlaceholder = NSLocalizedString("inquiry_placeholder", comment: "")
+    static let send = NSLocalizedString("send", comment: "")
+    static let sentTitle = NSLocalizedString("sent_title", comment: "")
+    static let sentMessage = NSLocalizedString("sent_message", comment: "")
+    static let doNotShowAgain = NSLocalizedString("do_not_show_again", comment: "")
+
+    // Review / Feedback
+    static let feedbackTitle = NSLocalizedString("feedback_title", comment: "")
+    static let feedbackSubtitle = NSLocalizedString("feedback_subtitle", comment: "")
+    static let satisfied = NSLocalizedString("satisfied", comment: "")
+    static let satisfiedDesc = NSLocalizedString("satisfied_desc", comment: "")
+    static let dissatisfied = NSLocalizedString("dissatisfied", comment: "")
+    static let dissatisfiedDesc = NSLocalizedString("dissatisfied_desc", comment: "")
+    static let thankYouTitle = NSLocalizedString("thank_you_title", comment: "")
+    static let thankYouReviewMessage = NSLocalizedString("thank_you_review_message", comment: "")
+    static let thankYouAnywayTitle = NSLocalizedString("thank_you_anyway_title", comment: "")
+    static let thankYouFeedbackMessage = NSLocalizedString("thank_you_feedback_message", comment: "")
+
+    // Start Loading
+    static let appTitle = NSLocalizedString("app_title", comment: "")
+    static let appStarting = NSLocalizedString("app_starting", comment: "")
 }
 
 func getCurrentLanguage() -> String {

@@ -57,14 +57,14 @@ struct ReviewView: View {
                     .animation(.spring(response: 0.6, dampingFraction: 0.8), value: animateIn)
                     
                     // タイトル
-                    Text("フィードバックをお聞かせください")
+                    Text(L10n.feedbackTitle)
                         .font(.system(size: isSmallDevice() ? 20 : 22, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
                         .multilineTextAlignment(.center)
                         .opacity(animateIn ? 1.0 : 0.0)
                         .animation(.easeInOut(duration: 0.5).delay(0.2), value: animateIn)
                     
-                    Text("あなたの体験を教えてください")
+                    Text(L10n.feedbackSubtitle)
                         .font(.system(size: isSmallDevice() ? 14 : 16, weight: .medium))
                         .foregroundColor(.secondary)
                         .opacity(animateIn ? 1.0 : 0.0)
@@ -95,11 +95,11 @@ struct ReviewView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("満足")
+                                Text(L10n.satisfied)
                                     .font(.system(size: 18, weight: .bold))
                                     .foregroundColor(.primary)
                                 
-                                Text("アプリの使い心地が良い")
+                                Text(L10n.satisfiedDesc)
                                     .font(.system(size: 14))
                                     .foregroundColor(.secondary)
                             }
@@ -141,11 +141,11 @@ struct ReviewView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("不満")
+                                Text(L10n.dissatisfied)
                                     .font(.system(size: 18, weight: .bold))
                                     .foregroundColor(.primary)
                                 
-                                Text("改善してほしい点がある")
+                                Text(L10n.dissatisfiedDesc)
                                     .font(.system(size: 14))
                                     .foregroundColor(.secondary)
                             }
@@ -182,7 +182,7 @@ struct ReviewView: View {
                             .font(.system(size: 16))
                             .foregroundColor(.secondary)
                         
-                        Text("今後は表示しない")
+                        Text(L10n.doNotShowAgain)
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.secondary)
                         
@@ -233,8 +233,8 @@ struct ReviewView: View {
             switch alert {
             case .satisfied:
                 return Alert(
-                    title: Text("ありがとうございます！"),
-                    message: Text("\nサービス向上の励みになりますので\nよろしければレビューお願いします🙇‍♂️"),
+                    title: Text(L10n.thankYouTitle),
+                    message: Text(L10n.thankYouReviewMessage),
                     dismissButton: .default(Text("OK")) {
                         requestReview()
                         authManager.updateUserCsFlag(userId: authManager.currentUserId!, userCsFlag: 1) { success in }
@@ -243,8 +243,8 @@ struct ReviewView: View {
                 )
             case .dissatisfied:
                 return Alert(
-                    title: Text("回答ありがとうございます！"),
-                    message: Text("サービス向上のため\nご意見お聞かせください🙇‍♂️"),
+                    title: Text(L10n.thankYouAnywayTitle),
+                    message: Text(L10n.thankYouFeedbackMessage),
                     dismissButton: .default(Text("OK")) {
                         helpFlag = true
                         isPresented = false
