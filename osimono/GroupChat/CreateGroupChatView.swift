@@ -119,7 +119,7 @@ struct CreateGroupChatView: View {
                             .font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundColor(.white)
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 8)
                     .padding(.vertical, 8)
                     .background(
                         LinearGradient(
@@ -200,7 +200,7 @@ struct CreateGroupChatView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "person.badge.plus")
                             .font(.system(size: 16, weight: .medium))
-                        Text("推しを追加する")
+                        Text(L10n.addNew)
                             .font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundColor(.white)
@@ -242,7 +242,7 @@ struct CreateGroupChatView: View {
             
             // Modern text field with suggestions
             VStack(alignment: .leading, spacing: 12) {
-                TextField("例：推し全員チャット", text: $groupName)
+                TextField(L10n.groupNamePlaceholder, text: $groupName)
                     .font(.system(size: 16))
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
@@ -481,7 +481,7 @@ struct CreateGroupChatView: View {
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     } else {
-                        Text("性格未設定")
+                        Text(L10n.noName)
                             .font(.system(size: 15))
 //                            .foregroundColor(.tertiary)
                             .italic()
@@ -548,7 +548,7 @@ struct CreateGroupChatView: View {
                             .font(.system(size: 22, weight: .medium))
                     }
                     
-                    Text(isCreating ? "作成中..." : "グループを作成")
+                    Text(isCreating ? L10n.creating : L10n.createGroup)
                         .font(.system(size: 18, weight: .semibold))
                 }
                 .foregroundColor(.white)
@@ -678,7 +678,7 @@ struct CreateGroupChatView: View {
         generateHapticFeedback()
         
         let groupId = UUID().uuidString
-        let finalGroupName = groupName.isEmpty ? "グループチャット" : groupName
+        let finalGroupName = groupName.isEmpty ? L10n.groupChat : groupName
         let memberIds = selectedMembers.map { $0.id }
         
         groupChatManager.createOrUpdateGroup(

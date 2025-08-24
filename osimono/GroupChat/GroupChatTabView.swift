@@ -129,15 +129,15 @@ struct GroupChatTabView: View {
                 )
             }
         }
-        .alert("グループを削除", isPresented: $showDeleteGroupAlert) {
-            Button("削除", role: .destructive) {
+        .alert(L10n.deleteGroupTitle, isPresented: $showDeleteGroupAlert) {
+            Button(L10n.delete, role: .destructive) {
                 if let group = groupToDelete {
                     deleteGroup(group)
                 }
             }
-            Button("キャンセル", role: .cancel) {}
+            Button(L10n.cancel, role: .cancel) {}
         } message: {
-            Text("\(groupToDelete?.name ?? "")を削除しますか？この操作は元に戻せません。")
+            Text(L10n.deleteGroupMessage(groupToDelete?.name ?? ""))
         }
     }
     
@@ -170,7 +170,7 @@ struct GroupChatTabView: View {
                 
                 Spacer()
                 
-                Text("グループチャット")
+                Text(L10n.groupChat)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.black)
                 
@@ -213,7 +213,7 @@ struct GroupChatTabView: View {
                 .foregroundColor(.gray)
                 .padding(.leading, 8)
             
-            TextField("グループを検索", text: $searchText)
+            TextField(L10n.searchGroups, text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
                 .padding(.vertical, 8)
             
@@ -236,7 +236,7 @@ struct GroupChatTabView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.2)
-            Text("読み込み中...")
+            Text(L10n.loading) // 修正: ハードコーディングされた文字列を多言語対応
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
@@ -250,11 +250,11 @@ struct GroupChatTabView: View {
                 .foregroundColor(.gray.opacity(0.6))
             
             VStack(spacing: 8) {
-                Text("まだグループチャットがありません")
+                Text(L10n.noGroupChats)
                     .font(.headline)
                     .foregroundColor(.black)
                 
-                Text("複数の推しと一緒にチャットを楽しもう！")
+                Text(L10n.groupChatDescription)
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -268,7 +268,7 @@ struct GroupChatTabView: View {
                     HStack {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 20))
-                        Text("グループを作成する")
+                        Text(L10n.createGroupButton)
                             .font(.headline)
                     }
                     .foregroundColor(.white)
@@ -286,11 +286,11 @@ struct GroupChatTabView: View {
                 }
             } else {
                 VStack(spacing: 8) {
-                    Text("グループチャットには2人以上の推しが必要です")
+                    Text(L10n.minimumMembersRequired)
                         .font(.subheadline)
                         .foregroundColor(.orange)
                     
-                    Text("まず推しを追加してください")
+                    Text(L10n.addOshiFirst)
                         .font(.subheadline)
                         .foregroundColor(.blue)
                         .underline()
@@ -362,11 +362,11 @@ struct GroupChatTabView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("新しいグループを作成")
+                        Text(L10n.createNewGroup)
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.primary)
                         
-                        Text("複数の推しとグループチャットを楽しもう")
+                        Text(L10n.groupChatDescription)
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                     }
@@ -400,7 +400,7 @@ struct GroupChatTabView: View {
                     Image(systemName: "pencil")
                         .font(.system(size: 16))
                         .foregroundColor(.blue)
-                    Text("編集")
+                    Text(L10n.edit) // 修正: ハードコーディングされた文字列を多言語対応
                         .font(.system(size: 10))
                         .foregroundColor(.blue)
                 }
@@ -415,7 +415,7 @@ struct GroupChatTabView: View {
                     Image(systemName: "trash")
                         .font(.system(size: 16))
                         .foregroundColor(.red)
-                    Text("削除")
+                    Text(L10n.delete) // 修正: ハードコーディングされた文字列を多言語対応
                         .font(.system(size: 10))
                         .foregroundColor(.red)
                 }

@@ -113,7 +113,7 @@ struct GroupChatListModalView: View {
                 
                 Spacer()
                 
-                Text(NSLocalizedString("group_chat_list_title", comment: "Group chat list title"))
+                Text(L10n.groupChatListTitle)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.black)
                 
@@ -131,6 +131,15 @@ struct GroupChatListModalView: View {
                                 .font(.system(size: 16))
                                 .foregroundColor(.blue)
                         }
+                    } else {
+                        Button(action: {
+                            generateHapticFeedback()
+                            withAnimation(.spring()) { isEditing.toggle() }
+                        }) {
+                            Text(isEditing ? L10n.done : L10n.edit)
+                                .font(.system(size: 16))
+                                .foregroundColor(.blue)
+                        }.opacity(0)
                     }
                 }
                 .padding(.trailing)

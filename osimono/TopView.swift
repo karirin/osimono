@@ -48,25 +48,25 @@ struct TopView: View {
                 .tabItem {
                     Image(systemName: "rectangle.split.2x2")
                         .padding()
-                    Text("推しログ")
+                    Text(L10n.oshiLogTab) // 修正: ハードコーディングされた文字列を多言語対応
                         .padding()
                 }
                 
                 ZStack {
-//                    SubscriptionPreView()
                     MapView(oshiId: selectedOshiId ?? "default")
                 }
                 .tabItem {
                     Image(systemName: "mappin.and.ellipse")
-                    Text("聖地巡礼")
+                    Text(L10n.pilgrimageTab) // 修正: ハードコーディングされた文字列を多言語対応
                 }
+                
                 ZStack {
                     IndividualChatTabView()
                 }
                 .tabItem {
                     Image(systemName: "message")
                         .frame(width:1,height:1)
-                    Text("チャット")
+                    Text(L10n.chatTab) // 修正: ハードコーディングされた文字列を多言語対応
                 }
                 
                 // グループチャットタブ（直接チャット画面表示）
@@ -80,7 +80,7 @@ struct TopView: View {
                 .tabItem {
                     Image(systemName: "person.2")
                         .frame(width:1,height:1)
-                    Text("グループチャット")
+                    Text(L10n.groupChatTab) // 修正: ハードコーディングされた文字列を多言語対応
                 }
                 
                 ZStack {
@@ -89,7 +89,7 @@ struct TopView: View {
                 .tabItem {
                     Image(systemName: "gear")
                         .frame(width:1,height:1)
-                    Text("設定")
+                    Text(L10n.settingsTab) // 修正: ハードコーディングされた文字列を多言語対応
                 }
             }
             // チュートリアルオーバーレイを条件付きで表示
@@ -156,11 +156,11 @@ struct TopView: View {
             if let savedGroupId = snapshot.value as? String,
                !savedGroupId.isEmpty {
                 DispatchQueue.main.async {
-                    print("✅ 保存済みグループID取得: \(savedGroupId)")
+                    print("✅ \(L10n.savedGroupIdRetrieved): \(savedGroupId)") // 修正: ログメッセージを多言語対応
                     self.selectedGroupId = savedGroupId
                 }
             } else {
-                print("📝 保存済みグループIDなし、デフォルトを使用")
+                print("📝 \(L10n.noSavedGroupId)") // 修正: ログメッセージを多言語対応
             }
         }
     }
@@ -171,9 +171,9 @@ struct TopView: View {
         let dbRef = Database.database().reference().child("users").child(userID)
         dbRef.updateChildValues(["selectedGroupId": groupId]) { error, _ in
             if let error = error {
-                print("❌ グループID保存エラー: \(error.localizedDescription)")
+                print("❌ \(L10n.groupIdSaveError): \(error.localizedDescription)") // 修正: エラーメッセージを多言語対応
             } else {
-                print("✅ グループID保存成功: \(groupId)")
+                print("✅ \(L10n.groupIdSaveSuccess): \(groupId)") // 修正: 成功メッセージを多言語対応
             }
         }
     }
@@ -195,16 +195,10 @@ struct TopView: View {
                             if !groups.contains(where: { $0.id == self.selectedGroupId }) {
                                 // 存在しない場合は最初のグループを選択
                                 self.selectedGroupId = groups.first?.id ?? ""
-                                if !self.selectedGroupId.isEmpty {
-//                                    self.saveSelectedGroupId(self.selectedGroupId)
-                                }
                             }
                         } else {
                             // 保存されたIDがない場合は最初のグループを選択
                             self.selectedGroupId = groups.first?.id ?? ""
-                            if !self.selectedGroupId.isEmpty {
-//                                self.saveSelectedGroupId(self.selectedGroupId)
-                            }
                         }
                     }
                 } else {
@@ -236,7 +230,7 @@ struct TopView: View {
                 if let childSnapshot = child as? DataSnapshot {
                     if let value = childSnapshot.value as? [String: Any] {
                         let id = childSnapshot.key
-                        let name = value["name"] as? String ?? "名前なし"
+                        let name = value["name"] as? String ?? L10n.noNamePlaceholder // 修正: ハードコーディングされた文字列を多言語対応
                         
                         // 画像URLは結果的にキャッシュする
                         let imageUrl = value["imageUrl"] as? String
@@ -289,7 +283,7 @@ struct TopView: View {
                 self.oshiList = newOshis
                 self.hasLoadedProfileImages = true
                 
-                print("✅ 推しリスト取得完了: \(newOshis.count)人")
+                print("✅ \(L10n.oshiDataLoaded): \(newOshis.count)人") // 修正: ログメッセージを多言語対応（日本語部分は保持）
                 
                 // 推しリストが取得できたら、選択中の推しを設定
                 if !newOshis.isEmpty {
@@ -325,13 +319,13 @@ struct TopView: View {
                let oshi = self.oshiList.first(where: { $0.id == selectedOshiId }) {
                 // Firebaseに保存されている推しIDに該当する推しが見つかった場合
                 DispatchQueue.main.async {
-                    print("✅ Firebase保存済み推し: \(oshi.name)")
+                    print("✅ \(L10n.firebaseSavedOshi): \(oshi.name)") // 修正: ログメッセージを多言語対応
                     self.updateSelectedOshi(oshi)
                 }
             } else {
                 // Firebaseに保存されていないか、該当する推しがない場合はフォールバックを使用
                 DispatchQueue.main.async {
-                    print("✅ フォールバック推し: \(fallbackOshi.name)")
+                    print("✅ \(L10n.fallbackOshi): \(fallbackOshi.name)") // 修正: ログメッセージを多言語対応
                     self.updateSelectedOshi(fallbackOshi)
                     // Firebaseにも保存
                     self.saveSelectedOshiId(fallbackOshi.id)
@@ -345,7 +339,7 @@ struct TopView: View {
         self.selectedOshi = oshi
         self.selectedOshiId = oshi.id
         self.viewModel = OshiViewModel(oshi: oshi)
-        print("🎯 推し選択完了: \(oshi.name) (ID: \(oshi.id))")
+        print("🎯 \(L10n.oshiSelectionCompleted): \(oshi.name) (ID: \(oshi.id))") // 修正: ログメッセージを多言語対応
     }
     
     // 推しIDをFirebaseに保存
@@ -355,9 +349,9 @@ struct TopView: View {
         let dbRef = Database.database().reference().child("users").child(userID)
         dbRef.updateChildValues(["selectedOshiId": oshiId]) { error, _ in
             if let error = error {
-                print("❌ 推しID保存エラー: \(error.localizedDescription)")
+                print("❌ \(L10n.oshiIdSaveError): \(error.localizedDescription)") // 修正: エラーメッセージを多言語対応
             } else {
-                print("✅ 推しID保存成功: \(oshiId)")
+                print("✅ \(L10n.oshiIdSaveSuccess): \(oshiId)") // 修正: 成功メッセージを多言語対応
             }
         }
     }
@@ -392,7 +386,7 @@ struct TopView: View {
         observerHandle = dbRef.child("selectedOshiId").observe(.value) { snapshot in
             if let selectedOshiId = snapshot.value as? String {
                 DispatchQueue.main.async {
-                    print("🔄 selectedOshiId変更検知: \(selectedOshiId)")
+                    print("🔄 \(L10n.selectedOshiIdChangeDetected): \(selectedOshiId)") // 修正: ログメッセージを多言語対応
                     
                     // 現在のIDと異なる場合のみ更新
                     if self.selectedOshiId != selectedOshiId {
@@ -408,7 +402,7 @@ struct TopView: View {
                             }
                         } else {
                             // 対応する推しが見つからない場合は再取得
-                            print("⚠️ 対応する推しが見つからないため、推しリストを再取得します")
+                            print("⚠️ \(L10n.correspondingOshiNotFound)") // 修正: ログメッセージを多言語対応
                             self.fetchOshiList()
                         }
                     }
@@ -511,16 +505,13 @@ struct DirectGroupChatTabView: View {
                             if let savedGroupId = savedGroupId,
                                !savedGroupId.isEmpty,
                                groups.contains(where: { $0.id == savedGroupId }) {
-                                // 保存されたIDが有効な場合はそれを使用
                                 self.selectedGroupId = savedGroupId
-                                print("✅ 保存済みグループを復元: \(savedGroupId)")
+                                print("✅ \(L10n.savedGroupRestored): \(savedGroupId)")
                             } else {
-                                // 保存されたIDがないか無効な場合は最初のグループを選択
                                 let firstGroupId = groups.first?.id ?? ""
                                 self.selectedGroupId = firstGroupId
                                 if !firstGroupId.isEmpty {
-//                                    self.saveSelectedGroupId(firstGroupId)
-                                    print("✅ デフォルトグループを選択: \(firstGroupId)")
+                                    print("✅ \(L10n.defaultGroupSelected): \(firstGroupId)")
                                 }
                             }
                         }
@@ -538,7 +529,7 @@ struct DirectGroupChatTabView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.2)
-            Text("グループチャットを読み込み中...")
+            Text(L10n.loadingGroupChats)
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
@@ -552,11 +543,11 @@ struct DirectGroupChatTabView: View {
                 .foregroundColor(.gray.opacity(0.6))
             
             VStack(spacing: 8) {
-                Text("グループチャットがありません")
+                Text(L10n.noGroupChatsAvailable)
                     .font(.headline)
                     .foregroundColor(.black)
                 
-                Text("複数の推しとのグループチャットを作成しましょう")
+                Text(L10n.createGroupChatsMessage)
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -568,7 +559,7 @@ struct DirectGroupChatTabView: View {
                 HStack {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 20))
-                    Text("グループを作成する")
+                    Text(L10n.createGroupButtonText)
                         .font(.headline)
                 }
                 .foregroundColor(.white)
@@ -596,11 +587,11 @@ struct DirectGroupChatTabView: View {
                 .foregroundColor(.gray.opacity(0.6))
             
             VStack(spacing: 8) {
-                Text("グループを選択してください")
+                Text(L10n.selectGroupPlease)
                     .font(.headline)
                     .foregroundColor(.black)
                 
-                Text("グループ一覧からチャットするグループを選択してください")
+                Text(L10n.selectGroupFromList)
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -612,7 +603,7 @@ struct DirectGroupChatTabView: View {
                 HStack {
                     Image(systemName: "list.bullet")
                         .font(.system(size: 20))
-                    Text("グループ一覧を表示")
+                    Text(L10n.showGroupList)
                         .font(.headline)
                 }
                 .foregroundColor(.white)

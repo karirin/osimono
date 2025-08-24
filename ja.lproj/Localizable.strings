@@ -331,7 +331,7 @@
 "group_chat" = "グループチャット";
 "group_chats" = "グループチャット";
 "individual_chat" = "個人チャット";
-"create_group" = "グループ作成";
+"create_group" = "作成";
 "group_name" = "グループ名";
 "group_members" = "グループメンバー";
 "member_selection" = "メンバー選択";
@@ -411,3 +411,49 @@
 "new_group" = "新しいグループ";
 "group_chat_requires_oshi_first" = "グループチャットを楽しむには、まず推しを登録する必要があります。推し管理画面から推しを追加してください。";
 "select_group_members_description" = "グループチャットに参加させたい推しを選択してください";
+
+"yesterday" = "昨日";
+"group_chat_list_title" = "グループ一覧";
+"update" = "更新";
+
+"oshi_log_tab" = "推しログ";
+"pilgrimage_tab" = "聖地巡礼";
+"chat_tab" = "チャット";
+"group_chat_tab" = "グループチャット";
+"settings_tab" = "設定";
+
+// MARK: - Group Chat Tab Messages
+"loading_group_chats" = "グループチャットを読み込み中...";
+"no_group_chats_available" = "グループチャットがありません";
+"create_group_chats_message" = "複数の推しとのグループチャットを作成しましょう";
+"create_group_button_text" = "グループを作成する";
+"select_group_please" = "グループを選択してください";
+"select_group_from_list" = "グループ一覧からチャットするグループを選択してください";
+"show_group_list" = "グループ一覧を表示";
+
+// MARK: - System Messages
+"oshi_data_loaded" = "推しリスト取得完了";
+"firebase_saved_oshi" = "Firebase保存済み推し";
+"fallback_oshi" = "フォールバック推し";
+"oshi_selection_completed" = "推し選択完了";
+"oshi_id_save_error" = "推しID保存エラー";
+"oshi_id_save_success" = "推しID保存成功";
+"group_id_save_error" = "グループID保存エラー";
+"group_id_save_success" = "グループID保存成功";
+"saved_group_id_retrieved" = "保存済みグループID取得";
+"no_saved_group_id" = "保存済みグループIDなし、デフォルトを使用";
+"saved_group_restored" = "保存済みグループを復元";
+"default_group_selected" = "デフォルトグループを選択";
+
+// MARK: - Error Messages
+"no_name_placeholder" = "名前なし";
+"corresponding_oshi_not_found" = "対応する推しが見つからないため、推しリストを再取得します";
+"selected_oshi_id_change_detected" = "selectedOshiId変更検知";
+
+// MARK: - Loading States
+"preparing_data" = "データを準備中...";
+"loading_please_wait" = "読み込み中です...";
+
+// MARK: - Tutorial and Onboarding
+"tutorial_starting" = "チュートリアルを開始します";
+"welcome_to_app" = "アプリへようこそ";

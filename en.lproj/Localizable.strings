@@ -380,7 +380,7 @@
 "group_chat" = "Group Chat";
 "group_chats" = "Group Chats";
 "individual_chat" = "Individual Chat";
-"create_group" = "Create Group";
+"create_group" = "Create";
 "group_name" = "Group Name";
 "group_members" = "Group Members";
 "member_selection" = "Member Selection";
@@ -460,3 +460,49 @@
 "new_group" = "New Group";
 "group_chat_requires_oshi_first" = "To enjoy group chat, you need to register your oshi first. Please add your oshi from the oshi management screen.";
 "select_group_members_description" = "Select the oshi you want to participate in the group chat";
+
+"yesterday" = "Yesterday";
+"group_chat_list_title" = "Group List";
+"update" = "update";
+
+"oshi_log_tab" = "Oshi Log";
+"pilgrimage_tab" = "Pilgrimage";
+"chat_tab" = "Chat";
+"group_chat_tab" = "Group Chat";
+"settings_tab" = "Settings";
+
+// MARK: - Group Chat Tab Messages
+"loading_group_chats" = "Loading group chats...";
+"no_group_chats_available" = "No group chats available";
+"create_group_chats_message" = "Create group chats with multiple oshi";
+"create_group_button_text" = "Create Group";
+"select_group_please" = "Please select a group";
+"select_group_from_list" = "Select a group to chat from the group list";
+"show_group_list" = "Show Group List";
+
+// MARK: - System Messages
+"oshi_data_loaded" = "Oshi list loading completed";
+"firebase_saved_oshi" = "Firebase saved oshi";
+"fallback_oshi" = "Fallback oshi";
+"oshi_selection_completed" = "Oshi selection completed";
+"oshi_id_save_error" = "Oshi ID save error";
+"oshi_id_save_success" = "Oshi ID save success";
+"group_id_save_error" = "Group ID save error";
+"group_id_save_success" = "Group ID save success";
+"saved_group_id_retrieved" = "Saved group ID retrieved";
+"no_saved_group_id" = "No saved group ID, using default";
+"saved_group_restored" = "Saved group restored";
+"default_group_selected" = "Default group selected";
+
+// MARK: - Error Messages
+"no_name_placeholder" = "No Name";
+"corresponding_oshi_not_found" = "Corresponding oshi not found, reloading oshi list";
+"selected_oshi_id_change_detected" = "Selected oshi ID change detected";
+
+// MARK: - Loading States
+"preparing_data" = "Preparing data...";
+"loading_please_wait" = "Loading, please wait...";
+
+// MARK: - Tutorial and Onboarding
+"tutorial_starting" = "Starting tutorial";
+"welcome_to_app" = "Welcome to the app";

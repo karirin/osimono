@@ -330,6 +330,10 @@ struct L10n {
     static let apologyMessage4 = NSLocalizedString("apology_message_4", comment: "Apology message 4")
     static let apologyMessage5 = NSLocalizedString("apology_message_5", comment: "Apology message 5")
     
+    static let yesterdayLabel = NSLocalizedString("yesterday", comment: "Yesterday label")
+    static let groupChatListTitle = NSLocalizedString("group_chat_list_title", comment: "Group Chat List Title")
+    static let update = NSLocalizedString("update", comment: "Update")
+    
     // Helper functions for dynamic content
     static func titlePlaceholder(for itemType: String) -> String {
         switch itemType {
@@ -634,6 +638,48 @@ struct L10n {
             return formatter.string(from: date)
         }
     }
+    
+    static let oshiLogTab = NSLocalizedString("oshi_log_tab", comment: "Oshi log tab")
+    static let pilgrimageTab = NSLocalizedString("pilgrimage_tab", comment: "Pilgrimage tab")
+    static let chatTab = NSLocalizedString("chat_tab", comment: "Chat tab")
+    static let groupChatTab = NSLocalizedString("group_chat_tab", comment: "Group chat tab")
+    static let settingsTab = NSLocalizedString("settings_tab", comment: "Settings tab")
+    
+    // MARK: - Group Chat Tab Messages
+    static let loadingGroupChats = NSLocalizedString("loading_group_chats", comment: "Loading group chats")
+    static let noGroupChatsAvailable = NSLocalizedString("no_group_chats_available", comment: "No group chats available")
+    static let createGroupChatsMessage = NSLocalizedString("create_group_chats_message", comment: "Create group chats message")
+    static let createGroupButtonText = NSLocalizedString("create_group_button_text", comment: "Create group button text")
+    static let selectGroupPlease = NSLocalizedString("select_group_please", comment: "Select group please")
+    static let selectGroupFromList = NSLocalizedString("select_group_from_list", comment: "Select group from list")
+    static let showGroupList = NSLocalizedString("show_group_list", comment: "Show group list")
+    
+    // MARK: - System Messages (for debugging/logging)
+    static let oshiDataLoaded = NSLocalizedString("oshi_data_loaded", comment: "Oshi data loaded")
+    static let firebaseSavedOshi = NSLocalizedString("firebase_saved_oshi", comment: "Firebase saved oshi")
+    static let fallbackOshi = NSLocalizedString("fallback_oshi", comment: "Fallback oshi")
+    static let oshiSelectionCompleted = NSLocalizedString("oshi_selection_completed", comment: "Oshi selection completed")
+    static let oshiIdSaveError = NSLocalizedString("oshi_id_save_error", comment: "Oshi ID save error")
+    static let oshiIdSaveSuccess = NSLocalizedString("oshi_id_save_success", comment: "Oshi ID save success")
+    static let groupIdSaveError = NSLocalizedString("group_id_save_error", comment: "Group ID save error")
+    static let groupIdSaveSuccess = NSLocalizedString("group_id_save_success", comment: "Group ID save success")
+    static let savedGroupIdRetrieved = NSLocalizedString("saved_group_id_retrieved", comment: "Saved group ID retrieved")
+    static let noSavedGroupId = NSLocalizedString("no_saved_group_id", comment: "No saved group ID")
+    static let savedGroupRestored = NSLocalizedString("saved_group_restored", comment: "Saved group restored")
+    static let defaultGroupSelected = NSLocalizedString("default_group_selected", comment: "Default group selected")
+    
+    // MARK: - Error Messages
+    static let noNamePlaceholder = NSLocalizedString("no_name_placeholder", comment: "No name placeholder")
+    static let correspondingOshiNotFound = NSLocalizedString("corresponding_oshi_not_found", comment: "Corresponding oshi not found")
+    static let selectedOshiIdChangeDetected = NSLocalizedString("selected_oshi_id_change_detected", comment: "Selected oshi ID change detected")
+    
+    // MARK: - Loading States
+    static let preparingData = NSLocalizedString("preparing_data", comment: "Preparing data")
+    static let loadingPleaseWait = NSLocalizedString("loading_please_wait", comment: "Loading please wait")
+    
+    // MARK: - Tutorial and Onboarding
+    static let tutorialStarting = NSLocalizedString("tutorial_starting", comment: "Tutorial starting")
+    static let welcomeToApp = NSLocalizedString("welcome_to_app", comment: "Welcome to app")
 }
 
 func getCurrentLanguage() -> String {

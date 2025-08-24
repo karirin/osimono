@@ -30,7 +30,7 @@ struct GroupChatRowView: View {
             // グループ情報
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(group.name.isEmpty ? "グループチャット" : group.name)
+                    Text(group.name.isEmpty ? L10n.groupChat : group.name)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.black)
                         .lineLimit(1)
@@ -43,7 +43,7 @@ struct GroupChatRowView: View {
                 }
                 
                 HStack {
-                    Text(group.lastMessage ?? "まだメッセージがありません")
+                    Text(group.lastMessage ?? L10n.noMessagesYet)
                         .font(.system(size: 14))
                         .foregroundColor(.gray)
                         .lineLimit(1)
@@ -73,7 +73,7 @@ struct GroupChatRowView: View {
                             Image(systemName: "pencil")
                                 .font(.system(size: 16))
                                 .foregroundColor(.blue)
-                            Text("編集")
+                            Text(L10n.edit)
                                 .font(.system(size: 10))
                                 .foregroundColor(.blue)
                         }
@@ -87,7 +87,7 @@ struct GroupChatRowView: View {
                             Image(systemName: "trash")
                                 .font(.system(size: 16))
                                 .foregroundColor(.red)
-                            Text("削除")
+                            Text(L10n.delete)
                                 .font(.system(size: 10))
                                 .foregroundColor(.red)
                         }
@@ -320,11 +320,11 @@ struct GroupChatRowView: View {
             formatter.dateFormat = "HH:mm"
             return formatter.string(from: date)
         } else if calendar.isDateInYesterday(date) {
-            return "昨日"
+            return L10n.yesterdayLabel // 修正: ハードコーディングされた文字列を多言語対応
         } else if calendar.dateInterval(of: .weekOfYear, for: now)?.contains(date) == true {
             let formatter = DateFormatter()
             formatter.dateFormat = "EEEE"
-            formatter.locale = Locale(identifier: "ja_JP")
+            formatter.locale = Locale.current // 修正: 日本語に固定されていたロケールを現在のロケールに変更
             return formatter.string(from: date)
         } else {
             let formatter = DateFormatter()

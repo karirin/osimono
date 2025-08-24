@@ -215,7 +215,7 @@ struct OshiGroupChatView: View {
                         .scaleEffect(1.5)
                         .progressViewStyle(CircularProgressViewStyle(tint: primaryColor))
                     
-                    Text(L10n.preparingGroupChat)
+                    Text(groupName.isEmpty ? L10n.groupChat : groupName)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.gray)
                 }
@@ -341,7 +341,7 @@ struct OshiGroupChatView: View {
                                 .foregroundStyle(.black)
                             
                             HStack(spacing: 4) {
-                                Text("\(selectedMembers.count)人のメンバー")
+                                Text(L10n.membersCount(selectedMembers.count))
                                     .font(.system(size: 12))
                                     .foregroundColor(.blue)
                                 
@@ -361,7 +361,7 @@ struct OshiGroupChatView: View {
                     generateHapticFeedback()
                     showEditGroupSheet = true
                 }) {
-                    Text("編集")
+                    Text(L10n.edit)
                        .font(.system(size: 16))
                        .foregroundColor(.blue)
                 }

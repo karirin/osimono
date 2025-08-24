@@ -92,12 +92,12 @@ struct EditGroupChatView: View {
             Spacer()
             
             VStack(spacing: 2) {
-                Text("グループ編集")
+                Text(L10n.editGroup)
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 
-                Text("\(selectedMembers.count)人のメンバー")
+                Text(L10n.membersCount(selectedMembers.count))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -110,7 +110,7 @@ struct EditGroupChatView: View {
                     updateGroup()
                 }) {
                     HStack(spacing: 6) {
-                        Text("保存")
+                        Text(L10n.save)
                             .font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundColor(.white)
@@ -153,7 +153,7 @@ struct EditGroupChatView: View {
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(accentColor)
                 
-                Text("グループ名")
+                Text(L10n.groupName)
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
@@ -161,7 +161,7 @@ struct EditGroupChatView: View {
             
             // Modern text field
             VStack(alignment: .leading, spacing: 8) {
-                TextField("例：お気に入りメンバー", text: $groupName)
+                TextField(L10n.groupNamePlaceholder, text: $groupName)
                     .font(.system(size: 16))
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
@@ -176,7 +176,7 @@ struct EditGroupChatView: View {
                     )
                     .animation(.easeInOut(duration: 0.2), value: groupName.isEmpty)
                 
-                Text("空白の場合は「グループチャット」として表示されます")
+                Text(L10n.groupNameEmptyDefault)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 4)
@@ -199,7 +199,7 @@ struct EditGroupChatView: View {
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(accentColor)
                     
-                    Text("メンバー選択")
+                    Text(L10n.memberSelection)
                         .font(.title3)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
@@ -247,7 +247,7 @@ struct EditGroupChatView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
-                    Text("最低1人のメンバーを選択してください")
+                    Text(L10n.validationMinMembers)
                         .font(.caption)
                         .foregroundColor(.orange)
                 }
@@ -270,11 +270,11 @@ struct EditGroupChatView: View {
                 .symbolRenderingMode(.hierarchical)
             
             VStack(spacing: 4) {
-                Text("推しが登録されていません")
+                Text(L10n.registerOshiFirst) // 修正: ハードコーディングされた文字列を多言語対応
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                Text("まずは推しを追加してからグループを作成しましょう")
+                Text(L10n.registerOshiMessage) // 修正: ハードコーディングされた文字列を多言語対応
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -301,7 +301,7 @@ struct EditGroupChatView: View {
                     .font(.system(size: 20, weight: .medium))
                     .foregroundColor(selectedMembers.count == allOshiList.count ? accentColor : .secondary)
                 
-                Text(selectedMembers.count == allOshiList.count ? "全て解除" : "全て選択")
+                Text(selectedMembers.count == allOshiList.count ? L10n.deselectAll : L10n.selectAll)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                 
@@ -386,9 +386,9 @@ struct EditGroupChatView: View {
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     } else {
-                        Text("性格未設定")
+                        Text(L10n.noName)
                             .font(.system(size: 15))
-//                            .foregroundColor(.tertiary)
+                            .foregroundColor(.secondary)
                             .italic()
                     }
                 }
@@ -453,7 +453,7 @@ struct EditGroupChatView: View {
                             .font(.system(size: 22, weight: .medium))
                     }
                     
-                    Text(isUpdating ? "更新中..." : "グループを更新")
+                    Text(isUpdating ? L10n.updating : L10n.update)
                         .font(.system(size: 18, weight: .semibold))
                 }
                 .foregroundColor(.white)
@@ -493,7 +493,7 @@ struct EditGroupChatView: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(accentColor)
                 
-                Text("プレビュー")
+                Text(L10n.preview)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(.secondary)
@@ -533,7 +533,7 @@ struct EditGroupChatView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(groupName.isEmpty ? "グループチャット" : groupName)
+                    Text(groupName.isEmpty ? L10n.groupChat : groupName)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(1)
@@ -579,7 +579,7 @@ struct EditGroupChatView: View {
         isUpdating = true
         generateHapticFeedback()
         
-        let finalGroupName = groupName.isEmpty ? "グループチャット" : groupName
+        let finalGroupName = groupName.isEmpty ? L10n.groupChat : groupName
         let memberIds = selectedMembers.map { $0.id }
         
         groupChatManager.createOrUpdateGroup(
