@@ -513,6 +513,127 @@ struct L10n {
     static func chatMessageSaveErrorMessage(_ error: String) -> String {
         return String.localizedStringWithFormat(NSLocalizedString("chat_message_save_error", comment: "Chat message save error"), error)
     }
+    
+    // MARK: - Group Chat Features
+    static let groupChat = NSLocalizedString("group_chat", comment: "Group chat")
+    static let groupChats = NSLocalizedString("group_chats", comment: "Group chats")
+    static let individualChat = NSLocalizedString("individual_chat", comment: "Individual chat")
+    static let createGroup = NSLocalizedString("create_group", comment: "Create group")
+    static let groupName = NSLocalizedString("group_name", comment: "Group name")
+    static let groupMembers = NSLocalizedString("group_members", comment: "Group members")
+    static let memberSelection = NSLocalizedString("member_selection", comment: "Member selection")
+    static let selectMembers = NSLocalizedString("select_members", comment: "Select members")
+    static let groupCreation = NSLocalizedString("group_creation", comment: "Group creation")
+    static let editGroup = NSLocalizedString("edit_group", comment: "Edit group")
+    static let deleteGroup = NSLocalizedString("delete_group", comment: "Delete group")
+    static let groupSettings = NSLocalizedString("group_settings", comment: "Group settings")
+    
+    // MARK: - Group Chat Messages
+    static let enterMessage = NSLocalizedString("enter_message", comment: "Enter message")
+    static let noGroupChats = NSLocalizedString("no_group_chats", comment: "No group chats")
+    static let createFirstGroup = NSLocalizedString("create_first_group", comment: "Create first group")
+    static let groupChatDescription = NSLocalizedString("group_chat_description", comment: "Group chat description")
+    static let minimumMembersRequired = NSLocalizedString("minimum_members_required", comment: "Minimum members required")
+    static let addOshiFirst = NSLocalizedString("add_oshi_first", comment: "Add oshi first")
+    static let noMessagesYet = NSLocalizedString("no_messages_yet", comment: "No messages yet")
+    static let startGroupChat = NSLocalizedString("start_group_chat", comment: "Start group chat")
+    static let addMembers = NSLocalizedString("add_members", comment: "Add members")
+    
+    // MARK: - Group Management
+    static let newGroup = NSLocalizedString("new_group", comment: "New group")
+    static let createNewGroup = NSLocalizedString("create_new_group", comment: "Create new group")
+    static let editGroupInfo = NSLocalizedString("edit_group_info", comment: "Edit group info")
+    static let groupNamePlaceholder = NSLocalizedString("group_name_placeholder", comment: "Group name placeholder")
+    static let groupNameEmptyDefault = NSLocalizedString("group_name_empty_default", comment: "Group name empty default")
+    static let selectAll = NSLocalizedString("select_all", comment: "Select all")
+    static let deselectAll = NSLocalizedString("deselect_all", comment: "Deselect all")
+    static let done = NSLocalizedString("done", comment: "Done")
+    static let complete = NSLocalizedString("complete", comment: "Complete")
+    static let creating = NSLocalizedString("creating", comment: "Creating")
+    
+    // MARK: - Group Chat UI
+    static let searchGroups = NSLocalizedString("search_groups", comment: "Search groups")
+    static let searchOshi = NSLocalizedString("search_oshi", comment: "Search oshi")
+    static let preparingGroupChat = NSLocalizedString("preparing_group_chat", comment: "Preparing group chat")
+    static let deletingGroup = NSLocalizedString("deleting_group", comment: "Deleting group")
+    static let groupDeleted = NSLocalizedString("group_deleted", comment: "Group deleted")
+    static let groupCreated = NSLocalizedString("group_created", comment: "Group created")
+    static let groupUpdated = NSLocalizedString("group_updated", comment: "Group updated")
+    
+    // MARK: - Group Chat Confirmations
+    static let deleteGroupTitle = NSLocalizedString("delete_group_title", comment: "Delete group title")
+    static let leaveGroup = NSLocalizedString("leave_group", comment: "Leave group")
+    static let removeMember = NSLocalizedString("remove_member", comment: "Remove member")
+    
+    // MARK: - Group Chat Empty States
+    static let noGroupChatsDescription = NSLocalizedString("no_group_chats_description", comment: "No group chats description")
+    static let createGroupButton = NSLocalizedString("create_group_button", comment: "Create group button")
+    static let needMoreMembers = NSLocalizedString("need_more_members", comment: "Need more members")
+    static let registerMoreOshi = NSLocalizedString("register_more_oshi", comment: "Register more oshi")
+    
+    // MARK: - Group Name Suggestions
+    static let groupNameSuggestion1 = NSLocalizedString("group_name_suggestion_1", comment: "Group name suggestion 1")
+    static let groupNameSuggestion2 = NSLocalizedString("group_name_suggestion_2", comment: "Group name suggestion 2")
+    static let groupNameSuggestion3 = NSLocalizedString("group_name_suggestion_3", comment: "Group name suggestion 3")
+    static let groupNameSuggestion4 = NSLocalizedString("group_name_suggestion_4", comment: "Group name suggestion 4")
+    static let groupNameSuggestion5 = NSLocalizedString("group_name_suggestion_5", comment: "Group name suggestion 5")
+    
+    // MARK: - Group Chat Features
+    static let groupIcon = NSLocalizedString("group_icon", comment: "Group icon")
+    static let groupDescription = NSLocalizedString("group_description", comment: "Group description")
+    static let memberList = NSLocalizedString("member_list", comment: "Member list")
+    static let groupInfo = NSLocalizedString("group_info", comment: "Group info")
+    static let preview = NSLocalizedString("preview", comment: "Preview")
+    static let validationMinMembers = NSLocalizedString("validation_min_members", comment: "Validation min members")
+    static let memberAdded = NSLocalizedString("member_added", comment: "Member added")
+    static let memberRemoved = NSLocalizedString("member_removed", comment: "Member removed")
+    
+    // MARK: - Chat Tab Types
+    static let individual = NSLocalizedString("individual", comment: "Individual")
+    static let group = NSLocalizedString("group", comment: "Group")
+    
+    // MARK: - Helper functions for dynamic content
+    static func membersCount(_ count: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("members_count", comment: "Members count"), count)
+    }
+    
+    static func deleteGroupMessage(_ groupName: String) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("delete_group_message", comment: "Delete group message"), groupName)
+    }
+    
+    // GroupChatRowView用の時刻表示多言語対応
+    static let yesterday = NSLocalizedString("yesterday", comment: "Yesterday")
+    
+    // 曜日の多言語対応（必要に応じて）
+    static func dayOfWeek(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE"
+        formatter.locale = Locale.current  // 現在のロケールを使用
+        return formatter.string(from: date)
+    }
+    
+    // 日時フォーマット用のヘルパー関数
+    static func formatChatTime(_ timestamp: TimeInterval) -> String {
+        guard timestamp > 0 else { return "" }
+        
+        let date = Date(timeIntervalSince1970: timestamp)
+        let calendar = Calendar.current
+        let now = Date()
+        
+        if calendar.isDateInToday(date) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm"
+            return formatter.string(from: date)
+        } else if calendar.isDateInYesterday(date) {
+            return L10n.yesterday
+        } else if calendar.dateInterval(of: .weekOfYear, for: now)?.contains(date) == true {
+            return L10n.dayOfWeek(from: date)
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MM/dd"
+            return formatter.string(from: date)
+        }
+    }
 }
 
 func getCurrentLanguage() -> String {

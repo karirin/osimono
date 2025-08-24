@@ -300,8 +300,6 @@
 // MARK: - Common UI
 "close_button" = "閉じる";
 
-// 日本語版 (ja.lproj/Localizable.strings) に追加するキー
-
 // Location registration
 "register_oshi_spot" = "推しスポット登録";
 "example_oshi_spot" = "例：XX推しライブ会場";
@@ -328,3 +326,88 @@
 "live_venue_ja" = "ライブ会場";
 "goods_shop_ja" = "グッズショップ";
 "other_ja" = "その他";
+
+// MARK: - Group Chat Features
+"group_chat" = "グループチャット";
+"group_chats" = "グループチャット";
+"individual_chat" = "個人チャット";
+"create_group" = "グループ作成";
+"group_name" = "グループ名";
+"group_members" = "グループメンバー";
+"member_selection" = "メンバー選択";
+"select_members" = "メンバーを選択";
+"group_creation" = "グループ作成";
+"edit_group" = "グループ編集";
+"delete_group" = "グループ削除";
+"group_settings" = "グループ設定";
+
+// Group Chat Messages
+"enter_message" = "メッセージを入力";
+"no_group_chats" = "まだグループチャットがありません";
+"create_first_group" = "最初のグループを作成しましょう";
+"group_chat_description" = "複数の推しと一緒にチャットを楽しもう！";
+"minimum_members_required" = "グループチャットには2人以上のメンバーが必要です";
+"add_oshi_first" = "まず推しを追加してください";
+"no_messages_yet" = "まだメッセージがありません";
+"start_group_chat" = "グループチャットを始めましょう！";
+"add_members" = "メンバーを追加";
+
+// Group Management
+"new_group" = "新しいグループ";
+"create_new_group" = "新しいグループを作成";
+"edit_group_info" = "グループ情報を編集";
+"group_name_placeholder" = "例：お気に入りメンバー";
+"group_name_empty_default" = "空白の場合は「グループチャット」として表示されます";
+"select_all" = "全て選択";
+"deselect_all" = "全て解除";
+"done" = "完了";
+"complete" = "完了";
+"creating" = "作成中...";
+"updating" = "更新中...";
+
+// Group Chat UI
+"members_count" = "%d人のメンバー";
+"search_groups" = "グループを検索";
+"search_oshi" = "推しを検索";
+"preparing_group_chat" = "グループチャットを準備中...";
+"deleting_group" = "グループを削除中...";
+"group_deleted" = "グループを削除しました";
+"group_created" = "グループを作成しました";
+"group_updated" = "グループを更新しました";
+
+// Group Chat Confirmations
+"delete_group_title" = "グループを削除";
+"delete_group_message" = "「%@」を削除しますか？この操作は元に戻せません。";
+"leave_group" = "グループから退出";
+"remove_member" = "メンバーを削除";
+
+// Group Chat Empty States
+"no_group_chats_description" = "複数の推しと一緒にチャットを楽しもう！";
+"create_group_button" = "グループを作成する";
+"need_more_members" = "グループチャットには2人以上のメンバーが必要です";
+"register_more_oshi" = "まず推しを追加してください";
+
+// Group Name Suggestions
+"group_name_suggestion_1" = "推し全員";
+"group_name_suggestion_2" = "みんなでトーク";
+"group_name_suggestion_3" = "お気に入りグループ";
+"group_name_suggestion_4" = "最高のメンバー";
+"group_name_suggestion_5" = "楽しいチャット";
+
+// Group Chat Features
+"group_icon" = "グループアイコン";
+"group_description" = "グループ説明";
+"member_list" = "メンバー一覧";
+"group_info" = "グループ情報";
+"preview" = "プレビュー";
+"validation_min_members" = "最低1人のメンバーを選択してください";
+"member_added" = "メンバーを追加しました";
+"member_removed" = "メンバーを削除しました";
+
+// Chat Tab Types
+"individual" = "個人";
+"group" = "グループ";
+
+"new_group" = "新しいグループ";
+"group_chat_requires_oshi_first" = "グループチャットを楽しむには、まず推しを登録する必要があります。推し管理画面から推しを追加してください。";
+"select_group_members_description" = "グループチャットに参加させたい推しを選択してください";

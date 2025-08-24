@@ -2,7 +2,7 @@
 //  GroupChatListModalView.swift
 //  osimono
 //
-//  グループチャット一覧モーダル
+//  グループチャット一覧モーダル - 多言語対応版
 //
 
 import SwiftUI
@@ -76,7 +76,7 @@ struct GroupChatListModalView: View {
                 }
             )
         }
-        .sheet(item: $groupToEdit) { group in            // ← item 版に変更
+        .sheet(item: $groupToEdit) { group in
             EditGroupChatView(
                 group: group,
                 allOshiList: allOshiList,
@@ -85,15 +85,15 @@ struct GroupChatListModalView: View {
                 }
             )
         }
-        .alert("グループを削除", isPresented: $showDeleteGroupAlert) {
-            Button("削除", role: .destructive) {
+        .alert(L10n.deleteGroupTitle, isPresented: $showDeleteGroupAlert) {
+            Button(L10n.delete, role: .destructive) {
                 if let group = groupToDelete {
                     deleteGroup(group)
                 }
             }
-            Button("キャンセル", role: .cancel) {}
+            Button(L10n.cancel, role: .cancel) {}
         } message: {
-            Text("\(groupToDelete?.name ?? "")を削除しますか？この操作は元に戻せません。")
+            Text(L10n.deleteGroupMessage(groupToDelete?.name ?? ""))
         }
     }
     
@@ -113,7 +113,7 @@ struct GroupChatListModalView: View {
                 
                 Spacer()
                 
-                Text("グループチャット一覧")
+                Text(NSLocalizedString("group_chat_list_title", comment: "Group chat list title"))
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.black)
                 
@@ -127,7 +127,7 @@ struct GroupChatListModalView: View {
                             generateHapticFeedback()
                             withAnimation(.spring()) { isEditing.toggle() }
                         }) {
-                            Text(isEditing ? "完了" : "編集")
+                            Text(isEditing ? L10n.done : L10n.edit)
                                 .font(.system(size: 16))
                                 .foregroundColor(.blue)
                         }
@@ -157,7 +157,7 @@ struct GroupChatListModalView: View {
                 .foregroundColor(.gray)
                 .padding(.leading, 8)
             
-            TextField("グループを検索", text: $searchText)
+            TextField(L10n.searchGroups, text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
                 .padding(.vertical, 8)
             
@@ -180,7 +180,7 @@ struct GroupChatListModalView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.2)
-            Text("読み込み中...")
+            Text(L10n.loading)
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
@@ -194,11 +194,11 @@ struct GroupChatListModalView: View {
                 .foregroundColor(.gray.opacity(0.6))
             
             VStack(spacing: 8) {
-                Text("まだグループチャットがありません")
+                Text(L10n.noGroupChats)
                     .font(.headline)
                     .foregroundColor(.black)
                 
-                Text("複数の推しと一緒にチャットを楽しもう！")
+                Text(L10n.noGroupChatsDescription)
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -212,7 +212,7 @@ struct GroupChatListModalView: View {
                     HStack {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 20))
-                        Text("グループを作成する")
+                        Text(L10n.createGroupButton)
                             .font(.headline)
                     }
                     .foregroundColor(.white)
@@ -230,11 +230,11 @@ struct GroupChatListModalView: View {
                 }
             } else {
                 VStack(spacing: 8) {
-                    Text("グループチャットには2人以上の推しが必要です")
+                    Text(L10n.needMoreMembers)
                         .font(.subheadline)
                         .foregroundColor(.orange)
                     
-                    Text("まず推しを追加してください")
+                    Text(L10n.registerMoreOshi)
                         .font(.subheadline)
                         .foregroundColor(.blue)
                         .underline()
@@ -298,11 +298,11 @@ struct GroupChatListModalView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("新しいグループを作成")
+                        Text(L10n.createNewGroup)
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.primary)
                         
-                        Text("複数の推しとグループチャットを楽しもう")
+                        Text(L10n.noGroupChatsDescription)
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                     }
@@ -371,7 +371,7 @@ struct GroupChatListModalView: View {
                     Image(systemName: "pencil")
                         .font(.system(size: 16))
                         .foregroundColor(.blue)
-                    Text("編集")
+                    Text(L10n.edit)
                         .font(.system(size: 10))
                         .foregroundColor(.blue)
                 }
@@ -386,7 +386,7 @@ struct GroupChatListModalView: View {
                     Image(systemName: "trash")
                         .font(.system(size: 16))
                         .foregroundColor(.red)
-                    Text("削除")
+                    Text(L10n.delete)
                         .font(.system(size: 10))
                         .foregroundColor(.red)
                 }
@@ -403,7 +403,7 @@ struct GroupChatListModalView: View {
                     ProgressView()
                         .scaleEffect(1.5)
                         .tint(.white)
-                    Text("グループを削除中...")
+                    Text(L10n.deletingGroup)
                         .foregroundColor(.white)
                         .font(.headline)
                 }

@@ -376,3 +376,87 @@
 "goods_shop_en" = "Goods Shop";
 "other_en" = "Other";
 
+// MARK: - Group Chat Features
+"group_chat" = "Group Chat";
+"group_chats" = "Group Chats";
+"individual_chat" = "Individual Chat";
+"create_group" = "Create Group";
+"group_name" = "Group Name";
+"group_members" = "Group Members";
+"member_selection" = "Member Selection";
+"select_members" = "Select Members";
+"group_creation" = "Group Creation";
+"edit_group" = "Edit Group";
+"delete_group" = "Delete Group";
+"group_settings" = "Group Settings";
+
+// Group Chat Messages
+"enter_message" = "Enter message";
+"no_group_chats" = "No group chats yet";
+"create_first_group" = "Create your first group";
+"group_chat_description" = "Chat with multiple oshi together!";
+"minimum_members_required" = "At least 2 members are required for a group chat";
+"add_oshi_first" = "Add oshi first";
+"no_messages_yet" = "No messages yet";
+"start_group_chat" = "Let's start a group chat!";
+"add_members" = "Add Members";
+
+// Group Management
+"new_group" = "New Group";
+"create_new_group" = "Create New Group";
+"edit_group_info" = "Edit Group Info";
+"group_name_placeholder" = "e.g., All My Favorites";
+"group_name_empty_default" = "Will be displayed as 'Group Chat' if left blank";
+"select_all" = "Select All";
+"deselect_all" = "Deselect All";
+"done" = "Done";
+"complete" = "Complete";
+"creating" = "Creating...";
+"updating" = "Updating...";
+
+// Group Chat UI
+"members_count" = "%d members";
+"search_groups" = "Search groups";
+"search_oshi" = "Search oshi";
+"preparing_group_chat" = "Preparing group chat...";
+"deleting_group" = "Deleting group...";
+"group_deleted" = "Group deleted";
+"group_created" = "Group created";
+"group_updated" = "Group updated";
+
+// Group Chat Confirmations
+"delete_group_title" = "Delete Group";
+"delete_group_message" = "Are you sure you want to delete \"%@\"? This action cannot be undone.";
+"leave_group" = "Leave Group";
+"remove_member" = "Remove Member";
+
+// Group Chat Empty States
+"no_group_chats_description" = "Enjoy chatting with multiple oshi together!";
+"create_group_button" = "Create Group";
+"need_more_members" = "Group chat requires 2 or more members";
+"register_more_oshi" = "Please register more oshi first";
+
+// Group Name Suggestions
+"group_name_suggestion_1" = "All My Favorites";
+"group_name_suggestion_2" = "Everyone Talk";
+"group_name_suggestion_3" = "Favorite Group";
+"group_name_suggestion_4" = "Best Members";
+"group_name_suggestion_5" = "Fun Chat";
+
+// Group Chat Features
+"group_icon" = "Group Icon";
+"group_description" = "Group Description";
+"member_list" = "Member List";
+"group_info" = "Group Info";
+"preview" = "Preview";
+"validation_min_members" = "Please select at least 1 member";
+"member_added" = "Member added";
+"member_removed" = "Member removed";
+
+// Chat Tab Types
+"individual" = "Individual";
+"group" = "Group";
+
+"new_group" = "New Group";
+"group_chat_requires_oshi_first" = "To enjoy group chat, you need to register your oshi first. Please add your oshi from the oshi management screen.";
+"select_group_members_description" = "Select the oshi you want to participate in the group chat";

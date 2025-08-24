@@ -95,13 +95,13 @@ struct CreateGroupChatView: View {
             Spacer()
             
             VStack(spacing: 2) {
-                Text("新しいグループ")
+                Text(L10n.newGroup)  // "新しいグループ" → 多言語対応
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 
                 if !allOshiList.isEmpty {
-                    Text("\(selectedMembers.count)人を選択中")
+                    Text(L10n.membersCount(selectedMembers.count))  // "X人を選択中" → 多言語対応
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -115,7 +115,7 @@ struct CreateGroupChatView: View {
                     createGroup()
                 }) {
                     HStack(spacing: 6) {
-                        Text("作成")
+                        Text(L10n.createGroup)
                             .font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundColor(.white)
@@ -172,19 +172,19 @@ struct CreateGroupChatView: View {
             }
             
             VStack(spacing: 12) {
-                Text(allOshiList.isEmpty ? "推しを登録しよう" : "グループを作成しよう")
+                Text(allOshiList.isEmpty ? L10n.registerOshiFirst : L10n.createFirstGroup)
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                 
                 if allOshiList.isEmpty {
-                    Text("グループチャットを楽しむには、まず推しを登録する必要があります。推し管理画面から推しを追加してください。")
+                    Text(NSLocalizedString("group_chat_requires_oshi_first", comment: "Group chat requires oshi first"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
                 } else {
-                    Text("複数の推しとのグループチャットを始めましょう。みんなでワイワイ会話を楽しめます！")
+                    Text(L10n.groupChatDescription)  // 多言語対応
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -234,7 +234,7 @@ struct CreateGroupChatView: View {
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(accentColor)
                 
-                Text("グループ名")
+                Text(L10n.groupName)  // "グループ名" → 多言語対応
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
@@ -285,7 +285,7 @@ struct CreateGroupChatView: View {
                     .padding(.horizontal, 4)
                 }
                 
-                Text("空白の場合は「グループチャット」として表示されます")
+                Text(L10n.groupNameEmptyDefault)  // 空白時の説明 → 多言語対応
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 4)
@@ -301,11 +301,11 @@ struct CreateGroupChatView: View {
     
     private var nameSuggestions: [String] {
         [
-            "推し全員",
-            "みんなでトーク",
-            "お気に入りグループ",
-            "最高のメンバー",
-            "楽しいチャット"
+            L10n.groupNameSuggestion1,  // "推し全員" など
+            L10n.groupNameSuggestion2,  // "みんなでトーク" など
+            L10n.groupNameSuggestion3,  // "お気に入りグループ" など
+            L10n.groupNameSuggestion4,  // "最高のメンバー" など
+            L10n.groupNameSuggestion5   // "楽しいチャット" など
         ]
     }
     
@@ -318,7 +318,7 @@ struct CreateGroupChatView: View {
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(accentColor)
                     
-                    Text("メンバー選択")
+                    Text(L10n.memberSelection)  // "メンバー選択" → 多言語対応
                         .font(.title3)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
@@ -362,7 +362,7 @@ struct CreateGroupChatView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "info.circle.fill")
                         .foregroundColor(.orange)
-                    Text("グループチャットには2人以上のメンバーが必要です")
+                    Text(L10n.minimumMembersRequired)  // 多言語対応
                         .font(.caption)
                         .foregroundColor(.orange)
                 }
@@ -394,7 +394,7 @@ struct CreateGroupChatView: View {
                     .font(.system(size: 20, weight: .medium))
                     .foregroundColor(selectedMembers.count == allOshiList.count ? accentColor : .secondary)
                 
-                Text(selectedMembers.count == allOshiList.count ? "全て解除" : "全て選択")
+                Text(selectedMembers.count == allOshiList.count ? L10n.deselectAll : L10n.selectAll)  // 多言語対応
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                 
@@ -588,7 +588,7 @@ struct CreateGroupChatView: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(accentColor)
                 
-                Text("プレビュー")
+                Text(L10n.preview)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(.secondary)
@@ -628,7 +628,7 @@ struct CreateGroupChatView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(groupName.isEmpty ? "グループチャット" : groupName)
+                    Text(isCreating ? L10n.creating : L10n.createNewGroup)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(1)

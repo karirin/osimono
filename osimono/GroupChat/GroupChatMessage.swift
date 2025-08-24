@@ -213,7 +213,7 @@ struct GroupChatBubble: View {
     private func formatDate(timestamp: TimeInterval) -> String {
         let date = Date(timeIntervalSince1970: timestamp)
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.locale = Locale.current  // 現在のロケールを使用
         
         if Calendar.current.isDateInToday(date) {
             formatter.dateFormat = "HH:mm"
@@ -245,13 +245,13 @@ struct GroupMemberSelectionView: View {
             VStack(spacing: 20) {
                 // ヘッダー
                 HStack {
-                    Text("グループメンバー")
+                    Text(L10n.groupMembers)
                         .font(.headline)
                         .foregroundColor(.primary)
                     
                     Spacer()
                     
-                    Button("完了") {
+                    Button(L10n.done) {  // "完了" → 多言語対応
                         selectedMembers = tempSelectedMembers
                         onSave()
                         isPresented = false
@@ -327,7 +327,7 @@ struct GroupMemberSelectionView: View {
                 }
                 
                 // 説明テキスト
-                Text("グループチャットに参加させたい推しを選択してください")
+                Text(NSLocalizedString("select_group_members_description", comment: "Select group members description"))  // 多言語対応
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)

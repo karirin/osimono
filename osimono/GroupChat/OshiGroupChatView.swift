@@ -215,7 +215,7 @@ struct OshiGroupChatView: View {
                         .scaleEffect(1.5)
                         .progressViewStyle(CircularProgressViewStyle(tint: primaryColor))
                     
-                    Text("グループチャットを準備中...")
+                    Text(L10n.preparingGroupChat)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.gray)
                 }
@@ -255,12 +255,12 @@ struct OshiGroupChatView: View {
                             .frame(width: 36, height: 36)
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(groupName.isEmpty ? "グループチャット" : groupName)
+                            Text(groupName.isEmpty ? L10n.groupChat : groupName)
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundStyle(.black)
                             
                             HStack(spacing: 4) {
-                                Text("\(selectedMembers.count)人のメンバー")
+                                Text(L10n.membersCount(selectedMembers.count))
                                     .font(.system(size: 12))
                                     .foregroundColor(.blue)
                                 
@@ -280,7 +280,7 @@ struct OshiGroupChatView: View {
                     generateHapticFeedback()
                     showEditGroupSheet = true
                 }) {
-                    Text("編集")
+                    Text(L10n.edit)
                         .font(.system(size: 16))
                         .foregroundColor(.blue)
                 }
@@ -438,7 +438,7 @@ struct OshiGroupChatView: View {
                 VStack(spacing: 16) {
                     if messages.isEmpty {
                         VStack(spacing: 12) {
-                            Text("グループチャットを始めましょう！")
+                            Text(L10n.startGroupChat)
                                 .foregroundColor(.gray)
                                 .padding(.top, 40)
                             
@@ -446,7 +446,7 @@ struct OshiGroupChatView: View {
                                 Button(action: {
                                     showMemberSelection = true
                                 }) {
-                                    Text("メンバーを追加する")
+                                    Text(L10n.addMembers)
                                         .foregroundColor(.blue)
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
@@ -512,7 +512,7 @@ struct OshiGroupChatView: View {
         VStack(spacing: 0) {
             Divider()
             HStack(spacing: 12) {
-                TextField("メッセージを入力", text: $inputText)
+                TextField(L10n.enterMessage, text: $inputText)
                     .focused($isTextFieldFocused)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
