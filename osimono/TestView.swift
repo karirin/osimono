@@ -20,32 +20,25 @@ enum TutorialStep: Int, CaseIterable {
     
     var title: String {
         switch self {
-        case .welcome: return "ようこそ"
-        case .selectOshi: return "推しを登録"
-        case .addOshi: return "推しを追加"
-        case .createPost: return "聖地巡礼"
-        case .categories: return "チャット"
-        case .message: return "グループチャット"
-        case .completed: return "完了"
+        case .welcome: return L10n.tutorialWelcomeTitle
+        case .selectOshi: return L10n.tutorialSelectOshiTitle
+        case .addOshi: return L10n.tutorialAddOshiTitle
+        case .createPost: return L10n.tutorialCreatePostTitle
+        case .categories: return L10n.tutorialCategoriesTitle
+        case .message: return L10n.tutorialMessageTitle
+        case .completed: return L10n.tutorialCompletedTitle
         }
     }
     
     var message: String {
         switch self {
-        case .welcome:
-            return "「推しログ」へようこそ！\nあなたの推し活を記録するアプリです。\n基本的な使い方を説明します。"
-        case .selectOshi:
-            return "こちらから推しを登録できます。\nアイコン、背景、名前を保存しましょう。"
-        case .addOshi:
-            return "プラスボタンで推しに関する「グッズ」「聖地巡礼」を記録することができます。"
-        case .createPost:
-            return "登録した推しの聖地巡礼をマップで見ることができます。"
-        case .categories:
-            return "推しとチャットでやり取りすることができます。記録した内容にメッセージを送ってきてくれることも！"
-        case .message:
-            return "登録した複数の推しとグループチャットをすることができます。"
-        case .completed:
-            return "これでチュートリアルは完了です！\nあなたの推し活ライフをお楽しみください！"
+        case .welcome: return L10n.tutorialWelcomeMessage
+        case .selectOshi: return L10n.tutorialSelectOshiMessage
+        case .addOshi: return L10n.tutorialAddOshiMessage
+        case .createPost: return L10n.tutorialCreatePostMessage
+        case .categories: return L10n.tutorialCategoriesMessage
+        case .message: return L10n.tutorialMessageMessage
+        case .completed: return L10n.tutorialCompletedMessage
         }
     }
     
@@ -216,7 +209,7 @@ struct TutorialOverlayView: View {
                                 tutorialManager.skipTutorial()
                                 closeAction()
                             }) {
-                                Text("スキップ")
+                                Text(L10n.tutorialSkip)
                                     .foregroundColor(.gray)
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 8)
@@ -228,7 +221,7 @@ struct TutorialOverlayView: View {
                             }) {
                                 HStack {
                                     Image(systemName: "chevron.left")
-                                    Text("戻る")
+                                    Text(L10n.tutorialBack)
                                 }
                                 .foregroundColor(.gray)
                                 .padding(.horizontal, 16)
@@ -249,7 +242,7 @@ struct TutorialOverlayView: View {
                             }
                         }) {
                             HStack {
-                                Text(tutorialManager.currentStep == .completed ? "始める" : "次へ")
+                                Text(tutorialManager.currentStep == .completed ? L10n.tutorialStart : L10n.tutorialNext)
                                 if tutorialManager.currentStep != .completed {
                                     Image(systemName: "chevron.right")
                                 }
@@ -339,13 +332,13 @@ struct WelcomeScreen: View {
                         .font(.system(size: 80))
                         .foregroundColor(primaryColor)
                     
-                    Text("osimono")
+                    Text(L10n.appTitle)
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                 }
                 
                 // 説明文
-                Text("あなたの推し活を記録し、思い出を\n大切に残すためのアプリです")
+                Text(L10n.welcomeAppDescription)
                     .font(.headline)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white.opacity(0.9))
@@ -360,7 +353,7 @@ struct WelcomeScreen: View {
                         isPresented = false
                         tutorialManager.startTutorial()
                     }) {
-                        Text("チュートリアルを見る")
+                        Text(L10n.welcomeViewTutorial)
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -374,7 +367,7 @@ struct WelcomeScreen: View {
                         isPresented = false
                         tutorialManager.skipTutorial()
                     }) {
-                        Text("スキップして始める")
+                        Text(L10n.welcomeSkipAndStart)
                             .font(.headline)
                             .foregroundColor(primaryColor)
                             .frame(maxWidth: .infinity)

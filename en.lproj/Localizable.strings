@@ -857,3 +857,31 @@
 "discard_changes_title" = "Discard changes?";
 "discard" = "Discard";
 "discard_changes_message" = "Entered content will not be saved.";
+
+"tutorial_welcome_title" = "Welcome";
+"tutorial_select_oshi_title" = "Register Oshi";
+"tutorial_add_oshi_title" = "Add Oshi";
+"tutorial_create_post_title" = "Pilgrimage";
+"tutorial_categories_title" = "Chat";
+"tutorial_message_title" = "Group Chat";
+"tutorial_completed_title" = "Complete";
+
+// MARK: - Tutorial Messages
+"tutorial_welcome_message" = "Welcome to \"Oshi Log\"!\nThis app helps you record your oshi activities.\nLet me show you the basics.";
+"tutorial_select_oshi_message" = "You can register your oshi here.\nSave their icon, background, and name.";
+"tutorial_add_oshi_message" = "Use the plus button to record \"Goods\" and \"Pilgrimage\" related to your oshi.";
+"tutorial_create_post_message" = "You can view your registered oshi's pilgrimage spots on the map.";
+"tutorial_categories_message" = "You can chat with your oshi. They might even send you messages about the things you've recorded!";
+"tutorial_message_message" = "You can have group chats with multiple registered oshi.";
+"tutorial_completed_message" = "That's the end of the tutorial!\nEnjoy your oshi life!";
+
+// MARK: - Tutorial Buttons
+"tutorial_skip" = "Skip";
+"tutorial_back" = "Back";
+"tutorial_next" = "Next";
+"tutorial_start" = "Start";
+
+// MARK: - Welcome Screen
+"welcome_app_description" = "An app to record your oshi activities\nand preserve precious memories";
+"welcome_view_tutorial" = "View Tutorial";
+"welcome_skip_and_start" = "Skip and Start";

@@ -839,6 +839,34 @@ struct L10n {
     static func deleteOshiAndAllData(_ oshiName: String) -> String {
         return String.localizedStringWithFormat(NSLocalizedString("delete_oshi_and_all_data", comment: "Delete oshi and all related data"), oshiName)
     }
+    
+    static let tutorialWelcomeTitle = NSLocalizedString("tutorial_welcome_title", comment: "Tutorial welcome title")
+    static let tutorialSelectOshiTitle = NSLocalizedString("tutorial_select_oshi_title", comment: "Tutorial select oshi title")
+    static let tutorialAddOshiTitle = NSLocalizedString("tutorial_add_oshi_title", comment: "Tutorial add oshi title")
+    static let tutorialCreatePostTitle = NSLocalizedString("tutorial_create_post_title", comment: "Tutorial create post title")
+    static let tutorialCategoriesTitle = NSLocalizedString("tutorial_categories_title", comment: "Tutorial categories title")
+    static let tutorialMessageTitle = NSLocalizedString("tutorial_message_title", comment: "Tutorial message title")
+    static let tutorialCompletedTitle = NSLocalizedString("tutorial_completed_title", comment: "Tutorial completed title")
+    
+    // MARK: - Tutorial Messages
+    static let tutorialWelcomeMessage = NSLocalizedString("tutorial_welcome_message", comment: "Tutorial welcome message")
+    static let tutorialSelectOshiMessage = NSLocalizedString("tutorial_select_oshi_message", comment: "Tutorial select oshi message")
+    static let tutorialAddOshiMessage = NSLocalizedString("tutorial_add_oshi_message", comment: "Tutorial add oshi message")
+    static let tutorialCreatePostMessage = NSLocalizedString("tutorial_create_post_message", comment: "Tutorial create post message")
+    static let tutorialCategoriesMessage = NSLocalizedString("tutorial_categories_message", comment: "Tutorial categories message")
+    static let tutorialMessageMessage = NSLocalizedString("tutorial_message_message", comment: "Tutorial message message")
+    static let tutorialCompletedMessage = NSLocalizedString("tutorial_completed_message", comment: "Tutorial completed message")
+    
+    // MARK: - Tutorial Buttons
+    static let tutorialSkip = NSLocalizedString("tutorial_skip", comment: "Tutorial skip button")
+    static let tutorialBack = NSLocalizedString("tutorial_back", comment: "Tutorial back button")
+    static let tutorialNext = NSLocalizedString("tutorial_next", comment: "Tutorial next button")
+    static let tutorialStart = NSLocalizedString("tutorial_start", comment: "Tutorial start button")
+    
+    // MARK: - Welcome Screen
+    static let welcomeAppDescription = NSLocalizedString("welcome_app_description", comment: "Welcome app description")
+    static let welcomeViewTutorial = NSLocalizedString("welcome_view_tutorial", comment: "Welcome view tutorial button")
+    static let welcomeSkipAndStart = NSLocalizedString("welcome_skip_and_start", comment: "Welcome skip and start button")
 }
 
 func getCurrentLanguage() -> String {

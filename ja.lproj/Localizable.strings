@@ -860,3 +860,31 @@
 "discard_changes_title" = "変更を破棄しますか？";
 "discard" = "破棄";
 "discard_changes_message" = "入力した内容は保存されません。";
+
+"tutorial_welcome_title" = "ようこそ";
+"tutorial_select_oshi_title" = "推しを登録";
+"tutorial_add_oshi_title" = "推しを追加";
+"tutorial_create_post_title" = "聖地巡礼";
+"tutorial_categories_title" = "チャット";
+"tutorial_message_title" = "グループチャット";
+"tutorial_completed_title" = "完了";
+
+// MARK: - Tutorial Messages
+"tutorial_welcome_message" = "「推しログ」へようこそ！\nあなたの推し活を記録するアプリです。\n基本的な使い方を説明します。";
+"tutorial_select_oshi_message" = "こちらから推しを登録できます。\nアイコン、背景、名前を保存しましょう。";
+"tutorial_add_oshi_message" = "プラスボタンで推しに関する「グッズ」「聖地巡礼」を記録することができます。";
+"tutorial_create_post_message" = "登録した推しの聖地巡礼をマップで見ることができます。";
+"tutorial_categories_message" = "推しとチャットでやり取りすることができます。記録した内容にメッセージを送ってきてくれることも！";
+"tutorial_message_message" = "登録した複数の推しとグループチャットをすることができます。";
+"tutorial_completed_message" = "これでチュートリアルは完了です！\nあなたの推し活ライフをお楽しみください！";
+
+// MARK: - Tutorial Buttons
+"tutorial_skip" = "スキップ";
+"tutorial_back" = "戻る";
+"tutorial_next" = "次へ";
+"tutorial_start" = "始める";
+
+// MARK: - Welcome Screen
+"welcome_app_description" = "あなたの推し活を記録し、思い出を\n大切に残すためのアプリです";
+"welcome_view_tutorial" = "チュートリアルを見る";
+"welcome_skip_and_start" = "スキップして始める";
