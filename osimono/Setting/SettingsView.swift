@@ -12,7 +12,7 @@ func generateHapticFeedback() {
 }
 
 struct SettingsView: View {
-    @State private var username: String = "推し活ユーザー"
+    @State private var username: String = L10n.oshiFanUser
     @State private var favoriteOshi: String = ""
     @State private var isShowingImagePicker = false
     @State private var isShowingLogoutAlert = false
@@ -80,7 +80,7 @@ struct SettingsView: View {
                 VStack(spacing: 20) {
                     // ヘッダー
                     HStack {
-                        Text("設定")
+                        Text(L10n.settings)
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(primaryColor)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -100,7 +100,7 @@ struct SettingsView: View {
                     if isAdmin {
                         VStack(spacing: 10) {
                             HStack {
-                                Text("管理者機能")
+                                Text(NSLocalizedString("admin_functions", comment: "Admin functions section title"))
                                     .foregroundColor(.secondary)
                                     .frame(alignment: .leading)
                                 Spacer()
@@ -110,7 +110,7 @@ struct SettingsView: View {
                                 // データ分析（既存）
                                 SettingRow(
                                     icon: "chart.bar.doc.horizontal.fill",
-                                    title: "データ分析",
+                                    title: NSLocalizedString("data_analytics", comment: "Data analytics"),
                                     color: .blue,
                                     action: {
                                         generateHapticFeedback()
@@ -121,7 +121,7 @@ struct SettingsView: View {
                                 // 新機能：全データ表示
                                 SettingRow(
                                     icon: "list.bullet.rectangle.portrait.fill",
-                                    title: "全データ表示",
+                                    title: NSLocalizedString("all_data_display", comment: "All data display"),
                                     color: .purple,
                                     action: {
                                         generateHapticFeedback()
@@ -132,7 +132,7 @@ struct SettingsView: View {
                                 // ユーザー管理（既存）
                                 SettingRow(
                                     icon: "person.3.fill",
-                                    title: "チャット",
+                                    title: L10n.chat,
                                     color: .green,
                                     action: {
                                         generateHapticFeedback()
@@ -143,7 +143,7 @@ struct SettingsView: View {
                                 // システム設定（既存）
                                 SettingRow(
                                     icon: "gear.badge.questionmark",
-                                    title: "グループチャット",
+                                    title: L10n.groupChat,
                                     color: .orange,
                                     action: {
                                         generateHapticFeedback()
@@ -154,7 +154,7 @@ struct SettingsView: View {
                                 // 新機能：データエクスポート
                                 SettingRow(
                                     icon: "square.and.arrow.up.fill",
-                                    title: "データエクスポート",
+                                    title: NSLocalizedString("data_export", comment: "Data export"),
                                     color: .indigo,
                                     action: {
                                         generateHapticFeedback()
@@ -179,10 +179,10 @@ struct SettingsView: View {
                             .padding(.horizontal)
                         }
                     }
-                    
+                
                     VStack(spacing: 10) {
                         HStack {
-                            Text("推しを編集")
+                            Text(L10n.editOshi)
                                 .foregroundColor(.secondary)
                                 .frame(alignment: .leading)
                             
@@ -194,7 +194,7 @@ struct SettingsView: View {
                                     Image(systemName: "crown.fill")
                                         .font(.system(size: 16))
                                         .foregroundColor(.orange)
-                                    Text("プレミアムプラン")
+                                    Text(NSLocalizedString("premium_plan", comment: "Premium plan"))
                                         .font(.system(size: 16))
                                         .fontWeight(.medium)
                                         .foregroundColor(.orange)
@@ -241,7 +241,7 @@ struct SettingsView: View {
                                         }
                                     }
                                     
-                                    Text("アイコンをタップして変更")
+                                    Text(NSLocalizedString("tap_icon_to_change", comment: "Tap icon to change"))
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
@@ -260,7 +260,7 @@ struct SettingsView: View {
                                    Image(systemName: "arrow.triangle.2.circlepath")
                                        .font(.system(size: 14))
                                        .foregroundColor(primaryColor)
-                                   Text("別の推しを選択")
+                                   Text(NSLocalizedString("select_different_oshi", comment: "Select different oshi"))
                                        .font(.system(size: 14, weight: .medium))
                                        .foregroundColor(primaryColor)
                                    Spacer()
@@ -290,10 +290,11 @@ struct SettingsView: View {
                             isShowingEditOshiView = true
                         }
                     }
+                  
                     if !subscriptionManager.isSubscribed {
                         VStack(spacing: 10) {
                             HStack {
-                                Text("プレミアムプラン")
+                                Text(NSLocalizedString("premium_plan", comment: "Premium plan"))
                                     .foregroundColor(.secondary)
                                     .frame(alignment: .leading)
                                 Spacer()
@@ -323,12 +324,12 @@ struct SettingsView: View {
                                         }
                                         
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text("プレミアムプランに加入")
+                                            Text(NSLocalizedString("upgrade_to_premium_plan", comment: "Upgrade to premium plan"))
                                                 .font(.system(size: 18, weight: .semibold))
                                                 .foregroundColor(.primary)
                                                 .fixedSize(horizontal: false, vertical: true)
                                             
-                                            Text("推しとの時間をより豊かに")
+                                            Text(NSLocalizedString("make_oshi_time_richer", comment: "Make time with oshi richer"))
                                                 .font(.system(size: 16))
                                                 .foregroundColor(.secondary)
                                                 .multilineTextAlignment(.leading)
@@ -349,7 +350,7 @@ struct SettingsView: View {
                                             Image(systemName: "checkmark.circle.fill")
                                                 .font(.system(size: 12))
                                                 .foregroundColor(.green)
-                                            Text("広告非表示")
+                                            Text(NSLocalizedString("ad_free", comment: "Ad free"))
                                                 .font(.system(size: 12))
                                                 .foregroundColor(.secondary)
                                         }
@@ -358,7 +359,7 @@ struct SettingsView: View {
                                             Image(systemName: "checkmark.circle.fill")
                                                 .font(.system(size: 12))
                                                 .foregroundColor(.green)
-                                            Text("チャット無制限")
+                                            Text(L10n.unlimitedChat)
                                                 .font(.system(size: 12))
                                                 .foregroundColor(.secondary)
                                         }
@@ -367,7 +368,7 @@ struct SettingsView: View {
                                             Image(systemName: "checkmark.circle.fill")
                                                 .font(.system(size: 12))
                                                 .foregroundColor(.green)
-                                            Text("推し無制限")
+                                            Text(NSLocalizedString("unlimited_oshi", comment: "Unlimited oshi"))
                                                 .font(.system(size: 12))
                                                 .foregroundColor(.secondary)
                                         }
@@ -405,19 +406,20 @@ struct SettingsView: View {
                             .padding(.horizontal)
                         }
                     }
+                    
                     VStack(spacing: 10) {
                         HStack {
-                            Text("フィードバック")
+                            Text(NSLocalizedString("feedback", comment: "Feedback section"))
                                 .foregroundColor(.secondary)
                                 .frame(alignment: .leading)
                             Spacer()
                         }.padding(.leading)
+                        
                         VStack(spacing: 15) {
-                            
                             // 不具合報告
                             SettingRow(
                                 icon: "exclamationmark.bubble",
-                                title: "バグ・ご意見を報告",
+                                title: NSLocalizedString("report_bug_feedback", comment: "Report bug and feedback"),
                                 color: .red,
                                 action: { showingBugReportForm = true }
                             )
@@ -425,7 +427,7 @@ struct SettingsView: View {
                             // アプリレビュー
                             SettingRow(
                                 icon: "star.fill",
-                                title: "アプリを評価する",
+                                title: NSLocalizedString("rate_app", comment: "Rate app"),
                                 color: .yellow,
                                 action: {
                                     generateHapticFeedback()
@@ -443,7 +445,7 @@ struct SettingsView: View {
                     // おすすめアプリカード
                     VStack(spacing: 10) {
                         HStack {
-                            Text("おすすめのアプリ")
+                            Text(L10n.recommendedApps)
                                 .foregroundColor(.secondary)
                                 .frame(alignment: .leading)
                             Spacer()
@@ -466,11 +468,11 @@ struct SettingsView: View {
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("ITクエスト")
+                                        Text(L10n.itQuestTitle)
                                             .font(.system(size: 18, weight: .medium))
                                             .foregroundColor(.primary)
                                         
-                                        Text("ゲーム感覚でITパスポートに合格できるアプリ")
+                                        Text(L10n.itQuestDescription)
                                             .font(.system(size: 14))
                                             .foregroundColor(.secondary)
                                             .multilineTextAlignment(.leading)
@@ -501,11 +503,11 @@ struct SettingsView: View {
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("ドリルクエスト")
+                                        Text(L10n.drillQuestTitle)
                                             .font(.system(size: 18, weight: .medium))
                                             .foregroundColor(.primary)
                                         
-                                        Text("ゲーム感覚で小学校レベルの勉強ができるアプリ")
+                                        Text(L10n.drillQuestDescription)
                                             .font(.system(size: 14))
                                             .foregroundColor(.secondary)
                                             .multilineTextAlignment(.leading)
@@ -536,11 +538,11 @@ struct SettingsView: View {
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("メイクToDo")
+                                        Text(L10n.makeTodoTitle)
                                             .font(.system(size: 18, weight: .medium))
                                             .foregroundColor(.primary)
                                         
-                                        Text("自分好みにカスタマイズできるToDoアプリ")
+                                        Text(L10n.makeTodoDescription)
                                             .font(.system(size: 14))
                                             .foregroundColor(.secondary)
                                             .multilineTextAlignment(.leading)
@@ -572,11 +574,11 @@ struct SettingsView: View {
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("サラリー")
+                                        Text(L10n.salaryTitle)
                                             .font(.system(size: 18, weight: .medium))
                                             .foregroundColor(.primary)
                                         
-                                        Text("給料日までの給与が確認できる仕事のモチベーション管理アプリ")
+                                        Text(L10n.salaryDescription)
                                             .font(.system(size: 14))
                                             .foregroundColor(.secondary)
                                             .multilineTextAlignment(.leading)
@@ -596,24 +598,24 @@ struct SettingsView: View {
                     
                     VStack(spacing: 10) {
                         HStack {
-                            Text("アプリについて")
+                            Text(L10n.about)
                                 .foregroundColor(.secondary)
                                 .frame(alignment: .leading)
                             Spacer()
                         }.padding(.leading)
+                        
                         VStack(spacing: 15) {
-                            
                             // 各設定項目にアクションを追加
                             SettingRow(
                                 icon: "doc.text.fill",
-                                title: "利用規約",
+                                title: NSLocalizedString("terms_of_service", comment: "Terms of service"),
                                 color: .green,
                                 action: { showingShareSettings = true }
                             )
                             
                             SettingRow(
                                 icon: "lock.fill",
-                                title: "プライバシーポリシー",
+                                title: NSLocalizedString("privacy_policy", comment: "Privacy policy"),
                                 color: .orange,
                                 action: { showingPrivacySettings = true }
                             )
@@ -623,7 +625,7 @@ struct SettingsView: View {
                                     .foregroundColor(.blue)
                                     .font(.system(size: 20))
                                 
-                                Text("アプリのバージョン")
+                                Text(NSLocalizedString("app_version", comment: "App version"))
                                     .foregroundColor(.primary)
                                 
                                 Spacer()
@@ -722,26 +724,26 @@ struct SettingsView: View {
         )
         .alert(isPresented: $isShowingLogoutAlert) {
             Alert(
-                title: Text("ログアウト"),
-                message: Text("本当にログアウトしますか？"),
-                primaryButton: .destructive(Text("ログアウト")) {
+                title: Text(NSLocalizedString("logout", comment: "Logout")),
+                message: Text(NSLocalizedString("confirm_logout", comment: "Are you sure you want to logout?")),
+                primaryButton: .destructive(Text(NSLocalizedString("logout", comment: "Logout"))) {
                     logout()
                 },
-                secondaryButton: .cancel(Text("キャンセル"))
+                secondaryButton: .cancel(Text(L10n.cancel))
             )
         }
         .alert(isPresented: $showingReviewConfirmation) {
             Alert(
-                title: Text("アプリを評価"),
-                message: Text("App Storeでこのアプリを評価しますか？"),
-                primaryButton: .default(Text("評価する")) {
+                title: Text(NSLocalizedString("rate_app", comment: "Rate app")),
+                message: Text(NSLocalizedString("rate_app_store_message", comment: "Would you like to rate this app on the App Store?")),
+                primaryButton: .default(Text(NSLocalizedString("rate_now", comment: "Rate now"))) {
                     
                     // または、App Storeのレビューページに直接移動
                     if let writeReviewURL = URL(string: "https://apps.apple.com/app/id6746085816?action=write-review") {
                         openURL(writeReviewURL)
                     }
                 },
-                secondaryButton: .cancel(Text("後で"))
+                secondaryButton: .cancel(Text(NSLocalizedString("later", comment: "Later")))
             )
         }
     }
@@ -922,7 +924,7 @@ struct SettingsView: View {
                 if let childSnapshot = child as? DataSnapshot {
                     if let value = childSnapshot.value as? [String: Any] {
                         let id = childSnapshot.key
-                        let name = value["name"] as? String ?? "名前なし"
+                        let name = value["name"] as? String ?? L10n.noNamePlaceholder
                         let imageUrl = value["imageUrl"] as? String
                         let backgroundImageUrl = value["backgroundImageUrl"] as? String
                         let memo = value["memo"] as? String
@@ -1074,5 +1076,6 @@ extension DateFormatter {
 }
 
 #Preview {
-    SettingsView(oshiChange: .constant(false))
+//    SettingsView(oshiChange: .constant(false))
+    TopView()
 }

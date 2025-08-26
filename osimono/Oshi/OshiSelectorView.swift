@@ -41,12 +41,10 @@ struct OshiSelectorView: View {
                         }
                     }
                 }
-            
             VStack(spacing: 20) {
-                // ヘッダー（改良版）
                 VStack(spacing: 16) {
                     HStack {
-                        Text(isEditMode ? "推しを削除" : "推しを変更")
+                        Text(isEditMode ? L10n.deleteOshiMode : L10n.changeOshi)
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
@@ -62,7 +60,7 @@ struct OshiSelectorView: View {
                                 HStack(spacing: 6) {
                                     Image(systemName: isEditMode ? "checkmark.circle.fill" : "pencil.circle.fill")
                                         .font(.system(size: 16))
-                                    Text(isEditMode ? "完了" : "編集")
+                                    Text(isEditMode ? L10n.complete : L10n.edit)
                                         .font(.system(size: 16, weight: .medium))
                                 }
                                 .foregroundColor(isEditMode ? .green : .blue)
@@ -101,7 +99,7 @@ struct OshiSelectorView: View {
                             Image(systemName: "info.circle")
                                 .font(.system(size: 14))
                                 .foregroundColor(.yellow)
-                            Text("削除したい推しの⊖ボタンをタップしてください")
+                            Text(L10n.deleteInstructions)
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.8))
                         }
@@ -147,7 +145,7 @@ struct OshiSelectorView: View {
                                         .foregroundColor(primaryColor)
                                 }
                                 
-                                Text("新規追加")
+                                Text(L10n.addNew)
                                     .font(.subheadline)
                                     .foregroundColor(.white)
                             }
@@ -233,7 +231,7 @@ struct OshiSelectorView: View {
                                                             ProgressView()
                                                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                                                 .scaleEffect(0.8)
-                                                            Text("削除中...")
+                                                            Text(L10n.deletingOshi)
                                                                 .font(.system(size: 10))
                                                                 .foregroundColor(.white)
                                                         }
@@ -329,12 +327,12 @@ struct OshiSelectorView: View {
                         }
                         
                         VStack(spacing: 8) {
-                            Text("推しを削除中...")
+                            Text(L10n.deletingOshi)
                                 .font(.headline)
                                 .foregroundColor(.white)
                             
                             if let deletingOshi = oshiToDelete {
-                                Text("\(deletingOshi.name)とすべての関連データを削除しています")
+                                Text(L10n.deleteOshiAndAllData(deletingOshi.name))
                                     .font(.subheadline)
                                     .foregroundColor(.white.opacity(0.8))
                                     .multilineTextAlignment(.center)
@@ -375,17 +373,17 @@ struct OshiSelectorView: View {
                 .zIndex(1001)
             }
         }
-        .alert("推しを削除", isPresented: $showDeleteAlert) {
-            Button("削除", role: .destructive) {
+        .alert(L10n.deleteOshiTitle, isPresented: $showDeleteAlert) {
+            Button(L10n.delete, role: .destructive) {
                 if let oshi = oshiToDelete {
                     deleteOshi(oshi)
                 }
             }
-            Button("キャンセル", role: .cancel) {
+            Button(L10n.cancel, role: .cancel) {
                 oshiToDelete = nil
             }
         } message: {
-            Text("\(oshiToDelete?.name ?? "")を削除しますか？この操作は元に戻せません。\n関連するチャット履歴やアイテム記録もすべて削除されます。")
+            Text(L10n.deleteOshiAllDataMessage(oshiToDelete?.name ?? ""))
         }
     }
     

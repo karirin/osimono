@@ -48,7 +48,7 @@ struct BugReportView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         // Description field
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("バグ報告・ご意見の内容")
+                            Text(NSLocalizedString("bug_report_content_title", comment: "Bug report content title"))
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(accentColor)
                             
@@ -68,7 +68,7 @@ struct BugReportView: View {
                                     )
                                 
                                 if bugDescription.isEmpty && !isDescriptionFocused {
-                                    Text("改善点や追加を希望する機能などございましたら\nお気軽にご連絡ください\n可能な限りご要望にお応えいたします")
+                                    Text(NSLocalizedString("bug_report_placeholder", comment: "Bug report placeholder text"))
                                         .foregroundColor(.gray.opacity(0.8))
                                         .padding(.top, 20)
                                         .padding(.leading, 16)
@@ -89,7 +89,7 @@ struct BugReportView: View {
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                         .padding(.horizontal, 8)
                                 } else {
-                                    Text("送信する")
+                                    Text(L10n.send)
                                         .fontWeight(.bold)
                                 }
                                 
@@ -109,7 +109,7 @@ struct BugReportView: View {
                         .padding(.top, 16)
                         
                         // Privacy note
-                        Text("提供された情報は問題解決のためだけに使用され、第三者に共有されることはありません。")
+                        Text(NSLocalizedString("privacy_note", comment: "Privacy note for bug report"))
                             .font(.system(size: 14))
                             .foregroundColor(.gray)
                             .padding(.top, 16)
@@ -119,7 +119,7 @@ struct BugReportView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .principal) {
-                        Text("お問い合せ")
+                        Text(L10n.inquiryTitle)
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(accentColor)
                     }
@@ -140,18 +140,18 @@ struct BugReportView: View {
             }
             .alert(isPresented: $showingSubmitSuccess) {
                 Alert(
-                    title: Text("送信されました"),
-                    message: Text("お問合せいただきありがとうございます。"),
-                    dismissButton: .default(Text("OK")) {
+                    title: Text(L10n.sentTitle),
+                    message: Text(L10n.sentMessage),
+                    dismissButton: .default(Text(L10n.ok)) {
                         dismiss()
                     }
                 )
             }
-            .alert("変更を破棄しますか？", isPresented: $showingDiscardAlert) {
-                Button("破棄", role: .destructive) { dismiss() }
-                Button("キャンセル", role: .cancel) { }
+            .alert(NSLocalizedString("discard_changes_title", comment: "Discard changes alert title"), isPresented: $showingDiscardAlert) {
+                Button(NSLocalizedString("discard", comment: "Discard button"), role: .destructive) { dismiss() }
+                Button(L10n.cancel, role: .cancel) { }
             } message: {
-                Text("入力した内容は保存されません。")
+                Text(NSLocalizedString("discard_changes_message", comment: "Discard changes alert message"))
             }
             .onAppear {
                 // Pre-populate email if user is signed in

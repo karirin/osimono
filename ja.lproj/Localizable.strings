@@ -599,7 +599,6 @@
 "gender" = "性別";
 
 "unlimited" = "無制限";
-"remaining" = "残り";
 "start_conversation" = "会話を始めましょう！";
 "talk_to_oshi_placeholder" = "%@に話しかけてみよう";
 "loading_chat" = "チャットを読み込み中...";
@@ -793,3 +792,71 @@
 "random_message_prompt_question" = "ファンに対して簡単な質問をして、会話を始めます";
 "test_message_prompt" = "ファンに対してテスト用のメッセージを送ります";
 "test_message_sent" = "テストメッセージを送信しました";
+
+// Admin Functions
+"admin_functions" = "管理者機能";
+"data_analytics" = "データ分析";
+"all_data_display" = "全データ表示";
+"data_export" = "データエクスポート";
+
+// Premium Plan
+"premium_plan" = "プレミアムプラン";
+"tap_icon_to_change" = "アイコンをタップして変更";
+"upgrade_to_premium_plan" = "プレミアムプランに加入";
+"make_oshi_time_richer" = "推しとの時間をより豊かに";
+"ad_free" = "広告非表示";
+"unlimited_oshi" = "推し無制限";
+
+// Feedback
+"feedback" = "フィードバック";
+"report_bug_feedback" = "バグ・ご意見を報告";
+"rate_app" = "アプリを評価する";
+
+// Recommended Apps
+"recommended_apps" = "おすすめのアプリ";
+"it_quest_description" = "ゲーム感覚でITパスポートに合格できるアプリ";
+"drill_quest_description" = "ゲーム感覚で小学校レベルの勉強ができるアプリ";
+"make_todo_description" = "自分好みにカスタマイズできるToDoアプリ";
+"salary_app_name" = "サラリー";
+"salary_app_description" = "給料日までの給与が確認できる仕事のモチベーション管理アプリ";
+
+// About
+"terms_of_service" = "利用規約";
+"privacy_policy" = "プライバシーポリシー";
+"app_version" = "アプリのバージョン";
+
+// Alerts
+"confirm_logout" = "本当にログアウトしますか？";
+"rate_app_store_message" = "App Storeでこのアプリを評価しますか？";
+"rate_now" = "評価する";
+"later" = "後で";
+
+"recommended_apps" = "おすすめのアプリ";
+"it_quest_title" = "ITクエスト";
+"it_quest_description" = "ゲーム感覚でITパスポートに合格できるアプリ";
+"drill_quest_title" = "ドリルクエスト";
+"drill_quest_description" = "ゲーム感覚で小学校レベルの勉強ができるアプリ";
+"make_todo_title" = "メイクToDo";
+"make_todo_description" = "自分好みにカスタマイズできるToDoアプリ";
+"salary_title" = "サラリー";
+"salary_description" = "給料日までの給与が確認できる仕事のモチベーション管理アプリ";
+
+// MARK: - Oshi Selector View
+"select_your_oshi_title" = "推しを選択";
+"change_oshi" = "推しを変更";
+"delete_oshi_mode" = "推しを削除";
+"complete_deletion" = "完了";
+"edit_mode" = "編集";
+"delete_instructions" = "削除したい推しの⊖ボタンをタップしてください";
+"add_new_oshi" = "新規追加";
+"deleting_oshi" = "推しを削除中...";
+"delete_oshi_title" = "推しを削除";
+"delete_oshi_all_data_message" = "%@を削除しますか？この操作は元に戻せません。\n関連するチャット履歴やアイテム記録もすべて削除されます。";
+"delete_oshi_and_all_data" = "%@とすべての関連データを削除しています";
+
+"bug_report_content_title" = "バグ報告・ご意見の内容";
+"bug_report_placeholder" = "改善点や追加を希望する機能などございましたら\nお気軽にご連絡ください\n可能な限りご要望にお応えいたします";
+"privacy_note" = "提供された情報は問題解決のためだけに使用され、第三者に共有されることはありません。";
+"discard_changes_title" = "変更を破棄しますか？";
+"discard" = "破棄";
+"discard_changes_message" = "入力した内容は保存されません。";

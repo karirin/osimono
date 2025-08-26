@@ -801,9 +801,43 @@ struct L10n {
     static let toTheEnd = NSLocalizedString("to_the_end", comment: "To the end")
     static let haveBeenAdded = NSLocalizedString("have_been_added", comment: "Have been added")
     
+    static let unlimitedChat = NSLocalizedString("unlimited_chat", comment: "Unlimited Chat")
+    
     // MARK: - Helper functions for dynamic content
     static func messagesAddedFormat(_ count: Int) -> String {
         return String.localizedStringWithFormat(NSLocalizedString("messages_added_format", comment: "Messages added format"), count)
+    }
+
+    static let recommendedApps = NSLocalizedString("recommended_apps", comment: "Recommended apps section title")
+    static let itQuestTitle = NSLocalizedString("it_quest_title", comment: "IT Quest app title")
+    static let itQuestDescription = NSLocalizedString("it_quest_description", comment: "IT Quest app description")
+    static let drillQuestTitle = NSLocalizedString("drill_quest_title", comment: "Drill Quest app title")
+    static let drillQuestDescription = NSLocalizedString("drill_quest_description", comment: "Drill Quest app description")
+    static let makeTodoTitle = NSLocalizedString("make_todo_title", comment: "Make Todo app title")
+    static let makeTodoDescription = NSLocalizedString("make_todo_description", comment: "Make Todo app description")
+    static let salaryTitle = NSLocalizedString("salary_title", comment: "Salary app title")
+    static let salaryDescription = NSLocalizedString("salary_description", comment: "Salary app description")
+
+    // MARK: - Oshi Selector View
+    static let selectYourOshiTitle = NSLocalizedString("select_your_oshi_title", comment: "Select your oshi title")
+    static let changeOshi = NSLocalizedString("change_oshi", comment: "Change oshi")
+    static let deleteOshiMode = NSLocalizedString("delete_oshi_mode", comment: "Delete oshi mode")
+    static let completeDeletion = NSLocalizedString("complete_deletion", comment: "Complete deletion")
+    static let editMode = NSLocalizedString("edit_mode", comment: "Edit mode")
+    static let deleteInstructions = NSLocalizedString("delete_instructions", comment: "Delete instructions")
+    static let addNewOshi = NSLocalizedString("add_new_oshi", comment: "Add new oshi")
+    static let deletingOshi = NSLocalizedString("deleting_oshi", comment: "Deleting oshi")
+    static let deleteOshiTitle = NSLocalizedString("delete_oshi_title", comment: "Delete oshi alert title")
+    static let deleteOshiAllDataMessage = NSLocalizedString("delete_oshi_all_data_message", comment: "Delete oshi all data message")
+    static let deleteOshiAndAllData = NSLocalizedString("delete_oshi_and_all_data", comment: "Delete oshi and all related data")
+
+    // Helper function
+    static func deleteOshiAllDataMessage(_ oshiName: String) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("delete_oshi_all_data_message", comment: "Delete oshi all data message"), oshiName)
+    }
+    
+    static func deleteOshiAndAllData(_ oshiName: String) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("delete_oshi_and_all_data", comment: "Delete oshi and all related data"), oshiName)
     }
 }
 

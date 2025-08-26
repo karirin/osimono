@@ -946,7 +946,34 @@ struct ChatHubView: View {
             }
             dispatchGroup.leave()
         }
-        
+        dispatchGroup.enter()
+          userRef.child("selectedOshiId").observeSingleEvent(of: .value) { snapshot in
+              if let selectedOshiId = snapshot.value as? String, selectedOshiId == oshi.id {
+                  // 削除する推しが選択中の場合、他の推しに変更するか、デフォルトに戻す
+                  let oshisRef = Database.database().reference().child("oshis").child(userId)
+                  oshisRef.observeSingleEvent(of: .value) { oshiSnapshot in
+                      var newSelectedId = "default"
+                      
+                      // 他の推しが存在する場合、最初の推しを選択
+                      for child in oshiSnapshot.children {
+                          if let childSnapshot = child as? DataSnapshot,
+                             childSnapshot.key != oshi.id {
+                              newSelectedId = childSnapshot.key
+                              break
+                          }
+                      }
+                      
+                      userRef.updateChildValues(["selectedOshiId": newSelectedId]) { error, _ in
+                          if let error = error {
+                              print("選択中推しID更新エラー: \(error.localizedDescription)")
+                          }
+                          dispatchGroup.leave()
+                      }
+                  }
+              } else {
+                  dispatchGroup.leave()
+              }
+          }
         // すべての削除処理が完了したら
         dispatchGroup.notify(queue: .main) {
             self.isDeletingItem = false

@@ -597,7 +597,6 @@
 "gender" = "Gender";
 
 "unlimited" = "Unlimited";
-"remaining" = "Remaining";
 "start_conversation" = "Let's start a conversation!";
 "talk_to_oshi_placeholder" = "Try talking to %@";
 "loading_chat" = "Loading chat...";
@@ -723,7 +722,7 @@
 
 // MARK: - Chat AI Features (English)
 "unlimited" = "Unlimited";
-"remaining" = "Remaining";
+"remaining" = "";
 "start_conversation" = "Let's start a conversation!";
 "talk_to_oshi_placeholder" = "Try talking to %@";
 "loading_chat" = "Loading chat...";
@@ -789,3 +788,72 @@
 "random_message_prompt_question" = "Ask the fan a simple question to start a conversation";
 "test_message_prompt" = "Send a test message to the fan";
 "test_message_sent" = "Test message sent";
+
+// Admin Functions
+"admin_functions" = "Admin Functions";
+"data_analytics" = "Data Analytics";
+"all_data_display" = "All Data Display";
+"data_export" = "Data Export";
+
+// Premium Plan
+"premium_plan" = "Premium Plan";
+"tap_icon_to_change" = "Tap icon to change";
+"upgrade_to_premium_plan" = "Join Premium Plan";
+"make_oshi_time_richer" = "Make time with oshi richer";
+"ad_free" = "Ad Free";
+"unlimited_oshi" = "Unlimited Oshi";
+
+// Feedback
+"feedback" = "Feedback";
+"report_bug_feedback" = "Report Bug & Feedback";
+"rate_app" = "Rate App";
+
+// Recommended Apps
+"recommended_apps" = "Recommended Apps";
+"it_quest_description" = "Game-style app for passing IT Passport exam";
+"drill_quest_description" = "Game-style learning app for elementary school";
+"make_todo_description" = "Customizable ToDo app for your preferences";
+"salary_app_name" = "Salary";
+"salary_app_description" = "Work motivation management app to check salary until payday";
+
+// About
+"terms_of_service" = "Terms of Service";
+"privacy_policy" = "Privacy Policy";
+"app_version" = "App Version";
+
+// Alerts
+"confirm_logout" = "Are you sure you want to logout?";
+"rate_app_store_message" = "Would you like to rate this app on the App Store?";
+"rate_now" = "Rate Now";
+"later" = "Later";
+
+// MARK: - Settings View - Recommended Apps
+"recommended_apps" = "Recommended Apps";
+"it_quest_title" = "IT Quest";
+"it_quest_description" = "An app to pass the IT Passport exam through gaming";
+"drill_quest_title" = "Drill Quest";
+"drill_quest_description" = "An app for elementary school level learning through gaming";
+"make_todo_title" = "Make Todo";
+"make_todo_description" = "A customizable todo app";
+"salary_title" = "Salary";
+"salary_description" = "A work motivation management app to check salary until payday";
+
+// MARK: - Oshi Selector View
+"select_your_oshi_title" = "Select Your Oshi";
+"change_oshi" = "Change Oshi";
+"delete_oshi_mode" = "Delete Oshi";
+"complete_deletion" = "Complete";
+"edit_mode" = "Edit";
+"delete_instructions" = "Tap the ⊖ button of the oshi you want to delete";
+"add_new_oshi" = "Add New";
+"deleting_oshi" = "Deleting oshi...";
+"delete_oshi_title" = "Delete Oshi";
+"delete_oshi_all_data_message" = "Delete %@? This action cannot be undone.\nAll related chat history and item records will also be deleted.";
+"delete_oshi_and_all_data" = "Deleting %@ and all related data";
+
+"bug_report_content_title" = "Bug Report & Feedback Content";
+"bug_report_placeholder" = "If you have any improvements or features you would like to see added,\nplease feel free to contact us.\nWe will respond to your requests as much as possible.";
+"privacy_note" = "The information provided will only be used to resolve issues and will not be shared with third parties.";
+"discard_changes_title" = "Discard changes?";
+"discard" = "Discard";
+"discard_changes_message" = "Entered content will not be saved.";

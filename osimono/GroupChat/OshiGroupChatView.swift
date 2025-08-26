@@ -124,6 +124,10 @@ struct OshiGroupChatView: View {
                 ReviewView(isPresented: $customerFlag, helpFlag: $helpFlag)
             }
         }
+        .contentShape(Rectangle())
+        .simultaneousGesture(
+            TapGesture().onEnded { isTextFieldFocused = false }
+        )
         .gesture(
             DragGesture()
                 .onEnded { value in
