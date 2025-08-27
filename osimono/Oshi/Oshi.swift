@@ -30,6 +30,9 @@ struct Oshi: Identifiable, Codable, Equatable {
     var gender: String?       // 性別（男性、女性、その他）
     var user_nickname: String? // 推しがユーザーを呼ぶ呼び方（例：「〇〇ちゃん」「〇〇くん」「〇〇さん」など）
     
+    // 新規追加：言語設定プロパティ
+    var preferred_language: String? // 会話言語設定（"ja", "en", "auto"など）
+    
     static func == (lhs: Oshi, rhs: Oshi) -> Bool {
         return lhs.id == rhs.id
     }
@@ -39,5 +42,6 @@ struct Oshi: Identifiable, Codable, Equatable {
         case personality, interests, speaking_style, birthday
         case height, favorite_color, favorite_food, disliked_food, hometown
         case gender, user_nickname
+        case preferred_language // 新しいキーを追加
     }
 }

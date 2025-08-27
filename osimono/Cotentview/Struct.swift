@@ -867,6 +867,9 @@ struct L10n {
     static let welcomeAppDescription = NSLocalizedString("welcome_app_description", comment: "Welcome app description")
     static let welcomeViewTutorial = NSLocalizedString("welcome_view_tutorial", comment: "Welcome view tutorial button")
     static let welcomeSkipAndStart = NSLocalizedString("welcome_skip_and_start", comment: "Welcome skip and start button")
+    static let conversationLanguage = NSLocalizedString("conversation_language", comment: "Conversation Language")
+    static let selectConversationLanguage = NSLocalizedString("select_conversation_language", comment: "Select Conversation Language")
+    static let languageSettingNote = NSLocalizedString("language_setting_note", comment: "Language Setting Note")
 }
 
 func getCurrentLanguage() -> String {

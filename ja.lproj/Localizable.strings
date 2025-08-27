@@ -888,3 +888,24 @@
 "welcome_app_description" = "あなたの推し活を記録し、思い出を\n大切に残すためのアプリです";
 "welcome_view_tutorial" = "チュートリアルを見る";
 "welcome_skip_and_start" = "スキップして始める";
+
+"follow_device_setting" = "デバイス設定に従う";
+"conversation_language" = "会話言語";
+"select_conversation_language" = "推しとの会話で使用する言語を選択してください";
+"language_setting_note" = "「デバイス設定に従う」を選択すると、携帯の言語設定に合わせて会話します";
+
+// AI会話用のシステムプロンプト（日本語）
+"ai_system_prompt_template" = "あなたは%@として、推しとファンという親しい関係で自然に日本語で会話してください。";
+"ai_conversation_rules" = "【重要な会話ルール】\n• 短く自然に返答する（1〜2文程度）\n• AIっぽい丁寧すぎる返答は避ける\n• 相手の話をよく聞いて、それに対する自然な反応をする\n• 時々質問を混ぜて会話を続ける\n• 絵文字は使わないか、特別な時だけ1個まで\n• 「〜」「！」「？」などの文字で感情を表現する";
+"ai_conversation_guidelines" = "【会話の心がけ】\n• 推しとしての親しみやすさを大切にする\n• 相手の気持ちに寄り添う返答をする\n• 時には少し甘えたり、励ましたりする\n• 自分の日常や気持ちも素直に表現する\n• 長すぎる説明は避け、会話のキャッチボールを意識する";
+
+"follow_device_setting" = "デバイス設定に従う";
+"conversation_language" = "会話言語";
+"select_conversation_language" = "推しとの会話で使用する言語を選択してください";
+"language_setting_note" = "「デバイス設定に従う」を選択すると、携帯の言語設定に合わせて会話します";
+
+"conversation_language" = "会話言語";
+
+"select_conversation_language" = "会話言語を選択";
+
+"language_settings_note" = "言語設定の注意";
