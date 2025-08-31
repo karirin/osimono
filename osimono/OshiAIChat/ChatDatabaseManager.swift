@@ -237,4 +237,45 @@ class ChatDatabaseManager {
             completion(error)
         }
     }
+    
+    func updateMessage(_ message: ChatMessage, completion: @escaping (Error?) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            completion(NSError(domain: "AuthError", code: -1, userInfo: [NSLocalizedDescriptionKey: "ユーザーが認証されていません"]))
+            return
+        }
+        
+        // 正しいパスを使用: oshiChats
+        let chatRef = database.child("oshiChats").child(userID).child(message.oshiId).child(message.id)
+        
+        let messageData = message.toDictionary()
+        
+        chatRef.updateChildValues(messageData) { error, _ in
+            if let error = error {
+                print("❌ メッセージ更新エラー: \(error.localizedDescription)")
+            } else {
+                print("✅ メッセージ更新完了")
+            }
+            completion(error)
+        }
+    }
+    
+    // メッセージ削除
+    func deleteMessage(_ message: ChatMessage, completion: @escaping (Error?) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            completion(NSError(domain: "AuthError", code: -1, userInfo: [NSLocalizedDescriptionKey: "ユーザーが認証されていません"]))
+            return
+        }
+        
+        // 正しいパスを使用: oshiChats
+        let chatRef = database.child("oshiChats").child(userID).child(message.oshiId).child(message.id)
+        
+        chatRef.removeValue { error, _ in
+            if let error = error {
+                print("❌ メッセージ削除エラー: \(error.localizedDescription)")
+            } else {
+                print("✅ メッセージ削除完了")
+            }
+            completion(error)
+        }
+    }
 }

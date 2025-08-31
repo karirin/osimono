@@ -80,6 +80,12 @@ struct OshiAIChatView: View {
     @State private var isLoadingAd = false
     var isEmbedded: Bool = false
     
+    @State private var editingMessage: ChatMessage? = nil
+    @State private var editingText: String = ""
+    @State private var showEditAlert = false
+    @State private var selectedMessageForDeletion: ChatMessage? = nil
+    @State private var showDeleteAlert = false
+    
     private let adminUserIds = [
 //        "3UDNienzhkdheKIy77lyjMJhY4D3",
         "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
@@ -139,6 +145,7 @@ struct OshiAIChatView: View {
                             }
                 )
 
+            // メッセージ制限モーダル
             if showMessageLimitModal {
                 MessageLimitModal(
                     isPresented: $showMessageLimitModal,
@@ -152,6 +159,7 @@ struct OshiAIChatView: View {
                 .zIndex(999)
             }
 
+            // リワード完了モーダル
             if showRewardCompletedModal {
                 RewardCompletedModal(
                     isPresented: $showRewardCompletedModal,
@@ -159,10 +167,12 @@ struct OshiAIChatView: View {
                 )
             }
             
+            // ヘルプモーダル
             if helpFlag {
                 HelpModalView(isPresented: $helpFlag)
             }
         }
+        .overlay(adminAlerts)
         .onReceive(Publishers.keyboardHeight) { height in
             withAnimation(.easeInOut(duration: 0.3)) { keyboardHeight = height }
         }
@@ -237,6 +247,108 @@ struct OshiAIChatView: View {
                     remainingMessages = MessageLimitManager.shared.getRemainingMessages()
                 }
         }
+    }
+    
+    private func startEditingMessage(_ message: ChatMessage) {
+        editingMessage = message
+        editingText = message.content
+        showEditAlert = true
+    }
+    
+    // メッセージ削除確認
+    private func confirmDeleteMessage(_ message: ChatMessage) {
+        selectedMessageForDeletion = message
+        showDeleteAlert = true
+    }
+    
+    // メッセージを実際に編集
+    private func saveEditedMessage() {
+        guard let editingMessage = editingMessage,
+              !editingText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return
+        }
+        
+        // ローカルのメッセージを更新
+        if let index = messages.firstIndex(where: { $0.id == editingMessage.id }) {
+            // 新しいメッセージインスタンスを作成（letプロパティを変更する代わりに）
+            let updatedMessage = ChatMessage(
+                id: editingMessage.id,
+                content: editingText,
+                isUser: editingMessage.isUser,
+                timestamp: Date().timeIntervalSince1970, // 編集時刻を更新
+                oshiId: editingMessage.oshiId,
+                itemId: editingMessage.itemId
+            )
+            messages[index] = updatedMessage
+            
+            // Firebaseに保存
+            ChatDatabaseManager.shared.updateMessage(updatedMessage) { error in
+                if let error = error {
+                    print("❌ メッセージ編集エラー: \(error.localizedDescription)")
+                    // エラーの場合は元に戻す
+                    DispatchQueue.main.async {
+                        self.messages[index] = editingMessage
+                    }
+                } else {
+                    print("✅ メッセージ編集完了")
+                }
+            }
+        }
+        
+        // 編集状態をリセット
+        self.editingMessage = nil
+        self.editingText = ""
+    }
+    
+    // メッセージを実際に削除
+    private func deleteMessage() {
+        guard let messageToDelete = selectedMessageForDeletion else { return }
+        
+        // ローカルから削除
+        messages.removeAll { $0.id == messageToDelete.id }
+        
+        // Firebaseから削除
+        ChatDatabaseManager.shared.deleteMessage(messageToDelete) { error in
+            if let error = error {
+                print("❌ メッセージ削除エラー: \(error.localizedDescription)")
+                // エラーの場合は元に戻す
+                DispatchQueue.main.async {
+                    self.messages.append(messageToDelete)
+                    self.messages.sort { $0.timestamp < $1.timestamp }
+                }
+            } else {
+                print("✅ メッセージ削除完了")
+            }
+        }
+        
+        selectedMessageForDeletion = nil
+    }
+    
+    // 管理者用のアラートビューを追加
+    private var adminAlerts: some View {
+        EmptyView()
+            .alert("メッセージを編集", isPresented: $showEditAlert, actions: {
+                TextField("メッセージ内容", text: $editingText)
+                Button("保存") {
+                    saveEditedMessage()
+                }
+                Button("キャンセル", role: .cancel) {
+                    editingMessage = nil
+                    editingText = ""
+                }
+            }, message: {
+                Text("管理者権限でメッセージ内容を変更します")
+            })
+            .alert("メッセージを削除", isPresented: $showDeleteAlert, actions: {
+                Button("削除", role: .destructive) {
+                    deleteMessage()
+                }
+                Button("キャンセル", role: .cancel) {
+                    selectedMessageForDeletion = nil
+                }
+            }, message: {
+                Text("このメッセージを完全に削除しますか？この操作は取り消せません。")
+            })
     }
     
     func executeProcessEveryfifTimes() {
@@ -388,8 +500,26 @@ struct OshiAIChatView: View {
                             .padding(.top, 40)
                     } else {
                         ForEach(messages, id: \.id) { message in
-                            LineChatBubble(message: message, oshiName: viewModel.selectedOshi.name, oshiImageURL: viewModel.selectedOshi.imageUrl)
+//                            LineChatBubble(message: message, oshiName: viewModel.selectedOshi.name, oshiImageURL: viewModel.selectedOshi.imageUrl)
+//                                .id(message.id)
+                            if isAdmin {
+                                AdminLineChatBubble(
+                                    message: message,
+                                    oshiName: viewModel.selectedOshi.name,
+                                    oshiImageURL: viewModel.selectedOshi.imageUrl,
+                                    isAdmin: true,
+                                    onEdit: { startEditingMessage($0) },
+                                    onDelete: { confirmDeleteMessage($0) }
+                                )
                                 .id(message.id)
+                            } else {
+                                LineChatBubble(
+                                    message: message,
+                                    oshiName: viewModel.selectedOshi.name,
+                                    oshiImageURL: viewModel.selectedOshi.imageUrl
+                                )
+                                .id(message.id)
+                            }
                         }
                         Color.clear
                             .frame(height: 1)
@@ -1137,6 +1267,140 @@ struct OshiAIChatView: View {
         }
     }
 }
+
+struct AdminLineChatBubble: View {
+    let message: ChatMessage
+    let oshiName: String
+    let oshiImageURL: String?
+    let isAdmin: Bool
+    let onEdit: (ChatMessage) -> Void
+    let onDelete: (ChatMessage) -> Void
+    
+    let primaryColor = Color(.systemPink)
+    let accentColor = Color(.purple)
+    let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
+    
+    @State private var showActionSheet = false
+    
+    var body: some View {
+        VStack(alignment: message.isUser ? .trailing : .leading, spacing: 2) {
+            HStack(alignment: .top, spacing: 4) {
+                // 相手のメッセージの場合、アイコンを表示
+                if !message.isUser {
+                    profileImage
+                        .frame(width: 30, height: 30)
+                        .padding(.top, 5)
+                }
+                
+                if message.isUser {
+                    Spacer()
+                }
+                
+                // メッセージ本文（管理者の場合は長押しで編集・削除可能）
+                Text(message.content)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(
+                        (message.isUser
+                         ? AnyShapeStyle(primaryColor.opacity(0.8))
+                         : AnyShapeStyle(Color.white))
+                    )
+                    .foregroundColor(message.isUser ? .white : .black)
+                    .cornerRadius(18)
+                    .onLongPressGesture {
+                        if isAdmin {
+                            showActionSheet = true
+                            generateHapticFeedback()
+                        }
+                    }
+                
+                if !message.isUser {
+                    Spacer()
+                }
+            }
+            
+            // タイムスタンプ
+            Text(formatDate(timestamp: message.timestamp))
+                .font(.system(size: 10))
+                .foregroundColor(.gray)
+                .padding(.horizontal, message.isUser ? 0 : 38)
+        }
+        .padding(.horizontal, 0)
+        .padding(.vertical, 2)
+        .actionSheet(isPresented: $showActionSheet) {
+            ActionSheet(
+                title: Text("メッセージを編集"),
+                message: Text("管理者権限でメッセージを変更できます"),
+                buttons: [
+                    .default(Text("編集")) {
+                        onEdit(message)
+                    },
+                    .destructive(Text("削除")) {
+                        onDelete(message)
+                    },
+                    .cancel(Text("キャンセル"))
+                ]
+            )
+        }
+    }
+    
+    private var profileImage: some View {
+        Group {
+            if let imageUrl = oshiImageURL, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .clipShape(Circle())
+                    default:
+                        defaultProfileImage
+                    }
+                }
+            } else {
+                defaultProfileImage
+            }
+        }
+    }
+    
+    private var defaultProfileImage: some View {
+        Circle()
+            .fill(Color.gray.opacity(0.2))
+            .overlay(
+                Image(systemName: "person.crop.circle")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16)
+                    .foregroundColor(.gray)
+            )
+    }
+    
+    private func formatDate(timestamp: TimeInterval) -> String {
+        let date = Date(timeIntervalSince1970: timestamp)
+        let formatter = DateFormatter()
+        
+        let currentLanguage = Locale.current.languageCode ?? "en"
+        if currentLanguage == "ja" {
+            formatter.locale = Locale(identifier: "ja_JP")
+        } else {
+            formatter.locale = Locale(identifier: "en_US")
+        }
+        
+        if Calendar.current.isDateInToday(date) {
+            formatter.dateFormat = "HH:mm"
+        } else {
+            if currentLanguage == "ja" {
+                formatter.dateFormat = "MM/dd HH:mm"
+            } else {
+                formatter.dateFormat = "MM/dd HH:mm"
+            }
+        }
+        
+        return formatter.string(from: date)
+    }
+}
+
 
 struct LineChatBubble: View {
     let message: ChatMessage

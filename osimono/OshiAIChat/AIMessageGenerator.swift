@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 class AIClient {
     static let shared = AIClient()
@@ -187,68 +188,131 @@ class LocalizedPromptManager {
 class AIMessageGenerator {
     static let shared = AIMessageGenerator()
     private let client = AIClient.shared
-    private let promptManager = LocalizedPromptManager.shared
     private let languageManager = LanguageManager.shared
     
-    // 言語を考慮したシステムプロンプト生成
+    // 言語を考慮したシステムプロンプト生成（完全ローカライズ対応版）
     private func createLanguageAwareSystemPrompt(oshi: Oshi) -> String {
         let conversationLanguage = languageManager.getConversationLanguage(for: oshi)
         
-        var prompt = promptManager.getSystemPromptTemplate(for: conversationLanguage, oshiName: oshi.name)
-        prompt += "\n\n" + promptManager.getConversationRules(for: conversationLanguage)
+        // 全てローカライズファイルから取得
+        var prompt = getLocalizedString("ai_system_prompt_base", language: conversationLanguage, oshiName: oshi.name)
         
-        // ユーザーの呼び方設定
-        if let userNickname = oshi.user_nickname, !userNickname.isEmpty {
-            prompt += "\n• " + promptManager.getNicknameInstruction(for: conversationLanguage, nickname: userNickname)
-        }
+        // 会話ルールを追加
+        prompt += "\n\n" + getLocalizedString("ai_conversation_rules", language: conversationLanguage)
         
-        // 性別に応じた話し方調整
-        if let gender = oshi.gender, !gender.isEmpty {
-            prompt += "\n• " + promptManager.getGenderInstruction(for: conversationLanguage, gender: gender)
-        }
+        // キャラクター設定を追加
+        prompt += "\n\n" + createCharacterSettings(oshi: oshi, language: conversationLanguage)
         
-        // 性格設定
-        if let personality = oshi.personality, !personality.isEmpty {
-            prompt += "\n• " + promptManager.getPersonalityInstruction(for: conversationLanguage, personality: personality)
-        }
-        
-        // 話し方の特徴
-        if let speakingStyle = oshi.speaking_style, !speakingStyle.isEmpty {
-            prompt += "\n• " + promptManager.getSpeakingStyleInstruction(for: conversationLanguage, speakingStyle: speakingStyle)
-        }
-        
-        // 個人的な詳細情報
-        var personalDetails: [String] = []
-        
-        if let favoriteFood = oshi.favorite_food, !favoriteFood.isEmpty {
-            let template = languageManager.localizedString("favorite_food_detail", language: conversationLanguage, fallback: "favorite food is %@")
-            personalDetails.append(String(format: template, favoriteFood))
-        }
-        
-        if let interests = oshi.interests, !interests.isEmpty {
-            let separator = languageManager.localizedString("list_separator", language: conversationLanguage, fallback: ", ")
-            let template = languageManager.localizedString("interests_detail", language: conversationLanguage, fallback: "hobbies are %@")
-            personalDetails.append(String(format: template, interests.joined(separator: separator)))
-        }
-        
-        if let birthday = oshi.birthday, !birthday.isEmpty {
-            let template = languageManager.localizedString("birthday_detail", language: conversationLanguage, fallback: "birthday is %@")
-            personalDetails.append(String(format: template, birthday))
-        }
-        
-        if !personalDetails.isEmpty {
-            prompt += "\n• " + promptManager.getPersonalDetailsInstruction(for: conversationLanguage, details: personalDetails)
-        }
-        
-        prompt += "\n\n" + promptManager.getConversationGuidelines(for: conversationLanguage)
+        // 最終的な言語確認指示を追加
+        prompt += "\n\n" + getLocalizedString("ai_final_language_reminder", language: conversationLanguage)
         
         return prompt
     }
     
+    // ローカライズされた文字列を取得（パラメータ置換対応）
+    private func getLocalizedString(_ key: String, language: String, oshiName: String? = nil) -> String {
+        let localizedString = languageManager.localizedString(key, language: language, fallback: "")
+        
+        // パラメータ置換
+        if let name = oshiName {
+            return String(format: localizedString, name)
+        }
+        return localizedString
+    }
+    
+    // キャラクター設定を言語に関係なく統一的に作成
+    private func createCharacterSettings(oshi: Oshi, language: String) -> String {
+        var settings: [String] = []
+        
+        // ユーザーの呼び方設定
+        if let userNickname = oshi.user_nickname, !userNickname.isEmpty {
+            let instruction = getLocalizedString("ai_user_nickname_instruction", language: language)
+            settings.append(String(format: instruction, userNickname))
+        }
+        
+        // 性別設定
+        if let gender = oshi.gender, !gender.isEmpty {
+            let instruction = createGenderInstruction(gender: gender, language: language)
+            settings.append(instruction)
+        }
+        
+        // 性格設定
+        if let personality = oshi.personality, !personality.isEmpty {
+            let instruction = getLocalizedString("ai_personality_instruction", language: language)
+            settings.append(String(format: instruction, personality))
+        }
+        
+        // 話し方設定
+        if let speakingStyle = oshi.speaking_style, !speakingStyle.isEmpty {
+            let instruction = getLocalizedString("ai_speaking_style_instruction", language: language)
+            settings.append(String(format: instruction, speakingStyle))
+        }
+        
+        // 個人情報
+        let personalDetails = createPersonalDetails(oshi: oshi, language: language)
+        if !personalDetails.isEmpty {
+            settings.append(personalDetails)
+        }
+        
+        return settings.map { "• \($0)" }.joined(separator: "\n")
+    }
+    
+    // 性別指示の作成（ローカライズ対応）
+    private func createGenderInstruction(gender: String, language: String) -> String {
+        // "その他："プレフィックスを多言語対応で取得
+        let otherPrefix = getLocalizedString("ai_gender_other_prefix", language: language)
+        
+        if gender.hasPrefix(otherPrefix) {
+            let detail = String(gender.dropFirst(otherPrefix.count))
+            let instruction = getLocalizedString("ai_gender_other_instruction", language: language)
+            return String(format: instruction, detail)
+        } else {
+            let instruction = getLocalizedString("ai_gender_instruction", language: language)
+            return String(format: instruction, gender)
+        }
+    }
+    
+    // 個人詳細情報の作成（ローカライズ対応）
+    private func createPersonalDetails(oshi: Oshi, language: String) -> String {
+        var details: [String] = []
+        
+        // 好きな食べ物
+        if let favoriteFood = oshi.favorite_food, !favoriteFood.isEmpty {
+            let template = getLocalizedString("ai_favorite_food_detail", language: language)
+            details.append(String(format: template, favoriteFood))
+        }
+        
+        // 趣味
+        if let interests = oshi.interests, !interests.isEmpty {
+            let separator = getLocalizedString("ai_list_separator", language: language)
+            let template = getLocalizedString("ai_interests_detail", language: language)
+            details.append(String(format: template, interests.joined(separator: separator)))
+        }
+        
+        // 誕生日
+        if let birthday = oshi.birthday, !birthday.isEmpty {
+            let template = getLocalizedString("ai_birthday_detail", language: language)
+            details.append(String(format: template, birthday))
+        }
+        
+        if details.isEmpty {
+            return ""
+        }
+        
+        let separator = getLocalizedString("ai_list_separator", language: language)
+        let aboutYouTemplate = getLocalizedString("ai_about_you_instruction", language: language)
+        let aboutYou = String(format: aboutYouTemplate, details.joined(separator: separator))
+        
+        let mentionNote = getLocalizedString("ai_mention_info_naturally", language: language)
+        
+        return aboutYou + "\n• " + mentionNote
+    }
+    
+    // generateResponseメソッド（変更なし）
     func generateResponse(for userMessage: String, oshi: Oshi, chatHistory: [ChatMessage], completion: @escaping (String?, Error?) -> Void) {
         guard let client = client else {
             let conversationLanguage = languageManager.getConversationLanguage(for: oshi)
-            let fallbackMessage = promptManager.getEmotionalFallback(mood: .neutral, userName: oshi.user_nickname ?? "", language: conversationLanguage)
+            let fallbackMessage = getLocalizedString("ai_fallback_neutral", language: conversationLanguage)
             completion(fallbackMessage, nil)
             return
         }
@@ -269,26 +333,28 @@ class AIMessageGenerator {
         
         messages.append(["role": "user", "content": userMessage])
         
+        // デバッグ用ログ
+        let conversationLanguage = languageManager.getConversationLanguage(for: oshi)
+        print("🌍 システムプロンプト言語設定:")
+        print("preferred_language: \(oshi.preferred_language ?? "未設定")")
+        print("決定された会話言語: \(conversationLanguage)")
+        print("システムプロンプト最初の200文字: \(systemPrompt.prefix(200))")
+        
         client.sendChat(messages: messages, completion: completion)
     }
     
+    // 初期メッセージ生成（ローカライズ対応）
     func generateInitialMessage(for oshi: Oshi, item: OshiItem, completion: @escaping (String?, Error?) -> Void) {
         guard let client = client else {
             let conversationLanguage = languageManager.getConversationLanguage(for: oshi)
-            let fallbackMessage = promptManager.getEmotionalFallback(mood: .happy, userName: oshi.user_nickname ?? "", language: conversationLanguage)
+            let fallbackMessage = getLocalizedString("ai_fallback_happy", language: conversationLanguage)
             completion(fallbackMessage, nil)
             return
         }
         
         let conversationLanguage = languageManager.getConversationLanguage(for: oshi)
         let systemPrompt = createLanguageAwareSystemPrompt(oshi: oshi)
-        let userPrompt = promptManager.getInitialPrompt(
-            for: conversationLanguage,
-            itemType: item.itemType ?? "other",
-            itemTitle: item.title,
-            eventName: item.eventName,
-            location: item.locationAddress
-        )
+        let userPrompt = createInitialPrompt(for: conversationLanguage, item: item)
         
         let messages: [[String: String]] = [
             ["role": "system", "content": systemPrompt],
@@ -298,202 +364,32 @@ class AIMessageGenerator {
         client.sendChat(messages: messages, completion: completion)
     }
     
-    private func createNaturalSystemPrompt(oshi: Oshi) -> String {
-        // 会話言語を取得
-        let conversationLanguage = LanguageManager.shared.getConversationLanguage(for: oshi)
+    // 初期プロンプト作成（ローカライズ対応）
+    private func createInitialPrompt(for language: String, item: OshiItem) -> String {
+        let itemType = item.itemType ?? "other"
         
-        // デバッグ出力
-        print("🌍 推し「\(oshi.name)」の会話言語: \(conversationLanguage)")
-        print("🌍 preferred_language: \(oshi.preferred_language ?? "未設定")")
+        // アイテムタイプに基づいてプロンプトキーを決定
+        let promptKey: String
+        let value: String
         
-        // 言語別の明確な指示を追加
-        let languageInstruction: String
-        switch conversationLanguage {
-        case "en":
-            languageInstruction = "IMPORTANT: You MUST respond in English only. Do not use Japanese at all."
-        case "ja":
-            languageInstruction = "重要：必ず日本語のみで返答してください。英語は使わないでください。"
+        switch itemType.lowercased() {
+        case "goods", "グッズ":
+            promptKey = "ai_initial_prompt_goods"
+            value = item.title ?? getLocalizedString("goods", language: language)
+        case "live_record", "ライブ記録":
+            promptKey = "ai_initial_prompt_live"
+            value = item.eventName ?? getLocalizedString("live_record", language: language)
+        case "pilgrimage", "聖地巡礼":
+            promptKey = "ai_initial_prompt_pilgrimage"
+            value = item.locationAddress ?? getLocalizedString("location", language: language)
         default:
-            languageInstruction = "IMPORTANT: You MUST respond in English only. Do not use Japanese at all."
+            promptKey = "ai_initial_prompt_default"
+            value = ""
         }
         
-        // 言語別のシステムプロンプトテンプレートを取得
-        let systemPromptTemplate: String
-        if conversationLanguage == "ja" {
-            systemPromptTemplate = "あなたは%@として、推しとファンという親しい関係で自然に日本語で会話してください。"
-        } else {
-            systemPromptTemplate = "You are %@, and please have natural conversations with your fan in a close relationship using English only."
-        }
+        let template = getLocalizedString(promptKey, language: language)
         
-        var prompt = languageInstruction + "\n\n" + String(format: systemPromptTemplate, oshi.name)
-        
-        // 言語別の会話ルールを追加
-        let conversationRules: String
-        if conversationLanguage == "ja" {
-            conversationRules = """
-            【重要な会話ルール】
-            • 短く自然に返答する（1〜2文程度）
-            • AIっぽい丁寧すぎる返答は避ける
-            • 相手の話をよく聞いて、それに対する自然な反応をする
-            • 時々質問を混ぜて会話を続ける
-            • 絵文字は使わないか、特別な時だけ1個まで
-            • 「〜」「！」「？」などの文字で感情を表現する
-            """
-        } else {
-            conversationRules = """
-            【Important Conversation Rules】
-            • Reply briefly and naturally in English (1-2 sentences)
-            • Avoid overly polite AI-like responses
-            • Listen carefully and give natural reactions
-            • Mix in questions occasionally
-            • Use minimal or no emojis
-            • Express emotions with characters like "~", "!", "?" etc.
-            """
-        }
-        
-        prompt += "\n\n" + conversationRules
-
-        // ユーザーの呼び方設定（言語対応）
-        if let userNickname = oshi.user_nickname, !userNickname.isEmpty {
-            let nicknameInstruction: String
-            if conversationLanguage == "ja" {
-                nicknameInstruction = "ファンのことは「\(userNickname)」と呼んでください"
-            } else {
-                nicknameInstruction = "Please call your fan \"\(userNickname)\""
-            }
-            prompt += "\n• " + nicknameInstruction
-        }
-
-        // 性別に応じた話し方調整
-        if let gender = oshi.gender, !gender.isEmpty {
-            let genderInstruction: String
-            if conversationLanguage == "ja" {
-                if gender.hasPrefix("その他：") {
-                    let detail = String(gender.dropFirst(4))
-                    genderInstruction = "あなたは\(detail)として、その特徴に合った話し方をしてください"
-                } else {
-                    genderInstruction = "あなたは\(gender)として、自然な話し方をしてください"
-                }
-            } else {
-                if gender.hasPrefix("Other: ") {
-                    let detail = String(gender.dropFirst(7))
-                    genderInstruction = "You are \(detail), please speak in a way that matches those characteristics"
-                } else {
-                    genderInstruction = "You are \(gender), please speak naturally in English"
-                }
-            }
-            prompt += "\n• " + genderInstruction
-        }
-
-        // 性格設定
-        if let personality = oshi.personality, !personality.isEmpty {
-            let personalityInstruction: String
-            if conversationLanguage == "ja" {
-                personalityInstruction = "あなたの性格: \(personality)"
-            } else {
-                personalityInstruction = "Your personality: \(personality)"
-            }
-            prompt += "\n• " + personalityInstruction
-        }
-
-        // 話し方の特徴
-        if let speakingStyle = oshi.speaking_style, !speakingStyle.isEmpty {
-            let styleInstruction: String
-            if conversationLanguage == "ja" {
-                styleInstruction = "話し方の特徴: \(speakingStyle)"
-            } else {
-                styleInstruction = "Speaking style characteristics: \(speakingStyle)"
-            }
-            prompt += "\n• " + styleInstruction
-        }
-
-        // その他の特徴を会話に活かす
-        var personalDetails: [String] = []
-        
-        if let favoriteFood = oshi.favorite_food, !favoriteFood.isEmpty {
-            let foodDetail: String
-            if conversationLanguage == "ja" {
-                foodDetail = "好きな食べ物は\(favoriteFood)"
-            } else {
-                foodDetail = "favorite food is \(favoriteFood)"
-            }
-            personalDetails.append(foodDetail)
-        }
-        
-        if let interests = oshi.interests, !interests.isEmpty {
-            let separator = conversationLanguage == "ja" ? "、" : ", "
-            let interestsDetail: String
-            if conversationLanguage == "ja" {
-                interestsDetail = "趣味は\(interests.joined(separator: separator))"
-            } else {
-                interestsDetail = "hobbies are \(interests.joined(separator: separator))"
-            }
-            personalDetails.append(interestsDetail)
-        }
-        
-        if let birthday = oshi.birthday, !birthday.isEmpty {
-            let birthdayDetail: String
-            if conversationLanguage == "ja" {
-                birthdayDetail = "誕生日は\(birthday)"
-            } else {
-                birthdayDetail = "birthday is \(birthday)"
-            }
-            personalDetails.append(birthdayDetail)
-        }
-        
-        if !personalDetails.isEmpty {
-            let separator = conversationLanguage == "ja" ? "、" : ", "
-            let aboutYou: String
-            let mentionNote: String
-            
-            if conversationLanguage == "ja" {
-                aboutYou = "あなたについて: \(personalDetails.joined(separator: separator))"
-                mentionNote = "これらの情報を自然な会話の中で時々触れてください"
-            } else {
-                aboutYou = "About you: \(personalDetails.joined(separator: separator))"
-                mentionNote = "Please naturally mention this information occasionally in conversation"
-            }
-            
-            prompt += "\n• " + aboutYou
-            prompt += "\n• " + mentionNote
-        }
-
-        // 会話ガイドライン
-        let conversationGuidelines: String
-        if conversationLanguage == "ja" {
-            conversationGuidelines = """
-            【会話の心がけ】
-            • 推しとしての親しみやすさを大切にする
-            • 相手の気持ちに寄り添う返答をする
-            • 時には少し甘えたり、励ましたりする
-            • 自分の日常や気持ちも素直に表現する
-            • 長すぎる説明は避け、会話のキャッチボールを意識する
-            """
-        } else {
-            conversationGuidelines = """
-            【Conversation Guidelines】
-            • Be approachable and friendly as an oshi
-            • Show empathy and understanding
-            • Sometimes be sweet or encouraging
-            • Share your thoughts and daily life honestly
-            • Keep conversations natural and flowing in English
-            """
-        }
-        
-        prompt += "\n\n" + conversationGuidelines
-        
-        // 最終的な言語確認指示を追加
-        if conversationLanguage == "en" {
-            prompt += "\n\nREMEMBER: Your response must be in English only. Do not mix languages."
-        } else if conversationLanguage == "ja" {
-            prompt += "\n\n忘れずに：返答は日本語のみで行ってください。言語を混在させないでください。"
-        }
-
-        // デバッグ用：生成されたプロンプトの一部を出力
-        print("🤖 生成されたプロンプト（最初の200文字）:")
-        print(String(prompt.prefix(200)) + "...")
-        
-        return prompt
+        return value.isEmpty ? template : String(format: template, value)
     }
 }
 
@@ -519,5 +415,11 @@ struct EmotionHelper {
             userName: oshi.user_nickname ?? "",
             language: conversationLanguage  // 追加されたlanguageパラメータ
         )
+    }
+}
+
+struct TopView1_Previews: PreviewProvider {
+    static var previews: some View {
+        TopView()
     }
 }

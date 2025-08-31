@@ -3,7 +3,7 @@
 //  osimono
 //
 //  Created by Apple on 2025/05/10.
-//  多言語対応版
+//  多言語対応版（言語設定項目削除）
 //
 
 import SwiftUI
@@ -45,7 +45,8 @@ struct EditOshiPersonalityView: View {
     let backgroundColor = Color(UIColor.systemGroupedBackground)
     let cardBackgroundColor = Color(UIColor.secondarySystemGroupedBackground)
     
-    @State private var preferredLanguage: String = "auto"
+    // 言語設定関連の状態変数を削除
+    // @State private var preferredLanguage: String = "auto"
     
     init(viewModel: OshiViewModel, onSave: @escaping (Oshi) -> Void, onUpdate: @escaping () -> Void) {
         self.viewModel = viewModel
@@ -66,8 +67,6 @@ struct EditOshiPersonalityView: View {
         _hometown = State(initialValue: viewModel.selectedOshi.hometown ?? "")
         _interests = State(initialValue: viewModel.selectedOshi.interests ?? [])
         _userNickname = State(initialValue: viewModel.selectedOshi.user_nickname ?? "")
-        
-        _preferredLanguage = State(initialValue: viewModel.selectedOshi.preferred_language ?? "auto")
         
         // 性別情報の処理（多言語対応）
         let genderValue = viewModel.selectedOshi.gender ?? L10n.maleGender
@@ -201,8 +200,6 @@ struct EditOshiPersonalityView: View {
                         // プロフィール入力セクション
                         profileSection
                         
-                        languageSettingSection
-                        
                         // 趣味・興味入力セクション
                         interestsSection
                         
@@ -264,65 +261,6 @@ struct EditOshiPersonalityView: View {
         .onTapGesture {
             hideKeyboard()
         }
-    }
-    
-    var languageSettingSection: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            SectionHeader(title: L10n.conversationLanguage, icon: "globe")
-            
-            VStack(alignment: .leading, spacing: 12) {
-                Text(L10n.selectConversationLanguage)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                // 言語選択ピッカー
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 10) {
-                    ForEach(LanguageManager.shared.getAvailableLanguages(), id: \.code) { language in
-                        Button(action: {
-                            preferredLanguage = language.code
-                            generateHapticFeedback()
-                        }) {
-                            HStack {
-                                Image(systemName: preferredLanguage == language.code ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(preferredLanguage == language.code ? primaryColor : .gray)
-                                
-                                Text(language.name)
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.primary)
-                                    .multilineTextAlignment(.leading)
-                                
-                                Spacer()
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(preferredLanguage == language.code ? primaryColor.opacity(0.1) : Color.clear)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(preferredLanguage == language.code ? primaryColor : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                }
-                
-                // 説明テキスト
-                Text(L10n.languageSettingNote)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 4)
-            }
-        }
-        .padding()
-        .background(cardBackgroundColor)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        .padding(.horizontal)
     }
     
     // 性格セクション
@@ -509,7 +447,6 @@ struct EditOshiPersonalityView: View {
                self.hometown = data["hometown"] as? String ?? ""
                self.interests = data["interests"] as? [String] ?? []
                self.userNickname = data["user_nickname"] as? String ?? ""
-               self.preferredLanguage = data["preferred_language"] as? String ?? "auto"
                
                // 性別の処理（多言語対応）
                let genderValue = data["gender"] as? String ?? L10n.maleGender
@@ -552,8 +489,6 @@ struct EditOshiPersonalityView: View {
             "gender": genderValue
         ]
         
-        updates["preferred_language"] = preferredLanguage
-        
         if let heightValue = Int(height) {
             updates["height"] = heightValue
         }
@@ -582,7 +517,7 @@ struct EditOshiPersonalityView: View {
                     }
                     updatedOshi.gender = gender
                     updatedOshi.user_nickname = userNickname
-                    updatedOshi.preferred_language = preferredLanguage
+                    
                     viewModel.selectedOshi = updatedOshi
                     
                     // Binding変数を明示的に更新
