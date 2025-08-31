@@ -125,14 +125,29 @@ struct OshiSelectorView: View {
                         // 新規追加ボタン
                         Button(action: {
                             generateHapticFeedback()
-                            onAddOshi()
-                            isPresented = false
                             
-                            if !subscriptionManager.isSubscribed &&
-                               !OshiLimitManager.shared.canAddNewOshi(currentOshiCount: oshiList.count, isSubscribed: false) {
+                            // 管理者は制限チェックをスキップ
+                            if OshiLimitManager.shared.isCurrentUserAdmin() {
+                                onAddOshi()
+                                isPresented = false
+                                return
+                            }
+                            
+                            // サブスクリプション会員も制限なし
+                            if subscriptionManager.isSubscribed {
+                                onAddOshi()
+                                isPresented = false
+                                return
+                            }
+                            
+                            // 一般ユーザーの制限チェック
+                            if !OshiLimitManager.shared.canAddNewOshi(currentOshiCount: oshiList.count, isSubscribed: false) {
                                 showOshiLimitModal = true
                                 return
                             }
+                            
+                            onAddOshi()
+                            isPresented = false
                         }) {
                             VStack {
                                 ZStack {

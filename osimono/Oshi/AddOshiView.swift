@@ -401,6 +401,12 @@ struct AddOshiView: View {
     
     // 新規追加：制限チェック付きの保存処理
     private func checkLimitAndSaveOshi() {
+        // 管理者は制限をスキップ
+        if OshiLimitManager.shared.isCurrentUserAdmin() {
+            saveOshi()
+            return
+        }
+        
         // サブスクリプション会員は制限なし
         if subscriptionManager.isSubscribed {
             saveOshi()
