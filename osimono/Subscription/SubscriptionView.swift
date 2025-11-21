@@ -15,238 +15,124 @@ struct SubscriptionPreView: View {
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var selectedProduct: Product?
+    @State private var animateFeatures = false
     
-    // グラデーションカラー
+    // 改良されたグラデーション
     let primaryGradient = LinearGradient(
-        colors: [Color(.systemPink), Color(.systemPurple)],
+        colors: [
+            Color(red: 1.0, green: 0.3, blue: 0.6),
+            Color(red: 0.6, green: 0.2, blue: 1.0),
+            Color(red: 0.2, green: 0.4, blue: 1.0)
+        ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
-    let accentColor = Color(.systemPurple)
     
-    @State private var showingPrivacySettings = false
-    @State private var showingShareSettings = false
+    let backgroundGradient = LinearGradient(
+        colors: [
+            Color(.systemBackground),
+            Color(red: 0.98, green: 0.97, blue: 1.0),
+            Color(red: 0.95, green: 0.95, blue: 1.0)
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    
+    let accentColor = Color(red: 0.6, green: 0.2, blue: 1.0)
     
     var body: some View {
         NavigationView {
             ScrollView {
-                LazyVStack(spacing: 32) {
-                    // ヘッダー（グラデーション背景付き）
-                    VStack(spacing: 20) {
-                        // アニメーション付きクラウンアイコン
+                LazyVStack(spacing: 40) {
+                    // 改良されたヘッダー
+                    VStack(spacing: 24) {
+                        // 3Dライクなクラウンアイコン
                         ZStack {
+                            // 背景の輝き効果
                             Circle()
-                                .fill(primaryGradient)
-                                .frame(width: 120, height: 120)
-                                .shadow(color: Color.pink.opacity(0.4), radius: 20, x: 0, y: 10)
+                                .fill(
+                                    RadialGradient(
+                                        colors: [
+                                            Color.white.opacity(0.6),
+                                            Color.yellow.opacity(0.8),
+//                                            primaryGradient.opacity(0.8)
+                                        ],
+                                        center: .topLeading,
+                                        startRadius: 20,
+                                        endRadius: 80
+                                    )
+                                )
+                                .frame(width: 140, height: 140)
+                                .shadow(color: Color.pink.opacity(0.4), radius: 25, x: 0, y: 15)
                             
+                            // グラデーションオーバーレイ
+                            Circle()
+                                .fill(primaryGradient.opacity(0.1))
+                                .frame(width: 120, height: 120)
+                            
+                            // クラウンアイコン
                             Image(systemName: "crown.fill")
-                                .font(.system(size: 50, weight: .medium))
-                                .foregroundColor(.white)
+                                .font(.system(size: 55, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.white, .white.opacity(0.9)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: .black.opacity(0.2), radius: 2, x: 1, y: 1)
                         }
+                        .scaleEffect(animateFeatures ? 1.0 : 0.8)
+                        .animation(.spring(response: 0.8, dampingFraction: 0.6), value: animateFeatures)
                         
-                        VStack(spacing: 12) {
+                    VStack(spacing: 16) {
                             Text("プレミアムプラン")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
                                 .foregroundStyle(primaryGradient)
+                                .opacity(animateFeatures ? 1 : 0)
+                                .offset(y: animateFeatures ? 0 : 20)
+                                .animation(.easeOut(duration: 0.8).delay(0.2), value: animateFeatures)
                             
                             Text("広告なしで推し活をもっと楽しく\n特別な機能で推しとの時間をより豊かに")
-                                .font(.body)
+                                .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
-                                .lineSpacing(4)
+                                .lineSpacing(6)
+                                .opacity(animateFeatures ? 1 : 0)
+                                .offset(y: animateFeatures ? 0 : 20)
+                                .animation(.easeOut(duration: 0.8).delay(0.4), value: animateFeatures)
                         }
-                    }
-                    .padding(.top, 10)
-                    
-                    // 特典一覧（カード形式）
-                    VStack(spacing: 20) {
-                        HStack {
-                            Text("プラン加入特典")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                            Spacer()
-                        }
-                        
-//                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-                            FeatureCard(
-                                icon: "star.bubble.fill",
-                                title: "推しとのチャットが無制限に",
-                                description: "どれだけ推しとチャットしても制限が無く\n広告も表示されません",
-                                color: .purple
-                            )
-                            
-                            FeatureCard(
-                                icon: "rectangle.fill.badge.xmark",
-                                title: "広告が非表示に",
-                                description: "アプリ内で表示されている全ての広告が非表示になります",
-                                color: .red
-                            )
-                            
-                            FeatureCard(
-                                icon: "person.2.badge.plus.fill",
-                                title: "推しの登録が無制限に",
-                                description: "何人推しを登録しても制限がかからなくなります",
-                                color: .blue
-                            )
-//                        }
                     }
                     
-                    // 料金プラン
-                    VStack(spacing: 20) {
-                        HStack {
-                            Text("料金プラン")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                            Spacer()
-                        }
-                        
-                        if subscriptionManager.isLoading {
-                            LoadingPreView()
-                        } else if let errorMessage = subscriptionManager.errorMessage {
-                            ErrorView(
-                                errorMessage: errorMessage,
-                                primaryGradient: primaryGradient,
-                                onRetry: {
-                                    Task {
-                                        await subscriptionManager.requestProducts()
-                                    }
-                                },
-                                onDebug: {
-                                    subscriptionManager.printDebugInfo()
-                                }
-                            )
-                        } else if subscriptionManager.subscriptionProducts.isEmpty {
-                        } else if subscriptionManager.subscriptionProducts.isEmpty {
-                            EmptyStatePreView(
-                                primaryGradient: primaryGradient,
-                                onReload: {
-                                    Task {
-                                        await subscriptionManager.requestProducts()
-                                    }
-                                },
-                                onDebug: {
-                                    subscriptionManager.printDebugInfo()
-                                }
-                            )
-                        } else {
-                            VStack(spacing: 12) {
-                                ForEach(subscriptionManager.subscriptionProducts, id: \.id) { product in
-                                    ModernPlanCard(
-                                        product: product,
-                                        subscriptionManager: subscriptionManager,
-                                        isSelected: selectedProduct?.id == product.id,
-                                        onSelect: { selectedProduct = product }
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    // アニメーション付き特典セクション
+                    featuresSection
+                    
+                    // 料金プランセクション
+                    pricingSection
                     
                     // 購入ボタン
-                    if let product = selectedProduct {
-                        VStack(spacing: 16) {
-                            Button(action: {
-                                purchaseSubscription(product)
-                            }) {
-                                HStack {
-                                    if isLoading {
-                                        ProgressView()
-                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                            .scaleEffect(0.9)
-                                    } else {
-                                        Image(systemName: "crown.fill")
-                                            .font(.system(size: 16, weight: .semibold))
-                                        Text("プレミアムプランを開始")
-                                            .font(.headline)
-                                            .fontWeight(.semibold)
-                                    }
-                                }
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 56)
-                                .background(primaryGradient)
-                                .cornerRadius(28)
-                                .shadow(color: Color.pink.opacity(0.3), radius: 10, x: 0, y: 5)
-                            }
-                            .disabled(isLoading)
-                            .scaleEffect(isLoading ? 0.98 : 1.0)
-                            .animation(.easeInOut(duration: 0.1), value: isLoading)
-                        }
+                    if selectedProduct != nil {
+                        purchaseButtonSection
                     }
                     
-                    // フッター
-                    VStack(spacing: 20) {
-                        Button("購入を復元") {
-                            restorePurchases()
-                        }
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundColor(accentColor)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 24)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(accentColor.opacity(0.3), lineWidth: 1)
-                        )
-                        
-                        HStack(spacing: 32) {
-                            NavigationLink("利用規約", destination: TermsOfServiceView())
-                                .foregroundColor(.secondary)
-                                .font(.subheadline)
-                            
-                            NavigationLink("プライバシーポリシー", destination: PrivacyView())
-                                .foregroundColor(.secondary)
-                                .font(.subheadline)
-                        }
-                        
-                        Text("購読は自動更新されます。解約はApp Storeの設定から行えます。")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(2)
-                    }
-                    .padding(.bottom, 20)
+                    // フッターセクション
+                    footerSection
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
             }
-            .background(
-                LinearGradient(
-                    colors: [Color(.systemBackground), Color(.systemGray6).opacity(0.3)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .navigationTitle("プレミアムプラン")
+            .background(backgroundGradient.ignoresSafeArea())
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(
-                leading: Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.primary)
-                        .padding(8)
-                        .background(Circle().fill(Color(.systemGray5)))
-                }
+                leading: dismissButton
             )
-//            .navigationDestination(isPresented: $showingPrivacySettings) {
-//                PrivacyView()
-//            }
-//            .navigationDestination(isPresented: $showingShareSettings) {
-//                TermsOfServiceView()
-//            }
         }
         .alert(isPresented: $showAlert) {
             Alert(title: Text("通知"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                if let monthly = subscriptionManager.subscriptionProducts.first(where: { $0.id.contains("monthlySub") }) {
-                    selectedProduct = subscriptionManager.subscriptionProducts.first(where: { $0.id.contains("monthlySub") })
-                }
-            }
+            animateOnAppear()
         }
         .onChange(of: subscriptionManager.subscriptionProducts) { products in
             if selectedProduct == nil, let firstProduct = products.first {
@@ -260,6 +146,232 @@ struct SubscriptionPreView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     presentationMode.wrappedValue.dismiss()
                 }
+            }
+        }
+    }
+    
+    // MARK: - Features Section
+    private var featuresSection: some View {
+        VStack(spacing: 24) {
+            HStack {
+                Text("プラン加入特典")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .opacity(animateFeatures ? 1 : 0)
+                    .offset(x: animateFeatures ? 0 : -30)
+                    .animation(.easeOut(duration: 0.8).delay(0.6), value: animateFeatures)
+                Spacer()
+            }
+            
+            VStack(spacing: 16) {
+                ModernFeatureCard(
+                    icon: "star.bubble.fill",
+                    title: "推しとのチャットが無制限に",
+                    description: "どれだけ推しとチャットしても制限が無く\n広告も表示されません",
+                    gradient: LinearGradient(colors: [.purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    delay: 0.8,
+                    isVisible: $animateFeatures
+                )
+                
+                ModernFeatureCard(
+                    icon: "rectangle.fill.badge.xmark",
+                    title: "広告が非表示に",
+                    description: "アプリ内で表示されている全ての広告が非表示になります",
+                    gradient: LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    delay: 1.0,
+                    isVisible: $animateFeatures
+                )
+                
+                ModernFeatureCard(
+                    icon: "person.2.badge.plus.fill",
+                    title: "推しの登録が無制限に",
+                    description: "何人推しを登録しても制限がかからなくなります",
+                    gradient: LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    delay: 1.2,
+                    isVisible: $animateFeatures
+                )
+            }
+        }
+    }
+    
+    // MARK: - Pricing Section
+    private var pricingSection: some View {
+        VStack(spacing: 24) {
+            HStack {
+                Text("料金プラン")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                Spacer()
+            }
+            
+            if subscriptionManager.isLoading {
+                LoadingPreView()
+            } else if let errorMessage = subscriptionManager.errorMessage {
+                ErrorView(
+                    errorMessage: errorMessage,
+                    primaryGradient: primaryGradient,
+                    onRetry: {
+                        Task {
+                            await subscriptionManager.requestProducts()
+                        }
+                    },
+                    onDebug: {
+                        subscriptionManager.printDebugInfo()
+                    }
+                )
+            } else if subscriptionManager.subscriptionProducts.isEmpty {
+                EmptyStatePreView(
+                    primaryGradient: primaryGradient,
+                    onReload: {
+                        Task {
+                            await subscriptionManager.requestProducts()
+                        }
+                    },
+                    onDebug: {
+                        subscriptionManager.printDebugInfo()
+                    }
+                )
+            } else {
+                VStack(spacing: 16) {
+                    ForEach(subscriptionManager.subscriptionProducts, id: \.id) { product in
+                        UltraModernPlanCard(
+                            product: product,
+                            subscriptionManager: subscriptionManager,
+                            isSelected: selectedProduct?.id == product.id,
+                            onSelect: { selectedProduct = product },
+                            primaryGradient: primaryGradient
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Purchase Button Section
+    private var purchaseButtonSection: some View {
+        VStack(spacing: 20) {
+            if let product = selectedProduct {
+                Button(action: {
+                    purchaseSubscription(product)
+                }) {
+                    HStack(spacing: 12) {
+                        if isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(1.2)
+                        } else {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 18, weight: .bold))
+                            Text("プレミアムプランを開始")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 60)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 30)
+                                .fill(primaryGradient)
+                            
+                            RoundedRectangle(cornerRadius: 30)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.white.opacity(0.3), .clear],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
+                    )
+                    .shadow(color: Color.pink.opacity(0.4), radius: 20, x: 0, y: 10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 30)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [.white.opacity(0.6), .clear],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                }
+                .disabled(isLoading)
+                .scaleEffect(isLoading ? 0.95 : 1.0)
+                .animation(.easeInOut(duration: 0.2), value: isLoading)
+            }
+        }
+    }
+    
+    // MARK: - Footer Section
+    private var footerSection: some View {
+        VStack(spacing: 24) {
+            Button("購入を復元") {
+                restorePurchases()
+            }
+            .font(.system(size: 16, weight: .semibold, design: .rounded))
+            .foregroundColor(accentColor)
+            .padding(.vertical, 16)
+            .padding(.horizontal, 32)
+            .background(
+                RoundedRectangle(cornerRadius: 25)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: accentColor.opacity(0.2), radius: 8, x: 0, y: 4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 25)
+                            .stroke(accentColor.opacity(0.3), lineWidth: 1.5)
+                    )
+            )
+            
+            HStack(spacing: 40) {
+                NavigationLink("利用規約", destination: TermsOfServiceView())
+                    .foregroundColor(.secondary)
+                    .font(.system(size: 14, weight: .medium))
+                
+                NavigationLink("プライバシーポリシー", destination: PrivacyView())
+                    .foregroundColor(.secondary)
+                    .font(.system(size: 14, weight: .medium))
+            }
+            
+            Text("購読は自動更新されます。解約はApp Storeの設定から行えます。")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+                .padding(.horizontal, 20)
+        }
+        .padding(.bottom, 30)
+    }
+    
+    // MARK: - Dismiss Button
+    private var dismissButton: some View {
+        Button(action: {
+            presentationMode.wrappedValue.dismiss()
+        }) {
+            Image(systemName: "xmark")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.primary)
+                .padding(10)
+                .background(
+                    Circle()
+                        .fill(Color(.systemBackground))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                )
+        }
+    }
+    
+    // MARK: - Helper Functions
+    private func animateOnAppear() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation {
+                animateFeatures = true
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            if let monthly = subscriptionManager.subscriptionProducts.first(where: { $0.id.contains("monthlySub") }) {
+                selectedProduct = monthly
+            } else if let firstProduct = subscriptionManager.subscriptionProducts.first {
+                selectedProduct = firstProduct
             }
         }
     }
@@ -307,62 +419,104 @@ struct SubscriptionPreView: View {
     }
 }
 
-// MARK: - Feature Card
-struct FeatureCard: View {
+// MARK: - Modern Feature Card
+struct ModernFeatureCard: View {
     let icon: String
     let title: String
     let description: String
-    let color: Color
+    let gradient: LinearGradient
+    let delay: Double
+    @Binding var isVisible: Bool
+    @State private var isHovered = false
     
     var body: some View {
-        VStack(spacing: 12) {
-            HStack{
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.15))
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundColor(color)
+        HStack(spacing: 20) {
+            // アイコン部分
+            ZStack {
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(gradient)
+                    .frame(width: 64, height: 64)
+                    .shadow(color: .clear, radius: 12, x: 0, y: 6)
+                
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(
+                        LinearGradient(
+                            colors: [.white.opacity(0.3), .clear],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 64, height: 64)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
+            }
+            
+            // テキスト部分
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                    .lineLimit(2)
+                
+                Text(description)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .lineLimit(3)
+                    .lineSpacing(2)
+            }
+            
+            Spacer()
+        }
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+                .shadow(
+                    color: .black.opacity(isHovered ? 0.15 : 0.08),
+                    radius: isHovered ? 16 : 8,
+                    x: 0,
+                    y: isHovered ? 8 : 4
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                colors: [.white, .gray.opacity(0.3)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+        )
+        .scaleEffect(isHovered ? 1.02 : 1.0)
+        .opacity(isVisible ? 1 : 0)
+        .offset(x: isVisible ? 0 : 50)
+        .animation(.easeOut(duration: 0.8).delay(delay), value: isVisible)
+        .animation(.easeInOut(duration: 0.2), value: isHovered)
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isHovered.toggle()
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    isHovered.toggle()
                 }
-                Spacer()
-                VStack(spacing: 4) {
-                    Text(title)
-                        .font(.system(size: 20))
-                        .fontWeight(.semibold)
-                        .multilineTextAlignment(.center)
-                    
-                    Text(description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                Spacer()
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
-        )
     }
 }
 
-// MARK: - Modern Plan Card
-struct ModernPlanCard: View {
+// MARK: - Ultra Modern Plan Card
+struct UltraModernPlanCard: View {
     let product: Product
     let subscriptionManager: SubscriptionManager
     let isSelected: Bool
     let onSelect: () -> Void
-    
-    let primaryGradient = LinearGradient(
-        colors: [Color(.systemPink), Color(.systemPurple)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    let primaryGradient: LinearGradient
     
     var isYearly: Bool {
         product.id.contains("yearlySub")
@@ -380,165 +534,166 @@ struct ModernPlanCard: View {
         Button(action: onSelect) {
             VStack(spacing: 0) {
                 // メインカード
-                VStack(spacing: 16) {
+                VStack(spacing: 20) {
                     HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack{
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
                                 Text(subscriptionManager.getPlanType(for: product))
-                                    .font(.title3)
-                                    .fontWeight(.bold)
-                                if isYearly {
-                                    HStack {
-                                        Text("最もお得")
-                                            .font(.caption)
-                                            .fontWeight(.bold)
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primary)
+                                
+                                    // バッジ
+                                    if isYearly || isMonthly {
+                                        HStack {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: isYearly ? "star.fill" : "heart.fill")
+                                                    .font(.system(size: 12, weight: .bold))
+                                                Text(isYearly ? "最もお得" : "人気")
+                                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                            }
                                             .foregroundColor(.white)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
                                             .background(
                                                 Capsule()
-                                                    .fill(LinearGradient(
-                                                        colors: [.orange, .red],
-                                                        startPoint: .leading,
-                                                        endPoint: .trailing
-                                                    ))
+                                                    .fill(isYearly ?
+                                                        LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing) :
+                                                        LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing)
+                                                    )
+                                                    .shadow(color: .blue.opacity(0.4), radius: 8, x: 0, y: 4)
                                             )
-                                        Spacer()
+                                            Spacer()
+                                        }
+                                        .zIndex(1)
                                     }
-                                    .zIndex(1)
-                                } else if isMonthly {
-                                    HStack {
-                                        Text("人気")
-                                            .font(.caption)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.white)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(
-                                                Capsule()
-                                                    .fill(LinearGradient(
-                                                        colors: [.blue, .purple],
-                                                        startPoint: .leading,
-                                                        endPoint: .trailing
-                                                    ))
-                                            )
-                                        Spacer()
-                                    }
-                                }
                             }
                             
                             HStack(alignment: .bottom, spacing: 4) {
-                                if isYearly {
-                                    
+                                Group {
+                                    if isYearly {
                                         Text("9,800円")
-                                                                            .font(.title)
-                                                                            .fontWeight(.bold)
-                                                                            .foregroundStyle( .primary)
-                                    Text("/年")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                } else if isMonthly {
-                                    Text("980円")
-                                                                        .font(.title)
-                                                                        .fontWeight(.bold)
-                                                                        .foregroundStyle( .primary)
-                                    Text("/月")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                } else if isWeekly {
-                                    Text("480円")
-                                                                        .font(.title)
-                                                                        .fontWeight(.bold)
-                                                                        .foregroundStyle( .primary)
-                                    Text("/週")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
+                                    } else if isMonthly {
+                                        Text("980円")
+                                    } else if isWeekly {
+                                        Text("480円")
+                                    }
                                 }
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundStyle(primaryGradient)
+                                
+                                Group {
+                                    if isYearly {
+                                        Text("/年")
+                                    } else if isMonthly {
+                                        Text("/月")
+                                    } else if isWeekly {
+                                        Text("/週")
+                                    }
+                                }
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.secondary)
                             }
                             
-                            // 料金の説明
-                            if isYearly {
-                                if let monthlyPrice = subscriptionManager.getMonthlyEquivalentPrice(for: product) {
+                            // サブテキスト
+                            Group {
+                                if isYearly {
                                     Text("月払いの2ヶ月分が無料")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                } else {
-                                    Text("最もお得なプラン")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                                } else if isMonthly {
+                                    Text("週間プランの50％オフ")
+                                } else if isWeekly {
+                                    Text("お試しに最適")
                                 }
-                            } else if isWeekly {
-                                Text("お試しに最適")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            } else if isMonthly {
-                                Text("週間プランの50％オフ")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
                             }
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.secondary)
                         }
                         
                         Spacer()
                         
+                        // 選択インジケーター
                         ZStack {
                             Circle()
-                                .stroke(isSelected ? Color.clear : Color.gray.opacity(0.3), lineWidth: 2)
-                                .frame(width: 28, height: 28)
+                                .fill(
+                                    isSelected ?
+                                    primaryGradient :
+                                    LinearGradient(colors: [.gray.opacity(0.2)], startPoint: .top, endPoint: .bottom)
+                                )
+                                .frame(width: 32, height: 32)
                             
                             if isSelected {
-                                Circle()
-                                    .fill(primaryGradient)
-                                    .frame(width: 28, height: 28)
-                                
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .bold))
+                                    .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(.white)
                             }
                         }
+                        .shadow(color:.clear, radius: 8)
                     }
                 }
-                .padding(20)
+                .padding(24)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: 20)
                         .fill(Color(.systemBackground))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 16)
+                            RoundedRectangle(cornerRadius: 20)
                                 .stroke(
-                                    Color.gray.opacity(0.2),
+                                    isSelected ? primaryGradient :
+                                    LinearGradient(colors: [.gray.opacity(0.2)], startPoint: .top, endPoint: .bottom),
                                     lineWidth: isSelected ? 2 : 1
                                 )
                         )
                         .shadow(
-                            color: isSelected ? Color.pink.opacity(0.2) : Color.black.opacity(0.05),
-                            radius: isSelected ? 12 : 4,
+                            color: .black.opacity(0.05),
+                            radius: isSelected ? 20 : 8,
                             x: 0,
-                            y: isSelected ? 6 : 2
+                            y: isSelected ? 10 : 4
                         )
                 )
             }
         }
         .buttonStyle(PlainButtonStyle())
-        .scaleEffect(isSelected ? 1.02 : 1.0)
-        .animation(.easeInOut(duration: 0.2), value: isSelected)
+        .scaleEffect(isSelected ? 1.03 : 1.0)
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isSelected)
     }
 }
 
 // MARK: - Loading View
 struct LoadingPreView: View {
+    @State private var rotationAngle: Double = 0
+    
     var body: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.2)
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 4)
+                    .frame(width: 50, height: 50)
+                
+                Circle()
+                    .trim(from: 0, to: 0.7)
+                    .stroke(
+                        LinearGradient(
+                            colors: [.pink, .purple],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
+                    .frame(width: 50, height: 50)
+                    .rotationEffect(.degrees(rotationAngle))
+                    .animation(.linear(duration: 1.0).repeatForever(autoreverses: false), value: rotationAngle)
+            }
             
             Text("プランを読み込み中...")
-                .font(.subheadline)
+                .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundColor(.secondary)
         }
-        .frame(height: 100)
+        .frame(height: 120)
+        .onAppear {
+            rotationAngle = 360
+        }
     }
 }
 
-// MARK: - Error View
+// MARK: - Error View (Enhanced)
 struct ErrorView: View {
     let errorMessage: String
     let primaryGradient: LinearGradient
@@ -546,81 +701,99 @@ struct ErrorView: View {
     let onDebug: () -> Void
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
             ZStack {
                 Circle()
-                    .fill(Color.orange.opacity(0.15))
-                    .frame(width: 80, height: 80)
+                    .fill(
+                        RadialGradient(
+                            colors: [.orange.opacity(0.3), .orange.opacity(0.1)],
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 50
+                        )
+                    )
+                    .frame(width: 100, height: 100)
                 
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 32))
+                    .font(.system(size: 40, weight: .semibold))
                     .foregroundColor(.orange)
             }
             
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 Text("商品の読み込みに失敗しました")
-                    .font(.headline)
-                    .fontWeight(.bold)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .multilineTextAlignment(.center)
                 
                 Text(errorMessage)
-                    .font(.subheadline)
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
+                    .lineSpacing(2)
             }
             
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 Button("再試行") {
                     onRetry()
                 }
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
+                .padding(.horizontal, 32)
+                .padding(.vertical, 16)
                 .background(primaryGradient)
-                .cornerRadius(20)
+                .cornerRadius(25)
+//                .shadow(color: primaryGradient.colors.first?.opacity(0.4) ?? .clear, radius: 12, x: 0, y: 6)
                 
                 Button("デバッグ情報") {
                     onDebug()
                 }
-                .font(.caption)
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.blue)
             }
         }
-        .padding(24)
+        .padding(32)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 24)
                 .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 8)
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 6)
         )
     }
 }
 
-// MARK: - Empty State View
+// MARK: - Empty State View (Enhanced)
 struct EmptyStatePreView: View {
     let primaryGradient: LinearGradient
     let onReload: () -> Void
     let onDebug: () -> Void
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
             ZStack {
                 Circle()
-                    .fill(Color.gray.opacity(0.15))
-                    .frame(width: 80, height: 80)
+                    .fill(
+                        RadialGradient(
+                            colors: [.gray.opacity(0.3), .gray.opacity(0.1)],
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 50
+                        )
+                    )
+                    .frame(width: 100, height: 100)
                 
                 Image(systemName: "cart.badge.questionmark")
-                    .font(.system(size: 32))
+                    .font(.system(size: 40, weight: .semibold))
                     .foregroundColor(.gray)
             }
             
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 Text("利用可能なプランがありません")
-                    .font(.headline)
-                    .fontWeight(.bold)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .multilineTextAlignment(.center)
                 
                 Text("App Store Connectでサブスクリプション商品が正しく設定されているか確認してください")
-                    .font(.subheadline)
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
+                    .lineSpacing(2)
             }
             
             VStack(spacing: 12) {

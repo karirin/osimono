@@ -14,6 +14,8 @@ struct GroupChatRowView: View {
     var showEditButtons: Bool = false
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
+    var onDeleteHistory: (() -> Void)? = nil
+    var isAdmin: Bool = false
     
     var groupMembers: [Oshi] {
         return allOshiList.filter { group.memberIds.contains($0.id) }
@@ -76,6 +78,22 @@ struct GroupChatRowView: View {
                             Text(L10n.edit)
                                 .font(.system(size: 10))
                                 .foregroundColor(.blue)
+                        }
+                    }
+                    
+                    // 管理者用履歴削除ボタン
+                    if isAdmin {
+                        Button(action: {
+                            onDeleteHistory?()
+                        }) {
+                            VStack(spacing: 2) {
+                                Image(systemName: "trash.circle")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.orange)
+                                Text("履歴")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.orange)
+                            }
                         }
                     }
                     

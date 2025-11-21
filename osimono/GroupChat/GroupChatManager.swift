@@ -18,6 +18,55 @@ class GroupChatManager: ObservableObject {
         return Auth.auth().currentUser?.uid
     }
     
+    func deleteGroupChatHistory(for groupId: String, completion: @escaping (Error?) -> Void) {
+        guard let userId = userId else {
+            completion(NSError(domain: "GroupChatManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "ユーザーが認証されていません"]))
+            return
+        }
+        
+        print("グループチャット履歴削除開始 - グループID: \(groupId)")
+        
+        let messagesRef = database.child("groupChats").child(userId).child(groupId).child("messages")
+        
+        // メッセージを全削除
+        messagesRef.removeValue { error, _ in
+            if let error = error {
+                print("グループチャット履歴削除エラー: \(error.localizedDescription)")
+                completion(error)
+            } else {
+                print("グループチャット履歴削除成功 - グループID: \(groupId)")
+                
+                // グループ情報の最終メッセージ情報もリセット
+                self.resetGroupLastMessage(groupId: groupId) { resetError in
+                    completion(resetError)
+                }
+            }
+        }
+    }
+    
+    // グループの最終メッセージ情報をリセット
+    private func resetGroupLastMessage(groupId: String, completion: @escaping (Error?) -> Void) {
+        guard let userId = userId else {
+            completion(NSError(domain: "GroupChatManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "ユーザーが認証されていません"]))
+            return
+        }
+        
+        let updates: [String: Any] = [
+            "lastMessageTime": 0,
+            "lastMessage": NSNull()
+        ]
+        
+        let groupInfoRef = database.child("groupChats").child(userId).child(groupId).child("info")
+        groupInfoRef.updateChildValues(updates) { error, _ in
+            if let error = error {
+                print("グループ最終メッセージリセットエラー: \(error.localizedDescription)")
+            } else {
+                print("グループ最終メッセージリセット成功")
+            }
+            completion(error)
+        }
+    }
+    
     // グループチャットメッセージを保存
     func saveMessage(_ message: GroupChatMessage, completion: @escaping (Error?) -> Void) {
         guard let userId = userId else {

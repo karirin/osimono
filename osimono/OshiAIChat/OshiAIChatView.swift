@@ -87,7 +87,7 @@ struct OshiAIChatView: View {
     @State private var showDeleteAlert = false
     
     private let adminUserIds = [
-//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+        "3UDNienzhkdheKIy77lyjMJhY4D3",
         "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
     
@@ -486,12 +486,6 @@ struct OshiAIChatView: View {
     
     private var chatMessagesView: some View {
         ScrollViewReader { proxy in
-            if !isAdmin {
-                if shouldShowAd {
-                    BannerAdChatView()
-                        .frame(height: 60)
-                }
-            }
             ScrollView {
                 VStack(spacing: 16) {
                     if messages.isEmpty {

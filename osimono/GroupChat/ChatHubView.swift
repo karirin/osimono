@@ -61,8 +61,13 @@ struct ChatHubView: View {
     @State private var isCheckingAdminStatus = true
     
     private let adminUserIds = [
+        "3UDNienzhkdheKIy77lyjMJhY4D3",
         "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
+    
+    @State private var showDeleteHistoryAlert = false
+    @State private var groupToDeleteHistory: GroupChatInfo?
+    @State private var isDeletingHistory = false
     
     // 多言語対応版のChatTabType
     enum ChatTabType: String, CaseIterable {
@@ -130,7 +135,7 @@ struct ChatHubView: View {
                 }
                 
                 // 削除中のオーバーレイ
-                if isDeletingItem {
+                if isDeletingItem || isDeletingHistory {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
                         .overlay(
@@ -138,7 +143,7 @@ struct ChatHubView: View {
                                 ProgressView()
                                     .scaleEffect(1.5)
                                     .tint(.white)
-                                Text(L10n.deletingGroup)
+                                Text(isDeletingHistory ? "履歴を削除中..." : L10n.deletingGroup)
                                     .foregroundColor(.white)
                                     .font(.headline)
                             }
@@ -208,6 +213,16 @@ struct ChatHubView: View {
         } message: {
             Text(L10n.deleteGroupMessage(groupToDelete?.name ?? ""))
         }
+        .alert("履歴削除の確認", isPresented: $showDeleteHistoryAlert) {
+            Button("削除", role: .destructive) {
+                if let group = groupToDeleteHistory {
+                    deleteGroupHistory(group)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("「\(groupToDeleteHistory?.name ?? "")」の全ての履歴を削除しますか？この操作は取り消すことができません。")
+        }
         .alert(NSLocalizedString("delete_oshi_title", comment: "Delete oshi title"), isPresented: $showDeleteOshiAlert) {
             Button(L10n.delete, role: .destructive) {
                 if let oshi = oshiToDeleteCompletely {
@@ -230,6 +245,32 @@ struct ChatHubView: View {
                 print("❌ グループID保存エラー: \(error.localizedDescription)")
             } else {
                 print("✅ グループID保存成功: \(groupId)")
+            }
+        }
+    }
+    
+    private func deleteGroupHistory(_ group: GroupChatInfo) {
+        guard isAdmin else {
+            print("管理者権限がないため履歴削除を実行できません")
+            return
+        }
+        
+        isDeletingHistory = true
+        
+        groupChatManager.deleteGroupChatHistory(for: group.id) { error in
+            DispatchQueue.main.async {
+                self.isDeletingHistory = false
+                
+                if let error = error {
+                    print("履歴削除エラー: \(error.localizedDescription)")
+                } else {
+                    print("履歴削除成功: \(group.name)")
+                    // 成功フィードバック
+                    self.generateHapticFeedback()
+                    
+                    // グループリストを更新して最終メッセージ情報をリセット
+                    self.loadGroupChats()
+                }
             }
         }
     }
@@ -520,7 +561,13 @@ struct ChatHubView: View {
                                             generateHapticFeedback()
                                             groupToDelete = group
                                             showDeleteGroupAlert = true
-                                        }
+                                        },
+                                        onDeleteHistory: isAdmin ? {  // 管理者の場合のみ履歴削除を有効化
+                                            generateHapticFeedback()
+                                            groupToDeleteHistory = group
+                                            showDeleteHistoryAlert = true
+                                        } : nil,
+                                        isAdmin: isAdmin
                                     )
                                 }
                             } else {
@@ -528,7 +575,8 @@ struct ChatHubView: View {
                                     GroupChatRowView(
                                         group: group,
                                         unreadCount: groupUnreadCounts[group.id] ?? 0,
-                                        allOshiList: oshiList
+                                        allOshiList: oshiList,
+                                        isAdmin: isAdmin
                                     )
                                 }
                                 .navigationBarHidden(true)

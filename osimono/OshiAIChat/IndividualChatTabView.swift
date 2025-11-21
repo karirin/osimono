@@ -28,6 +28,8 @@ struct IndividualChatTabView: View {
     @State private var oshiToDeleteCompletely: Oshi?
     @State private var isDeletingOshi = false
     
+    @State private var showSubscriptionPromotion = false
+    
     @State private var helpFlag = false
     @State private var customerFlag = false
     @ObservedObject var authManager = AuthManager()
@@ -46,7 +48,7 @@ struct IndividualChatTabView: View {
     let primaryColor = Color(.systemPink)
     
     private let adminUserIds = [
-//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+        "3UDNienzhkdheKIy77lyjMJhY4D3",
         "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
     
@@ -109,6 +111,9 @@ struct IndividualChatTabView: View {
         .navigationBarHidden(true)
         .onAppear {
             loadData()
+            checkAdminStatus()  // 管理者チェック
+            checkSubscriptionPromotion()  // サブスクリプション表示チェック
+            
             authManager.fetchUserFlag { userFlag, error in
                 if let error = error {
                     print(error.localizedDescription)
@@ -148,6 +153,31 @@ struct IndividualChatTabView: View {
             loadData()
         }) {
             AddOshiView()
+        }
+        .sheet(isPresented: $showSubscriptionPromotion) {
+            SubscriptionPreView()
+        }
+    }
+    
+    private func checkSubscriptionPromotion() {
+        // 管理者またはすでにサブスクリプション加入者の場合は表示しない
+        if isAdmin || subscriptionManager.isSubscribed {
+            return
+        }
+        
+        // カウンターを取得・更新
+        let currentCount = UserDefaults.standard.integer(forKey: "chatListViewCount")
+        let newCount = currentCount + 1
+        UserDefaults.standard.set(newCount, forKey: "chatListViewCount")
+        
+        print("📊 チャットリスト表示回数: \(newCount)")
+        
+        // 5回に1回表示
+        if newCount % 5 == 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                showSubscriptionPromotion = true
+                print("💰 サブスクリプション画面を表示")
+            }
         }
     }
     

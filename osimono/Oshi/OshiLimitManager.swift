@@ -16,8 +16,8 @@ class OshiLimitManager {
     
     // 管理者ユーザーIDリスト
     private let adminUserIds = [
+        "3UDNienzhkdheKIy77lyjMJhY4D3",
         "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
-        // 必要に応じて他の管理者IDを追加
     ]
     
     private init() {}

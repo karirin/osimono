@@ -59,8 +59,13 @@ struct OshiGroupChatView: View {
     @State private var isAdmin = false
     @State private var isCheckingAdminStatus = true
     
+    @State private var showDeleteHistoryAlert = false
+    @State private var isDeletingHistory = false
+    
+    @State private var isEditingMode = false
+    
     private let adminUserIds = [
-//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+        "3UDNienzhkdheKIy77lyjMJhY4D3",
         "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
     
@@ -77,6 +82,7 @@ struct OshiGroupChatView: View {
     @State private var helpFlag: Bool = false
     @State private var customerFlag: Bool = false
     @ObservedObject var authManager = AuthManager()
+    @State private var showSubscriptionSheet = false
     
     // イニシャライザを修正
     init(groupId: Binding<String>,          // ←型を Binding に
@@ -123,6 +129,29 @@ struct OshiGroupChatView: View {
             if customerFlag {
                 ReviewView(isPresented: $customerFlag, helpFlag: $helpFlag)
             }
+            
+            if isDeletingHistory {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .overlay(
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                                .tint(.white)
+                            Text("履歴を削除中...")
+                                .foregroundColor(.white)
+                                .font(.headline)
+                        }
+                    )
+            }
+        }
+        .alert("履歴削除の確認", isPresented: $showDeleteHistoryAlert) {
+            Button("削除", role: .destructive) {
+                deleteGroupChatHistory()
+            }
+            Button("キャンセル", role: .cancel) { }
+        } message: {
+            Text("このグループチャットの全ての履歴を削除しますか？この操作は取り消すことができません。")
         }
         .contentShape(Rectangle())
         .simultaneousGesture(
@@ -182,6 +211,43 @@ struct OshiGroupChatView: View {
                         }
                     }
                 )
+            }
+        }
+        .sheet(isPresented: $showSubscriptionSheet) {
+            SubscriptionPreView()
+        }
+        .onReceive(interstitialManager.$shouldShowSubscriptionSheet) { shouldShow in
+            if shouldShow && !subscriptionManager.isSubscribed && !isAdmin {
+                showSubscriptionSheet = true
+                // フラグをリセット
+                interstitialManager.shouldShowSubscriptionSheet = false
+            }
+        }
+    }
+    
+    private func deleteGroupChatHistory() {
+        guard isAdmin else {
+            print("管理者権限がないため履歴削除を実行できません")
+            return
+        }
+        
+        isDeletingHistory = true
+        
+        groupChatManager.deleteGroupChatHistory(for: groupId) { error in
+            DispatchQueue.main.async {
+                self.isDeletingHistory = false
+                
+                if let error = error {
+                    print("履歴削除エラー: \(error.localizedDescription)")
+                    // エラーアラートを表示（オプション）
+                } else {
+                    print("履歴削除成功")
+                    // メッセージリストをクリア
+                    self.messages.removeAll()
+                    
+                    // 成功フィードバック
+                    self.generateHapticFeedback()
+                }
             }
         }
     }
@@ -313,29 +379,14 @@ struct OshiGroupChatView: View {
     private var headerView: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                // 戻るボタン
-//                Button(action: {
-//                    generateHapticFeedback()
-//                    isTextFieldFocused = false
-//
-//                    // 戻る前に既読マーク
-//                    markAsReadWhenDisappear()
-//
-//                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-//                        presentationMode.wrappedValue.dismiss()
-//                    }
-//                }) {
-//                }
-                
                 Button(action: {
                     generateHapticFeedback()
                     onShowGroupList?()
                 }) {
                     HStack(spacing: 10) {
-                        
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.blue)
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.blue)
                         groupIconView
                             .frame(width: 36, height: 36)
                         
@@ -360,14 +411,52 @@ struct OshiGroupChatView: View {
                 
                 Spacer()
                 
-                // 編集ボタン（新規追加）
-                Button(action: {
-                    generateHapticFeedback()
-                    showEditGroupSheet = true
-                }) {
-                    Text(L10n.edit)
-                       .font(.system(size: 16))
-                       .foregroundColor(.blue)
+                HStack(spacing: 12) {
+                    // 管理者用履歴削除ボタン（編集モード時のみ表示）
+                    if isAdmin && !messages.isEmpty && isEditingMode {
+                        Button(action: {
+                            generateHapticFeedback()
+                            showDeleteHistoryAlert = true
+                        }) {
+                            Image(systemName: "trash.circle")
+                                .font(.system(size: 20))
+                                .foregroundColor(.red)
+                        }
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                    
+                    // 編集/完了ボタン
+                    Button(action: {
+                        generateHapticFeedback()
+                        if isEditingMode {
+                            // 編集モード終了
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                isEditingMode = false
+                            }
+                        } else {
+                            // グループ編集画面を表示
+                            showEditGroupSheet = true
+                        }
+                    }) {
+                        Text(isEditingMode ? L10n.done : L10n.edit)
+                           .font(.system(size: 16))
+                           .foregroundColor(.blue)
+                    }
+                    
+                    // 編集メニューボタン（編集モードではない時のみ表示）
+                    if !isEditingMode {
+                        Button(action: {
+                            generateHapticFeedback()
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                isEditingMode = true
+                            }
+                        }) {
+                            Image(systemName: "ellipsis.circle")
+                                .font(.system(size: 18))
+                                .foregroundColor(.blue)
+                        }
+                        .transition(.scale.combined(with: .opacity))
+                    }
                 }
             }
             .padding(.horizontal)

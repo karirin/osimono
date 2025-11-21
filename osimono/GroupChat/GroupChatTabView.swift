@@ -28,11 +28,15 @@ struct GroupChatTabView: View {
     @State private var openedGroupId: String = ""
     
     private let adminUserIds = [
-//        "3UDNienzhkdheKIy77lyjMJhY4D3",
+        "3UDNienzhkdheKIy77lyjMJhY4D3",
         "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
     
     @State private var isCheckingAdminStatus = true
+    
+    @State private var showDeleteHistoryAlert = false
+    @State private var groupToDeleteHistory: GroupChatInfo?
+    @State private var isDeletingHistory = false
     
     private func checkAdminStatus() {
           guard let userID = Auth.auth().currentUser?.uid else {
@@ -92,6 +96,21 @@ struct GroupChatTabView: View {
                 if isDeletingGroup {
                     deletingOverlay
                 }
+                
+                if isDeletingGroup || isDeletingHistory {
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                        .overlay(
+                            VStack(spacing: 16) {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                                    .tint(.white)
+                                Text(isDeletingHistory ? "履歴を削除中..." : "グループを削除中...")
+                                    .foregroundColor(.white)
+                                    .font(.headline)
+                            }
+                        )
+                }
             }
         }
         .navigationBarHidden(true)
@@ -138,6 +157,43 @@ struct GroupChatTabView: View {
             Button(L10n.cancel, role: .cancel) {}
         } message: {
             Text(L10n.deleteGroupMessage(groupToDelete?.name ?? ""))
+        }
+        .alert("履歴削除の確認", isPresented: $showDeleteHistoryAlert) {
+            Button("削除", role: .destructive) {
+                if let group = groupToDeleteHistory {
+                    deleteGroupHistory(group)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("「\(groupToDeleteHistory?.name ?? "")」の全ての履歴を削除しますか？この操作は取り消すことができません。")
+        }
+    }
+    
+    private func deleteGroupHistory(_ group: GroupChatInfo) {
+        guard isAdmin else {
+            print("管理者権限がないため履歴削除を実行できません")
+            return
+        }
+        
+        isDeletingHistory = true
+        
+        let groupChatManager = GroupChatManager()
+        groupChatManager.deleteGroupChatHistory(for: group.id) { error in
+            DispatchQueue.main.async {
+                self.isDeletingHistory = false
+                
+                if let error = error {
+                    print("履歴削除エラー: \(error.localizedDescription)")
+                } else {
+                    print("履歴削除成功: \(group.name)")
+                    // 成功フィードバック
+                    self.generateHapticFeedback()
+                    
+                    // グループリストを更新して最終メッセージ情報をリセット
+                    self.loadGroupChats()
+                }
+            }
         }
     }
     
@@ -308,39 +364,55 @@ struct GroupChatTabView: View {
             
             // グループチャット一覧
             ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(filteredGroupChats, id: \.id) { group in
-                        if isEditing {
-                            HStack {
-                                GroupChatRowView(
-                                    group: group,
-                                    unreadCount: groupUnreadCounts[group.id] ?? 0,
-                                    allOshiList: allOshiList
-                                )
-                                
-                                editButtonsView(for: group)
-                            }
-                        } else {
-                            NavigationLink(destination: groupChatDestination(for: group)) {
-                                GroupChatRowView(
-                                    group: group,
-                                    unreadCount: groupUnreadCounts[group.id] ?? 0,
-                                    allOshiList: allOshiList
-                                )
-                            }
-                            .navigationBarHidden(true)
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                        
-                        if group.id != filteredGroupChats.last?.id {
-                            Divider()
-                                .padding(.leading, 80)
-                                .background(Color.gray.opacity(0.3))
-                        }
-                    }
-                }
-            }
-            .background(Color.white)
+                 LazyVStack(spacing: 0) {
+                     ForEach(filteredGroupChats, id: \.id) { group in
+                         if isEditing {
+                             HStack {
+                                 GroupChatRowView(
+                                     group: group,
+                                     unreadCount: groupUnreadCounts[group.id] ?? 0,
+                                     allOshiList: allOshiList,
+                                     showEditButtons: true,
+                                     onEdit: {
+                                         generateHapticFeedback()
+                                         groupToEdit = group
+                                         showEditGroupSheet = true
+                                     },
+                                     onDelete: {
+                                         generateHapticFeedback()
+                                         groupToDelete = group
+                                         showDeleteGroupAlert = true
+                                     },
+                                     onDeleteHistory: isAdmin ? {  // 管理者の場合のみ履歴削除を有効化
+                                         generateHapticFeedback()
+                                         groupToDeleteHistory = group
+                                         showDeleteHistoryAlert = true
+                                     } : nil,
+                                     isAdmin: isAdmin
+                                 )
+                             }
+                         } else {
+                             NavigationLink(destination: groupChatDestination(for: group)) {
+                                 GroupChatRowView(
+                                     group: group,
+                                     unreadCount: groupUnreadCounts[group.id] ?? 0,
+                                     allOshiList: allOshiList,
+                                     isAdmin: isAdmin
+                                 )
+                             }
+                             .navigationBarHidden(true)
+                             .buttonStyle(PlainButtonStyle())
+                         }
+                         
+                         if group.id != filteredGroupChats.last?.id {
+                             Divider()
+                                 .padding(.leading, 80)
+                                 .background(Color.gray.opacity(0.3))
+                         }
+                     }
+                 }
+             }
+             .background(Color.white)
         }
     }
     

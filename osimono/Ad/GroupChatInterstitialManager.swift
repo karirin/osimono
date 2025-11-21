@@ -19,12 +19,19 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
     @Published var sendCount: Int = 0
     private let triggerInterval: Int = 5 // 5回ごとに広告表示
     
+    // サブスクリプション画面表示管理
+    @Published var shouldShowSubscriptionSheet = false
+    private var subscriptionSheetCounter: Int = 0
+    private let subscriptionSheetInterval: Int = 2 // 2回に1回サブスクリプション画面を表示
+    
     // UserDefaultsキー
     private let sendCountKey = "GroupChatSendCount"
+    private let subscriptionCounterKey = "GroupChatSubscriptionCounter"
     
     override init() {
         super.init()
         loadSendCount()
+        loadSubscriptionCounter()
         preloadInterstitialAd()
     }
     
@@ -33,11 +40,25 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
     /// 送信カウントを読み込み
     private func loadSendCount() {
         sendCount = UserDefaults.standard.integer(forKey: sendCountKey)
+        print("📊 送信カウント読み込み: \(sendCount)")
+    }
+    
+    /// サブスクリプションカウンターを読み込み
+    private func loadSubscriptionCounter() {
+        subscriptionSheetCounter = UserDefaults.standard.integer(forKey: subscriptionCounterKey)
+        print("📊 サブスクリプションカウンター読み込み: \(subscriptionSheetCounter)")
     }
     
     /// 送信カウントを保存
     private func saveSendCount() {
         UserDefaults.standard.set(sendCount, forKey: sendCountKey)
+        UserDefaults.standard.synchronize()
+    }
+    
+    /// サブスクリプションカウンターを保存
+    private func saveSubscriptionCounter() {
+        UserDefaults.standard.set(subscriptionSheetCounter, forKey: subscriptionCounterKey)
+        UserDefaults.standard.synchronize()
     }
     
     /// 送信カウントをインクリメント
@@ -57,6 +78,16 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
     func resetSendCount() {
         sendCount = 0
         saveSendCount()
+    }
+    
+    /// カウンターをリセット（デバッグ用）
+    func resetCounters() {
+        sendCount = 0
+        subscriptionSheetCounter = 0
+        saveSendCount()
+        saveSubscriptionCounter()
+        shouldShowSubscriptionSheet = false
+        print("🔄 カウンターをリセットしました")
     }
     
     // MARK: - 広告管理
@@ -107,6 +138,11 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
         interstitialAd.present(from: presentingViewController)
     }
     
+    /// 強制的に広告を表示（デバッグ用）
+    func forceShowInterstitial() {
+        showInterstitialIfReady()
+    }
+    
     /// 最前面のビューコントローラーを取得
     private func findTopViewController(from viewController: UIViewController) -> UIViewController {
         if let presentedViewController = viewController.presentedViewController {
@@ -126,9 +162,22 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
         return viewController
     }
     
-    /// 強制的に広告を表示（デバッグ用）
-    func forceShowInterstitial() {
-        showInterstitialIfReady()
+    // MARK: - サブスクリプション画面表示判定
+    
+    /// サブスクリプション画面表示判定
+    private func checkAndShowSubscriptionSheet() {
+        subscriptionSheetCounter += 1
+        saveSubscriptionCounter()
+        
+        print("📊 サブスクリプションシート判定: \(subscriptionSheetCounter)")
+        
+        // 2回に1回の頻度でサブスクリプション画面を表示
+        if subscriptionSheetCounter % subscriptionSheetInterval == 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                print("💳 サブスクリプション画面表示")
+                self.shouldShowSubscriptionSheet = true
+            }
+        }
     }
 }
 
@@ -145,6 +194,9 @@ extension GroupChatInterstitialManager: FullScreenContentDelegate {
         // 広告が閉じられたら次の広告を事前読み込み
         self.interstitialAd = nil
         preloadInterstitialAd()
+        
+        // サブスクリプション画面表示判定
+        checkAndShowSubscriptionSheet()
     }
     
     func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
@@ -153,5 +205,8 @@ extension GroupChatInterstitialManager: FullScreenContentDelegate {
         // エラーが発生した場合も次の広告を事前読み込み
         self.interstitialAd = nil
         preloadInterstitialAd()
+        
+        // サブスクリプション画面表示判定（広告が表示できなかった場合も）
+        checkAndShowSubscriptionSheet()
     }
 }
