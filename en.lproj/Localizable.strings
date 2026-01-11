@@ -941,3 +941,36 @@
 "ai_initial_prompt_live" = "Your fan came to %@! Please naturally express the joy of spending that time together in English.";
 "ai_initial_prompt_pilgrimage" = "Your fan went on a pilgrimage to %@! Please naturally talk to them with your feelings about that place in English.";
 "ai_initial_prompt_default" = "Your fan made a new post! Please react naturally and start a conversation in English.";
+
+"edit_message_title" = "Edit Message";
+"message_content" = "Message Content";
+"admin_edit_warning" = "Modifying message content with admin privileges.";
+"delete_message_title" = "Delete Message";
+"delete_message_warning" = "Are you sure you want to delete this message? This action cannot be undone.";
+"read_status" = "Read";
+"today" = "Today";
+"message_placeholder" = "Message to %@";
+
+// MARK: - Group Chat Specific
+"deleting_history" = "Deleting history...";
+"confirm_delete_history" = "Delete History";
+"delete_group_history_warning" = "Are you sure you want to delete all history for this group chat? This action cannot be undone.";
+"someone" = "Someone";
+"member_typing" = "%@ is typing...";
+"multiple_typing" = "Multiple members are typing...";
+"ai_reaction_prompt" = "%@ said \"%@\".\nAs a member of the same group, please respond naturally and briefly to this statement as you (%@).\nKeep the reaction short, about 1-2 sentences.";
+
+// MARK: - Group Chat Missing Keys
+"add_members_to_start" = "Add members to start chatting";
+"chat_with_members" = "You can chat with %d members";
+"someone" = "Someone";
+"deleting_history" = "Deleting history...";
+"confirm_delete_history" = "Delete History";
+"delete_group_history_warning" = "Are you sure you want to delete all history for this group chat? This action cannot be undone.";
+
+"start_conversation_with" = "Start a conversation with %@";
+"send_first_message" = "Try sending your first message";
+"typing" = "Typing...";
+"remaining" = "Remaining";
+"unlimited" = "Unlimited";
+"loading_chat" = "Loading chat...";

@@ -333,6 +333,38 @@ struct L10n {
     static let yesterdayLabel = NSLocalizedString("yesterday", comment: "Yesterday label")
     static let groupChatListTitle = NSLocalizedString("group_chat_list_title", comment: "Group Chat List Title")
     static let update = NSLocalizedString("update", comment: "Update")
+    static let deletingHistory = NSLocalizedString("deleting_history", comment: "Deleting history status")
+    static let confirmDeleteHistory = NSLocalizedString("confirm_delete_history", comment: "Confirm delete history title")
+    static let deleteGroupHistoryWarning = NSLocalizedString("delete_group_history_warning", comment: "Delete group history warning")
+    static let someone = NSLocalizedString("someone", comment: "Someone placeholder")
+    static let multipleTyping = NSLocalizedString("multiple_typing", comment: "Multiple members typing")
+    
+    static let selectGroupMembersDescription = NSLocalizedString("select_group_members_description", comment: "Description for member selection")
+    
+    static let sendFirstMessage = NSLocalizedString("send_first_message", comment: "Empty state subtitle")
+    static let typing = NSLocalizedString("typing", comment: "Typing indicator")
+    static let remaining = NSLocalizedString("remaining", comment: "Remaining count")
+    // unlimitedは既存かもしれませんが一応記述
+    static let unlimited = NSLocalizedString("unlimited", comment: "Unlimited plan")
+    static let loadingChat = NSLocalizedString("loading_chat", comment: "Loading chat status")
+
+    // フォーマット付き文字列
+    static func startConversationWith(_ name: String) -> String {
+        return String(format: NSLocalizedString("start_conversation_with", comment: "Start conversation title"), name)
+    }
+    
+    // Functions for formatted strings
+    static func memberTyping(name: String) -> String {
+        return String(format: NSLocalizedString("member_typing", comment: "Member typing"), name)
+    }
+    
+    static func aiReactionPrompt(sender: String, message: String, reactor: String) -> String {
+        return String(format: NSLocalizedString("ai_reaction_prompt", comment: "AI reaction prompt"), sender, message, reactor)
+    }
+    
+    static func messagePlaceholder(_ name: String) -> String {
+        return String(format: NSLocalizedString("message_placeholder", comment: "Message placeholder with oshi name"), name)
+    }
     
     // Helper functions for dynamic content
     static func titlePlaceholder(for itemType: String) -> String {
@@ -442,7 +474,6 @@ struct L10n {
     static let aiChat = NSLocalizedString("ai_chat", comment: "AI chat")
     static let message = NSLocalizedString("message", comment: "Message")
     static let sendMessage = NSLocalizedString("send_message", comment: "Send message")
-    static let typing = NSLocalizedString("typing", comment: "Typing")
     
     // Settings and Preferences
     static let settings = NSLocalizedString("settings", comment: "Settings")
@@ -473,6 +504,13 @@ struct L10n {
     static let faq = NSLocalizedString("faq", comment: "FAQ")
     static let contactUs = NSLocalizedString("contact_us", comment: "Contact us")
     static let tutorial = NSLocalizedString("tutorial", comment: "Tutorial")
+    
+    static let addMembersToStart = NSLocalizedString("add_members_to_start", comment: "Instruction to add members")
+
+    // フォーマット付きの文字列生成関数
+    static func chatWithMembers(_ count: Int) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("chat_with_members", comment: "Chat with members count"), count)
+    }
     
     static func itemCount(_ count: Int) -> String {
         return String.localizedStringWithFormat(NSLocalizedString("item_count", comment: "Item count"), count)
@@ -870,6 +908,14 @@ struct L10n {
     static let conversationLanguage = NSLocalizedString("conversation_language", comment: "Conversation Language")
     static let selectConversationLanguage = NSLocalizedString("select_conversation_language", comment: "Select Conversation Language")
     static let languageSettingNote = NSLocalizedString("language_setting_note", comment: "Language Setting Note")
+    
+    static let editMessageTitle = NSLocalizedString("edit_message_title", comment: "Edit message title")
+    static let messageContent = NSLocalizedString("message_content", comment: "Message content placeholder")
+    static let adminEditWarning = NSLocalizedString("admin_edit_warning", comment: "Admin edit warning body")
+    static let deleteMessageTitle = NSLocalizedString("delete_message_title", comment: "Delete message title")
+    static let deleteMessageWarning = NSLocalizedString("delete_message_warning", comment: "Delete message warning body")
+    static let readStatus = NSLocalizedString("read_status", comment: "Read status")
+    static let today = NSLocalizedString("today", comment: "Today")
 }
 
 func getCurrentLanguage() -> String {

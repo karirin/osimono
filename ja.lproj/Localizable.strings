@@ -937,3 +937,35 @@
 "ai_initial_prompt_live" = "ファンが%@に来てくれました！一緒にその時間を過ごせた喜びを自然に表現してください。";
 "ai_initial_prompt_pilgrimage" = "ファンが%@に聖地巡礼してくれました！その場所への思いを込めて自然に話しかけてください。";
 "ai_initial_prompt_default" = "ファンが新しい投稿をしてくれました！自然に反応して会話を始めてください。";
+
+"edit_message_title" = "メッセージを編集";
+"message_content" = "メッセージ内容";
+"admin_edit_warning" = "管理者権限でメッセージ内容を変更します";
+"delete_message_title" = "メッセージを削除";
+"delete_message_warning" = "このメッセージを完全に削除しますか？この操作は取り消せません。";
+"read_status" = "既読";
+"today" = "今日";
+"message_placeholder" = "%@にメッセージ";
+
+"deleting_history" = "履歴を削除中...";
+"confirm_delete_history" = "履歴削除の確認";
+"delete_group_history_warning" = "このグループチャットの全ての履歴を削除しますか？この操作は取り消すことができません。";
+"someone" = "誰か";
+"member_typing" = "%@が入力中...";
+"multiple_typing" = "複数のメンバーが入力中...";
+"ai_reaction_prompt" = "%@が「%@」と言いました。\nあなた（%@）は同じグループの仲間として、この発言に短く自然に反応してください。\nリアクションは1〜2文程度の短いものにしてください。";
+
+// MARK: - Group Chat Missing Keys
+"add_members_to_start" = "メンバーを追加して会話を始めましょう";
+"chat_with_members" = "%d人のメンバーと会話できます";
+"someone" = "誰か";
+"deleting_history" = "履歴を削除中...";
+"confirm_delete_history" = "履歴削除の確認";
+"delete_group_history_warning" = "このグループチャットの全ての履歴を削除しますか？この操作は取り消すことができません。";
+
+"start_conversation_with" = "%@との会話を始めましょう";
+"send_first_message" = "最初のメッセージを送ってみてください";
+"typing" = "入力中...";
+"remaining" = "残り";
+"unlimited" = "無制限";
+"loading_chat" = "チャットを読み込み中...";

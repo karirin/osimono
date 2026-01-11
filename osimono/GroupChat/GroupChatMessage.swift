@@ -327,7 +327,7 @@ struct GroupMemberSelectionView: View {
                 }
                 
                 // 説明テキスト
-                Text(NSLocalizedString("select_group_members_description", comment: "Select group members description"))  // 多言語対応
+                Text(L10n.selectGroupMembersDescription)  // 多言語対応
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)

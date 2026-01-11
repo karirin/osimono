@@ -2,7 +2,7 @@
 //  OshiGroupChatView.swift
 //  osimono
 //
-//  複数の推しとのグループチャット機能 - サブスクリプション対応版
+//  複数の推しとのグループチャット機能 - モダンUI版
 //
 
 import SwiftUI
@@ -12,9 +12,9 @@ import FirebaseDatabase
 import Combine
 
 enum ConversationPattern {
-    case aiToAI        // AI同士で話す
-    case aiToGroup     // AIがAIと自分に話す（グループ全体）
-    case aiToUser      // AIが自分に話す
+    case aiToAI
+    case aiToGroup
+    case aiToUser
 }
 
 struct OshiGroupChatView: View {
@@ -23,45 +23,52 @@ struct OshiGroupChatView: View {
     @State private var messages: [GroupChatMessage] = []
     @State private var inputText: String = ""
     @State private var isLoading: Bool = false
-    @State private var isInitialLoadingComplete: Bool = false // ローディング完了フラグ
+    @State private var isInitialLoadingComplete: Bool = false
     @State private var shouldScrollToBottom: Bool = false
     @State private var showMemberSelection: Bool = false
     @State private var showRewardCompletedModal = false
     @State private var rewardAmount = 0
     
-    // 編集機能関連の新しい状態
+    // 新しいUI用の状態管理
+    @State private var typingMembers: [String] = [] // タイピング中のメンバーID
+    @State private var showReadReceipt: Bool = false
+    @State private var lastSentMessageId: String? = nil
+    
+    // モダンカラーパレット
+    private let bgGradientStart = Color(red: 0.98, green: 0.97, blue: 0.99)
+    private let bgGradientEnd = Color(red: 0.95, green: 0.94, blue: 0.98)
+    private let primaryAccent = Color(red: 0.91, green: 0.42, blue: 0.58)
+    private let secondaryAccent = Color(red: 0.65, green: 0.45, blue: 0.85)
+    private let userBubbleGradient = LinearGradient(
+        colors: [
+            Color(red: 0.91, green: 0.42, blue: 0.58),
+            Color(red: 0.78, green: 0.38, blue: 0.72)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
     @State private var showEditGroupSheet = false
     @State private var groupInfo: GroupChatInfo?
-    
-    // 選択された推しメンバー
     @State private var selectedMembers: [Oshi] = []
     @State private var allOshiList: [Oshi] = []
     
-    // グループチャット情報
     @Binding var groupId: String
     @State private var currentGroupId = ""
-    let onShowGroupList: (() -> Void)? // グループリスト表示用のクロージャ
+    let onShowGroupList: (() -> Void)?
     @State private var groupName: String = ""
     
-    // キーボード関連
     @FocusState private var isTextFieldFocused: Bool
     @State private var keyboardHeight: CGFloat = 0
-    
-    // 既読管理用
     @State private var hasMarkedAsRead: Bool = false
     
     @StateObject private var interstitialManager = GroupChatInterstitialManager.shared
-    
-    // サブスクリプション管理を追加
     @StateObject private var subscriptionManager = SubscriptionManager()
     
-    // 管理者権限チェック用
     @State private var isAdmin = false
     @State private var isCheckingAdminStatus = true
-    
     @State private var showDeleteHistoryAlert = false
     @State private var isDeletingHistory = false
-    
     @State private var isEditingMode = false
     
     private let adminUserIds = [
@@ -69,48 +76,45 @@ struct OshiGroupChatView: View {
         "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     ]
     
-    // 広告表示判定のプロパティを追加
     private var shouldShowAd: Bool {
         return !isAdmin && !subscriptionManager.isSubscribed
     }
-    
-    // LINE風カラー設定
-    let lineBgColor = Color(UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0))
-    let lineGreen = Color(UIColor(red: 0.0, green: 0.68, blue: 0.31, alpha: 1.0))
-    let primaryColor = Color(.systemPink)
     
     @State private var helpFlag: Bool = false
     @State private var customerFlag: Bool = false
     @ObservedObject var authManager = AuthManager()
     @State private var showSubscriptionSheet = false
     
-    // イニシャライザを修正
-    init(groupId: Binding<String>,          // ←型を Binding に
-         onShowGroupList: (() -> Void)? = nil) {
-        self._groupId = groupId             // ←Binding を保持
+    init(groupId: Binding<String>, onShowGroupList: (() -> Void)? = nil) {
+        self._groupId = groupId
         self.onShowGroupList = onShowGroupList
-        _currentGroupId = State(initialValue: groupId.wrappedValue) // ←追加
+        _currentGroupId = State(initialValue: groupId.wrappedValue)
     }
     
     var body: some View {
         ZStack {
-            // 背景色（ローディング中でも表示）
-            lineBgColor.edgesIgnoringSafeArea(.all)
+            // 背景グラデーション
+            LinearGradient(
+                colors: [bgGradientStart, bgGradientEnd],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
             
             if isInitialLoadingComplete {
-                // メインのチャット画面
                 chatContent
             } else {
-                // ローディング画面
                 loadingView
             }
             
-            // モーダル系（ローディング完了後でも表示）
+            // モーダル群
             if showMemberSelection {
-                GroupMemberSelectionView(
+                ModernGroupMemberSelectionView(
                     isPresented: $showMemberSelection,
                     allOshiList: allOshiList,
                     selectedMembers: $selectedMembers,
+                    primaryAccent: primaryAccent,
+                    secondaryAccent: secondaryAccent,
                     onSave: { updateGroupMembers() }
                 )
             }
@@ -138,20 +142,23 @@ struct OshiGroupChatView: View {
                             ProgressView()
                                 .scaleEffect(1.5)
                                 .tint(.white)
-                            Text("履歴を削除中...")
+                            Text(L10n.deletingHistory)
                                 .foregroundColor(.white)
-                                .font(.headline)
+                                .font(.system(size: 14, weight: .medium, design: .rounded))
                         }
+                        .padding(24)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.black.opacity(0.7))
+                        )
                     )
             }
         }
-        .alert("履歴削除の確認", isPresented: $showDeleteHistoryAlert) {
-            Button("削除", role: .destructive) {
-                deleteGroupChatHistory()
-            }
-            Button("キャンセル", role: .cancel) { }
+        .alert(L10n.confirmDeleteHistory, isPresented: $showDeleteHistoryAlert) { // 変更
+            Button(L10n.delete, role: .destructive) { deleteGroupChatHistory() } // 変更
+            Button(L10n.cancel, role: .cancel) { } // 変更
         } message: {
-            Text("このグループチャットの全ての履歴を削除しますか？この操作は取り消すことができません。")
+            Text(L10n.deleteGroupHistoryWarning) // 変更
         }
         .contentShape(Rectangle())
         .simultaneousGesture(
@@ -166,33 +173,26 @@ struct OshiGroupChatView: View {
                 }
         )
         .onReceive(Publishers.keyboardHeight) { height in
-            withAnimation(.easeInOut(duration: 0.3)) { keyboardHeight = height }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { keyboardHeight = height }
         }
         .onAppear {
             checkAdminStatus()
             setupGroupChat()
-            // インタースティシャル広告を事前読み込み（サブスク状態を考慮）
             if shouldShowAd {
                 interstitialManager.preloadInterstitialAd()
             }
         }
         .onChange(of: groupId) { newValue in
             guard newValue != currentGroupId else { return }
-            // 古いリスナーを解除
             groupChatManager.removeMessageListener(for: currentGroupId)
-            
-            // 状態をリセット（必要に応じて）
             messages.removeAll()
             selectedMembers.removeAll()
             hasMarkedAsRead = false
-            
-            // 新しいグループをロード
             currentGroupId = newValue
             setupGroupChat()
         }
         .onDisappear {
             markAsReadWhenDisappear()
-            // リスナーを削除してメモリリークを防止
             groupChatManager.removeMessageListener(for: groupId)
         }
         .navigationBarHidden(true)
@@ -202,13 +202,9 @@ struct OshiGroupChatView: View {
                     group: group,
                     allOshiList: allOshiList,
                     onUpdate: { updatedGroup in
-                        // グループ情報更新後の処理
                         self.groupInfo = updatedGroup
                         self.groupName = updatedGroup.name
-                        // メンバー情報を再読み込み
-                        self.loadGroupMembers {
-                            // 完了処理
-                        }
+                        self.loadGroupMembers { }
                     }
                 )
             }
@@ -219,265 +215,239 @@ struct OshiGroupChatView: View {
         .onReceive(interstitialManager.$shouldShowSubscriptionSheet) { shouldShow in
             if shouldShow && !subscriptionManager.isSubscribed && !isAdmin {
                 showSubscriptionSheet = true
-                // フラグをリセット
                 interstitialManager.shouldShowSubscriptionSheet = false
             }
-        }
-    }
-    
-    private func deleteGroupChatHistory() {
-        guard isAdmin else {
-            print("管理者権限がないため履歴削除を実行できません")
-            return
-        }
-        
-        isDeletingHistory = true
-        
-        groupChatManager.deleteGroupChatHistory(for: groupId) { error in
-            DispatchQueue.main.async {
-                self.isDeletingHistory = false
-                
-                if let error = error {
-                    print("履歴削除エラー: \(error.localizedDescription)")
-                    // エラーアラートを表示（オプション）
-                } else {
-                    print("履歴削除成功")
-                    // メッセージリストをクリア
-                    self.messages.removeAll()
-                    
-                    // 成功フィードバック
-                    self.generateHapticFeedback()
-                }
-            }
-        }
-    }
-    
-    // 管理者権限チェック関数を追加
-    private func checkAdminStatus() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            isAdmin = false
-            isCheckingAdminStatus = false
-            return
-        }
-        
-        // UserIDで管理者権限をチェック
-        isAdmin = adminUserIds.contains(userID)
-        isCheckingAdminStatus = false
-        
-        if isAdmin {
-            print("🔑 管理者としてログイン中: \(userID)")
         }
     }
     
     // MARK: - ローディング画面
     private var loadingView: some View {
         VStack(spacing: 0) {
-            // ヘッダー部分（ローディング中でも表示）
             headerViewLoading
             
-            // ローディング中のメインエリア
             VStack(spacing: 24) {
                 Spacer()
                 
-                // ローディングアニメーション
-                VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [primaryAccent.opacity(0.2), secondaryAccent.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 80, height: 80)
+                    
                     ProgressView()
-                        .scaleEffect(1.5)
-                        .progressViewStyle(CircularProgressViewStyle(tint: primaryColor))
-                    
-                    Text(groupName.isEmpty ? L10n.groupChat : groupName)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.gray)
+                        .scaleEffect(1.3)
+                        .progressViewStyle(CircularProgressViewStyle(tint: primaryAccent))
                 }
+                
+                Text(groupName.isEmpty ? L10n.groupChat : groupName)
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
                 
                 Spacer()
             }
         }
     }
     
-    // ローディング中のヘッダー（戻るボタンのみ）
     private var headerViewLoading: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                // 戻るボタン
-                Button(action: {
-                    generateHapticFeedback()
-                    isTextFieldFocused = false
-                    
-                    // 戻る前に既読マーク
-                    markAsReadWhenDisappear()
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.blue)
+        HStack(spacing: 14) {
+            Button(action: {
+                generateHapticFeedback()
+                isTextFieldFocused = false
+                markAsReadWhenDisappear()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    presentationMode.wrappedValue.dismiss()
                 }
-                
-                Button(action: {
-                    generateHapticFeedback()
-                    onShowGroupList?()
-                }) {
-                    HStack(spacing: 10) {
-                        groupIconView
-                            .frame(width: 36, height: 36)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(groupName.isEmpty ? L10n.groupChat : groupName)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.black)
-                            
-                            HStack(spacing: 4) {
-                                Text(L10n.membersCount(selectedMembers.count))
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.blue)
-                                
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                Spacer()
-                
-                // 編集ボタン（新規追加）
-                Button(action: {
-                    generateHapticFeedback()
-                    showEditGroupSheet = true
-                }) {
-                    Text(L10n.edit)
-                        .font(.system(size: 16))
-                        .foregroundColor(.blue)
-                }
+            }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.primary.opacity(0.7))
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.8))
+                            .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+                    )
             }
-            .padding(.horizontal)
-            .padding(.vertical, 10)
-            .background(Color.white)
-            .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
+            
+            modernGroupIconView
+                .frame(width: 46, height: 46)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(groupName.isEmpty ? L10n.groupChat : groupName)
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .foregroundColor(.primary)
+                
+                Text(L10n.membersCount(selectedMembers.count))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.03), radius: 8, y: 4)
+        )
     }
     
+    // MARK: - メインコンテンツ
     private var chatContent: some View {
         VStack(spacing: 0) {
-            // ヘッダー
             headerView
-            
-            // チャットメッセージリスト
             chatMessagesView
-            
-            // 入力エリア
             inputAreaView
-                .padding(.bottom, keyboardHeight > 0 ? 0 : 0)
         }
     }
     
+    // MARK: - ヘッダー
     private var headerView: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Button(action: {
-                    generateHapticFeedback()
-                    onShowGroupList?()
-                }) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.blue)
-                        groupIconView
-                            .frame(width: 36, height: 36)
+        HStack(spacing: 14) {
+            Button(action: {
+                generateHapticFeedback()
+                onShowGroupList?()
+            }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.primary.opacity(0.7))
+                        .frame(width: 36, height: 36)
+                        .background(
+                            Circle()
+                                .fill(Color.white.opacity(0.8))
+                                .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+                        )
+                    
+                    modernGroupIconView
+                        .frame(width: 46, height: 46)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(groupName.isEmpty ? L10n.groupChat : groupName)
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(.primary)
                         
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(groupName.isEmpty ? "グループチャット" : groupName)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.black)
-                            
-                            HStack(spacing: 4) {
+                        HStack(spacing: 4) {
+                            if !typingMembers.isEmpty {
+                                TypingIndicatorDots()
+                                Text(getTypingText())
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(primaryAccent)
+                            } else {
                                 Text(L10n.membersCount(selectedMembers.count))
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.blue)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.secondary)
                                 
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 10))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.secondary)
                             }
                         }
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                Spacer()
-                
-                HStack(spacing: 12) {
-                    // 管理者用履歴削除ボタン（編集モード時のみ表示）
-                    if isAdmin && !messages.isEmpty && isEditingMode {
-                        Button(action: {
-                            generateHapticFeedback()
-                            showDeleteHistoryAlert = true
-                        }) {
-                            Image(systemName: "trash.circle")
-                                .font(.system(size: 20))
-                                .foregroundColor(.red)
-                        }
-                        .transition(.scale.combined(with: .opacity))
-                    }
-                    
-                    // 編集/完了ボタン
-                    Button(action: {
-                        generateHapticFeedback()
-                        if isEditingMode {
-                            // 編集モード終了
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                                isEditingMode = false
-                            }
-                        } else {
-                            // グループ編集画面を表示
-                            showEditGroupSheet = true
-                        }
-                    }) {
-                        Text(isEditingMode ? L10n.done : L10n.edit)
-                           .font(.system(size: 16))
-                           .foregroundColor(.blue)
-                    }
-                    
-                    // 編集メニューボタン（編集モードではない時のみ表示）
-                    if !isEditingMode {
-                        Button(action: {
-                            generateHapticFeedback()
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                                isEditingMode = true
-                            }
-                        }) {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.system(size: 18))
-                                .foregroundColor(.blue)
-                        }
-                        .transition(.scale.combined(with: .opacity))
                     }
                 }
             }
-            .padding(.horizontal)
-            .padding(.vertical, 10)
-            .background(Color.white)
-            .shadow(color: Color.black.opacity(0.1), radius: 1, y: 1)
+            .buttonStyle(PlainButtonStyle())
+            
+            Spacer()
+            
+            HStack(spacing: 8) {
+                if isAdmin && !messages.isEmpty && isEditingMode {
+                    Button(action: {
+                        generateHapticFeedback()
+                        showDeleteHistoryAlert = true
+                    }) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.red)
+                            .frame(width: 36, height: 36)
+                            .background(
+                                Circle()
+                                    .fill(Color.red.opacity(0.1))
+                            )
+                    }
+                    .transition(.scale.combined(with: .opacity))
+                }
+                
+                Button(action: {
+                    generateHapticFeedback()
+                    if isEditingMode {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            isEditingMode = false
+                        }
+                    } else {
+                        showEditGroupSheet = true
+                    }
+                }) {
+                    Text(isEditingMode ? L10n.done : L10n.edit)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(primaryAccent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(primaryAccent.opacity(0.1))
+                        )
+                }
+                
+                if !isEditingMode {
+                    Button(action: {
+                        generateHapticFeedback()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            isEditingMode = true
+                        }
+                    }) {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.primary.opacity(0.6))
+                            .frame(width: 36, height: 36)
+                            .background(
+                                Circle()
+                                    .fill(Color.white.opacity(0.8))
+                                    .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+                            )
+                    }
+                    .transition(.scale.combined(with: .opacity))
+                }
+            }
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.03), radius: 8, y: 4)
+        )
     }
     
-    private var groupIconView: some View {
+    // モダンなグループアイコン
+    private var modernGroupIconView: some View {
         ZStack {
             Circle()
-                .fill(Color.gray.opacity(0.2))
-                .frame(width: 36, height: 36)
+                .fill(
+                    LinearGradient(
+                        colors: [primaryAccent.opacity(0.3), secondaryAccent.opacity(0.3)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
             
             if selectedMembers.isEmpty {
-                Image(systemName: "person.2.circle")
-                    .font(.system(size: 20))
-                    .foregroundColor(.gray)
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [primaryAccent, secondaryAccent],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
             } else if selectedMembers.count == 1 {
-                // 1人の場合は通常のプロフィール画像
                 if let imageUrl = selectedMembers[0].imageUrl, let url = URL(string: imageUrl) {
                     AsyncImage(url: url) { phase in
                         switch phase {
@@ -487,81 +457,138 @@ struct OshiGroupChatView: View {
                                 .scaledToFill()
                                 .clipShape(Circle())
                         default:
-                            Circle()
-                                .fill(Color.gray.opacity(0.2))
-                                .overlay(
-                                    Text(String(selectedMembers[0].name.prefix(1)))
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.gray)
-                                )
+                            singleMemberPlaceholder(selectedMembers[0])
                         }
                     }
                 } else {
-                    Circle()
-                        .fill(Color.gray.opacity(0.2))
-                        .overlay(
-                            Text(String(selectedMembers[0].name.prefix(1)))
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.gray)
-                        )
+                    singleMemberPlaceholder(selectedMembers[0])
                 }
             } else {
-                // 複数人の場合は重ねて表示
-                ForEach(Array(selectedMembers.prefix(2).enumerated()), id: \.element.id) { index, oshi in
-                    Circle()
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(width: 24, height: 24)
-                        .overlay(
-                            Text(String(oshi.name.prefix(1)))
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.gray)
-                        )
-                        .offset(
-                            x: index == 0 ? -6 : 6,
-                            y: index == 0 ? -6 : 6
-                        )
+                // 複数メンバーのグリッド表示
+                GeometryReader { geo in
+                    let size = geo.size.width * 0.45
+                    ZStack {
+                        ForEach(Array(selectedMembers.prefix(4).enumerated()), id: \.element.id) { index, oshi in
+                            memberMiniAvatar(oshi, size: size)
+                                .offset(
+                                    x: index % 2 == 0 ? -size/3 : size/3,
+                                    y: index < 2 ? -size/3 : size/3
+                                )
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
         }
     }
     
+    private func singleMemberPlaceholder(_ oshi: Oshi) -> some View {
+        Circle()
+            .fill(
+                LinearGradient(
+                    colors: [primaryAccent.opacity(0.5), secondaryAccent.opacity(0.5)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                Text(String(oshi.name.prefix(1)))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+            )
+    }
+    
+    private func memberMiniAvatar(_ oshi: Oshi, size: CGFloat) -> some View {
+        Group {
+            if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: size, height: size)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 1.5)
+                            )
+                    default:
+                        miniPlaceholder(oshi, size: size)
+                    }
+                }
+            } else {
+                miniPlaceholder(oshi, size: size)
+            }
+        }
+    }
+    
+    private func miniPlaceholder(_ oshi: Oshi, size: CGFloat) -> some View {
+        Circle()
+            .fill(primaryAccent.opacity(0.3))
+            .frame(width: size, height: size)
+            .overlay(
+                Text(String(oshi.name.prefix(1)))
+                    .font(.system(size: size * 0.5, weight: .bold))
+                    .foregroundColor(.white)
+            )
+            .overlay(
+                Circle()
+                    .stroke(Color.white, lineWidth: 1.5)
+            )
+    }
+    
+    // MARK: - チャットメッセージ
     private var chatMessagesView: some View {
         ScrollViewReader { proxy in
-            ScrollView {
-                VStack(spacing: 16) {
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: 4) {
                     if messages.isEmpty {
-                        VStack(spacing: 12) {
-                            Text(L10n.startGroupChat)
-                                .foregroundColor(.gray)
-                                .padding(.top, 40)
-                            
-                            if selectedMembers.isEmpty {
-                                Button(action: {
-                                    showMemberSelection = true
-                                }) {
-                                    Text(L10n.addMembers)
-                                        .foregroundColor(.blue)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                        .background(Color.blue.opacity(0.1))
-                                        .cornerRadius(12)
-                                }
-                            }
-                        }
+                        emptyStateView
                     } else {
-                        ForEach(messages, id: \.id) { message in
-                            GroupChatBubble(
+                        ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
+                            let showTimestamp = shouldShowTimestamp(for: index)
+                            
+                            if showTimestamp {
+                                timestampDivider(for: message.timestamp)
+                            }
+                            
+                            ModernGroupChatBubble(
                                 message: message,
-                                selectedMembers: selectedMembers
+                                selectedMembers: selectedMembers,
+                                showReadReceipt: message.id == lastSentMessageId && showReadReceipt,
+                                userBubbleGradient: userBubbleGradient,
+                                primaryAccent: primaryAccent,
+                                secondaryAccent: secondaryAccent
                             )
                             .id(message.id)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.9).combined(with: .opacity),
+                                removal: .opacity
+                            ))
                         }
+                        
+                        // タイピングインジケーター
+                        if !typingMembers.isEmpty {
+                            GroupTypingBubble(
+                                typingMembers: typingMembers,
+                                selectedMembers: selectedMembers,
+                                primaryAccent: primaryAccent,
+                                secondaryAccent: secondaryAccent
+                            )
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.8).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                        }
+                        
                         Color.clear
-                            .frame(height: 1)
+                            .frame(height: 20)
                             .id("bottomMarker")
                     }
                 }
-                .padding()
+                .padding(.horizontal, 12)
+                .padding(.top, 16)
             }
             .onChange(of: messages.count) { _ in
                 scrollToBottom(proxy: proxy)
@@ -573,13 +600,17 @@ struct OshiGroupChatView: View {
                     shouldScrollToBottom = false
                 }
             }
+            .onChange(of: typingMembers) { _ in
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    proxy.scrollTo("bottomMarker", anchor: .bottom)
+                }
+            }
             .onChange(of: keyboardHeight) { _ in
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     scrollToBottom(proxy: proxy)
                 }
             }
             .onAppear {
-                // メッセージが読み込まれた後に初回スクロール
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     if !messages.isEmpty {
                         scrollToBottom(proxy: proxy, animated: false)
@@ -601,64 +632,385 @@ struct OshiGroupChatView: View {
         }
     }
     
-    private var inputAreaView: some View {
-        VStack(spacing: 0) {
-            Divider()
-            HStack(spacing: 12) {
-                TextField(L10n.enterMessage, text: $inputText)
-                    .focused($isTextFieldFocused)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Color.white)
-                    .foregroundStyle(.black)
-                    .cornerRadius(20)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+    // 空状態ビュー
+    private var emptyStateView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+                .frame(height: 60)
+            
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [primaryAccent.opacity(0.2), secondaryAccent.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                    .onSubmit {
-                        if !inputText.isEmpty && !isLoading && !selectedMembers.isEmpty {
-                            sendMessage()
-                        }
-                    }
+                    .frame(width: 100, height: 100)
                 
-                Button(action: {
-                    if !inputText.isEmpty && !isLoading && !selectedMembers.isEmpty {
-                        generateHapticFeedback()
-                        // サブスクリプション状態を考慮してカウント処理
-                        if shouldShowAd {
-                            interstitialManager.incrementSendCount()
-                        }
-                        sendMessage()
-                    }
-                }) {
-                    ZStack {
-                        Circle()
-                            .fill(inputText.isEmpty || isLoading || selectedMembers.isEmpty ? Color.gray.opacity(0.4) : lineGreen)
-                            .frame(width: 40, height: 40)
-                        
-                        Image(systemName: "arrow.up")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                }
-                .disabled(inputText.isEmpty || isLoading || selectedMembers.isEmpty)
+                Image(systemName: "bubble.left.and.bubble.right.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [primaryAccent, secondaryAccent],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color.white)
+            
+            VStack(spacing: 8) {
+                Text(L10n.startGroupChat)
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundColor(.primary)
+                
+                if selectedMembers.isEmpty {
+                    Text(L10n.addMembersToStart)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                } else {
+                    Text(L10n.chatWithMembers(selectedMembers.count))
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            if selectedMembers.isEmpty {
+                Button(action: {
+                    generateHapticFeedback()
+                    showMemberSelection = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.badge.plus")
+                            .font(.system(size: 14, weight: .medium))
+                        Text(L10n.addMembers)
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [primaryAccent, secondaryAccent],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .shadow(color: primaryAccent.opacity(0.3), radius: 8, y: 4)
+                    )
+                }
+            }
+            
+            Spacer()
         }
     }
     
+    // タイムスタンプ区切り
+    private func timestampDivider(for timestamp: TimeInterval) -> some View {
+        HStack {
+            Rectangle()
+                .fill(Color.secondary.opacity(0.2))
+                .frame(height: 0.5)
+            
+            Text(formatDateForDivider(timestamp: timestamp))
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(Color.white.opacity(0.8))
+                )
+            
+            Rectangle()
+                .fill(Color.secondary.opacity(0.2))
+                .frame(height: 0.5)
+        }
+        .padding(.vertical, 12)
+    }
+    
+    private func shouldShowTimestamp(for index: Int) -> Bool {
+        guard index > 0 else { return true }
+        let currentDate = Date(timeIntervalSince1970: messages[index].timestamp)
+        let previousDate = Date(timeIntervalSince1970: messages[index - 1].timestamp)
+        return !Calendar.current.isDate(currentDate, inSameDayAs: previousDate)
+    }
+    
+    // MARK: - 入力エリア
+    private var inputAreaView: some View {
+        VStack(spacing: 0) {
+            Divider()
+                .opacity(0.3)
+            
+            HStack(spacing: 12) {
+                HStack(spacing: 8) {
+                    TextField(L10n.enterMessage, text: $inputText, axis: .vertical)
+                        .focused($isTextFieldFocused)
+                        .font(.system(size: 16))
+                        .lineLimit(1...5)
+                        .onSubmit {
+                            if !inputText.isEmpty && !isLoading && !selectedMembers.isEmpty {
+                                sendMessage()
+                            }
+                        }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(Color.white)
+                        .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(
+                            isTextFieldFocused ? primaryAccent.opacity(0.4) : Color.clear,
+                            lineWidth: 1.5
+                        )
+                )
+                
+                sendButton
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+            )
+        }
+    }
+    
+    private var sendButton: some View {
+        Button(action: {
+            if !inputText.isEmpty && !isLoading && !selectedMembers.isEmpty {
+                generateHapticFeedback()
+                if shouldShowAd {
+                    interstitialManager.incrementSendCount()
+                }
+                sendMessage()
+            }
+        }) {
+            ZStack {
+                Circle()
+                    .fill(
+                        (inputText.isEmpty || isLoading || selectedMembers.isEmpty)
+                        ? LinearGradient(
+                            colors: [Color.gray.opacity(0.2), Color.gray.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        : LinearGradient(
+                            colors: [primaryAccent, secondaryAccent],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 44, height: 44)
+                    .shadow(
+                        color: (inputText.isEmpty || isLoading || selectedMembers.isEmpty) ? .clear : primaryAccent.opacity(0.3),
+                        radius: 8,
+                        y: 4
+                    )
+                
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor((inputText.isEmpty || isLoading || selectedMembers.isEmpty) ? .gray : .white)
+                    .offset(y: -1)
+            }
+        }
+        .disabled(inputText.isEmpty || isLoading || selectedMembers.isEmpty)
+        .scaleEffect((inputText.isEmpty || selectedMembers.isEmpty) ? 0.95 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: inputText.isEmpty)
+    }
+    
+    // MARK: - メッセージ送信（既読・タイピング機能付き）
+    private func sendMessage() {
+        guard !inputText.isEmpty, !selectedMembers.isEmpty else { return }
+        
+        let userMessage = GroupChatMessage(
+            id: UUID().uuidString,
+            content: inputText,
+            isUser: true,
+            timestamp: Date().timeIntervalSince1970,
+            groupId: groupId,
+            senderId: "user"
+        )
+        
+        let userInput = inputText
+        lastSentMessageId = userMessage.id
+        showReadReceipt = false
+        inputText = ""
+        
+        groupChatManager.saveMessage(userMessage) { error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("メッセージ保存エラー: \(error.localizedDescription)")
+                    self.inputText = userInput
+                } else {
+                    // 1〜2秒後に既読表示
+                    let readDelay = Double.random(in: 1.0...2.0)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + readDelay) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showReadReceipt = true
+                        }
+                        generateHapticFeedback()
+                    }
+                    
+                    // 返信メンバーを選択
+                    let respondingMemberCount = min(2, selectedMembers.count)
+                    let respondingMembers = Array(selectedMembers.shuffled().prefix(Int.random(in: 1...respondingMemberCount)))
+                    
+                    // 既読後にタイピング開始
+                    let typingDelay = readDelay + Double.random(in: 1.0...2.0)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + typingDelay) {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            typingMembers = respondingMembers.map { $0.id }
+                        }
+                    }
+                    
+                    // AI応答を生成
+                    self.generateGroupResponseWithDelay(for: userInput, members: respondingMembers, startDelay: typingDelay)
+                }
+            }
+        }
+    }
+    
+    private func generateGroupResponseWithDelay(for userInput: String, members: [Oshi], startDelay: TimeInterval) {
+        let dispatchGroup = DispatchGroup()
+        var responses: [(oshi: Oshi, content: String)] = []
+        
+        for oshi in members {
+            dispatchGroup.enter()
+            
+            let recentChatHistory = Array(messages.suffix(5).map { $0.toChatMessage() })
+            
+            AIMessageGenerator.shared.generateResponse(
+                for: userInput,
+                oshi: oshi,
+                chatHistory: recentChatHistory
+            ) { content, error in
+                if let content = content, !content.isEmpty {
+                    responses.append((oshi: oshi, content: content))
+                }
+                dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            // 5〜10秒のランダム遅延後に返信
+            let responseDelay = Double.random(in: 5.0...10.0)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + responseDelay) {
+                // タイピング終了
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    self.typingMembers = []
+                }
+                
+                // 返信を順次送信
+                self.sendResponsesSequentiallyWithAnimation(responses: responses, index: 0) {
+                    // 既読表示をリセット
+                    self.lastSentMessageId = nil
+                    self.showReadReceipt = false
+                    
+                    // 追加のリアクションをチェック
+                    self.checkForAIReactions()
+                }
+            }
+        }
+    }
+    
+    private func sendResponsesSequentiallyWithAnimation(responses: [(oshi: Oshi, content: String)], index: Int, completion: @escaping () -> Void) {
+        guard index < responses.count else {
+            completion()
+            return
+        }
+        
+        let response = responses[index]
+        let delay = index == 0 ? 0.0 : 1.5
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            let aiMessage = GroupChatMessage(
+                id: UUID().uuidString,
+                content: response.content,
+                isUser: false,
+                timestamp: Date().timeIntervalSince1970,
+                groupId: self.groupId,
+                senderId: response.oshi.id,
+                senderName: response.oshi.name,
+                senderImageUrl: response.oshi.imageUrl
+            )
+            
+            self.groupChatManager.saveMessage(aiMessage) { error in
+                if error == nil {
+                    generateHapticFeedback()
+                }
+                
+                DispatchQueue.main.async {
+                    self.sendResponsesSequentiallyWithAnimation(responses: responses, index: index + 1, completion: completion)
+                }
+            }
+        }
+    }
+    
+    // MARK: - ヘルパー関数
+    private func getTypingText() -> String {
+        let typingOshis = selectedMembers.filter { typingMembers.contains($0.id) }
+        if typingOshis.count == 1 {
+            return L10n.memberTyping(name: typingOshis[0].name) // 変更
+        } else if typingOshis.count > 1 {
+            return L10n.multipleTyping // 変更
+        }
+        return ""
+    }
+    
+    private func formatDateForDivider(timestamp: TimeInterval) -> String {
+        let date = Date(timeIntervalSince1970: timestamp)
+        let formatter = DateFormatter()
+        let currentLanguage = Locale.current.languageCode ?? "en"
+        formatter.locale = Locale(identifier: currentLanguage == "ja" ? "ja_JP" : "en_US")
+        
+        if Calendar.current.isDateInToday(date) {
+            return L10n.today // 変更
+        } else if Calendar.current.isDateInYesterday(date) {
+            return L10n.yesterday // 変更
+        } else {
+            formatter.dateFormat = currentLanguage == "ja" ? "M月d日(E)" : "MMM d, E"
+            return formatter.string(from: date)
+        }
+    }
+    
+    // 以下は既存のヘルパーメソッド（変更なし）
+    private func deleteGroupChatHistory() {
+        guard isAdmin else { return }
+        isDeletingHistory = true
+        
+        groupChatManager.deleteGroupChatHistory(for: groupId) { error in
+            DispatchQueue.main.async {
+                self.isDeletingHistory = false
+                if error == nil {
+                    self.messages.removeAll()
+                    self.generateHapticFeedback()
+                }
+            }
+        }
+    }
+    
+    private func checkAdminStatus() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            isAdmin = false
+            isCheckingAdminStatus = false
+            return
+        }
+        isAdmin = adminUserIds.contains(userID)
+        isCheckingAdminStatus = false
+    }
+    
     func executeProcessEveryThreeTimes() {
-        // UserDefaultsからカウンターを取得
         let count = UserDefaults.standard.integer(forKey: "launchCount") + 1
-        
-        // カウンターを更新
         UserDefaults.standard.set(count, forKey: "launchCount")
-        
-        // 3回に1回の割合で処理を実行
-        
         if count % 10 == 0 {
             customerFlag = true
         }
@@ -682,29 +1034,18 @@ struct OshiGroupChatView: View {
     
     private func markGroupChatAsRead() {
         guard !hasMarkedAsRead else { return }
-        
         hasMarkedAsRead = true
         
         groupChatManager.markGroupChatAsRead(for: groupId) { error in
-            if let error = error {
-                print("グループチャット既読マークエラー: \(error.localizedDescription)")
-            } else {
-                print("グループチャット既読マーク成功: \(self.groupId)")
-            }
-            
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 self.hasMarkedAsRead = false
             }
         }
     }
     
-    // MARK: - セットアップ関連メソッド
-    
     private func setupGroupChat() {
-        // 初期ローディング開始
         isInitialLoadingComplete = false
         
-        // 順次読み込みに変更（並行処理を避ける）
         loadOshiList {
             self.loadMessages {
                 self.loadGroupMembers {
@@ -712,8 +1053,6 @@ struct OshiGroupChatView: View {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             self.isInitialLoadingComplete = true
                         }
-                        
-                        // 画面表示後に既読マーク
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             self.markAsReadWhenAppear()
                         }
@@ -723,7 +1062,6 @@ struct OshiGroupChatView: View {
         }
     }
     
-    // 残りのメソッドは元のコードと同じ（省略）
     private func loadOshiList(completion: @escaping () -> Void) {
         guard let userId = Auth.auth().currentUser?.uid else {
             completion()
@@ -738,7 +1076,7 @@ struct OshiGroupChatView: View {
                 if let childSnapshot = child as? DataSnapshot,
                    let value = childSnapshot.value as? [String: Any] {
                     let id = childSnapshot.key
-                    let name = value["name"] as? String ?? "名前なし"
+                    let name = value["name"] as? String ?? L10n.noName
                     let imageUrl = value["imageUrl"] as? String
                     
                     let oshi = Oshi(
@@ -772,18 +1110,10 @@ struct OshiGroupChatView: View {
     }
     
     private func loadMessages(completion: @escaping () -> Void) {
-        print("メッセージ読み込み開始: \(groupId)")
-        
         groupChatManager.fetchMessages(for: groupId) { fetchedMessages, error in
             DispatchQueue.main.async {
-                if let error = error {
-                    print("メッセージ読み込みエラー: \(error.localizedDescription)")
-                    self.messages = []
-                } else if let fetchedMessages = fetchedMessages {
-                    print("メッセージ読み込み成功: \(fetchedMessages.count)件")
+                if let fetchedMessages = fetchedMessages {
                     self.messages = fetchedMessages
-                    
-                    // 初回読み込み完了後のスクロール
                     if !self.isInitialLoadingComplete {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             self.shouldScrollToBottom = true
@@ -792,7 +1122,6 @@ struct OshiGroupChatView: View {
                 } else {
                     self.messages = []
                 }
-                
                 completion()
             }
         }
@@ -806,16 +1135,11 @@ struct OshiGroupChatView: View {
                 } else {
                     self.selectedMembers = []
                 }
-                
-                // グループ情報を読み込み（編集機能のため）
-                self.loadGroupInfo {
-                    completion()
-                }
+                self.loadGroupInfo { completion() }
             }
         }
     }
 
-    // グループ情報を取得する修正版メソッド（編集用のgroupInfoも設定）
     private func loadGroupInfo(completion: @escaping () -> Void) {
         guard let userId = Auth.auth().currentUser?.uid else {
             completion()
@@ -833,16 +1157,14 @@ struct OshiGroupChatView: View {
                let groupInfo = GroupChatInfo.fromDictionary(groupData) {
                 DispatchQueue.main.async {
                     self.groupName = groupInfo.name
-                    self.groupInfo = groupInfo // 編集用にグループ情報を保存
-                    print("グループ情報読み込み完了: \(groupInfo.name)")
+                    self.groupInfo = groupInfo
                     completion()
                 }
             } else {
-                // グループ情報が存在しない場合は、デフォルトのグループ情報を作成
                 DispatchQueue.main.async {
                     let defaultGroupInfo = GroupChatInfo(
                         id: self.groupId,
-                        name: "グループチャット",
+                        name: L10n.groupChat,
                         memberIds: self.selectedMembers.map { $0.id },
                         createdAt: Date().timeIntervalSince1970,
                         lastMessageTime: 0,
@@ -850,7 +1172,6 @@ struct OshiGroupChatView: View {
                     )
                     self.groupInfo = defaultGroupInfo
                     self.groupName = defaultGroupInfo.name
-                    print("デフォルトグループ情報作成: \(defaultGroupInfo.name)")
                     completion()
                 }
             }
@@ -860,10 +1181,7 @@ struct OshiGroupChatView: View {
     private func updateGroupMembers() {
         let memberIds = selectedMembers.map { $0.id }
         groupChatManager.updateGroupMembers(groupId: groupId, memberIds: memberIds) { error in
-            if let error = error {
-                print("グループメンバー更新エラー: \(error.localizedDescription)")
-            } else {
-                // メンバー更新後にgroupInfoも更新
+            if error == nil {
                 DispatchQueue.main.async {
                     if var currentGroupInfo = self.groupInfo {
                         currentGroupInfo = GroupChatInfo(
@@ -881,147 +1199,44 @@ struct OshiGroupChatView: View {
         }
     }
     
-    private func sendMessage() {
-        guard !inputText.isEmpty, !selectedMembers.isEmpty else {
-            print("送信条件不足: テキスト=\(inputText), メンバー数=\(selectedMembers.count)")
-            return
-        }
-        
-        let userMessage = GroupChatMessage(
-            id: UUID().uuidString,
-            content: inputText,
-            isUser: true,
-            timestamp: Date().timeIntervalSince1970,
-            groupId: groupId,
-            senderId: "user"
-        )
-        
-        let userInput = inputText
-        inputText = ""
-        
-        print("メッセージ保存開始: \(userMessage.id)")
-        
-        groupChatManager.saveMessage(userMessage) { error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("メッセージ保存エラー: \(error.localizedDescription)")
-                    self.inputText = userInput // エラー時は入力を復元
-                } else {
-                    print("メッセージ保存成功、AI返信生成開始")
-                    self.generateGroupResponse(for: userInput)
-                }
-            }
-        }
-    }
-    
-    private func generateGroupResponse(for userInput: String) {
-        guard !selectedMembers.isEmpty else { return }
-        
-        isLoading = true
-        
-        // 最初の返信メンバーを選択（1〜2人）
-        let respondingMemberCount = min(2, selectedMembers.count)
-        let initialRespondingMembers = selectedMembers.shuffled().prefix(Int.random(in: 1...respondingMemberCount))
-        
-        print("AI返信生成開始 - 返信メンバー: \(initialRespondingMembers.map { $0.name }.joined(separator: ", "))")
-        
-        generateInitialResponses(for: userInput, members: Array(initialRespondingMembers)) {
-            // 初期返信完了後、追加のリアクションをチェック
-            self.checkForAIReactions()
-        }
-    }
-    
-    private func generateInitialResponses(for userInput: String, members: [Oshi], completion: @escaping () -> Void) {
-        let dispatchGroup = DispatchGroup()
-        var responses: [(oshi: Oshi, content: String)] = []
-        
-        print("初期返信生成中 - メンバー数: \(members.count)")
-        
-        for oshi in members {
-            dispatchGroup.enter()
-            
-            // チャット履歴を最新5件に限定
-            let recentChatHistory = Array(messages.suffix(5).compactMap { message in
-                ChatMessage(
-                    id: message.id,
-                    content: message.content,
-                    isUser: message.isUser,
-                    timestamp: message.timestamp,
-                    oshiId: message.senderId,
-                    itemId: nil
-                )
-            })
-            
-            AIMessageGenerator.shared.generateResponse(
-                for: userInput,
-                oshi: oshi,
-                chatHistory: recentChatHistory
-            ) { content, error in
-                if let content = content, !content.isEmpty {
-                    responses.append((oshi: oshi, content: content))
-                    print("AI返信生成成功 - \(oshi.name): \(content.prefix(20))...")
-                } else if let error = error {
-                    print("AI返信生成エラー - \(oshi.name): \(error.localizedDescription)")
-                }
-                dispatchGroup.leave()
-            }
-        }
-        
-        dispatchGroup.notify(queue: .main) {
-            self.isLoading = false
-            print("全ての初期返信生成完了 - 返信数: \(responses.count)")
-            
-            // レスポンスを順次送信（並行送信を避ける）
-            self.sendResponsesSequentially(responses: responses, index: 0, completion: completion)
-        }
-    }
-    
     private func checkForAIReactions() {
-        print("AIリアクションチェック開始")
-        
-        // リアクション発生確率（100%から調整可能）
-        let reactionProbability = 0.7 // 70%の確率でリアクション発生
+        let reactionProbability = 0.7
         
         guard let lastMessage = messages.last,
               !lastMessage.isUser,
-              let lastSender = selectedMembers.first(where: { $0.id == lastMessage.senderId }) else {
-            print("リアクション条件不満足")
+              let _ = selectedMembers.first(where: { $0.id == lastMessage.senderId }) else {
             return
         }
         
-        // 最後にメッセージを送った推し以外のメンバー
         let otherMembers = selectedMembers.filter { $0.id != lastMessage.senderId }
         
-        guard !otherMembers.isEmpty else {
-            print("リアクション可能なメンバーなし")
-            return
-        }
+        guard !otherMembers.isEmpty else { return }
         
-        // ランダムに1人選択してリアクション生成
         if let reactor = otherMembers.randomElement(),
            Double.random(in: 0...1) < reactionProbability {
             
-            let delay = Double.random(in: 2.0...5.0) // 2〜5秒の遅延
-            print("リアクション予定 - \(reactor.name): \(delay)秒後")
+            let delay = Double.random(in: 2.0...5.0)
             
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                self.generateAIReaction(reactor: reactor, originalMessage: lastMessage, originalSender: lastSender)
+                self.generateAIReactionWithTyping(reactor: reactor, originalMessage: lastMessage)
             }
-        } else {
-            print("リアクション発生せず")
         }
     }
     
-    private func generateAIReaction(reactor: Oshi, originalMessage: GroupChatMessage, originalSender: Oshi) {
-        print("AIリアクション生成開始 - \(reactor.name) -> \(originalSender.name)の発言")
+    private func generateAIReactionWithTyping(reactor: Oshi, originalMessage: GroupChatMessage) {
+        // タイピング表示
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            typingMembers = [reactor.id]
+        }
         
-        let reactionPrompt = """
-        \(originalSender.name)が「\(originalMessage.content)」と言いました。
-        あなた（\(reactor.name)）は同じグループの仲間として、この発言に短く自然に反応してください。
-        リアクションは1〜2文程度の短いものにしてください。
-        """
+        let originalSenderName = selectedMembers.first(where: { $0.id == originalMessage.senderId })?.name ?? L10n.someone
         
-        // 最新3件のチャット履歴を使用
+        let reactionPrompt = L10n.aiReactionPrompt(
+            sender: originalSenderName,
+            message: originalMessage.content,
+            reactor: reactor.name
+        )
+        
         let recentChatHistory = Array(messages.suffix(3).map { $0.toChatMessage() })
         
         AIMessageGenerator.shared.generateResponse(
@@ -1029,77 +1244,31 @@ struct OshiGroupChatView: View {
             oshi: reactor,
             chatHistory: recentChatHistory
         ) { content, error in
-            guard let content = content, !content.isEmpty else {
-                if let error = error {
-                    print("AIリアクション生成エラー - \(reactor.name): \(error.localizedDescription)")
-                }
-                return
-            }
+            // 3〜6秒後に返信
+            let responseDelay = Double.random(in: 3.0...6.0)
             
-            print("AIリアクション生成成功 - \(reactor.name): \(content.prefix(20))...")
-            
-            let reactionMessage = GroupChatMessage(
-                id: UUID().uuidString,
-                content: content,
-                isUser: false,
-                timestamp: Date().timeIntervalSince1970,
-                groupId: self.groupId,
-                senderId: reactor.id,
-                senderName: reactor.name,
-                senderImageUrl: reactor.imageUrl
-            )
-            
-            // メッセージを保存（楽観的更新は行わない）
-            self.groupChatManager.saveMessage(reactionMessage) { error in
-                if let error = error {
-                    print("AIリアクション保存エラー - \(reactor.name): \(error.localizedDescription)")
-                } else {
-                    print("AIリアクション保存成功 - \(reactor.name)")
-                }
-            }
-        }
-    }
-    
-    private func sendResponsesSequentially(responses: [(oshi: Oshi, content: String)], index: Int, completion: @escaping () -> Void) {
-        guard index < responses.count else {
-            // 全てのレスポンス送信完了
-            print("全ての返信送信完了")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                completion()
-            }
-            return
-        }
-        
-        let response = responses[index]
-        let delay = Double(index) * 1.5 // 1.5秒間隔で送信
-        
-        print("返信送信予定 - \(response.oshi.name): \(delay)秒後")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-            let aiMessage = GroupChatMessage(
-                id: UUID().uuidString,
-                content: response.content,
-                isUser: false,
-                timestamp: Date().timeIntervalSince1970,
-                groupId: self.groupId,
-                senderId: response.oshi.id,
-                senderName: response.oshi.name,
-                senderImageUrl: response.oshi.imageUrl
-            )
-            
-            print("返信送信中 - \(response.oshi.name): \(aiMessage.id)")
-            
-            // メッセージを保存（楽観的更新は行わない）
-            self.groupChatManager.saveMessage(aiMessage) { error in
-                if let error = error {
-                    print("AI返信保存エラー - \(response.oshi.name): \(error.localizedDescription)")
-                } else {
-                    print("AI返信保存成功 - \(response.oshi.name)")
+            DispatchQueue.main.asyncAfter(deadline: .now() + responseDelay) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    self.typingMembers = []
                 }
                 
-                // 次のレスポンスを送信
-                DispatchQueue.main.async {
-                    self.sendResponsesSequentially(responses: responses, index: index + 1, completion: completion)
+                guard let content = content, !content.isEmpty else { return }
+                
+                let reactionMessage = GroupChatMessage(
+                    id: UUID().uuidString,
+                    content: content,
+                    isUser: false,
+                    timestamp: Date().timeIntervalSince1970,
+                    groupId: self.groupId,
+                    senderId: reactor.id,
+                    senderName: reactor.name,
+                    senderImageUrl: reactor.imageUrl
+                )
+                
+                self.groupChatManager.saveMessage(reactionMessage) { error in
+                    if error == nil {
+                        generateHapticFeedback()
+                    }
                 }
             }
         }
@@ -1109,7 +1278,7 @@ struct OshiGroupChatView: View {
         guard !messages.isEmpty else { return }
         
         if animated {
-            withAnimation(.easeInOut(duration: 0.3)) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 proxy.scrollTo("bottomMarker", anchor: .bottom)
             }
         } else {
@@ -1117,13 +1286,522 @@ struct OshiGroupChatView: View {
         }
     }
     
-    private func showRewardAd() {
-        // リワード広告表示の実装
-    }
-    
     private func generateHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
+    }
+}
+
+// MARK: - モダングループチャットバブル
+struct ModernGroupChatBubble: View {
+    let message: GroupChatMessage
+    let selectedMembers: [Oshi]
+    let showReadReceipt: Bool
+    let userBubbleGradient: LinearGradient
+    let primaryAccent: Color
+    let secondaryAccent: Color
+    
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            if message.isUser {
+                Spacer(minLength: 60)
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(message.content)
+                        .font(.system(size: 15))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(userBubbleGradient)
+                        .clipShape(ModernBubbleShape(isUser: true))
+                        .shadow(color: primaryAccent.opacity(0.2), radius: 8, y: 4)
+                    
+                    HStack(spacing: 4) {
+                        if showReadReceipt {
+                            Text(L10n.readStatus)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(primaryAccent)
+                        }
+                        Text(formatTime(timestamp: message.timestamp))
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            } else {
+                // 送信者アバター
+                senderAvatar
+                    .frame(width: 36, height: 36)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    // 送信者名
+                    if let senderName = message.senderName {
+                        Text(senderName)
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .padding(.leading, 4)
+                    }
+                    
+                    Text(message.content)
+                        .font(.system(size: 15))
+                        .foregroundColor(.primary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.white)
+                        .clipShape(ModernBubbleShape(isUser: false))
+                        .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                    
+                    Text(formatTime(timestamp: message.timestamp))
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 4)
+                }
+                
+                Spacer(minLength: 60)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+    
+    private var senderAvatar: some View {
+        Group {
+            if let imageUrl = message.senderImageUrl, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .clipShape(Circle())
+                    default:
+                        defaultAvatar
+                    }
+                }
+            } else {
+                defaultAvatar
+            }
+        }
+    }
+    
+    private var defaultAvatar: some View {
+        Circle()
+            .fill(
+                LinearGradient(
+                    colors: [primaryAccent.opacity(0.3), secondaryAccent.opacity(0.3)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                Text(String(message.senderName?.prefix(1) ?? "?"))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+            )
+    }
+    
+    private func formatTime(timestamp: TimeInterval) -> String {
+        let date = Date(timeIntervalSince1970: timestamp)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - バブル形状
+struct ModernBubbleShape: Shape {
+    let isUser: Bool
+    
+    func path(in rect: CGRect) -> Path {
+        let radius: CGFloat = 18
+        let tailSize: CGFloat = 6
+        
+        var path = Path()
+        
+        if isUser {
+            path.move(to: CGPoint(x: rect.minX + radius, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.maxX, y: rect.minY + radius),
+                control: CGPoint(x: rect.maxX, y: rect.minY)
+            )
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.maxX - tailSize, y: rect.maxY),
+                control: CGPoint(x: rect.maxX, y: rect.maxY)
+            )
+            path.addLine(to: CGPoint(x: rect.minX + radius, y: rect.maxY))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.minX, y: rect.maxY - radius),
+                control: CGPoint(x: rect.minX, y: rect.maxY)
+            )
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + radius))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.minX + radius, y: rect.minY),
+                control: CGPoint(x: rect.minX, y: rect.minY)
+            )
+        } else {
+            path.move(to: CGPoint(x: rect.minX + radius, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.maxX, y: rect.minY + radius),
+                control: CGPoint(x: rect.maxX, y: rect.minY)
+            )
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.maxX - radius, y: rect.maxY),
+                control: CGPoint(x: rect.maxX, y: rect.maxY)
+            )
+            path.addLine(to: CGPoint(x: rect.minX + tailSize, y: rect.maxY))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.minX, y: rect.maxY - radius),
+                control: CGPoint(x: rect.minX, y: rect.maxY)
+            )
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + radius))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.minX + radius, y: rect.minY),
+                control: CGPoint(x: rect.minX, y: rect.minY)
+            )
+        }
+        
+        return path
+    }
+}
+
+// MARK: - グループタイピングバブル
+struct GroupTypingBubble: View {
+    let typingMembers: [String]
+    let selectedMembers: [Oshi]
+    let primaryAccent: Color
+    let secondaryAccent: Color
+    
+    @State private var dotAnimation: [Bool] = [false, false, false]
+    
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            // タイピング中のメンバーのアバター
+            typingMemberAvatar
+                .frame(width: 36, height: 36)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                // タイピング中のメンバー名
+                if let typingMember = selectedMembers.first(where: { typingMembers.contains($0.id) }) {
+                    Text(typingMember.name)
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 4)
+                }
+                
+                // タイピングドット
+                HStack(spacing: 4) {
+                    ForEach(0..<3) { index in
+                        Circle()
+                            .fill(Color.gray.opacity(0.5))
+                            .frame(width: 8, height: 8)
+                            .scaleEffect(dotAnimation[index] ? 1.0 : 0.6)
+                            .opacity(dotAnimation[index] ? 1.0 : 0.4)
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+                .background(Color.white)
+                .clipShape(ModernBubbleShape(isUser: false))
+                .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 2)
+        .onAppear { startAnimation() }
+    }
+    
+    private var typingMemberAvatar: some View {
+        Group {
+            if let typingMember = selectedMembers.first(where: { typingMembers.contains($0.id) }),
+               let imageUrl = typingMember.imageUrl,
+               let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .clipShape(Circle())
+                    default:
+                        defaultTypingAvatar
+                    }
+                }
+            } else {
+                defaultTypingAvatar
+            }
+        }
+    }
+    
+    private var defaultTypingAvatar: some View {
+        Circle()
+            .fill(
+                LinearGradient(
+                    colors: [primaryAccent.opacity(0.3), secondaryAccent.opacity(0.3)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                Image(systemName: "person.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.8))
+            )
+    }
+    
+    private func startAnimation() {
+        for i in 0..<3 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.2) {
+                withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+                    dotAnimation[i] = true
+                }
+            }
+        }
+    }
+}
+
+// MARK: - モダンメンバー選択ビュー
+struct ModernGroupMemberSelectionView: View {
+    @Binding var isPresented: Bool
+    let allOshiList: [Oshi]
+    @Binding var selectedMembers: [Oshi]
+    let primaryAccent: Color
+    let secondaryAccent: Color
+    let onSave: () -> Void
+    
+    @State private var tempSelectedMembers: [Oshi] = []
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture { isPresented = false }
+            
+            VStack(spacing: 0) {
+                // ヘッダー
+                HStack {
+                    Button(action: { isPresented = false }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .frame(width: 32, height: 32)
+                            .background(Circle().fill(Color.gray.opacity(0.1)))
+                    }
+                    
+                    Spacer()
+                    
+                    Text(L10n.groupMembers)
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        selectedMembers = tempSelectedMembers
+                        onSave()
+                        isPresented = false
+                    }) {
+                        Text(L10n.done)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [primaryAccent, secondaryAccent],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                            )
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                
+                Divider()
+                
+                // 選択済みメンバー表示
+                if !tempSelectedMembers.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(tempSelectedMembers, id: \.id) { oshi in
+                                VStack(spacing: 4) {
+                                    ZStack(alignment: .topTrailing) {
+                                        if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                            AsyncImage(url: url) { phase in
+                                                switch phase {
+                                                case .success(let image):
+                                                    image
+                                                        .resizable()
+                                                        .scaledToFill()
+                                                        .frame(width: 50, height: 50)
+                                                        .clipShape(Circle())
+                                                default:
+                                                    selectedMemberPlaceholder(oshi)
+                                                }
+                                            }
+                                        } else {
+                                            selectedMemberPlaceholder(oshi)
+                                        }
+                                        
+                                        Button(action: {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                tempSelectedMembers.removeAll { $0.id == oshi.id }
+                                            }
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.system(size: 18))
+                                                .foregroundColor(.white)
+                                                .background(Circle().fill(Color.gray))
+                                        }
+                                        .offset(x: 4, y: -4)
+                                    }
+                                    
+                                    Text(oshi.name)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                }
+                                .frame(width: 60)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                    }
+                    .background(Color.gray.opacity(0.05))
+                }
+                
+                // メンバーリスト
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(allOshiList, id: \.id) { oshi in
+                            memberRow(oshi)
+                        }
+                    }
+                }
+                
+                // 説明テキスト
+                Text(L10n.selectGroupMembersDescription)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+            }
+            .background(Color(.systemBackground))
+            .cornerRadius(24)
+            .shadow(color: .black.opacity(0.15), radius: 20, y: 10)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 60)
+        }
+        .onAppear { tempSelectedMembers = selectedMembers }
+    }
+    
+    private func selectedMemberPlaceholder(_ oshi: Oshi) -> some View {
+        Circle()
+            .fill(
+                LinearGradient(
+                    colors: [primaryAccent.opacity(0.5), secondaryAccent.opacity(0.5)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(width: 50, height: 50)
+            .overlay(
+                Text(String(oshi.name.prefix(1)))
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+            )
+    }
+    
+    private func memberRow(_ oshi: Oshi) -> some View {
+        let isSelected = tempSelectedMembers.contains(where: { $0.id == oshi.id })
+        
+        return Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                if isSelected {
+                    tempSelectedMembers.removeAll { $0.id == oshi.id }
+                } else {
+                    tempSelectedMembers.append(oshi)
+                }
+            }
+        }) {
+            HStack(spacing: 14) {
+                // アバター
+                if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 48, height: 48)
+                                .clipShape(Circle())
+                        default:
+                            memberPlaceholder(oshi)
+                        }
+                    }
+                } else {
+                    memberPlaceholder(oshi)
+                }
+                
+                // 名前
+                Text(oshi.name)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                // チェックマーク
+                ZStack {
+                    Circle()
+                        .stroke(isSelected ? primaryAccent : Color.gray.opacity(0.3), lineWidth: 2)
+                        .frame(width: 24, height: 24)
+                    
+                    if isSelected {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [primaryAccent, secondaryAccent],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 24, height: 24)
+                        
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(isSelected ? primaryAccent.opacity(0.05) : Color.clear)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func memberPlaceholder(_ oshi: Oshi) -> some View {
+        Circle()
+            .fill(
+                LinearGradient(
+                    colors: [primaryAccent.opacity(0.3), secondaryAccent.opacity(0.3)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(width: 48, height: 48)
+            .overlay(
+                Text(String(oshi.name.prefix(1)))
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+            )
     }
 }
 
