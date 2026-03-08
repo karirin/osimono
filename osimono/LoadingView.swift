@@ -10,119 +10,154 @@ import SwiftUI
 import SwiftUI
 
 struct LoadingView: View {
-    // 3Dキューブのアニメーション用ステート
-    @State private var rotationX: Double = 0
-    @State private var rotationY: Double = 0
-    @State private var scale: CGFloat = 0.7
-    @State private var opacity: Double = 0
-    @State private var showContent = false
-    
-    // パーティクルエフェクト用
-    @State private var particles: [Particle] = []
+    @State private var isAnimating = false
     
     var body: some View {
-        ZStack {
-            // 背景
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(hex: "1A2980"),
-                    Color(hex: "26D0CE")
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .edgesIgnoringSafeArea(.all)
-            
-            // パーティクル
-            ForEach(particles) { particle in
+        VStack(spacing: DesignSystem.Spacing.md) {
+            ZStack {
                 Circle()
-                    .fill(Color.white.opacity(particle.opacity))
-                    .frame(width: particle.size, height: particle.size)
-                    .position(particle.position)
-                    .blur(radius: 0.5)
+                    .stroke(DesignSystem.Colors.primary.opacity(0.2), lineWidth: 4)
+                    .frame(width: 50, height: 50)
+                
+                Circle()
+                    .trim(from: 0, to: 0.7)
+                    .stroke(
+                        DesignSystem.Colors.primaryGradient,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
+                    .frame(width: 50, height: 50)
+                    .rotationEffect(.degrees(isAnimating ? 360 : 0))
             }
             
-            VStack(spacing: 40) {
-                // アプリタイトル
-                Text("推しコレクション")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .shadow(color: Color(hex: "26D0CE").opacity(0.5), radius: 5, x: 0, y: 2)
-                    .opacity(showContent ? 1 : 0)
-                    .offset(y: showContent ? 0 : -20)
-                    .animation(
-                        Animation.spring(response: 0.6, dampingFraction: 0.7).delay(0.4),
-                        value: showContent
-                    )
-                
-                // 3Dキューブ
-                ZStack {
-                    // キューブの面
-                    ForEach(0..<6) { index in
-                        CubeFace(
-                            rotationX: rotationX,
-                            rotationY: rotationY,
-                            faceIndex: index
-                        )
-                    }
-                }
-                .scaleEffect(scale)
-                .opacity(opacity)
-                
-                // ローディングテキスト
-                VStack(spacing: 15) {
-                    Text("推し情報を整理しています")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
-                        .foregroundColor(.white)
-                    
-                    Text("あなただけの推し空間がまもなく完成します")
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                }
-                .opacity(showContent ? 1 : 0)
-                .offset(y: showContent ? 0 : 20)
-                .animation(
-                    Animation.easeOut(duration: 0.8).delay(0.6),
-                    value: showContent
-                )
-            }
-            .padding()
+            Text("読み込み中...")
+                .font(DesignSystem.Typography.bodyMedium())
+                .foregroundColor(DesignSystem.Colors.textSecondary)
         }
         .onAppear {
-            // キューブのアニメーション
-            withAnimation(Animation.easeOut(duration: 1.0)) {
-                opacity = 1.0
-                scale = 1.0
-            }
-            
-            // 継続的な回転アニメーション
             withAnimation(
-                Animation.linear(duration: 6)
+                SwiftUI.Animation.linear(duration: 1)
                     .repeatForever(autoreverses: false)
             ) {
-                rotationY = 360
-            }
-            
-            withAnimation(
-                Animation.linear(duration: 8)
-                    .repeatForever(autoreverses: false)
-            ) {
-                rotationX = 360
-            }
-            
-            // テキストのアニメーション
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                showContent = true
-            }
-            
-            // パーティクルの生成
-            for _ in 0..<30 {
-                particles.append(Particle())
+                isAnimating = true
             }
         }
     }
 }
+
+//struct LoadingView: View {
+//    // 3Dキューブのアニメーション用ステート
+//    @State private var rotationX: Double = 0
+//    @State private var rotationY: Double = 0
+//    @State private var scale: CGFloat = 0.7
+//    @State private var opacity: Double = 0
+//    @State private var showContent = false
+//    
+//    // パーティクルエフェクト用
+//    @State private var particles: [Particle] = []
+//    
+//    var body: some View {
+//        ZStack {
+//            // 背景
+//            LinearGradient(
+//                gradient: Gradient(colors: [
+//                    Color(hex: "1A2980"),
+//                    Color(hex: "26D0CE")
+//                ]),
+//                startPoint: .topLeading,
+//                endPoint: .bottomTrailing
+//            )
+//            .edgesIgnoringSafeArea(.all)
+//            
+//            // パーティクル
+//            ForEach(particles) { particle in
+//                Circle()
+//                    .fill(Color.white.opacity(particle.opacity))
+//                    .frame(width: particle.size, height: particle.size)
+//                    .position(particle.position)
+//                    .blur(radius: 0.5)
+//            }
+//            
+//            VStack(spacing: 40) {
+//                // アプリタイトル
+//                Text("推しコレクション")
+//                    .font(.system(size: 32, weight: .bold, design: .rounded))
+//                    .foregroundColor(.white)
+//                    .shadow(color: Color(hex: "26D0CE").opacity(0.5), radius: 5, x: 0, y: 2)
+//                    .opacity(showContent ? 1 : 0)
+//                    .offset(y: showContent ? 0 : -20)
+//                    .animation(
+//                        Animation.spring(response: 0.6, dampingFraction: 0.7).delay(0.4),
+//                        value: showContent
+//                    )
+//                
+//                // 3Dキューブ
+//                ZStack {
+//                    // キューブの面
+//                    ForEach(0..<6) { index in
+//                        CubeFace(
+//                            rotationX: rotationX,
+//                            rotationY: rotationY,
+//                            faceIndex: index
+//                        )
+//                    }
+//                }
+//                .scaleEffect(scale)
+//                .opacity(opacity)
+//                
+//                // ローディングテキスト
+//                VStack(spacing: 15) {
+//                    Text("推し情報を整理しています")
+//                        .font(.system(size: 18, weight: .medium, design: .rounded))
+//                        .foregroundColor(.white)
+//                    
+//                    Text("あなただけの推し空間がまもなく完成します")
+//                        .font(.system(size: 14, weight: .regular, design: .rounded))
+//                        .foregroundColor(.white.opacity(0.8))
+//                        .multilineTextAlignment(.center)
+//                }
+//                .opacity(showContent ? 1 : 0)
+//                .offset(y: showContent ? 0 : 20)
+//                .animation(
+//                    Animation.easeOut(duration: 0.8).delay(0.6),
+//                    value: showContent
+//                )
+//            }
+//            .padding()
+//        }
+//        .onAppear {
+//            // キューブのアニメーション
+//            withAnimation(Animation.easeOut(duration: 1.0)) {
+//                opacity = 1.0
+//                scale = 1.0
+//            }
+//            
+//            // 継続的な回転アニメーション
+//            withAnimation(
+//                Animation.linear(duration: 6)
+//                    .repeatForever(autoreverses: false)
+//            ) {
+//                rotationY = 360
+//            }
+//            
+//            withAnimation(
+//                Animation.linear(duration: 8)
+//                    .repeatForever(autoreverses: false)
+//            ) {
+//                rotationX = 360
+//            }
+//            
+//            // テキストのアニメーション
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//                showContent = true
+//            }
+//            
+//            // パーティクルの生成
+//            for _ in 0..<30 {
+//                particles.append(Particle())
+//            }
+//        }
+//    }
+//}
 
 // パーティクルの定義
 struct Particle: Identifiable {

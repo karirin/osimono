@@ -10,122 +10,100 @@ import SwiftUI
 struct ChatBadgeView: View {
     let count: Int
     let hasNewMessages: Bool
-    @State private var animateScale: Bool = false
-    @State private var showTooltip: Bool = true
     
-    @State private var isAnimating = false
-    @State private var isAnimatingFlag = true
-    
-    // カスタムカラー - より明確な色を使用
-    let badgeColor = Color(.systemRed)
-    let pulsatingColor = Color(.systemRed)
-    let tooltipColor = Color(.systemIndigo)
+    @State private var scale: CGFloat = 1.0
+    @State private var glowOpacity: Double = 0.5
     
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            // チャットアイコン
-            ZStack{
-                Image(systemName: "bubble.left.fill")
-                    .font(.system(size: 30))
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.purple.opacity(0.7), Color.pink]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
-                    )
-                    .overlay(
-                        Group{
-                            if hasNewMessages {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [badgeColor, Color.red]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 20, height: 20)
-                                    .shadow(color: badgeColor.opacity(0.4), radius: 3, x: 0, y: 1)
-                                    .offset(x: 15,y: -15)
-                                if isAnimatingFlag {
-                                    ForEach(0..<3) { index in
-                                        Circle()
-                                            .stroke(lineWidth: 2)
-                                            .foregroundColor(Color.purple.opacity(0.8))
-                                            .scaleEffect(isAnimating ? 2 + CGFloat(index) * 0.5 : 1)
-                                            .opacity(isAnimating ? 0 : 0.7)
-                                            .animation(
-                                                Animation.easeOut(duration: 1.5)
-                                                    .repeatForever(autoreverses: false)
-                                                    .delay(0.3 * Double(index)),
-                                                value: isAnimating
-                                            )
-                                    }
-                                }
-                            }
-                        }
-                )
+        ZStack {
+            // グロー効果
+            if hasNewMessages {
+                Circle()
+                    .fill(DesignSystem.Colors.primary.opacity(glowOpacity * 0.5))
+                    .frame(width: 50, height: 50)
+                    .blur(radius: 8)
             }
-            .onAppear {
-                // アニメーションを開始
-                withAnimation(Animation.easeInOut(duration: 1.0)) {
-                    isAnimating = true
+            
+            // メインボタン
+            ZStack {
+                Circle()
+                    .fill(
+                        hasNewMessages
+                            ? DesignSystem.Colors.primaryGradient
+                            : LinearGradient(
+                                colors: [Color.white],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                    )
+                    .frame(width: 40, height: 40)
+                    .shadow(
+                        color: hasNewMessages ? DesignSystem.Colors.primary.opacity(0.4) : Color.black.opacity(0.1),
+                        radius: 8,
+                        x: 0,
+                        y: 4
+                    )
+                
+                Image(systemName: hasNewMessages ? "message.fill" : "message")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(hasNewMessages ? .white : DesignSystem.Colors.primary)
+            }
+            .scaleEffect(scale)
+            
+            // バッジ
+            if count > 0 {
+                Text(count > 99 ? "99+" : "\(count)")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, count > 9 ? 5 : 0)
+                    .frame(minWidth: 18, minHeight: 18)
+                    .background(
+                        Capsule()
+                            .fill(DesignSystem.Colors.error)
+                    )
+                    .offset(x: 14, y: -14)
+            }
+        }
+        .onAppear {
+            if hasNewMessages {
+                withAnimation(
+                    .easeInOut(duration: 1.5)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    glowOpacity = 1.0
                 }
                 
-                // 1秒後にアニメーションを停止
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation {
-                        isAnimatingFlag = false
-                    }
+                // バウンスアニメーション
+                withAnimation(
+                    .spring(response: 0.3, dampingFraction: 0.6)
+                    .repeatCount(3, autoreverses: true)
+                ) {
+                    scale = 1.1
                 }
-            }
-            // 未読メッセージがある場合にバッジを表示
-            if hasNewMessages {
-                ZStack {
-                    // カウント表示を改良（必要に応じてコメントアウトを解除）
-//                    if count > 0 {
-//                        Text("\(count > 99 ? "99+" : "\(count)")")
-//                            .font(.system(size: count > 99 ? 12 : 16, weight: .bold))
-//                            .foregroundColor(.white)
-//                    } else {
-//                        // カウントが0の場合は白い点を大きくして視認性を向上
-//                        Circle()
-//                            .fill(Color.white)
-//                            .frame(width: 8, height: 8)
-//                    }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    withAnimation {
+                        scale = 1.0
+                    }
                 }
             }
         }
-        .overlay(
-            Group {
-                // ツールチップ改良版 - 多言語化対応
-                if hasNewMessages {
-                    TooltipView(
-                        isVisible: showTooltip,
-                        text: L10n.newMessageFromOshi,
-                        tooltipColor: tooltipColor
-                    )
-                    .offset(x: 50, y: 60)
-                    .zIndex(1) // 確実に前面に表示
-                    
-                    // 自動的に消える
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                            withAnimation {
-                                // showTooltip = false
-                            }
-                        }
+        .onChange(of: hasNewMessages) { newValue in
+            if newValue {
+                withAnimation(
+                    .spring(response: 0.3, dampingFraction: 0.6)
+                    .repeatCount(3, autoreverses: true)
+                ) {
+                    scale = 1.1
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    withAnimation {
+                        scale = 1.0
                     }
                 }
             }
-        )
+        }
     }
 }
 

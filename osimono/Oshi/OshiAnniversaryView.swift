@@ -11,28 +11,28 @@ import Confetti
 
 struct OshiAnniversaryView: View {
     @Binding var isShowing: Bool
-    var days: Int
-    var oshiName: String
-    var imageUrl: String?
+    let days: Int
+    let oshiName: String
+    let imageUrl: String?
     
-    // 紙吹雪アニメーションの状態
-    @State private var showConfetti = false
+    @State private var scale: CGFloat = 0.5
+    @State private var opacity: Double = 0
+    @State private var confettiOpacity: Double = 0
+    @State private var confettiOffset: CGFloat = 0
     
     var body: some View {
         ZStack {
-            // 半透明の背景
+            // 背景
             Color.black.opacity(0.7)
-                .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    withAnimation(.spring()) {
-                        isShowing = false
-                    }
-                }
+                .ignoresSafeArea()
             
-            VStack(spacing: 20) {
-                // ヘッダー
+            // 紙吹雪エフェクト
+            confettiView
+            
+            // メインカード
+            VStack(spacing: DesignSystem.Spacing.lg) {
+                // アバター
                 if let imageUrlString = imageUrl, let url = URL(string: imageUrlString) {
-                    // 推しのアイコン画像を表示
                     AsyncImage(url: url) { phase in
                         switch phase {
                         case .success(let image):
@@ -43,145 +43,151 @@ struct OshiAnniversaryView: View {
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(Color.pink, lineWidth: 3)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    DesignSystem.Colors.primary,
+                                                    DesignSystem.Colors.secondary
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 4
+                                        )
                                 )
-                                .shadow(color: Color.pink.opacity(0.5), radius: 10)
-                                .padding(.top, 30)
+                                .shadow(color: DesignSystem.Colors.primary.opacity(0.3), radius: 10, x: 0, y: 5)
                         default:
-                            ZStack{
-                                Circle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 100, height: 100)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(Color.white, lineWidth: 3)
-                                    )
-                                    .shadow(color: Color.black.opacity(0.1), radius: 5)
-                                    .padding(5)
-                                    .shimmering(active: true)
-                                Image(systemName: "person.fill")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 50, height: 50)
-                                    .foregroundColor(.white)
-                            }.padding(.top)
+                            avatarPlaceholder
                         }
                     }
                 } else {
-                    ZStack{
-                        Circle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 100, height: 100)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 3)
-                            )
-                            .shadow(color: Color.black.opacity(0.1), radius: 5)
-                            .padding(5)
-                        Image(systemName: "person.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 50, height: 50)
-                            .foregroundColor(.white)
-                    }.padding(.top)
+                    avatarPlaceholder
                 }
                 
-                VStack(spacing: 15) {
-                    Text(L10n.congratulations)
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
+                // タイトル
+                VStack(spacing: DesignSystem.Spacing.xs) {
+                    Text("🎉")
+                        .font(.system(size: 40))
                     
-                    Text(L10n.anniversaryMessage(days))
-                        .font(.body)
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(4)
+                    Text(L10n.congratulations)
+                        .font(DesignSystem.Typography.displaySmall())
+                        .foregroundStyle(DesignSystem.Colors.primaryGradient)
                     
                     Text(L10n.daysWithOshi(days))
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .padding(.top, 8)
+                        .font(DesignSystem.Typography.headlineMedium())
+                        .foregroundColor(.white)
                 }
                 
-                // 日数に応じたメッセージを表示
-                if days % 100 == 0 {
-                    // 100日単位の節目
-                    Text("推し活マスター！")
-                        .foregroundColor(.yellow)
-                        .font(.callout)
-                        .italic()
-                } else if days % 50 == 0 {
-                    // 50日単位の節目
-                    Text("立派な推しオタクの証♪")
-                        .foregroundColor(.yellow)
-                        .font(.callout)
-                        .italic()
-                } else if days % 30 == 0 {
-                    // 30日(約1ヶ月)単位の節目
-                    Text("推し活1ヶ月おめでとう！")
-                        .foregroundColor(.yellow)
-                        .font(.callout)
-                        .italic()
-                } else {
-                    // その他の10日単位の節目
-                    Text("継続は力なり！")
-                        .foregroundColor(.yellow)
-                        .font(.callout)
-                        .italic()
-                }
+                // メッセージ
+                Text(L10n.anniversaryMessage(days))
+                    .font(DesignSystem.Typography.bodyMedium())
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
                 
+                // ボタン
                 Button(action: {
                     generateHapticFeedback()
-                    withAnimation(.spring()) {
-                        isShowing = false
-                    }
+                    dismiss()
                 }) {
                     Text(L10n.close)
-                        .padding(.horizontal, 30)
-                        .padding(.vertical, 12)
-                        .background(Color.pink)
-                        .foregroundColor(.white)
-                        .cornerRadius(25)
-                        .shadow(color: Color.pink.opacity(0.5), radius: 5)
                 }
-                .padding(.top, 20)
-                .padding(.bottom, 30)
+                .primaryButton()
+                .padding(.top, DesignSystem.Spacing.sm)
             }
-            .frame(width: 320)
+            .padding(DesignSystem.Spacing.xl)
             .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.black)
-                    .shadow(color: Color.pink.opacity(0.5), radius: 10)
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.xl)
+                    .fill(.ultraThinMaterial)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(LinearGradient(
-                        gradient: Gradient(colors: [Color.pink, Color.purple]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ), lineWidth: 3)
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.xl)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.3),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
             )
-            .padding()
-            // 紙吹雪アニメーション
-            if showConfetti {
-                ConfettiView()
-            }
+            .padding(.horizontal, DesignSystem.Spacing.lg)
+            .scaleEffect(scale)
+            .opacity(opacity)
         }
         .onAppear {
-            generateHapticFeedback()
-            // 少し遅延させてから紙吹雪アニメーションを開始
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                generateHapticFeedback()
-                showConfetti = true
+            withAnimation(DesignSystem.Animation.bouncy) {
+                scale = 1.0
+                opacity = 1.0
+            }
+            
+            withAnimation(.easeOut(duration: 2).repeatForever(autoreverses: false)) {
+                confettiOpacity = 1.0
+                confettiOffset = 200
             }
         }
     }
     
-    // 触覚フィードバック生成
-    func generateHapticFeedback() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+    private var avatarPlaceholder: some View {
+        Circle()
+            .fill(
+                LinearGradient(
+                    colors: [
+                        DesignSystem.Colors.primary.opacity(0.5),
+                        DesignSystem.Colors.secondary.opacity(0.5)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(width: 100, height: 100)
+            .overlay(
+                Text(String(oshiName.prefix(1)))
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+            )
+    }
+    
+    private var confettiView: some View {
+        GeometryReader { geometry in
+            ForEach(0..<20, id: \.self) { index in
+                Circle()
+                    .fill(confettiColors[index % confettiColors.count])
+                    .frame(width: CGFloat.random(in: 8...16), height: CGFloat.random(in: 8...16))
+                    .position(
+                        x: CGFloat.random(in: 0...geometry.size.width),
+                        y: -20 + confettiOffset
+                    )
+                    .opacity(confettiOpacity)
+            }
+        }
+    }
+    
+    private let confettiColors: [Color] = [
+        DesignSystem.Colors.primary,
+        DesignSystem.Colors.secondary,
+        DesignSystem.Colors.tertiary,
+        DesignSystem.Colors.success,
+        DesignSystem.Colors.warning
+    ]
+    
+    private func dismiss() {
+        withAnimation(DesignSystem.Animation.quick) {
+            scale = 0.5
+            opacity = 0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            isShowing = false
+        }
+    }
+    
+    private func generateHapticFeedback() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
     }
 }
 
@@ -195,5 +201,5 @@ extension Date {
 }
 
 #Preview {
-    OshiAnniversaryView(isShowing: .constant(false), days: 10, oshiName: "アイドル〇〇ちゃん")
+    OshiAnniversaryView(isShowing: .constant(false), days: 10, oshiName: "アイドル〇〇ちゃん", imageUrl: "")
 }

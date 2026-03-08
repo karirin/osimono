@@ -10,149 +10,161 @@ import Confetti
 
 struct FirstOshiCongratsView: View {
     @Binding var isShowing: Bool
-    @State private var isAnimating = false
-    var imageUrl: String?
-    @State private var showConfetti = false
+    let imageUrl: String?
     
-    // カラーテーマ（推しのジャンルによって変更可能）
-    let primaryColor = Color(.systemPink)
-    let secondaryColor = Color(.systemPurple)
+    @State private var scale: CGFloat = 0.5
+    @State private var opacity: Double = 0
+    @State private var sparkleRotation: Double = 0
     
     var body: some View {
         ZStack {
-            // 背景グラデーション
-            LinearGradient(
-                gradient: Gradient(colors: [primaryColor.opacity(0.1), secondaryColor.opacity(0.1)]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .edgesIgnoringSafeArea(.all)
-            .onTapGesture {
-                isShowing = false
+            // 背景
+            Color.black.opacity(0.7)
+                .ignoresSafeArea()
+            
+            // スパークルエフェクト
+            ForEach(0..<6) { index in
+                Image(systemName: "sparkle")
+                    .font(.system(size: 24))
+                    .foregroundColor(DesignSystem.Colors.warning)
+                    .offset(
+                        x: CGFloat(cos(Double(index) * .pi / 3 + sparkleRotation)) * 120,
+                        y: CGFloat(sin(Double(index) * .pi / 3 + sparkleRotation)) * 120
+                    )
+                    .opacity(0.8)
             }
             
-            VStack(spacing: 24) {
-                // ヘッダー（アニメーション付き）
-                Text("初めての推し登録おめでとう！")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(primaryColor)
-                    .multilineTextAlignment(.center)
-                
-                if let imageUrlString = imageUrl, let url = URL(string: imageUrlString) {
-                    // 推しのアイコン画像を表示
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.pink, lineWidth: 3)
-                                )
-                                .shadow(color: Color.pink.opacity(0.5), radius: 10)
-                                .padding(.top, 30)
-                        default:
-                            ZStack{
-                                Circle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 100, height: 100)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(Color.white, lineWidth: 3)
-                                    )
-                                    .shadow(color: Color.black.opacity(0.1), radius: 5)
-                                    .padding(5)
-                                    .shimmering(active: true)
-                                Image(systemName: "person.fill")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 50, height: 50)
-                                    .foregroundColor(.white)
-                            }.padding(.top)
-                        }
-                    }
-                } else {
-                    ZStack{
-                        Circle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 100, height: 100)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 3)
-                            )
-                            .shadow(color: Color.black.opacity(0.1), radius: 5)
-                            .padding(5)
-                        Image(systemName: "person.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 50, height: 50)
-                            .foregroundColor(.white)
-                    }.padding(.top)
-                }
-                
-                // メッセージ
-                VStack(spacing: 12) {
-                    Text("あなたの推し活第一歩を踏み出しました！")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.black)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("これからの素敵な思い出を一緒に記録していきましょう✨")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal)
-                
-                // 閉じるボタン（グラデーション付き）
-                Button(action: {
-                    generateHapticFeedback()
-                    isShowing = false
-                }) {
-                    Text("推し活をはじめる")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(height: 50)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [primaryColor, secondaryColor]),
-                                startPoint: .leading,
-                                endPoint: .trailing
+            // メインカード
+            VStack(spacing: DesignSystem.Spacing.lg) {
+                // アバター
+                ZStack {
+                    // グロー
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    DesignSystem.Colors.primary.opacity(0.5),
+                                    DesignSystem.Colors.primary.opacity(0)
+                                ],
+                                center: .center,
+                                startRadius: 50,
+                                endRadius: 100
                             )
                         )
-                        .cornerRadius(25)
-                        .shadow(color: primaryColor.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .frame(width: 200, height: 200)
+                    
+                    if let imageUrlString = imageUrl, let url = URL(string: imageUrlString) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 120, height: 120)
+                                    .clipShape(Circle())
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color.white, lineWidth: 4)
+                                    )
+                            default:
+                                defaultAvatar
+                            }
+                        }
+                    } else {
+                        defaultAvatar
+                    }
                 }
-                .padding(.horizontal, 40)
-                .padding(.top, 10)
+                
+                // テキスト
+                VStack(spacing: DesignSystem.Spacing.sm) {
+                    Text("🎊")
+                        .font(.system(size: 50))
+                    
+                    Text("おめでとうございます！")
+                        .font(DesignSystem.Typography.displaySmall())
+                        .foregroundStyle(DesignSystem.Colors.primaryGradient)
+                    
+                    Text("最初の推しを登録しました")
+                        .font(DesignSystem.Typography.headlineSmall())
+                        .foregroundColor(.white)
+                    
+                    Text("これからの推し活を\n楽しみましょう！")
+                        .font(DesignSystem.Typography.bodyMedium())
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                }
+                
+                // ボタン
+                Button(action: {
+                    generateHapticFeedback()
+                    dismiss()
+                }) {
+                    Text("始める")
+                }
+                .primaryButton()
+                .padding(.top, DesignSystem.Spacing.sm)
             }
-            .padding()
-            .padding(.vertical)
-            .background(Color.white.opacity(0.95))
-            .cornerRadius(20)
-            .shadow(radius: 10)
-            .padding()
-            
-            if showConfetti {
-                ConfettiView()
-            }
+            .padding(DesignSystem.Spacing.xl)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.xl)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.xl)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            )
+            .padding(.horizontal, DesignSystem.Spacing.lg)
+            .scaleEffect(scale)
+            .opacity(opacity)
         }
         .onAppear {
-            withAnimation {
-                isAnimating = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    generateHapticFeedback()
-                    showConfetti = true
-                }
+            withAnimation(DesignSystem.Animation.bouncy) {
+                scale = 1.0
+                opacity = 1.0
+            }
+            
+            withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
+                sparkleRotation = .pi * 2
             }
         }
     }
     
-    func generateHapticFeedback() {
+    private var defaultAvatar: some View {
+        Circle()
+            .fill(
+                LinearGradient(
+                    colors: [
+                        DesignSystem.Colors.primary,
+                        DesignSystem.Colors.secondary
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(width: 120, height: 120)
+            .overlay(
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 50))
+                    .foregroundColor(.white)
+            )
+            .overlay(
+                Circle()
+                    .stroke(Color.white, lineWidth: 4)
+            )
+    }
+    
+    private func dismiss() {
+        withAnimation(DesignSystem.Animation.quick) {
+            scale = 0.5
+            opacity = 0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            isShowing = false
+        }
+    }
+    
+    private func generateHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
     }
@@ -218,6 +230,6 @@ struct ImprovedStepView: View {
 // プレビュー
 struct FirstOshiCongratsView_Previews: PreviewProvider {
     static var previews: some View {
-        FirstOshiCongratsView(isShowing: .constant(false))
+        FirstOshiCongratsView(isShowing: .constant(false), imageUrl: "")
     }
 }

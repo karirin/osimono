@@ -48,7 +48,7 @@ struct AdminChatAnalyticsView: View {
                     }
                     
                     // 検索バー
-                    SearchBar(text: $searchText)
+                    ModernSearchBar(text: $searchText)
                         .padding(.horizontal)
                     
                     // ローディング表示 or チャット一覧
@@ -194,21 +194,6 @@ struct StatCard: View {
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(radius: 2)
-    }
-}
-
-// 検索バー
-struct SearchBar: View {
-    @Binding var text: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
-            
-            TextField("推しの名前やメッセージで検索", text: $text)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-        }
     }
 }
 

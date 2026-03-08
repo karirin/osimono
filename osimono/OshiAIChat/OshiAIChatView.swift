@@ -31,6 +31,7 @@ extension Publishers {
 // MARK: - メインビュー
 struct OshiAIChatView: View {
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.colorScheme) var colorScheme
     @State private var messages: [ChatMessage] = []
     @State private var inputText: String = ""
     @State private var isLoading: Bool = false
@@ -53,12 +54,18 @@ struct OshiAIChatView: View {
     @State private var isTyping: Bool = false
     @State private var lastSentMessageId: String? = nil
     
-    // モダンカラーパレット
-    private let bgGradientStart = Color(red: 0.98, green: 0.97, blue: 0.99)
-    private let bgGradientEnd = Color(red: 0.95, green: 0.94, blue: 0.98)
+    // モダンカラーパレット - ダークモード対応
+    private var bgGradientStart: Color {
+        colorScheme == .dark ? Color(red: 0.1, green: 0.1, blue: 0.12) : Color(red: 0.98, green: 0.97, blue: 0.99)
+    }
+    private var bgGradientEnd: Color {
+        colorScheme == .dark ? Color(red: 0.08, green: 0.08, blue: 0.1) : Color(red: 0.95, green: 0.94, blue: 0.98)
+    }
     private let primaryAccent = Color(red: 0.91, green: 0.42, blue: 0.58) // ソフトピンク
     private let secondaryAccent = Color(red: 0.65, green: 0.45, blue: 0.85) // ラベンダー
-    private let oshiBubbleColor = Color.white
+    private var oshiBubbleColor: Color {
+        colorScheme == .dark ? Color(red: 0.2, green: 0.2, blue: 0.22) : Color.white
+    }
     private let userBubbleGradient = LinearGradient(
         colors: [
             Color(red: 0.91, green: 0.42, blue: 0.58),
@@ -234,7 +241,7 @@ struct OshiAIChatView: View {
                         .frame(width: 36, height: 36)
                         .background(
                             Circle()
-                                .fill(Color.white.opacity(0.8))
+                                .fill(Color(.secondarySystemBackground))
                                 .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
                         )
                 }
@@ -286,7 +293,7 @@ struct OshiAIChatView: View {
                     .frame(width: 36, height: 36)
                     .background(
                         Circle()
-                            .fill(Color.white.opacity(0.8))
+                            .fill(Color(.secondarySystemBackground))
                             .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
                     )
             }
@@ -333,7 +340,7 @@ struct OshiAIChatView: View {
                 .padding(.vertical, 6)
                 .background(
                     Capsule()
-                        .fill(Color.white.opacity(0.8))
+                        .fill(Color(.secondarySystemBackground))
                         .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
                 )
             }
@@ -376,7 +383,8 @@ struct OshiAIChatView: View {
                         // タイピングインジケーター
                         if isTyping {
                             TypingBubble(
-                                oshiImageURL: viewModel.selectedOshi.imageUrl
+                                oshiImageURL: viewModel.selectedOshi.imageUrl,
+                                bubbleColor: oshiBubbleColor
                             )
                             .transition(.asymmetric(
                                 insertion: .scale(scale: 0.8).combined(with: .opacity),
@@ -480,7 +488,7 @@ struct OshiAIChatView: View {
                 .padding(.vertical, 4)
                 .background(
                     Capsule()
-                        .fill(Color.white.opacity(0.8))
+                        .fill(Color(.secondarySystemBackground))
                 )
             
             Rectangle()
@@ -542,7 +550,7 @@ struct OshiAIChatView: View {
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 24)
-                        .fill(Color.white)
+                        .fill(Color(.secondarySystemBackground))
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
                 )
                 .overlay(
@@ -661,7 +669,7 @@ struct OshiAIChatView: View {
             MessageLimitManager.shared.forceUpdateSubscriptionCache(isSubscribed: isSubscribed)
         }
         
-        if !isSubscribed {
+        if !isSubscribed && !isAdmin {
             if MessageLimitManager.shared.hasReachedLimit() {
                 showMessageLimitModal = true
                 return
@@ -711,21 +719,24 @@ struct OshiAIChatView: View {
             }
             generateHapticFeedback()
         }
-        
-        // 既読後1〜2秒でタイピング開始
-        let typingDelay = readDelay + Double.random(in: 1.0...2.0)
+
+        // 既読後2〜3秒でタイピング開始
+        let typingDelay = readDelay + Double.random(in: 2.0...3.0)
         DispatchQueue.main.asyncAfter(deadline: .now() + typingDelay) {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 isTyping = true
             }
         }
-        
+
+        let sendTime = Date()
+
         // AI応答を生成
         AIMessageGenerator.shared.generateResponse(for: userInput, oshi: viewModel.selectedOshi, chatHistory: messages) { content, error in
-            // 5〜10秒のランダム遅延
-            let responseDelay = Double.random(in: 5.0...10.0)
-            let totalDelay = typingDelay + responseDelay - typingDelay // タイピング開始からの遅延
-            
+            // タイピング開始後、最低5秒は表示してから返信を出す
+            let elapsed = Date().timeIntervalSince(sendTime)
+            let minShowTime = typingDelay + 5.0
+            let responseDelay = max(minShowTime - elapsed, 0.5)
+
             DispatchQueue.main.asyncAfter(deadline: .now() + responseDelay) {
                 // タイピング終了
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -1079,7 +1090,9 @@ struct OshiAIChatView: View {
             newOshi.interests = data["interests"] as? [String]
             newOshi.gender = data["gender"] as? String
             newOshi.height = data["height"] as? Int
-            
+            newOshi.user_nickname = data["user_nickname"] as? String
+            newOshi.preferred_language = data["preferred_language"] as? String
+
             DispatchQueue.main.async {
                 self.viewModel.selectedOshi = newOshi
             }
@@ -1119,6 +1132,7 @@ struct OshiAIChatView: View {
             newOshi.gender = oshiData["gender"] as? String
             newOshi.height = oshiData["height"] as? Int
             newOshi.user_nickname = oshiData["user_nickname"] as? String
+            newOshi.preferred_language = oshiData["preferred_language"] as? String
             
             DispatchQueue.main.async {
                 self.viewModel.selectedOshi = newOshi
@@ -1160,7 +1174,17 @@ struct OshiAIChatView: View {
                 
                 oshi.personality = oshiData["personality"] as? String
                 oshi.speaking_style = oshiData["speaking_style"] as? String
-                
+                oshi.birthday = oshiData["birthday"] as? String
+                oshi.hometown = oshiData["hometown"] as? String
+                oshi.favorite_color = oshiData["favorite_color"] as? String
+                oshi.favorite_food = oshiData["favorite_food"] as? String
+                oshi.disliked_food = oshiData["disliked_food"] as? String
+                oshi.interests = oshiData["interests"] as? [String]
+                oshi.gender = oshiData["gender"] as? String
+                oshi.height = oshiData["height"] as? Int
+                oshi.user_nickname = oshiData["user_nickname"] as? String
+                oshi.preferred_language = oshiData["preferred_language"] as? String
+
                 DispatchQueue.main.async {
                     self.viewModel.selectedOshi = oshi
                     self.currentOshiId = oshi.id
@@ -1185,7 +1209,7 @@ struct OshiAIChatView: View {
                     let id = childSnapshot.key
                     let name = oshiData["name"] as? String ?? L10n.noName
                     
-                    firstOshi = Oshi(
+                    var loadedOshi = Oshi(
                         id: id,
                         name: name,
                         imageUrl: oshiData["imageUrl"] as? String,
@@ -1193,6 +1217,19 @@ struct OshiAIChatView: View {
                         memo: oshiData["memo"] as? String,
                         createdAt: oshiData["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970
                     )
+                    loadedOshi.personality = oshiData["personality"] as? String
+                    loadedOshi.speaking_style = oshiData["speaking_style"] as? String
+                    loadedOshi.birthday = oshiData["birthday"] as? String
+                    loadedOshi.hometown = oshiData["hometown"] as? String
+                    loadedOshi.favorite_color = oshiData["favorite_color"] as? String
+                    loadedOshi.favorite_food = oshiData["favorite_food"] as? String
+                    loadedOshi.disliked_food = oshiData["disliked_food"] as? String
+                    loadedOshi.interests = oshiData["interests"] as? [String]
+                    loadedOshi.gender = oshiData["gender"] as? String
+                    loadedOshi.height = oshiData["height"] as? Int
+                    loadedOshi.user_nickname = oshiData["user_nickname"] as? String
+                    loadedOshi.preferred_language = oshiData["preferred_language"] as? String
+                    firstOshi = loadedOshi
                     break
                 }
             }
@@ -1308,7 +1345,8 @@ struct OshiAIChatView: View {
                 oshi.gender = data["gender"] as? String
                 oshi.height = data["height"] as? Int
                 oshi.user_nickname = data["user_nickname"] as? String
-                
+                oshi.preferred_language = data["preferred_language"] as? String
+
                 DispatchQueue.main.async {
                     self.loadedOshi = oshi
                     self.isLoading = false
@@ -1550,6 +1588,7 @@ struct TypingIndicatorDots: View {
 // MARK: - タイピングバブル
 struct TypingBubble: View {
     let oshiImageURL: String?
+    var bubbleColor: Color = Color(.secondarySystemBackground)
     
     @State private var dotAnimation: [Bool] = [false, false, false]
     
@@ -1587,7 +1626,7 @@ struct TypingBubble: View {
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
-            .background(Color.white)
+            .background(bubbleColor)
             .clipShape(ChatBubbleShape(isUser: false))
             .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
             
@@ -1634,6 +1673,11 @@ struct LineChatBubble: View {
     let message: ChatMessage
     let oshiName: String
     let oshiImageURL: String?
+    @Environment(\.colorScheme) var colorScheme
+    
+    private var oshiBubbleColor: Color {
+        colorScheme == .dark ? Color(red: 0.2, green: 0.2, blue: 0.22) : Color.white
+    }
     
     var body: some View {
         ModernChatBubble(
@@ -1650,7 +1694,7 @@ struct LineChatBubble: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ),
-            oshiBubbleColor: .white,
+            oshiBubbleColor: oshiBubbleColor,
             onEdit: nil,
             onDelete: nil
         )
@@ -1664,6 +1708,11 @@ struct AdminLineChatBubble: View {
     let isAdmin: Bool
     let onEdit: (ChatMessage) -> Void
     let onDelete: (ChatMessage) -> Void
+    @Environment(\.colorScheme) var colorScheme
+    
+    private var oshiBubbleColor: Color {
+        colorScheme == .dark ? Color(red: 0.2, green: 0.2, blue: 0.22) : Color.white
+    }
     
     var body: some View {
         ModernChatBubble(
@@ -1680,7 +1729,7 @@ struct AdminLineChatBubble: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ),
-            oshiBubbleColor: .white,
+            oshiBubbleColor: oshiBubbleColor,
             onEdit: onEdit,
             onDelete: onDelete
         )
@@ -1690,6 +1739,11 @@ struct AdminLineChatBubble: View {
 struct ChatBubble: View {
     let message: ChatMessage
     let oshiName: String
+    @Environment(\.colorScheme) var colorScheme
+    
+    private var oshiBubbleColor: Color {
+        colorScheme == .dark ? Color(red: 0.2, green: 0.2, blue: 0.22) : Color(.systemGray6)
+    }
     
     var body: some View {
         ModernChatBubble(
@@ -1703,7 +1757,7 @@ struct ChatBubble: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ),
-            oshiBubbleColor: Color.gray.opacity(0.1),
+            oshiBubbleColor: oshiBubbleColor,
             onEdit: nil,
             onDelete: nil
         )

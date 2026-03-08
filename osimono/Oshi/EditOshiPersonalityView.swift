@@ -515,7 +515,7 @@ struct EditOshiPersonalityView: View {
                     if let heightInt = Int(height) {
                         updatedOshi.height = heightInt
                     }
-                    updatedOshi.gender = gender
+                    updatedOshi.gender = genderValue
                     updatedOshi.user_nickname = userNickname
                     
                     viewModel.selectedOshi = updatedOshi

@@ -19,6 +19,7 @@ enum ConversationPattern {
 
 struct OshiGroupChatView: View {
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.colorScheme) var colorScheme
     @StateObject private var groupChatManager = GroupChatManager()
     @State private var messages: [GroupChatMessage] = []
     @State private var inputText: String = ""
@@ -34,9 +35,13 @@ struct OshiGroupChatView: View {
     @State private var showReadReceipt: Bool = false
     @State private var lastSentMessageId: String? = nil
     
-    // モダンカラーパレット
-    private let bgGradientStart = Color(red: 0.98, green: 0.97, blue: 0.99)
-    private let bgGradientEnd = Color(red: 0.95, green: 0.94, blue: 0.98)
+    // モダンカラーパレット - ダークモード対応
+    private var bgGradientStart: Color {
+        colorScheme == .dark ? Color(red: 0.1, green: 0.1, blue: 0.12) : Color(red: 0.98, green: 0.97, blue: 0.99)
+    }
+    private var bgGradientEnd: Color {
+        colorScheme == .dark ? Color(red: 0.08, green: 0.08, blue: 0.1) : Color(red: 0.95, green: 0.94, blue: 0.98)
+    }
     private let primaryAccent = Color(red: 0.91, green: 0.42, blue: 0.58)
     private let secondaryAccent = Color(red: 0.65, green: 0.45, blue: 0.85)
     private let userBubbleGradient = LinearGradient(
@@ -47,6 +52,9 @@ struct OshiGroupChatView: View {
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
+    private var oshiBubbleColor: Color {
+        colorScheme == .dark ? Color(red: 0.2, green: 0.2, blue: 0.22) : Color.white
+    }
     
     @State private var showEditGroupSheet = false
     @State private var groupInfo: GroupChatInfo?
@@ -154,11 +162,11 @@ struct OshiGroupChatView: View {
                     )
             }
         }
-        .alert(L10n.confirmDeleteHistory, isPresented: $showDeleteHistoryAlert) { // 変更
-            Button(L10n.delete, role: .destructive) { deleteGroupChatHistory() } // 変更
-            Button(L10n.cancel, role: .cancel) { } // 変更
+        .alert(L10n.confirmDeleteHistory, isPresented: $showDeleteHistoryAlert) {
+            Button(L10n.delete, role: .destructive) { deleteGroupChatHistory() }
+            Button(L10n.cancel, role: .cancel) { }
         } message: {
-            Text(L10n.deleteGroupHistoryWarning) // 変更
+            Text(L10n.deleteGroupHistoryWarning)
         }
         .contentShape(Rectangle())
         .simultaneousGesture(
@@ -269,7 +277,7 @@ struct OshiGroupChatView: View {
                     .frame(width: 36, height: 36)
                     .background(
                         Circle()
-                            .fill(Color.white.opacity(0.8))
+                            .fill(Color(.secondarySystemBackground))
                             .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
                     )
             }
@@ -321,7 +329,7 @@ struct OshiGroupChatView: View {
                         .frame(width: 36, height: 36)
                         .background(
                             Circle()
-                                .fill(Color.white.opacity(0.8))
+                                .fill(Color(.secondarySystemBackground))
                                 .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
                         )
                     
@@ -408,7 +416,7 @@ struct OshiGroupChatView: View {
                             .frame(width: 36, height: 36)
                             .background(
                                 Circle()
-                                    .fill(Color.white.opacity(0.8))
+                                    .fill(Color(.secondarySystemBackground))
                                     .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
                             )
                     }
@@ -511,7 +519,7 @@ struct OshiGroupChatView: View {
                             .clipShape(Circle())
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white, lineWidth: 1.5)
+                                    .stroke(Color(.systemBackground), lineWidth: 1.5)
                             )
                     default:
                         miniPlaceholder(oshi, size: size)
@@ -534,7 +542,7 @@ struct OshiGroupChatView: View {
             )
             .overlay(
                 Circle()
-                    .stroke(Color.white, lineWidth: 1.5)
+                    .stroke(Color(.systemBackground), lineWidth: 1.5)
             )
     }
     
@@ -559,7 +567,8 @@ struct OshiGroupChatView: View {
                                 showReadReceipt: message.id == lastSentMessageId && showReadReceipt,
                                 userBubbleGradient: userBubbleGradient,
                                 primaryAccent: primaryAccent,
-                                secondaryAccent: secondaryAccent
+                                secondaryAccent: secondaryAccent,
+                                oshiBubbleColor: oshiBubbleColor
                             )
                             .id(message.id)
                             .transition(.asymmetric(
@@ -574,7 +583,8 @@ struct OshiGroupChatView: View {
                                 typingMembers: typingMembers,
                                 selectedMembers: selectedMembers,
                                 primaryAccent: primaryAccent,
-                                secondaryAccent: secondaryAccent
+                                secondaryAccent: secondaryAccent,
+                                bubbleColor: oshiBubbleColor
                             )
                             .transition(.asymmetric(
                                 insertion: .scale(scale: 0.8).combined(with: .opacity),
@@ -722,7 +732,7 @@ struct OshiGroupChatView: View {
                 .padding(.vertical, 4)
                 .background(
                     Capsule()
-                        .fill(Color.white.opacity(0.8))
+                        .fill(Color(.secondarySystemBackground))
                 )
             
             Rectangle()
@@ -761,7 +771,7 @@ struct OshiGroupChatView: View {
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 24)
-                        .fill(Color.white)
+                        .fill(Color(.secondarySystemBackground))
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
                 )
                 .overlay(
@@ -959,9 +969,9 @@ struct OshiGroupChatView: View {
     private func getTypingText() -> String {
         let typingOshis = selectedMembers.filter { typingMembers.contains($0.id) }
         if typingOshis.count == 1 {
-            return L10n.memberTyping(name: typingOshis[0].name) // 変更
+            return L10n.memberTyping(name: typingOshis[0].name)
         } else if typingOshis.count > 1 {
-            return L10n.multipleTyping // 変更
+            return L10n.multipleTyping
         }
         return ""
     }
@@ -973,9 +983,9 @@ struct OshiGroupChatView: View {
         formatter.locale = Locale(identifier: currentLanguage == "ja" ? "ja_JP" : "en_US")
         
         if Calendar.current.isDateInToday(date) {
-            return L10n.today // 変更
+            return L10n.today
         } else if Calendar.current.isDateInYesterday(date) {
-            return L10n.yesterday // 変更
+            return L10n.yesterday
         } else {
             formatter.dateFormat = currentLanguage == "ja" ? "M月d日(E)" : "MMM d, E"
             return formatter.string(from: date)
@@ -1300,6 +1310,7 @@ struct ModernGroupChatBubble: View {
     let userBubbleGradient: LinearGradient
     let primaryAccent: Color
     let secondaryAccent: Color
+    var oshiBubbleColor: Color = Color(.secondarySystemBackground)
     
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
@@ -1346,7 +1357,7 @@ struct ModernGroupChatBubble: View {
                         .foregroundColor(.primary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
-                        .background(Color.white)
+                        .background(oshiBubbleColor)
                         .clipShape(ModernBubbleShape(isUser: false))
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
                     
@@ -1472,6 +1483,7 @@ struct GroupTypingBubble: View {
     let selectedMembers: [Oshi]
     let primaryAccent: Color
     let secondaryAccent: Color
+    var bubbleColor: Color = Color(.secondarySystemBackground)
     
     @State private var dotAnimation: [Bool] = [false, false, false]
     
@@ -1502,7 +1514,7 @@ struct GroupTypingBubble: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 14)
-                .background(Color.white)
+                .background(bubbleColor)
                 .clipShape(ModernBubbleShape(isUser: false))
                 .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
             }
@@ -1673,7 +1685,7 @@ struct ModernGroupMemberSelectionView: View {
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                     }
-                    .background(Color.gray.opacity(0.05))
+                    .background(Color(.secondarySystemBackground).opacity(0.5))
                 }
                 
                 // メンバーリスト

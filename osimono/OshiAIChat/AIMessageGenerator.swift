@@ -193,20 +193,43 @@ class AIMessageGenerator {
     // 言語を考慮したシステムプロンプト生成（完全ローカライズ対応版）
     private func createLanguageAwareSystemPrompt(oshi: Oshi) -> String {
         let conversationLanguage = languageManager.getConversationLanguage(for: oshi)
-        
+
         // 全てローカライズファイルから取得
         var prompt = getLocalizedString("ai_system_prompt_base", language: conversationLanguage, oshiName: oshi.name)
-        
+
         // 会話ルールを追加
         prompt += "\n\n" + getLocalizedString("ai_conversation_rules", language: conversationLanguage)
-        
+
         // キャラクター設定を追加
         prompt += "\n\n" + createCharacterSettings(oshi: oshi, language: conversationLanguage)
-        
+
         // 最終的な言語確認指示を追加
         prompt += "\n\n" + getLocalizedString("ai_final_language_reminder", language: conversationLanguage)
-        
+
+        // 話し方・性格を最後に再強調（最も重要な指示として最後尾に配置）
+        prompt += "\n\n" + createFinalPersonalityOverride(oshi: oshi)
+
         return prompt
+    }
+
+    private func createFinalPersonalityOverride(oshi: Oshi) -> String {
+        var sections: [String] = []
+
+        if let personality = oshi.personality, !personality.isEmpty {
+            sections.append("性格：「\(personality)」→ この性格を全ての返答で一貫して表現すること")
+        }
+        if let speakingStyle = oshi.speaking_style, !speakingStyle.isEmpty {
+            sections.append("話し方：「\(speakingStyle)」→ この話し方を全文字・全文に適用すること。例外なし")
+        }
+
+        guard !sections.isEmpty else { return "" }
+
+        return """
+        【最重要・絶対に守ること】
+        以下のキャラクター設定は、上記の全ルールより優先される最上位の指示です。
+        \(sections.joined(separator: "\n        "))
+        汎用的な会話ルールよりもこのキャラクター設定を優先し、どんな状況でも崩さないこと。
+        """
     }
     
     // ローカライズされた文字列を取得（パラメータ置換対応）
@@ -364,6 +387,37 @@ class AIMessageGenerator {
         client.sendChat(messages: messages, completion: completion)
     }
     
+    // プロアクティブメッセージ生成（自発的に話しかける）
+    func generateProactiveMessage(for oshi: Oshi, chatHistory: [ChatMessage], isFirstMessage: Bool, completion: @escaping (String?, Error?) -> Void) {
+        guard let client = client else {
+            completion(nil, nil)
+            return
+        }
+
+        let conversationLanguage = languageManager.getConversationLanguage(for: oshi)
+        let systemPrompt = createLanguageAwareSystemPrompt(oshi: oshi)
+
+        var messages: [[String: String]] = [["role": "system", "content": systemPrompt]]
+
+        for message in chatHistory.suffix(5) {
+            messages.append(["role": message.isUser ? "user" : "assistant", "content": message.content])
+        }
+
+        let proactivePrompt: String
+        if isFirstMessage {
+            proactivePrompt = conversationLanguage == "ja"
+                ? "ファンに向けて、自然に最初の挨拶を送ってください。1〜2文で、キャラクターらしく。"
+                : "Send a natural first greeting to your fan. Keep it to 1-2 sentences, staying in character."
+        } else {
+            proactivePrompt = conversationLanguage == "ja"
+                ? "しばらくぶりです。キャラクターを保ちながら、ファンに向けて自然に話しかけてください。1〜2文で。"
+                : "It's been a while. Reach out to your fan naturally, staying in character. Keep it to 1-2 sentences."
+        }
+
+        messages.append(["role": "user", "content": proactivePrompt])
+        client.sendChat(messages: messages, completion: completion)
+    }
+
     // 初期プロンプト作成（ローカライズ対応）
     private func createInitialPrompt(for language: String, item: OshiItem) -> String {
         let itemType = item.itemType ?? "other"

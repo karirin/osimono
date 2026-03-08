@@ -28,6 +28,10 @@ struct TopView: View {
     @State private var selectedGroupId: String = ""
     @State private var groupChats: [GroupChatInfo] = []
     @StateObject private var groupChatManager = GroupChatManager()
+
+    // タブバーバッジ用
+    @State private var chatUnreadCount: Int = 0
+    @State private var groupUnreadCount: Int = 0
     
     let dummyOshi = Oshi(
         id: "1",
@@ -66,9 +70,10 @@ struct TopView: View {
                 .tabItem {
                     Image(systemName: "message")
                         .frame(width:1,height:1)
-                    Text(L10n.chatTab) // 修正: ハードコーディングされた文字列を多言語対応
+                    Text(L10n.chatTab)
                 }
-                
+                .badge(chatUnreadCount > 0 ? chatUnreadCount : 0)
+
                 // グループチャットタブ（直接チャット画面表示）
                 ZStack {
                     DirectGroupChatTabView(
@@ -80,8 +85,9 @@ struct TopView: View {
                 .tabItem {
                     Image(systemName: "person.2")
                         .frame(width:1,height:1)
-                    Text(L10n.groupChatTab) // 修正: ハードコーディングされた文字列を多言語対応
+                    Text(L10n.groupChatTab)
                 }
+                .badge(groupUnreadCount > 0 ? groupUnreadCount : 0)
                 
                 ZStack {
                     SettingsView(oshiChange: $oshiChange)
@@ -123,6 +129,9 @@ struct TopView: View {
                 observeSelectedOshiId()
                 loadGroupChats() // グループチャットデータも読み込み
                 initialLoadCompleted = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    loadTabBadgeCounts()
+                }
                 
                 if !UserDefaults.standard.bool(forKey: "appLaunchedBefore") {
                     UserDefaults.standard.set(false, forKey: "tutorialCompleted")
@@ -140,6 +149,8 @@ struct TopView: View {
                 fetchOshiList()
                 loadGroupChats() // グループチャットも再読み込み
                 oshiChange = false
+            } else {
+                loadTabBadgeCounts()
             }
         }
         .onDisappear {
@@ -148,6 +159,39 @@ struct TopView: View {
         }
     }
     
+    private func loadTabBadgeCounts() {
+        guard !oshiList.isEmpty else { return }
+
+        // 個別チャット未読数（全推しの合計）
+        let chatGroup = DispatchGroup()
+        var totalChat = 0
+        for oshi in oshiList {
+            chatGroup.enter()
+            ChatDatabaseManager.shared.fetchUnreadMessageCount(for: oshi.id) { count, _ in
+                totalChat += count
+                chatGroup.leave()
+            }
+        }
+        chatGroup.notify(queue: .main) {
+            self.chatUnreadCount = totalChat
+        }
+
+        // グループチャット未読数（全グループの合計）
+        guard !groupChats.isEmpty else { return }
+        let groupGroup = DispatchGroup()
+        var totalGroup = 0
+        for group in groupChats {
+            groupGroup.enter()
+            groupChatManager.fetchUnreadMessageCount(for: group.id) { count, _ in
+                totalGroup += count
+                groupGroup.leave()
+            }
+        }
+        groupGroup.notify(queue: .main) {
+            self.groupUnreadCount = totalGroup
+        }
+    }
+
     private func loadSelectedGroupId() {
         guard let userID = Auth.auth().currentUser?.uid else { return }
         

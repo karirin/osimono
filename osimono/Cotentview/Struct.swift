@@ -347,6 +347,18 @@ struct L10n {
     // unlimitedは既存かもしれませんが一応記述
     static let unlimited = NSLocalizedString("unlimited", comment: "Unlimited plan")
     static let loadingChat = NSLocalizedString("loading_chat", comment: "Loading chat status")
+    
+    static let chatHistoryShort = NSLocalizedString("chat_history_short", comment: "History label for delete button")
+    static let deleteOshiButton = NSLocalizedString("delete_oshi_button", comment: "Oshi label for delete button")
+    static let deleteChatHistory = NSLocalizedString("delete_chat_history", comment: "Delete chat history title")
+    static let noChatsYet = NSLocalizedString("no_chats_yet", comment: "No chats yet empty state")
+        
+    /// "Register your oshi to start chatting!" / "推しを登録してチャットを始めよう！"
+    static let registerOshiToChat = NSLocalizedString("register_oshi_to_chat", comment: "Register oshi instruction")
+
+    static func deleteChatHistoryMessage(_ name: String) -> String {
+        return String.localizedStringWithFormat(NSLocalizedString("delete_chat_history_message", comment: "Delete chat history message"), name)
+    }
 
     // フォーマット付き文字列
     static func startConversationWith(_ name: String) -> String {
