@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Shimmer
-import Confetti
 
 struct OshiAnniversaryView: View {
     @Binding var isShowing: Bool

@@ -15,6 +15,10 @@ struct BannerAdView: UIViewRepresentable {
     
     func makeUIView(context: Context) -> BannerView {
         let bannerView = BannerView(adSize: AdSizeBanner)
+        guard !AdConfiguration.isDisabledForDevelopment else {
+            bannerView.isHidden = true
+            return bannerView
+        }
         bannerView.adUnitID = adUnitID
         bannerView.delegate = context.coordinator
         bannerView.rootViewController = getRootViewController()
@@ -63,6 +67,10 @@ struct BannerAdChatListView: UIViewRepresentable {
     
     func makeUIView(context: Context) -> BannerView {
         let bannerView = BannerView(adSize: AdSizeBanner)
+        guard !AdConfiguration.isDisabledForDevelopment else {
+            bannerView.isHidden = true
+            return bannerView
+        }
         bannerView.adUnitID = adUnitID
         bannerView.delegate = context.coordinator
         bannerView.rootViewController = getRootViewController()
@@ -111,6 +119,10 @@ struct BannerAdChatView: UIViewRepresentable {
     
     func makeUIView(context: Context) -> BannerView {
         let bannerView = BannerView(adSize: AdSizeBanner)
+        guard !AdConfiguration.isDisabledForDevelopment else {
+            bannerView.isHidden = true
+            return bannerView
+        }
         bannerView.adUnitID = adUnitID
         bannerView.delegate = context.coordinator
         bannerView.rootViewController = getRootViewController()

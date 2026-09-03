@@ -193,10 +193,10 @@ struct OshiItemDetailView: View {
                     // メモ・思い出
                     if let memo = item.memo, !memo.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text(L10n.memoLabel(for: item.itemType ?? ""))
+                            Text(L10n.memoLabel(for: OshiItem.localizedItemType(for: item.itemType ?? L10n.other)))
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.gray)
-                            
+
                             Text(memo)
                                 .font(.system(size: 16))
                                 .foregroundColor(.black)
@@ -360,41 +360,17 @@ struct OshiItemDetailView: View {
     }
     
     func getItemDate() -> Date? {
-        guard let itemType = item.itemType else {
-            return item.date
-        }
-        
-        switch itemType {
-        case "グッズ", "ライブ記録", "SNS投稿":
-            if let timestamp = item.purchaseDate {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-        case "聖地巡礼":
-            if let timestamp = item.visitDate {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-        case "その他":
-            if let timestamp = item.recordDate {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-        default:
-            break
-        }
-        
         return item.date
     }
 
     // 日付ラベル取得メソッドを追加
     func getDateLabel() -> String {
-        guard let itemType = item.itemType else {
-            return NSLocalizedString("date", comment: "Date")
-        }
-        return L10n.dateLabel(for: itemType)
+        return OshiItem.localizedDateLabel(for: item.itemType)
     }
     
     // データベース値からアイテムタイプの表示名を取得
     func displayNameForItemType(_ type: String) -> String {
-        return itemTypeMappings.first(where: { $0.key == type })?.displayName ?? type
+        return OshiItem.localizedItemType(for: type)
     }
     
     // データベース値からカテゴリーの表示名を取得
@@ -451,28 +427,26 @@ struct OshiItemDetailView: View {
             updatedItem.tags = data["tags"] as? [String]
             
             // Parse specific fields based on item type
-            if let itemType = updatedItem.itemType {
-                switch itemType {
-                case "グッズ":
+            if let normalizedKind = updatedItem.normalizedKind {
+                switch normalizedKind {
+                case .goods:
                     updatedItem.category = data["category"] as? String
                     updatedItem.price = data["price"] as? Int
                     updatedItem.location = data["location"] as? String
                     updatedItem.purchaseDate = data["purchaseDate"] as? TimeInterval
-                case "ライブ記録":
+                case .liveRecord:
                     updatedItem.eventName = data["eventName"] as? String
                     updatedItem.purchaseDate = data["purchaseDate"] as? TimeInterval
                     updatedItem.memories = data["memories"] as? String
-                case "聖地巡礼":
+                case .pilgrimage:
                     updatedItem.locationAddress = data["locationAddress"] as? String
                     updatedItem.visitDate = data["visitDate"] as? TimeInterval
                     updatedItem.memories = data["memories"] as? String
-                case "SNS投稿":
-                    updatedItem.purchaseDate = data["publishDate"] as? TimeInterval
-                case "その他":
+                case .snsPost:
+                    updatedItem.purchaseDate = (data["publishDate"] as? TimeInterval) ?? (data["purchaseDate"] as? TimeInterval)
+                case .other:
                     updatedItem.recordDate = data["recordDate"] as? TimeInterval
                     updatedItem.details = data["details"] as? String
-                default:
-                    break
                 }
             }
             
@@ -486,11 +460,13 @@ struct OshiItemDetailView: View {
     
     // アイテムタイプによってアイコンを変更（マッピングを使用）
     func iconForItemType(_ type: String) -> String {
-        return itemTypeMappings.first(where: { $0.key == type })?.icon ?? "photo"
+        let normalizedType = OshiItem.canonicalItemType(for: type)
+        return itemTypeMappings.first(where: { $0.key == normalizedType })?.icon ?? "photo"
     }
     
     func badgeColor(for type: String) -> Color {
-        return itemTypeMappings.first(where: { $0.key == type })?.color ?? Color(.systemGray)
+        let normalizedType = OshiItem.canonicalItemType(for: type)
+        return itemTypeMappings.first(where: { $0.key == normalizedType })?.color ?? Color(.systemGray)
     }
     
     // 日付フォーマット（多言語対応）

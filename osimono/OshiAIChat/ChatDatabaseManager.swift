@@ -109,6 +109,37 @@ class ChatDatabaseManager {
             completion(error)
         }
     }
+
+    // 特定の推しのメッセージを単発で取得
+    func fetchRecentMessagesOnce(for oshiId: String, limit: UInt = 10, completion: @escaping ([ChatMessage]?, Error?) -> Void) {
+        guard let userId = userId else {
+            completion(nil, NSError(domain: "ChatDatabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "ユーザーが認証されていません"]))
+            return
+        }
+
+        let chatRef = database.child("oshiChats").child(userId).child(oshiId)
+        chatRef.queryOrdered(byChild: "timestamp").queryLimited(toLast: limit).observeSingleEvent(of: .value) { snapshot in
+            var messages: [ChatMessage] = []
+
+            for child in snapshot.children {
+                if let childSnapshot = child as? DataSnapshot,
+                   let messageDict = childSnapshot.value as? [String: Any],
+                   let message = ChatMessage.fromDictionary(messageDict) {
+                    messages.append(message)
+                }
+            }
+
+            messages.sort { $0.timestamp < $1.timestamp }
+            completion(messages, nil)
+        }
+    }
+
+    // 特定の推しの最新メッセージを単発で取得
+    func fetchLatestMessageOnce(for oshiId: String, completion: @escaping (ChatMessage?, Error?) -> Void) {
+        fetchRecentMessagesOnce(for: oshiId, limit: 1) { messages, error in
+            completion(messages?.last, error)
+        }
+    }
     
     // 特定の推しのメッセージを全て取得
     func fetchMessages(for oshiId: String, completion: @escaping ([ChatMessage]?, Error?) -> Void) {
@@ -130,6 +161,30 @@ class ChatDatabaseManager {
             }
             
             // 時間順にソート
+            messages.sort { $0.timestamp < $1.timestamp }
+            completion(messages, nil)
+        }
+    }
+
+    // 特定の推しの最近のメッセージを取得
+    func fetchRecentMessages(for oshiId: String, limit: UInt = 20, completion: @escaping ([ChatMessage]?, Error?) -> Void) {
+        guard let userId = userId else {
+            completion(nil, NSError(domain: "ChatDatabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "ユーザーが認証されていません"]))
+            return
+        }
+
+        let chatRef = database.child("oshiChats").child(userId).child(oshiId)
+        chatRef.queryOrdered(byChild: "timestamp").queryLimited(toLast: limit).observeSingleEvent(of: .value) { snapshot in
+            var messages: [ChatMessage] = []
+
+            for child in snapshot.children {
+                if let childSnapshot = child as? DataSnapshot,
+                   let messageDict = childSnapshot.value as? [String: Any],
+                   let message = ChatMessage.fromDictionary(messageDict) {
+                    messages.append(message)
+                }
+            }
+
             messages.sort { $0.timestamp < $1.timestamp }
             completion(messages, nil)
         }

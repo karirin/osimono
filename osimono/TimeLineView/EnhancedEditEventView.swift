@@ -24,6 +24,9 @@ struct EnhancedEditEventView: View {
     @State private var isShowingDeleteAlert = false
     @State private var isSaving = false
     @State private var isDeleting = false
+    @State private var availableLocations: [EventLocation] = []
+    @State private var selectedLocationId: String?
+    @State private var selectedLocationTitle: String?
     @FocusState private var isTitleFocused: Bool
     
     // Colors
@@ -62,6 +65,8 @@ struct EnhancedEditEventView: View {
         _title = State(initialValue: eventToEdit.title)
         _isOshiActivity = State(initialValue: eventToEdit.color == Color(hex: "3B82F6"))
         _selectedImage = State(initialValue: eventToEdit.image)
+        _selectedLocationId = State(initialValue: eventToEdit.locationId)
+        _selectedLocationTitle = State(initialValue: eventToEdit.locationTitle)
     }
     
     var body: some View {
@@ -142,6 +147,9 @@ struct EnhancedEditEventView: View {
                         
                         // 日付選択
                         datePickerSection
+
+                        // 会場リンク
+                        locationLinkSection
                         
                         // 活動タイプ切り替え
                         activityToggleSection
@@ -232,6 +240,9 @@ struct EnhancedEditEventView: View {
                 }
             }
             .navigationBarHidden(true)
+        }
+        .onAppear {
+            loadAvailableLocations()
         }
     }
     
@@ -426,6 +437,58 @@ struct EnhancedEditEventView: View {
                 )
         }
     }
+
+    private var locationLinkSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("会場・場所")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(textColor)
+
+            Menu {
+                Button("未設定") {
+                    selectedLocationId = nil
+                    selectedLocationTitle = nil
+                }
+
+                ForEach(availableLocations) { location in
+                    Button(location.title) {
+                        selectedLocationId = location.id
+                        selectedLocationTitle = location.title
+                    }
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(brandColor)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(selectedLocationTitle ?? "会場を選択")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(textColor)
+                            .lineLimit(1)
+
+                        Text(availableLocations.isEmpty ? "先にマップで会場を追加してください" : "このイベントを会場に紐づけます")
+                            .font(.system(size: 12))
+                            .foregroundColor(secondaryTextColor)
+                            .lineLimit(1)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(secondaryTextColor)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(cardBackgroundColor)
+                )
+            }
+            .disabled(availableLocations.isEmpty)
+        }
+    }
     
     // 活動タイプセクション
     private var activityToggleSection: some View {
@@ -479,7 +542,9 @@ struct EnhancedEditEventView: View {
             color: color,
             image: selectedImage,
             imageURL: selectedImage == nil ? eventToEdit.imageURL : nil, // 新しい画像がない場合は既存のURLを保持
-            oshiId: eventToEdit.oshiId
+            oshiId: eventToEdit.oshiId,
+            locationId: selectedLocationId,
+            locationTitle: selectedLocationTitle
         )
         
         viewModel.updateEvent(event: updatedEvent) { success in
@@ -497,6 +562,12 @@ struct EnhancedEditEventView: View {
             DispatchQueue.main.async {
                 self.presentationMode.wrappedValue.dismiss()
             }
+        }
+    }
+
+    private func loadAvailableLocations() {
+        viewModel.fetchEventLocations(forOshiId: eventToEdit.oshiId) { locations in
+            availableLocations = locations
         }
     }
 }

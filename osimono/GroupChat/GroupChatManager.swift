@@ -83,6 +83,34 @@ class GroupChatManager: ObservableObject {
             completion(error)
         }
     }
+
+    func updateMessage(_ message: GroupChatMessage, shouldUpdateLastMessage: Bool, completion: @escaping (Error?) -> Void) {
+        guard let userId = userId else {
+            completion(NSError(domain: "GroupChatManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "ユーザーが認証されていません"]))
+            return
+        }
+
+        let messageRef = database.child("groupChats").child(userId).child(message.groupId).child("messages").child(message.id)
+        messageRef.updateChildValues(message.toDictionary()) { error, _ in
+            if let error = error {
+                completion(error)
+                return
+            }
+
+            guard shouldUpdateLastMessage else {
+                completion(nil)
+                return
+            }
+
+            let groupInfoRef = self.database.child("groupChats").child(userId).child(message.groupId).child("info")
+            groupInfoRef.updateChildValues([
+                "lastMessageTime": message.timestamp,
+                "lastMessage": message.content
+            ]) { infoError, _ in
+                completion(infoError)
+            }
+        }
+    }
     
     // グループチャットメッセージを取得
     func fetchMessages(for groupId: String, completion: @escaping ([GroupChatMessage]?, Error?) -> Void) {

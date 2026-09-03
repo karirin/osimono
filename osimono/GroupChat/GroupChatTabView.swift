@@ -27,11 +27,11 @@ struct GroupChatTabView: View {
     
     @State private var openedGroupId: String = ""
     
-    private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
-    ]
-    
+    // private let adminUserIds = [
+    //     "3UDNienzhkdheKIy77lyjMJhY4D3",
+    //     "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    // ]
+
     @State private var isCheckingAdminStatus = true
     
     @State private var showDeleteHistoryAlert = false
@@ -39,27 +39,16 @@ struct GroupChatTabView: View {
     @State private var isDeletingHistory = false
     
     private func checkAdminStatus() {
-          guard let userID = Auth.auth().currentUser?.uid else {
-              isAdmin = false
-              isCheckingAdminStatus = false
-              return
-          }
-          
-          // UserIDで管理者権限をチェック
-          isAdmin = adminUserIds.contains(userID)
-          isCheckingAdminStatus = false
-          
-          if isAdmin {
-              print("🔑 管理者としてログイン中: \(userID)")
-          }
-      }
+        isAdmin = false
+        isCheckingAdminStatus = false
+    }
     
     @State private var isAdmin = false
     
     @StateObject private var subscriptionManager = SubscriptionManager()
     
     private var shouldShowAd: Bool {
-        return !isAdmin && !subscriptionManager.isSubscribed
+        AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)
     }
     
     // LINE風カラー設定

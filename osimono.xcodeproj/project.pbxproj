@@ -7,15 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		180348852DC0CEFE00AD2922 /* Confetti in Frameworks */ = {isa = PBXBuildFile; productRef = 180348842DC0CEFE00AD2922 /* Confetti */; };
-		1814B9322E22400E0034EE4C /* OpenAISwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1814B9312E22400E0034EE4C /* OpenAISwift */; };
+		180A299C2F8B98E500EA6453 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 180A299B2F8B98E500EA6453 /* GoogleMobileAds */; };
+		180A299F2F8B9C3F00EA6453 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 180A299E2F8B9C3F00EA6453 /* FirebaseAnalytics */; };
+		180A29A12F8B9C3F00EA6453 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 180A29A02F8B9C3F00EA6453 /* FirebaseAuth */; };
+		180A29A32F8B9C3F00EA6453 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 180A29A22F8B9C3F00EA6453 /* FirebaseDatabase */; };
+		180A29A52F8B9C3F00EA6453 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 180A29A42F8B9C3F00EA6453 /* FirebaseStorage */; };
 		18274FF82DE2C5AF00917A47 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */; };
-		182AD6682D8F50B9006F9F09 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 182AD6672D8F50B9006F9F09 /* Lottie */; };
 		183EA0A52E36616300BA48BD /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 183EA0A42E36616300BA48BD /* StoreKit.framework */; };
 		183EA0A72E37A7BC00BA48BD /* osirogu.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 183EA0A62E37A7BC00BA48BD /* osirogu.storekit */; };
+		185488CB2F8B9814004C7ED4 /* SwiftyCrop in Frameworks */ = {isa = PBXBuildFile; productRef = 185488CA2F8B9814004C7ED4 /* SwiftyCrop */; };
+		185488CE2F8B9840004C7ED4 /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 185488CD2F8B9840004C7ED4 /* CropViewController */; };
+		185488D02F8B9840004C7ED4 /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 185488CF2F8B9840004C7ED4 /* TOCropViewController */; };
 		1870B01A2D8BD224004B827B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0192D8BD224004B827B /* FirebaseAnalytics */; };
-		1870B01C2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B01B2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion */; };
-		1870B01E2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B01D2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport */; };
 		1870B0202D8BD224004B827B /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B01F2D8BD224004B827B /* FirebaseAppCheck */; };
 		1870B0222D8BD224004B827B /* FirebaseAppDistribution-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0212D8BD224004B827B /* FirebaseAppDistribution-Beta */; };
 		1870B0242D8BD224004B827B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0232D8BD224004B827B /* FirebaseAuth */; };
@@ -23,20 +26,16 @@
 		1870B0282D8BD224004B827B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0272D8BD224004B827B /* FirebaseCore */; };
 		1870B02A2D8BD224004B827B /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0292D8BD224004B827B /* FirebaseCrashlytics */; };
 		1870B02C2D8BD224004B827B /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B02B2D8BD224004B827B /* FirebaseDatabase */; };
-		1870B02E2D8BD224004B827B /* FirebaseDynamicLinks in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B02D2D8BD224004B827B /* FirebaseDynamicLinks */; };
 		1870B0302D8BD224004B827B /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B02F2D8BD224004B827B /* FirebaseFirestore */; };
 		1870B0322D8BD224004B827B /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0312D8BD224004B827B /* FirebaseFirestoreCombine-Community */; };
 		1870B0342D8BD224004B827B /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0332D8BD224004B827B /* FirebaseFunctions */; };
 		1870B0362D8BD224004B827B /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0352D8BD224004B827B /* FirebaseStorage */; };
 		1870B0382D8BD224004B827B /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 1870B0372D8BD224004B827B /* FirebaseStorageCombine-Community */; };
-		1879BDA72DC7BDBC0016ACA3 /* SwiftyCrop in Frameworks */ = {isa = PBXBuildFile; productRef = 1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */; };
-		187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE2592D8EFEE100D58928 /* ShimmerEffect */; };
-		187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = 187FE25C2D8F4AAF00D58928 /* Shimmer */; };
-		188C012C2DDF4FCC00B7ADB9 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */; };
 		18B8A37F2E5747E80068C455 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 18B8A37D2E5747E80068C455 /* Localizable.strings */; };
 		18B9E1172E096099000F4B57 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 18B9E1162E096099000F4B57 /* FirebaseAnalytics */; };
-		18F429E82DB291EE007C198B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E72DB291EE007C198B /* CropViewController */; };
-		18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 18F429E92DB291EE007C198B /* TOCropViewController */; };
+		18DCEF4B2F8B902B00350B0A /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 18DCEF4A2F8B902B00350B0A /* Lottie */; };
+		18DCEF502F8B903F00350B0A /* OpenAISwift in Frameworks */ = {isa = PBXBuildFile; productRef = 18DCEF4F2F8B903F00350B0A /* OpenAISwift */; };
+		18DCEF562F8B907700350B0A /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = 18DCEF552F8B907700350B0A /* Shimmer */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,31 +105,30 @@
 				1870B0322D8BD224004B827B /* FirebaseFirestoreCombine-Community in Frameworks */,
 				1870B0342D8BD224004B827B /* FirebaseFunctions in Frameworks */,
 				1870B02C2D8BD224004B827B /* FirebaseDatabase in Frameworks */,
-				1870B02E2D8BD224004B827B /* FirebaseDynamicLinks in Frameworks */,
-				1814B9322E22400E0034EE4C /* OpenAISwift in Frameworks */,
 				18274FF82DE2C5AF00917A47 /* FirebaseAnalytics in Frameworks */,
 				1870B0202D8BD224004B827B /* FirebaseAppCheck in Frameworks */,
 				1870B0242D8BD224004B827B /* FirebaseAuth in Frameworks */,
 				1870B01A2D8BD224004B827B /* FirebaseAnalytics in Frameworks */,
-				182AD6682D8F50B9006F9F09 /* Lottie in Frameworks */,
 				1870B0302D8BD224004B827B /* FirebaseFirestore in Frameworks */,
 				1870B0362D8BD224004B827B /* FirebaseStorage in Frameworks */,
+				18DCEF562F8B907700350B0A /* Shimmer in Frameworks */,
+				18DCEF502F8B903F00350B0A /* OpenAISwift in Frameworks */,
+				18DCEF4B2F8B902B00350B0A /* Lottie in Frameworks */,
+				185488CE2F8B9840004C7ED4 /* CropViewController in Frameworks */,
+				185488D02F8B9840004C7ED4 /* TOCropViewController in Frameworks */,
+				185488CB2F8B9814004C7ED4 /* SwiftyCrop in Frameworks */,
 				1870B0222D8BD224004B827B /* FirebaseAppDistribution-Beta in Frameworks */,
+				180A29A12F8B9C3F00EA6453 /* FirebaseAuth in Frameworks */,
+				180A29A32F8B9C3F00EA6453 /* FirebaseDatabase in Frameworks */,
+				180A299C2F8B98E500EA6453 /* GoogleMobileAds in Frameworks */,
+				180A29A52F8B9C3F00EA6453 /* FirebaseStorage in Frameworks */,
+				180A299F2F8B9C3F00EA6453 /* FirebaseAnalytics in Frameworks */,
 				1870B0382D8BD224004B827B /* FirebaseStorageCombine-Community in Frameworks */,
-				1870B01E2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				183EA0A52E36616300BA48BD /* StoreKit.framework in Frameworks */,
-				18F429E82DB291EE007C198B /* CropViewController in Frameworks */,
-				187FE25D2D8F4AAF00D58928 /* Shimmer in Frameworks */,
 				18B9E1172E096099000F4B57 /* FirebaseAnalytics in Frameworks */,
-				187FE25A2D8EFEE100D58928 /* ShimmerEffect in Frameworks */,
-				188C012C2DDF4FCC00B7ADB9 /* GoogleMobileAds in Frameworks */,
-				18F429EA2DB291EE007C198B /* TOCropViewController in Frameworks */,
 				1870B0262D8BD224004B827B /* FirebaseAuthCombine-Community in Frameworks */,
-				1879BDA72DC7BDBC0016ACA3 /* SwiftyCrop in Frameworks */,
-				180348852DC0CEFE00AD2922 /* Confetti in Frameworks */,
 				1870B02A2D8BD224004B827B /* FirebaseCrashlytics in Frameworks */,
 				1870B0282D8BD224004B827B /* FirebaseCore in Frameworks */,
-				1870B01C2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,8 +201,6 @@
 			name = osimono;
 			packageProductDependencies = (
 				1870B0192D8BD224004B827B /* FirebaseAnalytics */,
-				1870B01B2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion */,
-				1870B01D2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport */,
 				1870B01F2D8BD224004B827B /* FirebaseAppCheck */,
 				1870B0212D8BD224004B827B /* FirebaseAppDistribution-Beta */,
 				1870B0232D8BD224004B827B /* FirebaseAuth */,
@@ -212,23 +208,24 @@
 				1870B0272D8BD224004B827B /* FirebaseCore */,
 				1870B0292D8BD224004B827B /* FirebaseCrashlytics */,
 				1870B02B2D8BD224004B827B /* FirebaseDatabase */,
-				1870B02D2D8BD224004B827B /* FirebaseDynamicLinks */,
 				1870B02F2D8BD224004B827B /* FirebaseFirestore */,
 				1870B0312D8BD224004B827B /* FirebaseFirestoreCombine-Community */,
 				1870B0332D8BD224004B827B /* FirebaseFunctions */,
 				1870B0352D8BD224004B827B /* FirebaseStorage */,
 				1870B0372D8BD224004B827B /* FirebaseStorageCombine-Community */,
-				187FE2592D8EFEE100D58928 /* ShimmerEffect */,
-				187FE25C2D8F4AAF00D58928 /* Shimmer */,
-				182AD6672D8F50B9006F9F09 /* Lottie */,
-				18F429E72DB291EE007C198B /* CropViewController */,
-				18F429E92DB291EE007C198B /* TOCropViewController */,
-				180348842DC0CEFE00AD2922 /* Confetti */,
-				1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */,
-				188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */,
 				18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */,
 				18B9E1162E096099000F4B57 /* FirebaseAnalytics */,
-				1814B9312E22400E0034EE4C /* OpenAISwift */,
+				18DCEF4A2F8B902B00350B0A /* Lottie */,
+				18DCEF4F2F8B903F00350B0A /* OpenAISwift */,
+				18DCEF552F8B907700350B0A /* Shimmer */,
+				185488CA2F8B9814004C7ED4 /* SwiftyCrop */,
+				185488CD2F8B9840004C7ED4 /* CropViewController */,
+				185488CF2F8B9840004C7ED4 /* TOCropViewController */,
+				180A299B2F8B98E500EA6453 /* GoogleMobileAds */,
+				180A299E2F8B9C3F00EA6453 /* FirebaseAnalytics */,
+				180A29A02F8B9C3F00EA6453 /* FirebaseAuth */,
+				180A29A22F8B9C3F00EA6453 /* FirebaseDatabase */,
+				180A29A42F8B9C3F00EA6453 /* FirebaseStorage */,
 			);
 			productName = osimono;
 			productReference = 1870AFB32D8BC85E004B827B /* osimono.app */;
@@ -314,15 +311,13 @@
 			mainGroup = 1870AFAA2D8BC85E004B827B;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				1870AFF62D8BCEA9004B827B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-				187FE2582D8EFEE100D58928 /* XCRemoteSwiftPackageReference "Shimmer-SwiftUI-Modifier" */,
-				187FE25B2D8F4AAF00D58928 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */,
-				182AD6662D8F50B9006F9F09 /* XCRemoteSwiftPackageReference "lottie-ios" */,
-				18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */,
-				180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */,
-				1879BDA52DC7BDBC0016ACA3 /* XCRemoteSwiftPackageReference "SwiftyCrop" */,
-				188C012A2DDF4FCC00B7ADB9 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
-				1814B9302E22400E0034EE4C /* XCRemoteSwiftPackageReference "OpenAISwift" */,
+				18DCEF492F8B902B00350B0A /* XCRemoteSwiftPackageReference "lottie-ios" */,
+				18DCEF4E2F8B903F00350B0A /* XCRemoteSwiftPackageReference "OpenAISwift" */,
+				18DCEF542F8B907700350B0A /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */,
+				185488C92F8B9814004C7ED4 /* XCRemoteSwiftPackageReference "SwiftyCrop" */,
+				185488CC2F8B9840004C7ED4 /* XCRemoteSwiftPackageReference "TOCropViewController" */,
+				180A299A2F8B98E500EA6453 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				180A299D2F8B9C3F00EA6453 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1870AFB42D8BC85E004B827B /* Products */;
@@ -543,10 +538,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.7;
+				CURRENT_PROJECT_VERSION = 4.6;
 				DEVELOPMENT_ASSET_PATHS = "\"osimono/Preview Content\"";
 				DEVELOPMENT_TEAM = F3XS565TSX;
 				ENABLE_PREVIEWS = YES;
+				EXCLUDED_SOURCE_FILE_NAMES = (
+					android,
+					"android/*",
+					"android/**/*",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = osimono/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "推しログ";
@@ -562,7 +562,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.8;
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MARKETING_VERSION = 4.6;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -577,10 +578,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3.7;
+				CURRENT_PROJECT_VERSION = 4.6;
 				DEVELOPMENT_ASSET_PATHS = "\"osimono/Preview Content\"";
 				DEVELOPMENT_TEAM = F3XS565TSX;
 				ENABLE_PREVIEWS = YES;
+				EXCLUDED_SOURCE_FILE_NAMES = (
+					android,
+					"android/*",
+					"android/**/*",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = osimono/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "推しログ";
@@ -596,7 +602,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.8;
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MARKETING_VERSION = 4.6;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -719,15 +726,47 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */ = {
+		180A299A2F8B98E500EA6453 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ottijp/confetti-swiftui";
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.0;
+				minimumVersion = 13.2.0;
 			};
 		};
-		1814B9302E22400E0034EE4C /* XCRemoteSwiftPackageReference "OpenAISwift" */ = {
+		180A299D2F8B9C3F00EA6453 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.12.0;
+			};
+		};
+		185488C92F8B9814004C7ED4 /* XCRemoteSwiftPackageReference "SwiftyCrop" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/benedom/SwiftyCrop";
+			requirement = {
+				kind = revision;
+				revision = ef27522c4850ccc899b0f4f745bfcc3aee892dfc;
+			};
+		};
+		185488CC2F8B9840004C7ED4 /* XCRemoteSwiftPackageReference "TOCropViewController" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/TimOliver/TOCropViewController";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.2;
+			};
+		};
+		18DCEF492F8B902B00350B0A /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.6.0;
+			};
+		};
+		18DCEF4E2F8B903F00350B0A /* XCRemoteSwiftPackageReference "OpenAISwift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/adamrushy/OpenAISwift";
 			requirement = {
@@ -735,39 +774,7 @@
 				minimumVersion = 1.4.1;
 			};
 		};
-		182AD6662D8F50B9006F9F09 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.5.1;
-			};
-		};
-		1870AFF62D8BCEA9004B827B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 11.10.0;
-			};
-		};
-		1879BDA52DC7BDBC0016ACA3 /* XCRemoteSwiftPackageReference "SwiftyCrop" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/benedom/SwiftyCrop";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
-		187FE2582D8EFEE100D58928 /* XCRemoteSwiftPackageReference "Shimmer-SwiftUI-Modifier" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/0xYanis/Shimmer-SwiftUI-Modifier.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-		187FE25B2D8F4AAF00D58928 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */ = {
+		18DCEF542F8B907700350B0A /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/markiv/SwiftUI-Shimmer";
 			requirement = {
@@ -775,55 +782,56 @@
 				minimumVersion = 1.5.1;
 			};
 		};
-		188C012A2DDF4FCC00B7ADB9 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.4.0;
-			};
-		};
-		18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/TimOliver/TOCropViewController.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.7.4;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		180348842DC0CEFE00AD2922 /* Confetti */ = {
+		180A299B2F8B98E500EA6453 /* GoogleMobileAds */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 180348832DC0CEFE00AD2922 /* XCRemoteSwiftPackageReference "confetti-swiftui" */;
-			productName = Confetti;
+			package = 180A299A2F8B98E500EA6453 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
 		};
-		1814B9312E22400E0034EE4C /* OpenAISwift */ = {
+		180A299E2F8B9C3F00EA6453 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 1814B9302E22400E0034EE4C /* XCRemoteSwiftPackageReference "OpenAISwift" */;
-			productName = OpenAISwift;
+			package = 180A299D2F8B9C3F00EA6453 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		180A29A02F8B9C3F00EA6453 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 180A299D2F8B9C3F00EA6453 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		180A29A22F8B9C3F00EA6453 /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 180A299D2F8B9C3F00EA6453 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+		180A29A42F8B9C3F00EA6453 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 180A299D2F8B9C3F00EA6453 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 		18274FF72DE2C5AF00917A47 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FirebaseAnalytics;
 		};
-		182AD6672D8F50B9006F9F09 /* Lottie */ = {
+		185488CA2F8B9814004C7ED4 /* SwiftyCrop */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 182AD6662D8F50B9006F9F09 /* XCRemoteSwiftPackageReference "lottie-ios" */;
-			productName = Lottie;
+			package = 185488C92F8B9814004C7ED4 /* XCRemoteSwiftPackageReference "SwiftyCrop" */;
+			productName = SwiftyCrop;
+		};
+		185488CD2F8B9840004C7ED4 /* CropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 185488CC2F8B9840004C7ED4 /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = CropViewController;
+		};
+		185488CF2F8B9840004C7ED4 /* TOCropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 185488CC2F8B9840004C7ED4 /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = TOCropViewController;
 		};
 		1870B0192D8BD224004B827B /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FirebaseAnalytics;
-		};
-		1870B01B2D8BD224004B827B /* FirebaseAnalyticsOnDeviceConversion */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = FirebaseAnalyticsOnDeviceConversion;
-		};
-		1870B01D2D8BD224004B827B /* FirebaseAnalyticsWithoutAdIdSupport */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = FirebaseAnalyticsWithoutAdIdSupport;
 		};
 		1870B01F2D8BD224004B827B /* FirebaseAppCheck */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -853,10 +861,6 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = FirebaseDatabase;
 		};
-		1870B02D2D8BD224004B827B /* FirebaseDynamicLinks */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = FirebaseDynamicLinks;
-		};
 		1870B02F2D8BD224004B827B /* FirebaseFirestore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FirebaseFirestore;
@@ -877,39 +881,24 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = "FirebaseStorageCombine-Community";
 		};
-		1879BDA62DC7BDBC0016ACA3 /* SwiftyCrop */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1879BDA52DC7BDBC0016ACA3 /* XCRemoteSwiftPackageReference "SwiftyCrop" */;
-			productName = SwiftyCrop;
-		};
-		187FE2592D8EFEE100D58928 /* ShimmerEffect */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 187FE2582D8EFEE100D58928 /* XCRemoteSwiftPackageReference "Shimmer-SwiftUI-Modifier" */;
-			productName = ShimmerEffect;
-		};
-		187FE25C2D8F4AAF00D58928 /* Shimmer */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 187FE25B2D8F4AAF00D58928 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */;
-			productName = Shimmer;
-		};
-		188C012B2DDF4FCC00B7ADB9 /* GoogleMobileAds */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 188C012A2DDF4FCC00B7ADB9 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
-			productName = GoogleMobileAds;
-		};
 		18B9E1162E096099000F4B57 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FirebaseAnalytics;
 		};
-		18F429E72DB291EE007C198B /* CropViewController */ = {
+		18DCEF4A2F8B902B00350B0A /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */;
-			productName = CropViewController;
+			package = 18DCEF492F8B902B00350B0A /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
 		};
-		18F429E92DB291EE007C198B /* TOCropViewController */ = {
+		18DCEF4F2F8B903F00350B0A /* OpenAISwift */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 18F429E62DB291EE007C198B /* XCRemoteSwiftPackageReference "TOCropViewController" */;
-			productName = TOCropViewController;
+			package = 18DCEF4E2F8B903F00350B0A /* XCRemoteSwiftPackageReference "OpenAISwift" */;
+			productName = OpenAISwift;
+		};
+		18DCEF552F8B907700350B0A /* Shimmer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 18DCEF542F8B907700350B0A /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */;
+			productName = Shimmer;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

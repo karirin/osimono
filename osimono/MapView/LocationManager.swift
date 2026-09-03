@@ -294,7 +294,7 @@ class LocationViewModel: ObservableObject {
         
         let ratingSum = initialRating > 0 ? initialRating : 0
         
-        var newLocation = EventLocation(
+        let newLocation = EventLocation(
             title: title,
             latitude: latitude,
             longitude: longitude,
@@ -308,8 +308,16 @@ class LocationViewModel: ObservableObject {
         
         do {
             // ユーザーID → 推しID → 投稿ID という階層構造で保存
-            let ref = db.child("locations").child(userId).child(currentOshiId).childByAutoId()
-            let locationDict = try newLocation.asDictionary()
+            let ref: DatabaseReference
+            if let providedId = id {
+                ref = db.child("locations").child(userId).child(currentOshiId).child(providedId)
+            } else {
+                ref = db.child("locations").child(userId).child(currentOshiId).childByAutoId()
+            }
+            var locationDict = try newLocation.asDictionary()
+            if let customImageUrl, !customImageUrl.isEmpty {
+                locationDict["imageURL"] = customImageUrl
+            }
             
             ref.setValue(locationDict) { error, _ in
                 if let error = error {
@@ -322,6 +330,11 @@ class LocationViewModel: ObservableObject {
                     // 初回評価がある場合はユーザー評価も保存
                     if initialRating > 0 {
                         self.saveUserRating(locationId: newLocationId ?? "", rating: initialRating, userId: userId, oshiId: self.currentOshiId)
+                    }
+
+                    if let customImageUrl, !customImageUrl.isEmpty {
+                        completion(newLocationId)
+                        return
                     }
                     
                     // 画像がある場合は Firebase Storage にアップロード
@@ -421,5 +434,67 @@ class LocationViewModel: ObservableObject {
     func updateCurrentOshi(id: String) {
         currentOshiId = id
         fetchLocations(forOshiId: id)
+    }
+
+    func fetchTimelineEventsLinked(to locationId: String, oshiId: String, completion: @escaping ([TimelineEvent]) -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion([])
+            return
+        }
+
+        let eventsRef = db.child("timelineEvents").child(userId).child(oshiId)
+        eventsRef.observeSingleEvent(of: .value) { snapshot in
+            var events: [TimelineEvent] = []
+
+            for child in snapshot.children {
+                guard let childSnapshot = child as? DataSnapshot,
+                      let dict = childSnapshot.value as? [String: Any],
+                      let linkedLocationId = dict["locationId"] as? String,
+                      linkedLocationId == locationId,
+                      let time = dict["time"] as? String,
+                      let title = dict["title"] as? String,
+                      let colorString = dict["color"] as? String else {
+                    continue
+                }
+
+                let color: Color
+                switch colorString {
+                case "blue":
+                    color = Color(hex: "3B82F6")
+                case "green":
+                    color = Color(hex: "10B981")
+                default:
+                    color = .gray
+                }
+
+                events.append(
+                    TimelineEvent(
+                        id: UUID(uuidString: dict["id"] as? String ?? childSnapshot.key) ?? UUID(),
+                        time: time,
+                        title: title,
+                        color: color,
+                        image: nil,
+                        imageURL: dict["imageURL"] as? String,
+                        oshiId: oshiId,
+                        locationId: linkedLocationId,
+                        locationTitle: dict["locationTitle"] as? String
+                    )
+                )
+            }
+
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy/MM/dd HH:mm"
+            let sortedEvents = events.sorted {
+                guard let firstDate = formatter.date(from: $0.time),
+                      let secondDate = formatter.date(from: $1.time) else {
+                    return $0.time > $1.time
+                }
+                return firstDate > secondDate
+            }
+
+            DispatchQueue.main.async {
+                completion(sortedEvents)
+            }
+        }
     }
 }

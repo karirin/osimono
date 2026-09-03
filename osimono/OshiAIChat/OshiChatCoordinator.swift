@@ -114,7 +114,14 @@ class OshiChatCoordinator: ObservableObject {
                 speaking_style: data["speaking_style"] as? String,
                 favorite_food: data["favorite_food"] as? String,
                 disliked_food: data["disliked_food"] as? String,
-                gender: data["gender"] as? String ?? L10n.maleGender // 性別情報を追加（デフォルトは「男性」の多言語表記）
+                gender: data["gender"] as? String ?? L10n.maleGender,
+                user_nickname: data["user_nickname"] as? String,
+                relationship_status: data["relationship_status"] as? String,
+                relationship_detail: data["relationship_detail"] as? String,
+                shared_memory: data["shared_memory"] as? String,
+                signature_phrase: data["signature_phrase"] as? String,
+                conversation_topics: data["conversation_topics"] as? [String],
+                forbidden_topics: data["forbidden_topics"] as? [String]
             )
             
             completion(oshi)

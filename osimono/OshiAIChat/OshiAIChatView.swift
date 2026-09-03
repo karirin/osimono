@@ -91,27 +91,30 @@ struct OshiAIChatView: View {
     @State private var selectedMessageForDeletion: ChatMessage? = nil
     @State private var showDeleteAlert = false
     
-    private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
-    ]
-    
+    // private let adminUserIds = [
+    //     "3UDNienzhkdheKIy77lyjMJhY4D3",
+    //     "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    // ]
+
     @StateObject private var subscriptionManager = SubscriptionManager()
-    
+
     private var shouldShowAd: Bool {
-        return !isAdmin && !subscriptionManager.isSubscribed
+        AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)
     }
-    
+
+    private var isDeveloperMode: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+
     @State private var isAdmin = false
     @State private var isCheckingAdminStatus = true
-    
+
     private func checkAdminStatus() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            isAdmin = false
-            isCheckingAdminStatus = false
-            return
-        }
-        isAdmin = adminUserIds.contains(userID)
+        isAdmin = false
         isCheckingAdminStatus = false
     }
     
@@ -137,9 +140,9 @@ struct OshiAIChatView: View {
             .ignoresSafeArea()
             
             chatContent
-                .allowsHitTesting(!(showMessageLimitModal || showRewardCompletedModal))
+                .allowsHitTesting(!showRewardCompletedModal)
                 .gesture(
-                    (showMessageLimitModal || showRewardCompletedModal) ? nil :
+                    showRewardCompletedModal ? nil :
                         DragGesture(minimumDistance: 30)
                             .onEnded { value in
                                 if value.translation.width > 80 {
@@ -152,18 +155,7 @@ struct OshiAIChatView: View {
                 )
 
             // モーダル群
-            if showMessageLimitModal {
-                MessageLimitModal(
-                    isPresented: $showMessageLimitModal,
-                    onWatchAd: { showRewardAd() },
-                    onUpgrade: {
-                        showMessageLimitModal = false
-                        showSubscriptionView = true
-                    },
-                    remainingMessages: remainingMessages
-                )
-                .zIndex(999)
-            }
+            // MessageLimitModal は廃止（インタースティシャル広告に移行）
 
             if showRewardCompletedModal {
                 RewardCompletedModal(
@@ -185,6 +177,9 @@ struct OshiAIChatView: View {
             setupView()
             checkAdminStatus()
             MessageLimitManager.shared.forceUpdateSubscriptionCache(isSubscribed: subscriptionManager.isSubscribed)
+            if shouldShowAd {
+                IndividualChatInterstitialManager.shared.preloadAd()
+            }
             remainingMessages = MessageLimitManager.shared.getRemainingMessages()
             
             authManager.fetchUserFlag { userFlag, error in
@@ -206,6 +201,12 @@ struct OshiAIChatView: View {
         }
         .onDisappear { cleanup() }
         .navigationBarHidden(true)
+        .onReceive(IndividualChatInterstitialManager.shared.$shouldShowSubscriptionSheet) { shouldShow in
+            if shouldShow && !subscriptionManager.isSubscribed && !isAdmin {
+                showSubscriptionView = true
+                IndividualChatInterstitialManager.shared.shouldShowSubscriptionSheet = false
+            }
+        }
         .sheet(isPresented: $showSubscriptionView) {
             SubscriptionPreView()
                 .onDisappear {
@@ -328,21 +329,7 @@ struct OshiAIChatView: View {
                         .fill(Color.orange.opacity(0.12))
                 )
             } else {
-                VStack(spacing: 0) {
-                    Text("\(MessageLimitManager.shared.getRemainingMessagesText())")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundColor(primaryAccent)
-                    Text(L10n.remaining)
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(Color(.secondarySystemBackground))
-                        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
-                )
+                EmptyView()
             }
         }
     }
@@ -370,7 +357,7 @@ struct OshiAIChatView: View {
                                 showReadReceipt: message.id == lastSentMessageId && showReadReceipt,
                                 userBubbleGradient: userBubbleGradient,
                                 oshiBubbleColor: oshiBubbleColor,
-                                onEdit: isAdmin ? { startEditingMessage($0) } : nil,
+                                onEdit: (isAdmin || isDeveloperMode) ? { startEditingMessage($0) } : nil,
                                 onDelete: isAdmin ? { confirmDeleteMessage($0) } : nil
                             )
                             .id(message.id)
@@ -669,14 +656,7 @@ struct OshiAIChatView: View {
             MessageLimitManager.shared.forceUpdateSubscriptionCache(isSubscribed: isSubscribed)
         }
         
-        if !isSubscribed && !isAdmin {
-            if MessageLimitManager.shared.hasReachedLimit() {
-                showMessageLimitModal = true
-                return
-            }
-            MessageLimitManager.shared.incrementCount()
-        }
-        
+        // メッセージ上限チェックは廃止（インタースティシャル広告に移行）
         remainingMessages = MessageLimitManager.shared.getRemainingMessages()
         
         // ユーザーメッセージを作成
@@ -710,9 +690,14 @@ struct OshiAIChatView: View {
                 print("❌ ユーザーメッセージ保存エラー: \(error.localizedDescription)")
             }
         }
-        
-        // 1〜2秒後に既読をつける
-        let readDelay = Double.random(in: 1.0...2.0)
+
+        // 5回に1回インタースティシャル広告を表示
+        if shouldShowAd {
+            IndividualChatInterstitialManager.shared.incrementAndShowIfNeeded()
+        }
+
+        // 少し間を置いて既読をつける
+        let readDelay = Double.random(in: 2.5...5.0)
         DispatchQueue.main.asyncAfter(deadline: .now() + readDelay) {
             withAnimation(.easeInOut(duration: 0.3)) {
                 showReadReceipt = true
@@ -720,8 +705,8 @@ struct OshiAIChatView: View {
             generateHapticFeedback()
         }
 
-        // 既読後2〜3秒でタイピング開始
-        let typingDelay = readDelay + Double.random(in: 2.0...3.0)
+        // 既読後にタイピング開始
+        let typingDelay = readDelay + Double.random(in: 2.0...3.5)
         DispatchQueue.main.asyncAfter(deadline: .now() + typingDelay) {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 isTyping = true
@@ -810,7 +795,7 @@ struct OshiAIChatView: View {
                 id: editingMessage.id,
                 content: editingText,
                 isUser: editingMessage.isUser,
-                timestamp: Date().timeIntervalSince1970,
+                timestamp: editingMessage.timestamp,
                 oshiId: editingMessage.oshiId,
                 itemId: editingMessage.itemId
             )
@@ -889,7 +874,6 @@ struct OshiAIChatView: View {
             markMessagesAsRead()
         }
         remainingMessages = MessageLimitManager.shared.getRemainingMessages()
-        loadRewardedAd()
     }
     
     private func handleOshiChange(newId: String) {
@@ -969,8 +953,12 @@ struct OshiAIChatView: View {
                     }
                     
                     if let messages = fetchedMessages, !messages.isEmpty {
+                        let wasEmpty = self.messages.isEmpty
                         self.messages = messages
                         isFetchingMessages = false
+                        if wasEmpty {
+                            shouldScrollToBottom = true
+                        }
                         if messages.isEmpty {
                             isInitialScrollComplete = true
                         }
@@ -992,14 +980,17 @@ struct OshiAIChatView: View {
                     }
                     
                     if let messages = fetchedMessages, !messages.isEmpty {
+                        let wasEmpty = self.messages.isEmpty
                         self.messages = messages
                         isFetchingMessages = false
+                        if wasEmpty {
+                            shouldScrollToBottom = true
+                        }
                         if messages.isEmpty {
                             isInitialScrollComplete = true
                         }
                     } else {
-                        isFetchingMessages = false
-                        isInitialScrollComplete = true
+                        requestProactiveConversationStarter()
                     }
                 }
             }
@@ -1051,6 +1042,26 @@ struct OshiAIChatView: View {
             }
         }
     }
+
+    private func requestProactiveConversationStarter() {
+        isTyping = true
+
+        RandomMessageManager.shared.sendProactiveMessageIfNeeded(for: viewModel.selectedOshi) { message in
+            DispatchQueue.main.async {
+                withAnimation {
+                    isTyping = false
+                }
+
+                isFetchingMessages = false
+
+                if message == nil {
+                    isInitialScrollComplete = true
+                } else {
+                    self.markMessagesAsRead()
+                }
+            }
+        }
+    }
     
     private func resetViewState() {
         messages = []
@@ -1091,6 +1102,12 @@ struct OshiAIChatView: View {
             newOshi.gender = data["gender"] as? String
             newOshi.height = data["height"] as? Int
             newOshi.user_nickname = data["user_nickname"] as? String
+            newOshi.relationship_status = data["relationship_status"] as? String
+            newOshi.relationship_detail = data["relationship_detail"] as? String
+            newOshi.shared_memory = data["shared_memory"] as? String
+            newOshi.signature_phrase = data["signature_phrase"] as? String
+            newOshi.conversation_topics = data["conversation_topics"] as? [String]
+            newOshi.forbidden_topics = data["forbidden_topics"] as? [String]
             newOshi.preferred_language = data["preferred_language"] as? String
 
             DispatchQueue.main.async {
@@ -1132,6 +1149,12 @@ struct OshiAIChatView: View {
             newOshi.gender = oshiData["gender"] as? String
             newOshi.height = oshiData["height"] as? Int
             newOshi.user_nickname = oshiData["user_nickname"] as? String
+            newOshi.relationship_status = oshiData["relationship_status"] as? String
+            newOshi.relationship_detail = oshiData["relationship_detail"] as? String
+            newOshi.shared_memory = oshiData["shared_memory"] as? String
+            newOshi.signature_phrase = oshiData["signature_phrase"] as? String
+            newOshi.conversation_topics = oshiData["conversation_topics"] as? [String]
+            newOshi.forbidden_topics = oshiData["forbidden_topics"] as? [String]
             newOshi.preferred_language = oshiData["preferred_language"] as? String
             
             DispatchQueue.main.async {
@@ -1183,6 +1206,12 @@ struct OshiAIChatView: View {
                 oshi.gender = oshiData["gender"] as? String
                 oshi.height = oshiData["height"] as? Int
                 oshi.user_nickname = oshiData["user_nickname"] as? String
+                oshi.relationship_status = oshiData["relationship_status"] as? String
+                oshi.relationship_detail = oshiData["relationship_detail"] as? String
+                oshi.shared_memory = oshiData["shared_memory"] as? String
+                oshi.signature_phrase = oshiData["signature_phrase"] as? String
+                oshi.conversation_topics = oshiData["conversation_topics"] as? [String]
+                oshi.forbidden_topics = oshiData["forbidden_topics"] as? [String]
                 oshi.preferred_language = oshiData["preferred_language"] as? String
 
                 DispatchQueue.main.async {
@@ -1228,6 +1257,12 @@ struct OshiAIChatView: View {
                     loadedOshi.gender = oshiData["gender"] as? String
                     loadedOshi.height = oshiData["height"] as? Int
                     loadedOshi.user_nickname = oshiData["user_nickname"] as? String
+                    loadedOshi.relationship_status = oshiData["relationship_status"] as? String
+                    loadedOshi.relationship_detail = oshiData["relationship_detail"] as? String
+                    loadedOshi.shared_memory = oshiData["shared_memory"] as? String
+                    loadedOshi.signature_phrase = oshiData["signature_phrase"] as? String
+                    loadedOshi.conversation_topics = oshiData["conversation_topics"] as? [String]
+                    loadedOshi.forbidden_topics = oshiData["forbidden_topics"] as? [String]
                     loadedOshi.preferred_language = oshiData["preferred_language"] as? String
                     firstOshi = loadedOshi
                     break
@@ -1250,6 +1285,12 @@ struct OshiAIChatView: View {
     }
     
     private func loadRewardedAd() {
+        guard !AdConfiguration.isDisabledForDevelopment else {
+            rewardedAd = nil
+            isLoadingAd = false
+            return
+        }
+
         let request = Request()
         RewardedAd.load(with: "ca-app-pub-4898800212808837/3373075660", request: request) { [self] ad, error in
             if let error = error {
@@ -1263,6 +1304,15 @@ struct OshiAIChatView: View {
     }
     
     private func showRewardAd() {
+        guard !AdConfiguration.isDisabledForDevelopment else {
+            MessageLimitManager.shared.resetCountAfterReward()
+            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+            showMessageLimitModal = false
+            rewardAmount = 10
+            showRewardCompletedModal = true
+            return
+        }
+
         guard let rewardedAd = rewardedAd else {
             loadRewardedAd()
             return
@@ -1345,6 +1395,12 @@ struct OshiAIChatView: View {
                 oshi.gender = data["gender"] as? String
                 oshi.height = data["height"] as? Int
                 oshi.user_nickname = data["user_nickname"] as? String
+                oshi.relationship_status = data["relationship_status"] as? String
+                oshi.relationship_detail = data["relationship_detail"] as? String
+                oshi.shared_memory = data["shared_memory"] as? String
+                oshi.signature_phrase = data["signature_phrase"] as? String
+                oshi.conversation_topics = data["conversation_topics"] as? [String]
+                oshi.forbidden_topics = data["forbidden_topics"] as? [String]
                 oshi.preferred_language = data["preferred_language"] as? String
 
                 DispatchQueue.main.async {
@@ -1386,7 +1442,7 @@ struct ModernChatBubble: View {
                         .clipShape(ChatBubbleShape(isUser: true))
                         .shadow(color: Color(red: 0.91, green: 0.42, blue: 0.58).opacity(0.2), radius: 8, y: 4)
                         .onLongPressGesture {
-                            if isAdmin {
+                            if canShowActions {
                                 showActionSheet = true
                                 generateHapticFeedback()
                             }
@@ -1420,7 +1476,7 @@ struct ModernChatBubble: View {
                         .clipShape(ChatBubbleShape(isUser: false))
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
                         .onLongPressGesture {
-                            if isAdmin {
+                            if canShowActions {
                                 showActionSheet = true
                                 generateHapticFeedback()
                             }
@@ -1441,13 +1497,25 @@ struct ModernChatBubble: View {
             ActionSheet(
                 title: Text(L10n.editMessageTitle), // 変更
                 message: Text(L10n.adminEditWarning), // 変更
-                buttons: [
-                    .default(Text(L10n.edit)) { onEdit?(message) }, // 変更: "編集" -> L10n.edit
-                    .destructive(Text(L10n.delete)) { onDelete?(message) }, // 変更: "削除" -> L10n.delete
-                    .cancel(Text(L10n.cancel)) // 変更: "キャンセル" -> L10n.cancel
-                ]
+                buttons: actionSheetButtons
             )
         }
+    }
+
+    private var canShowActions: Bool {
+        onEdit != nil || onDelete != nil
+    }
+
+    private var actionSheetButtons: [ActionSheet.Button] {
+        var buttons: [ActionSheet.Button] = []
+        if let onEdit = onEdit {
+            buttons.append(.default(Text(L10n.edit)) { onEdit(message) })
+        }
+        if let onDelete = onDelete {
+            buttons.append(.destructive(Text(L10n.delete)) { onDelete(message) })
+        }
+        buttons.append(.cancel(Text(L10n.cancel)))
+        return buttons
     }
     
     private var oshiAvatar: some View {

@@ -11,15 +11,23 @@ class RewardAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
     static let shared = RewardAdManager()
     
     @Published var isAdReady = false
-    private var rewardedAd: RewardedAd?
+    var rewardedAd: RewardedAd?
     private var completionHandler: ((Bool) -> Void)?
     
     override init() {
         super.init()
-        loadRewardedAd()
+        if !AdConfiguration.isDisabledForDevelopment {
+            loadRewardedAd()
+        }
     }
     
     func loadRewardedAd() {
+        guard !AdConfiguration.isDisabledForDevelopment else {
+            rewardedAd = nil
+            isAdReady = false
+            return
+        }
+
         let request = GoogleMobileAds.Request()
         RewardedAd.load(
             with: "ca-app-pub-4898800212808837/3373075660",
@@ -37,6 +45,11 @@ class RewardAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
     }
     
     func showAd(completion: @escaping (Bool) -> Void) {
+        guard !AdConfiguration.isDisabledForDevelopment else {
+            completion(true)
+            return
+        }
+
         completionHandler = completion
         
         guard let rewardedAd = rewardedAd,
@@ -53,6 +66,8 @@ class RewardAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
     
     // GADFullScreenContentDelegate
     func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
-        loadRewardedAd() // 次の広告を準備
+        if !AdConfiguration.isDisabledForDevelopment {
+            loadRewardedAd() // 次の広告を準備
+        }
     }
 }

@@ -48,31 +48,21 @@ struct OshiChatListView: View {
     @State private var headerAppeared = false
     @State private var cardsAppeared = false
     
-    private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
-    ]
-    
+    // private let adminUserIds = [
+    //     "3UDNienzhkdheKIy77lyjMJhY4D3",
+    //     "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    // ]
+
     private func checkAdminStatus() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            isAdmin = false
-            isCheckingAdminStatus = false
-            return
-        }
-        
-        isAdmin = adminUserIds.contains(userID)
+        isAdmin = false
         isCheckingAdminStatus = false
-        
-        if isAdmin {
-            print("🔑 管理者としてログイン中: \(userID)")
-        }
     }
     
     @State private var isCheckingAdminStatus = true
     @StateObject private var subscriptionManager = SubscriptionManager()
     
     private var shouldShowAd: Bool {
-        return !isAdmin && !subscriptionManager.isSubscribed
+        AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)
     }
     
     @State private var isAdmin = false
@@ -1089,6 +1079,13 @@ struct OshiChatListView: View {
                     let interests = value["interests"] as? [String]
                     let gender = value["gender"] as? String ?? "男性"
                     let userNickname = value["user_nickname"] as? String
+                    let relationshipStatus = value["relationship_status"] as? String
+                    let relationshipDetail = value["relationship_detail"] as? String
+                    let sharedMemory = value["shared_memory"] as? String
+                    let signaturePhrase = value["signature_phrase"] as? String
+                    let conversationTopics = value["conversation_topics"] as? [String]
+                    let forbiddenTopics = value["forbidden_topics"] as? [String]
+                    let preferredLanguage = value["preferred_language"] as? String
                     
                     let oshi = Oshi(
                         id: id,
@@ -1107,7 +1104,14 @@ struct OshiChatListView: View {
                         disliked_food: dislikedFood,
                         hometown: hometown,
                         gender: gender,
-                        user_nickname: userNickname
+                        user_nickname: userNickname,
+                        relationship_status: relationshipStatus,
+                        relationship_detail: relationshipDetail,
+                        shared_memory: sharedMemory,
+                        signature_phrase: signaturePhrase,
+                        conversation_topics: conversationTopics,
+                        forbidden_topics: forbiddenTopics,
+                        preferred_language: preferredLanguage
                     )
                     newOshis.append(oshi)
                 }
@@ -1188,57 +1192,37 @@ struct OshiChatListView: View {
     }
     
     private func sendProactiveMessageIfNeeded() {
-        // セッション内で一度だけ、かつ6時間に一度だけ送信
-        let lastSentKey = "lastProactiveMsgSent"
-        let lastSent = UserDefaults.standard.double(forKey: lastSentKey)
-        let sixHours: TimeInterval = 6 * 60 * 60
-        guard Date().timeIntervalSince1970 - lastSent > sixHours else { return }
+        guard !oshiList.isEmpty else { return }
 
-        // 40%の確率で実行
-        guard Double.random(in: 0...1) < 0.4 else { return }
+        let sortedCandidates = oshiList.sorted { lhs, rhs in
+            let lhsPriority = lhs.id == selectedOshiId ? 0 : 1
+            let rhsPriority = rhs.id == selectedOshiId ? 0 : 1
 
-        // 3時間以上メッセージのない推しを候補にする
-        let threeHours: TimeInterval = 3 * 60 * 60
-        let now = Date().timeIntervalSince1970
-        let eligibleOshis = oshiList.filter { oshi in
-            let lastTime = lastMessageTimes[oshi.id] ?? 0
-            return now - lastTime > threeHours
-        }
-        guard !eligibleOshis.isEmpty else { return }
+            if lhsPriority != rhsPriority {
+                return lhsPriority < rhsPriority
+            }
 
-        // 選択中の推しを優先、なければランダム選択
-        let targetOshi: Oshi
-        if let selected = eligibleOshis.first(where: { $0.id == selectedOshiId }) {
-            targetOshi = selected
-        } else {
-            targetOshi = eligibleOshis.randomElement()!
+            let lhsLastMessage = lastMessageTimes[lhs.id] ?? 0
+            let rhsLastMessage = lastMessageTimes[rhs.id] ?? 0
+            return lhsLastMessage < rhsLastMessage
         }
 
-        let isFirst = (lastMessageTimes[targetOshi.id] ?? 0) == 0
-        UserDefaults.standard.set(now, forKey: lastSentKey)
+        attemptProactiveMessage(with: sortedCandidates)
+    }
 
-        AIMessageGenerator.shared.generateProactiveMessage(
-            for: targetOshi,
-            chatHistory: [],
-            isFirstMessage: isFirst
-        ) { content, error in
-            guard let content = content else { return }
+    private func attemptProactiveMessage(with candidates: [Oshi]) {
+        guard let candidate = candidates.first else { return }
 
-            let message = ChatMessage(
-                id: UUID().uuidString,
-                content: content,
-                isUser: false,
-                timestamp: Date().timeIntervalSince1970,
-                oshiId: targetOshi.id,
-                itemId: nil
-            )
+        RandomMessageManager.shared.sendProactiveMessageIfNeeded(for: candidate) { message in
+            guard let message = message else {
+                self.attemptProactiveMessage(with: Array(candidates.dropFirst()))
+                return
+            }
 
-            ChatDatabaseManager.shared.saveMessage(message) { _ in
-                DispatchQueue.main.async {
-                    self.lastMessages[targetOshi.id] = content
-                    self.lastMessageTimes[targetOshi.id] = message.timestamp
-                    self.unreadCounts[targetOshi.id] = (self.unreadCounts[targetOshi.id] ?? 0) + 1
-                }
+            DispatchQueue.main.async {
+                self.lastMessages[candidate.id] = message.content
+                self.lastMessageTimes[candidate.id] = message.timestamp
+                self.unreadCounts[candidate.id] = (self.unreadCounts[candidate.id] ?? 0) + 1
             }
         }
     }

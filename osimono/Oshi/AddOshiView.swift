@@ -36,6 +36,19 @@ struct AddOshiView: View {
     @State private var speakingStyle: String = ""
     @State private var showAdvancedOptions: Bool = false
     @State private var userNickname: String = ""
+    @State private var birthday: String = ""
+    @State private var height: String = ""
+    @State private var hometown: String = ""
+    @State private var favoriteColor: String = ""
+    @State private var favoriteFood: String = ""
+    @State private var dislikedFood: String = ""
+    @State private var interestsText: String = ""
+    @State private var relationshipStatus: String = ""
+    @State private var relationshipDetail: String = ""
+    @State private var sharedMemory: String = ""
+    @State private var signaturePhrase: String = ""
+    @State private var conversationTopicsText: String = ""
+    @State private var forbiddenTopicsText: String = ""
 
     // 性別選択用の状態変数
     @State private var gender: String = L10n.maleGender
@@ -48,6 +61,8 @@ struct AddOshiView: View {
     @State private var showSubscriptionView = false
     @State private var oshiList: [Oshi] = []
     @StateObject private var subscriptionManager = SubscriptionManager()
+    @State private var showAlert = false
+    @State private var alertMessage = ""
     
     // 性別選択肢（多言語対応）
     private var genderOptions: [String] {
@@ -57,6 +72,7 @@ struct AddOshiView: View {
     // 色の定義
     let primaryColor = Color(UIColor(red: 0.3, green: 0.6, blue: 0.9, alpha: 1.0))
     let backgroundColor = Color(UIColor.systemGroupedBackground)
+    let inputBackgroundColor = Color(UIColor.secondarySystemBackground)
     
     public struct Texts {
         public var cancelButton: String
@@ -105,6 +121,8 @@ struct AddOshiView: View {
                         Text(L10n.register)
                             .foregroundColor(primaryColor)
                     }
+                    .disabled(isLoading)
+                    .opacity(isLoading ? 0.5 : 1)
                     .padding()
                 }
                 .padding(.top, 8)
@@ -217,8 +235,15 @@ struct AddOshiView: View {
                                 
                                 TextField(L10n.enterName, text: $oshiName)
                                     .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(10)
+                                    .foregroundColor(.primary)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(inputBackgroundColor)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color(.separator), lineWidth: 0.5)
+                                    )
                                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                                     .padding(.horizontal)
                             }
@@ -239,8 +264,15 @@ struct AddOshiView: View {
                                 if gender == L10n.otherGender {
                                     TextField(L10n.genderDetailPlaceholder, text: $genderDetail)
                                         .padding()
-                                        .background(Color.white)
-                                        .cornerRadius(10)
+                                        .foregroundColor(.primary)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .fill(inputBackgroundColor)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(Color(.separator), lineWidth: 0.5)
+                                        )
                                         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                                         .padding(.horizontal)
                                         .padding(.top, 5)
@@ -257,8 +289,15 @@ struct AddOshiView: View {
                                 
                                 TextField(L10n.personalityPlaceholder, text: $personality)
                                     .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(10)
+                                    .foregroundColor(.primary)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(inputBackgroundColor)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color(.separator), lineWidth: 0.5)
+                                    )
                                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                                     .padding(.horizontal)
                             }
@@ -271,8 +310,15 @@ struct AddOshiView: View {
                                 
                                 TextField(L10n.speakingStylePlaceholder, text: $speakingStyle)
                                     .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(10)
+                                    .foregroundColor(.primary)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(inputBackgroundColor)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color(.separator), lineWidth: 0.5)
+                                    )
                                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                                     .padding(.horizontal)
                             }
@@ -284,10 +330,156 @@ struct AddOshiView: View {
                                 
                                 TextField(L10n.userNicknamePlaceholder, text: $userNickname)
                                     .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(10)
+                                    .foregroundColor(.primary)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(inputBackgroundColor)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color(.separator), lineWidth: 0.5)
+                                    )
                                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                                     .padding(.horizontal)
+                            }
+
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    showAdvancedOptions.toggle()
+                                }
+                                generateHapticFeedback()
+                            }) {
+                                HStack {
+                                    Text(showAdvancedOptions ? L10n.hideDetailedSettings : L10n.showDetailedSettings)
+                                        .font(.headline)
+                                        .foregroundColor(primaryColor)
+                                    Spacer()
+                                    Image(systemName: showAdvancedOptions ? "chevron.up" : "chevron.down")
+                                        .foregroundColor(primaryColor)
+                                }
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(primaryColor.opacity(0.08))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(primaryColor.opacity(0.25), lineWidth: 1)
+                                        )
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal)
+
+                            if showAdvancedOptions {
+                                VStack(spacing: 18) {
+                                    advancedInputField(
+                                        title: L10n.memoTitle,
+                                        placeholder: L10n.memoPlaceholder,
+                                        text: $oshiMemo,
+                                        isMultiline: true
+                                    )
+
+                                    Group {
+                                        Text(L10n.detailedProfileSection)
+                                            .font(.headline)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                                        advancedInputField(
+                                            title: L10n.birthday,
+                                            placeholder: L10n.birthdayPlaceholder,
+                                            text: $birthday
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.height,
+                                            placeholder: L10n.heightPlaceholder,
+                                            text: $height,
+                                            keyboardType: .numberPad
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.hometown,
+                                            placeholder: L10n.hometownPlaceholder,
+                                            text: $hometown
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.favoriteColor,
+                                            placeholder: L10n.favoriteColorPlaceholder,
+                                            text: $favoriteColor
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.favoriteFood,
+                                            placeholder: L10n.favoriteFoodPlaceholder,
+                                            text: $favoriteFood
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.dislikedFood,
+                                            placeholder: L10n.dislikedFoodPlaceholder,
+                                            text: $dislikedFood
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.interests,
+                                            placeholder: "例: ダンス、ゲーム、深夜ラジオ",
+                                            text: $interestsText,
+                                            isMultiline: true,
+                                            helperText: L10n.listInputHint
+                                        )
+                                    }
+
+                                    Group {
+                                        Text(L10n.relationshipSettingsSection)
+                                            .font(.headline)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                                        advancedInputField(
+                                            title: L10n.relationshipStatusTitle,
+                                            placeholder: L10n.relationshipStatusPlaceholder,
+                                            text: $relationshipStatus
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.relationshipDetailTitle,
+                                            placeholder: L10n.relationshipDetailPlaceholder,
+                                            text: $relationshipDetail,
+                                            isMultiline: true
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.sharedMemoryTitle,
+                                            placeholder: L10n.sharedMemoryPlaceholder,
+                                            text: $sharedMemory,
+                                            isMultiline: true
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.signaturePhraseTitle,
+                                            placeholder: L10n.signaturePhrasePlaceholder,
+                                            text: $signaturePhrase
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.conversationTopicsTitle,
+                                            placeholder: L10n.conversationTopicsPlaceholder,
+                                            text: $conversationTopicsText,
+                                            isMultiline: true,
+                                            helperText: L10n.listInputHint
+                                        )
+
+                                        advancedInputField(
+                                            title: L10n.forbiddenTopicsTitle,
+                                            placeholder: L10n.forbiddenTopicsPlaceholder,
+                                            text: $forbiddenTopicsText,
+                                            isMultiline: true,
+                                            helperText: L10n.listInputHint
+                                        )
+                                    }
+                                }
+                                .padding(.horizontal)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
                             }
                             
                             // 詳細設定への案内
@@ -331,6 +523,8 @@ struct AddOshiView: View {
                         }
                         .padding(.horizontal, 30)
                         .padding(.vertical)
+                        .disabled(isLoading)
+                        .opacity(isLoading ? 0.7 : 1)
                     }
                     .padding(.bottom, 30)
                 }
@@ -387,6 +581,9 @@ struct AddOshiView: View {
         .sheet(isPresented: $showSubscriptionView) {
             SubscriptionPreView()
         }
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text(L10n.notification), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
         .onTapGesture {
             hideKeyboard()
         }
@@ -401,6 +598,15 @@ struct AddOshiView: View {
     
     // 新規追加：制限チェック付きの保存処理
     private func checkLimitAndSaveOshi() {
+        guard !isLoading else { return }
+
+        let trimmedName = oshiName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            alertMessage = L10n.enterName
+            showAlert = true
+            return
+        }
+
         // 管理者は制限をスキップ
         if OshiLimitManager.shared.isCurrentUserAdmin() {
             saveOshi()
@@ -470,8 +676,6 @@ struct AddOshiView: View {
         } else {
             selectedBackgroundImage = image
         }
-
-        uploadImageToFirebase(image, type: editType)
     }
     
     func fetchUserImageURL(type: UploadImageType, completion: @escaping (URL?) -> Void) {
@@ -538,19 +742,97 @@ struct AddOshiView: View {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
     }
+
+    @ViewBuilder
+    private func advancedInputField(
+        title: String,
+        placeholder: String,
+        text: Binding<String>,
+        keyboardType: UIKeyboardType = .default,
+        isMultiline: Bool = false,
+        helperText: String? = nil
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            if isMultiline {
+                TextEditor(text: text)
+                    .frame(minHeight: 92)
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(inputBackgroundColor)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(.separator), lineWidth: 0.5)
+                    )
+                    .overlay(alignment: .topLeading) {
+                        if text.wrappedValue.isEmpty {
+                            Text(placeholder)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 16)
+                                .allowsHitTesting(false)
+                        }
+                    }
+            } else {
+                TextField(placeholder, text: text)
+                    .keyboardType(keyboardType)
+                    .padding()
+                    .foregroundColor(.primary)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(inputBackgroundColor)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(.separator), lineWidth: 0.5)
+                    )
+            }
+
+            if let helperText, !helperText.isEmpty {
+                Text(helperText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+
+    private func parseListInput(_ text: String) -> [String] {
+        text
+            .split(whereSeparator: { ",、\n".contains($0) })
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
     
     // 推しを保存する処理（性格情報を追加）
     func saveOshi() {
-        guard let userId = Auth.auth().currentUser?.uid, !oshiName.isEmpty else { return }
+        guard !isLoading else { return }
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+
+        let trimmedName = oshiName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            alertMessage = L10n.enterName
+            showAlert = true
+            return
+        }
+
         isLoading = true
         
         let oshiId = UUID().uuidString
         var data: [String: Any] = [
             "id": oshiId,
-            "name": oshiName,
-            "memo": oshiMemo,
+            "name": trimmedName,
             "createdAt": Date().timeIntervalSince1970
         ]
+
+        let trimmedMemo = oshiMemo.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedMemo.isEmpty {
+            data["memo"] = trimmedMemo
+        }
         
         // 性別情報の追加（「その他」の場合は詳細を含める）
         if gender == L10n.otherGender && !genderDetail.isEmpty {
@@ -572,6 +854,70 @@ struct AddOshiView: View {
         // 呼び方設定の保存
         if !userNickname.isEmpty {
             data["user_nickname"] = userNickname
+        }
+
+        let trimmedBirthday = birthday.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedBirthday.isEmpty {
+            data["birthday"] = trimmedBirthday
+        }
+
+        if let heightValue = Int(height.trimmingCharacters(in: .whitespacesAndNewlines)) {
+            data["height"] = heightValue
+        }
+
+        let trimmedHometown = hometown.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedHometown.isEmpty {
+            data["hometown"] = trimmedHometown
+        }
+
+        let trimmedFavoriteColor = favoriteColor.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedFavoriteColor.isEmpty {
+            data["favorite_color"] = trimmedFavoriteColor
+        }
+
+        let trimmedFavoriteFood = favoriteFood.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedFavoriteFood.isEmpty {
+            data["favorite_food"] = trimmedFavoriteFood
+        }
+
+        let trimmedDislikedFood = dislikedFood.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedDislikedFood.isEmpty {
+            data["disliked_food"] = trimmedDislikedFood
+        }
+
+        let parsedInterests = parseListInput(interestsText)
+        if !parsedInterests.isEmpty {
+            data["interests"] = parsedInterests
+        }
+
+        let trimmedRelationshipStatus = relationshipStatus.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedRelationshipStatus.isEmpty {
+            data["relationship_status"] = trimmedRelationshipStatus
+        }
+
+        let trimmedRelationshipDetail = relationshipDetail.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedRelationshipDetail.isEmpty {
+            data["relationship_detail"] = trimmedRelationshipDetail
+        }
+
+        let trimmedSharedMemory = sharedMemory.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedSharedMemory.isEmpty {
+            data["shared_memory"] = trimmedSharedMemory
+        }
+
+        let trimmedSignaturePhrase = signaturePhrase.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedSignaturePhrase.isEmpty {
+            data["signature_phrase"] = trimmedSignaturePhrase
+        }
+
+        let parsedConversationTopics = parseListInput(conversationTopicsText)
+        if !parsedConversationTopics.isEmpty {
+            data["conversation_topics"] = parsedConversationTopics
+        }
+
+        let parsedForbiddenTopics = parseListInput(forbiddenTopicsText)
+        if !parsedForbiddenTopics.isEmpty {
+            data["forbidden_topics"] = parsedForbiddenTopics
         }
         
         let dispatchGroup = DispatchGroup()
@@ -648,7 +994,8 @@ struct AddOshiView: View {
                     self.saveSelectedOshiId(oshiId)
                 } else {
                     self.isLoading = false
-                    print("データ保存エラー: \(error!.localizedDescription)")
+                    self.alertMessage = "\(L10n.saveError): \(error!.localizedDescription)"
+                    self.showAlert = true
                 }
             }
         }
@@ -668,7 +1015,8 @@ struct AddOshiView: View {
                 if error == nil {
                     self.presentationMode.wrappedValue.dismiss()
                 } else {
-                    print("推しID保存エラー: \(error!.localizedDescription)")
+                    self.alertMessage = "\(L10n.saveError): \(error!.localizedDescription)"
+                    self.showAlert = true
                 }
             }
         }

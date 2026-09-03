@@ -42,6 +42,12 @@ class OshiViewModel: ObservableObject {
                newOshi.gender = data["gender"] as? String
                newOshi.height = data["height"] as? Int
                newOshi.user_nickname = data["user_nickname"] as? String
+               newOshi.relationship_status = data["relationship_status"] as? String
+               newOshi.relationship_detail = data["relationship_detail"] as? String
+               newOshi.shared_memory = data["shared_memory"] as? String
+               newOshi.signature_phrase = data["signature_phrase"] as? String
+               newOshi.conversation_topics = data["conversation_topics"] as? [String]
+               newOshi.forbidden_topics = data["forbidden_topics"] as? [String]
                
                DispatchQueue.main.async {
                    self.selectedOshi = newOshi
@@ -92,6 +98,13 @@ class OshiViewModel: ObservableObject {
             newOshi.interests = data["interests"] as? [String]
             newOshi.gender = data["gender"] as? String
             newOshi.height = data["height"] as? Int
+            newOshi.user_nickname = data["user_nickname"] as? String
+            newOshi.relationship_status = data["relationship_status"] as? String
+            newOshi.relationship_detail = data["relationship_detail"] as? String
+            newOshi.shared_memory = data["shared_memory"] as? String
+            newOshi.signature_phrase = data["signature_phrase"] as? String
+            newOshi.conversation_topics = data["conversation_topics"] as? [String]
+            newOshi.forbidden_topics = data["forbidden_topics"] as? [String]
             
             DispatchQueue.main.async {
                 print("更新前: \(self.selectedOshi.personality ?? "なし")")
@@ -144,6 +157,30 @@ class OshiViewModel: ObservableObject {
         
         if let userNickname = updatedOshi.user_nickname {
             data["user_nickname"] = userNickname
+        }
+
+        if let relationshipStatus = updatedOshi.relationship_status {
+            data["relationship_status"] = relationshipStatus
+        }
+
+        if let relationshipDetail = updatedOshi.relationship_detail {
+            data["relationship_detail"] = relationshipDetail
+        }
+
+        if let sharedMemory = updatedOshi.shared_memory {
+            data["shared_memory"] = sharedMemory
+        }
+
+        if let signaturePhrase = updatedOshi.signature_phrase {
+            data["signature_phrase"] = signaturePhrase
+        }
+
+        if let conversationTopics = updatedOshi.conversation_topics {
+            data["conversation_topics"] = conversationTopics
+        }
+
+        if let forbiddenTopics = updatedOshi.forbidden_topics {
+            data["forbidden_topics"] = forbiddenTopics
         }
         
         if let gender = updatedOshi.gender {

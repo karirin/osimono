@@ -109,6 +109,12 @@ class TimelineViewModel: ObservableObject {
         if let imageURL = imageURL {
             eventDict["imageURL"] = imageURL
         }
+        if let locationId = event.locationId, !locationId.isEmpty {
+            eventDict["locationId"] = locationId
+        }
+        if let locationTitle = event.locationTitle, !locationTitle.isEmpty {
+            eventDict["locationTitle"] = locationTitle
+        }
         
         let oshiId = event.oshiId ?? currentOshiId
         dbRef.child(oshiId).child(eventId).setValue(eventDict) { error, _ in
@@ -136,6 +142,8 @@ class TimelineViewModel: ObservableObject {
                    let title = dict["title"] as? String,
                    let colorString = dict["color"] as? String {
                     let imageURL = dict["imageURL"] as? String
+                    let locationId = dict["locationId"] as? String
+                    let locationTitle = dict["locationTitle"] as? String
                     let id = UUID(uuidString: dict["id"] as? String ?? "") ?? UUID()
                     let color: Color = {
                         switch colorString {
@@ -151,7 +159,9 @@ class TimelineViewModel: ObservableObject {
                         color: color,
                         image: nil,
                         imageURL: imageURL,
-                        oshiId: oshiId
+                        oshiId: oshiId,
+                        locationId: locationId,
+                        locationTitle: locationTitle
                     )
                     newEvents.append(event)
                 }
@@ -244,6 +254,12 @@ class TimelineViewModel: ObservableObject {
         if let imageURL = imageURL {
             eventDict["imageURL"] = imageURL
         }
+        if let locationId = event.locationId, !locationId.isEmpty {
+            eventDict["locationId"] = locationId
+        }
+        if let locationTitle = event.locationTitle, !locationTitle.isEmpty {
+            eventDict["locationTitle"] = locationTitle
+        }
         
         let oshiId = event.oshiId ?? currentOshiId
         dbRef.child(oshiId).child(eventId).setValue(eventDict) { error, _ in
@@ -295,6 +311,44 @@ class TimelineViewModel: ObservableObject {
             }
         }
     }
+
+    func fetchEventLocations(forOshiId oshiId: String? = nil, completion: @escaping ([EventLocation]) -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion([])
+            return
+        }
+
+        let targetOshiId = oshiId ?? currentOshiId
+        let locationsRef = Database.database().reference()
+            .child("locations")
+            .child(userId)
+            .child(targetOshiId)
+
+        locationsRef.observeSingleEvent(of: .value) { snapshot in
+            var locations: [EventLocation] = []
+
+            for child in snapshot.children {
+                guard let childSnapshot = child as? DataSnapshot,
+                      let dict = childSnapshot.value as? [String: Any] else {
+                    continue
+                }
+
+                do {
+                    let jsonData = try JSONSerialization.data(withJSONObject: dict)
+                    var location = try JSONDecoder().decode(EventLocation.self, from: jsonData)
+                    location.id = childSnapshot.key
+                    location.oshiId = targetOshiId
+                    locations.append(location)
+                } catch {
+                    print("イベント用ロケーション取得エラー: \(error)")
+                }
+            }
+
+            DispatchQueue.main.async {
+                completion(locations.sorted { $0.createdAt > $1.createdAt })
+            }
+        }
+    }
 }
 
 enum TimelineMode: String, CaseIterable {
@@ -310,4 +364,6 @@ struct TimelineEvent: Identifiable {
     let image: UIImage?
     let imageURL: String?
     var oshiId: String?
+    var locationId: String?
+    var locationTitle: String?
 }

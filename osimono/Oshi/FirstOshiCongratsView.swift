@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Confetti
 
 struct FirstOshiCongratsView: View {
     @Binding var isShowing: Bool

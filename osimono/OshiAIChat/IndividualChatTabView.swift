@@ -40,7 +40,7 @@ struct IndividualChatTabView: View {
     @State private var contentAppeared = false
     
     private var shouldShowAd: Bool {
-        return !isAdmin && !subscriptionManager.isSubscribed
+        AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)
     }
     
     @State private var isAdmin = false
@@ -65,24 +65,14 @@ struct IndividualChatTabView: View {
     private let softPink = Color(hex: "FFF0F5")
     private let softPurple = Color(hex: "F5F0FF")
     
-    private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
-    ]
-    
+    // private let adminUserIds = [
+    //     "3UDNienzhkdheKIy77lyjMJhY4D3",
+    //     "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    // ]
+
     private func checkAdminStatus() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            isAdmin = false
-            isCheckingAdminStatus = false
-            return
-        }
-        
-        isAdmin = adminUserIds.contains(userID)
+        isAdmin = false
         isCheckingAdminStatus = false
-        
-        if isAdmin {
-            print("🔑 管理者としてログイン中: \(userID)")
-        }
     }
     
     var body: some View {
@@ -733,6 +723,12 @@ struct IndividualChatTabView: View {
                     let interests = value["interests"] as? [String]
                     let gender = value["gender"] as? String ?? "男性"
                     let userNickname = value["user_nickname"] as? String
+                    let relationshipStatus = value["relationship_status"] as? String
+                    let relationshipDetail = value["relationship_detail"] as? String
+                    let sharedMemory = value["shared_memory"] as? String
+                    let signaturePhrase = value["signature_phrase"] as? String
+                    let conversationTopics = value["conversation_topics"] as? [String]
+                    let forbiddenTopics = value["forbidden_topics"] as? [String]
                     
                     let oshi = Oshi(
                         id: id,
@@ -751,7 +747,13 @@ struct IndividualChatTabView: View {
                         disliked_food: dislikedFood,
                         hometown: hometown,
                         gender: gender,
-                        user_nickname: userNickname
+                        user_nickname: userNickname,
+                        relationship_status: relationshipStatus,
+                        relationship_detail: relationshipDetail,
+                        shared_memory: sharedMemory,
+                        signature_phrase: signaturePhrase,
+                        conversation_topics: conversationTopics,
+                        forbidden_topics: forbiddenTopics
                     )
                     newOshis.append(oshi)
                 }

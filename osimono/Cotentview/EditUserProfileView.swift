@@ -71,13 +71,15 @@ struct EditUserProfileView: View {
     
     func saveProfile() {
         guard let userID = Auth.auth().currentUser?.uid else { return }
-        guard !username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedFavoriteOshi = favoriteOshi.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedUsername.isEmpty else { return }
         
         isLoading = true
         
         let updatedProfileData: [String: Any] = [
-            "username": username,
-            "favoriteOshi": favoriteOshi
+            "username": trimmedUsername,
+            "favoriteOshi": trimmedFavoriteOshi
         ]
         
         let dbRef = Database.database().reference().child("users").child(userID)
@@ -86,8 +88,11 @@ struct EditUserProfileView: View {
                 isLoading = false
                 generateHapticFeedback()
                 if error == nil {
-                    userProfile.username = username
-                    userProfile.favoriteOshi = favoriteOshi
+                    userProfile.username = trimmedUsername
+                    userProfile.favoriteOshi = trimmedFavoriteOshi
+                    username = trimmedUsername
+                    favoriteOshi = trimmedFavoriteOshi
+                    updateAuthDisplayName(trimmedUsername)
                     presentationMode.wrappedValue.dismiss()
                     
                     let generator = UIImpactFeedbackGenerator(style: .medium)
@@ -95,6 +100,16 @@ struct EditUserProfileView: View {
                 } else {
                     print("\(L10n.saveError): \(error?.localizedDescription ?? L10n.unknownError)")
                 }
+            }
+        }
+    }
+
+    private func updateAuthDisplayName(_ displayName: String) {
+        guard let changeRequest = Auth.auth().currentUser?.createProfileChangeRequest() else { return }
+        changeRequest.displayName = displayName
+        changeRequest.commitChanges { error in
+            if let error = error {
+                print("Firebase Auth displayName update error: \(error.localizedDescription)")
             }
         }
     }

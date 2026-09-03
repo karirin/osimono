@@ -397,50 +397,12 @@ struct MessageLimitModal: View {
             }
             .buttonStyle(ScaleButtonStyle())
             
-            // Watch ad button (Secondary)
-            Button(action: {
-                generateHapticFeedback()
-                onWatchAd()
-            }) {
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle()
-                            .fill(Color(hex: "9D4EDD").opacity(0.2))
-                            .frame(width: 36, height: 36)
-                        
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 22))
-                            .foregroundStyle(premiumGradient)
-                    }
-                    
-                    Text(NSLocalizedString("watch_ad_for_messages", comment: "Watch video to add 10 messages"))
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.9))
-                    
-                    Spacer()
-                    
-                    Text("+10")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundStyle(premiumGradient)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(Color(hex: "9D4EDD").opacity(0.2))
-                        )
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(Color.white.opacity(0.05))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .stroke(Color(hex: "9D4EDD").opacity(0.3), lineWidth: 1)
-                        )
-                )
-            }
-            .buttonStyle(ScaleButtonStyle())
+            // Watch ad button (非表示 - 個人チャットではインタースティシャル広告に移行)
+//            Button(action: {
+//                generateHapticFeedback()
+//                onWatchAd()
+//            }) { ... }
+//            .buttonStyle(ScaleButtonStyle())
             
             // Dismiss button
             Button(action: {

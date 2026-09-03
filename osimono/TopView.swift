@@ -298,6 +298,12 @@ struct TopView: View {
                         let interests = value["interests"] as? [String]
                         let gender = value["gender"] as? String ?? "男性"
                         let userNickname = value["user_nickname"] as? String
+                        let relationshipStatus = value["relationship_status"] as? String
+                        let relationshipDetail = value["relationship_detail"] as? String
+                        let sharedMemory = value["shared_memory"] as? String
+                        let signaturePhrase = value["signature_phrase"] as? String
+                        let conversationTopics = value["conversation_topics"] as? [String]
+                        let forbiddenTopics = value["forbidden_topics"] as? [String]
                         
                         let oshi = Oshi(
                             id: id,
@@ -316,7 +322,13 @@ struct TopView: View {
                             disliked_food: dislikedFood,
                             hometown: hometown,
                             gender: gender,
-                            user_nickname: userNickname
+                            user_nickname: userNickname,
+                            relationship_status: relationshipStatus,
+                            relationship_detail: relationshipDetail,
+                            shared_memory: sharedMemory,
+                            signature_phrase: signaturePhrase,
+                            conversation_topics: conversationTopics,
+                            forbidden_topics: forbiddenTopics
                         )
                         newOshis.append(oshi)
                     }

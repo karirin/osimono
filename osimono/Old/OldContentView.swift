@@ -9,7 +9,6 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseStorage
 import PhotosUI
-import ShimmerEffect
 import Shimmer
 
 enum UploadImageType1: Identifiable {
@@ -433,7 +432,7 @@ struct ImagePicker: UIViewControllerRepresentable {
                 cropViewController.delegate = self
                 
                 // アスペクト比を設定（背景画像用）
-                cropViewController.customAspectRatio = CGSize(width: 16, height: 9)
+                cropViewController.aspectRatioPreset = CGSize(width: 16, height: 9)
                 cropViewController.aspectRatioLockEnabled = true
                 cropViewController.resetAspectRatioEnabled = false
                 

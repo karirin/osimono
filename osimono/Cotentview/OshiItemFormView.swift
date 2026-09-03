@@ -675,6 +675,7 @@ struct OshiItemFormView: View {
     // データ保存
     func saveItem() {
         isLoading = true
+        let normalizedItemType = OshiItem.normalizedKind(for: itemType)
         
         let itemId = UUID().uuidString
         var data: [String: Any] = [
@@ -692,18 +693,18 @@ struct OshiItemFormView: View {
         }
         
         // アイテムタイプ別のデータ追加
-        if itemType == "グッズ" {
+        if normalizedItemType == .goods {
             data["category"] = category
             if let priceInt = Int(price) {
                 data["price"] = priceInt
             }
             data["purchaseDate"] = purchaseDate.timeIntervalSince1970
             data["location"] = location
-        } else if itemType == "ライブ記録" {
+        } else if normalizedItemType == .liveRecord {
             data["eventName"] = eventName
             data["purchaseDate"] = purchaseDate.timeIntervalSince1970
             data["memories"] = memo
-        } else if itemType == "聖地巡礼" {
+        } else if normalizedItemType == .pilgrimage {
             data["locationAddress"] = locationAddress
             data["visitDate"] = purchaseDate.timeIntervalSince1970
             data["memories"] = memo
@@ -807,7 +808,7 @@ struct OshiItemFormView: View {
                 }
                 return // 非同期処理なのでここで終了
             }
-        } else if itemType == "その他" {
+        } else if normalizedItemType == .other {
             data["recordDate"] = purchaseDate.timeIntervalSince1970
             data["details"] = memo
         } else {
@@ -860,15 +861,15 @@ struct OshiItemFormView: View {
         let oshiItem = OshiItem(
             id: itemId,
             title: self.title,
-            category: self.itemType == L10n.goods ? self.category : nil,
+            category: OshiItem.normalizedKind(for: self.itemType) == .goods ? self.category : nil,
             memo: self.memo,
             imageUrl: data["imageUrl"] as? String,
-            price: self.itemType == L10n.goods ? Int(self.price) : nil,
-            eventName: self.itemType == L10n.liveRecord ? self.eventName : nil,
+            price: OshiItem.normalizedKind(for: self.itemType) == .goods ? Int(self.price) : nil,
+            eventName: OshiItem.normalizedKind(for: self.itemType) == .liveRecord ? self.eventName : nil,
             favorite: self.favorite,
             tags: self.tags.isEmpty ? nil : self.tags,
             itemType: self.itemType,
-            locationAddress: self.itemType == L10n.pilgrimage ? self.locationAddress : nil,
+            locationAddress: OshiItem.normalizedKind(for: self.itemType) == .pilgrimage ? self.locationAddress : nil,
             createdAt: Date().timeIntervalSince1970,
             oshiId: self.oshiId
         )

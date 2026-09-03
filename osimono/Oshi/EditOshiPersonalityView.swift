@@ -27,6 +27,12 @@ struct EditOshiPersonalityView: View {
     @State private var newInterest: String = ""
     @State private var initializationCompleted: Bool = false
     @State private var userNickname: String = ""
+    @State private var relationshipStatus: String = ""
+    @State private var relationshipDetail: String = ""
+    @State private var sharedMemory: String = ""
+    @State private var signaturePhrase: String = ""
+    @State private var conversationTopicsText: String = ""
+    @State private var forbiddenTopicsText: String = ""
     // 性別選択用の状態変数を追加
     @State private var gender: String = L10n.maleGender
     @State private var genderDetail: String = ""
@@ -67,13 +73,18 @@ struct EditOshiPersonalityView: View {
         _hometown = State(initialValue: viewModel.selectedOshi.hometown ?? "")
         _interests = State(initialValue: viewModel.selectedOshi.interests ?? [])
         _userNickname = State(initialValue: viewModel.selectedOshi.user_nickname ?? "")
+        _relationshipStatus = State(initialValue: viewModel.selectedOshi.relationship_status ?? "")
+        _relationshipDetail = State(initialValue: viewModel.selectedOshi.relationship_detail ?? "")
+        _sharedMemory = State(initialValue: viewModel.selectedOshi.shared_memory ?? "")
+        _signaturePhrase = State(initialValue: viewModel.selectedOshi.signature_phrase ?? "")
+        _conversationTopicsText = State(initialValue: viewModel.selectedOshi.conversation_topics?.joined(separator: "、") ?? "")
+        _forbiddenTopicsText = State(initialValue: viewModel.selectedOshi.forbidden_topics?.joined(separator: "、") ?? "")
         
         // 性別情報の処理（多言語対応）
         let genderValue = viewModel.selectedOshi.gender ?? L10n.maleGender
-        if genderValue.hasPrefix("\(L10n.otherGender)：") {
+        if let detail = genderValue.split(separator: "：", maxSplits: 1).dropFirst().first {
             _gender = State(initialValue: L10n.otherGender)
-            let detailStartIndex = genderValue.index(genderValue.startIndex, offsetBy: 4)
-            _genderDetail = State(initialValue: String(genderValue[detailStartIndex...]))
+            _genderDetail = State(initialValue: String(detail))
         } else {
             _gender = State(initialValue: genderValue)
             _genderDetail = State(initialValue: "")
@@ -199,6 +210,8 @@ struct EditOshiPersonalityView: View {
                         
                         // プロフィール入力セクション
                         profileSection
+
+                        relationshipSection
                         
                         // 趣味・興味入力セクション
                         interestsSection
@@ -299,12 +312,69 @@ struct EditOshiPersonalityView: View {
                 text: $userNickname,
                 iconName: "person.circle"
             )
+
+            CustomTextField(
+                title: L10n.relationshipStatusTitle,
+                placeholder: L10n.relationshipStatusPlaceholder,
+                text: $relationshipStatus,
+                iconName: "person.2"
+            )
             
             // ヘルプテキスト
             Text(L10n.userNicknameHelp)
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 4)
+        }
+        .padding()
+        .background(cardBackgroundColor)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .padding(.horizontal)
+    }
+
+    var relationshipSection: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            SectionHeader(title: L10n.relationshipSettingsSection, icon: "bubble.left.and.bubble.right.fill")
+
+            CustomTextEditorField(
+                title: L10n.relationshipDetailTitle,
+                placeholder: L10n.relationshipDetailPlaceholder,
+                text: $relationshipDetail,
+                iconName: "person.wave.2.fill"
+            )
+
+            CustomTextEditorField(
+                title: L10n.sharedMemoryTitle,
+                placeholder: L10n.sharedMemoryPlaceholder,
+                text: $sharedMemory,
+                iconName: "sparkles.rectangle.stack.fill"
+            )
+
+            CustomTextField(
+                title: L10n.signaturePhraseTitle,
+                placeholder: L10n.signaturePhrasePlaceholder,
+                text: $signaturePhrase,
+                iconName: "quote.bubble.fill"
+            )
+
+            CustomTextEditorField(
+                title: L10n.conversationTopicsTitle,
+                placeholder: L10n.conversationTopicsPlaceholder,
+                text: $conversationTopicsText,
+                iconName: "text.bubble.fill"
+            )
+
+            Text(L10n.listInputHint)
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            CustomTextEditorField(
+                title: L10n.forbiddenTopicsTitle,
+                placeholder: L10n.forbiddenTopicsPlaceholder,
+                text: $forbiddenTopicsText,
+                iconName: "hand.raised.fill"
+            )
         }
         .padding()
         .background(cardBackgroundColor)
@@ -447,13 +517,18 @@ struct EditOshiPersonalityView: View {
                self.hometown = data["hometown"] as? String ?? ""
                self.interests = data["interests"] as? [String] ?? []
                self.userNickname = data["user_nickname"] as? String ?? ""
+               self.relationshipStatus = data["relationship_status"] as? String ?? ""
+               self.relationshipDetail = data["relationship_detail"] as? String ?? ""
+               self.sharedMemory = data["shared_memory"] as? String ?? ""
+               self.signaturePhrase = data["signature_phrase"] as? String ?? ""
+               self.conversationTopicsText = (data["conversation_topics"] as? [String] ?? []).joined(separator: "、")
+               self.forbiddenTopicsText = (data["forbidden_topics"] as? [String] ?? []).joined(separator: "、")
                
                // 性別の処理（多言語対応）
                let genderValue = data["gender"] as? String ?? L10n.maleGender
-               if genderValue.hasPrefix("\(L10n.otherGender)：") {
+               if let detail = genderValue.split(separator: "：", maxSplits: 1).dropFirst().first {
                    self.gender = L10n.otherGender
-                   let detailStartIndex = genderValue.index(genderValue.startIndex, offsetBy: 4)
-                   self.genderDetail = String(genderValue[detailStartIndex...])
+                   self.genderDetail = String(detail)
                } else {
                    self.gender = genderValue
                    self.genderDetail = ""
@@ -486,7 +561,13 @@ struct EditOshiPersonalityView: View {
             "favorite_food": favoriteFood,
             "disliked_food": dislikedFood,
             "interests": interests,
-            "gender": genderValue
+            "gender": genderValue,
+            "relationship_status": relationshipStatus,
+            "relationship_detail": relationshipDetail,
+            "shared_memory": sharedMemory,
+            "signature_phrase": signaturePhrase,
+            "conversation_topics": parseListInput(conversationTopicsText),
+            "forbidden_topics": parseListInput(forbiddenTopicsText)
         ]
         
         if let heightValue = Int(height) {
@@ -517,6 +598,12 @@ struct EditOshiPersonalityView: View {
                     }
                     updatedOshi.gender = genderValue
                     updatedOshi.user_nickname = userNickname
+                    updatedOshi.relationship_status = relationshipStatus
+                    updatedOshi.relationship_detail = relationshipDetail
+                    updatedOshi.shared_memory = sharedMemory
+                    updatedOshi.signature_phrase = signaturePhrase
+                    updatedOshi.conversation_topics = parseListInput(conversationTopicsText)
+                    updatedOshi.forbidden_topics = parseListInput(forbiddenTopicsText)
                     
                     viewModel.selectedOshi = updatedOshi
                     
@@ -540,6 +627,13 @@ struct EditOshiPersonalityView: View {
     private func generateHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
+    }
+
+    private func parseListInput(_ text: String) -> [String] {
+        text
+            .split(whereSeparator: { ",、\n".contains($0) })
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
     }
 }
 
@@ -585,6 +679,47 @@ struct CustomTextField: View {
             .padding(10)
             .background(Color(.tertiarySystemFill))
             .cornerRadius(8)
+        }
+    }
+}
+
+struct CustomTextEditorField: View {
+    let title: String
+    let placeholder: String
+    @Binding var text: String
+    let iconName: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.tertiarySystemFill))
+
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: iconName)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 12)
+
+                    TextEditor(text: $text)
+                        .frame(minHeight: 96)
+                        .padding(.vertical, 4)
+                        .background(Color.clear)
+                }
+                .padding(.horizontal, 10)
+
+                if text.isEmpty {
+                    Text(placeholder)
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 38)
+                        .padding(.top, 16)
+                        .allowsHitTesting(false)
+                }
+            }
+            .frame(minHeight: 96)
         }
     }
 }

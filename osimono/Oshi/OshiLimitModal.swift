@@ -13,23 +13,23 @@ struct OshiLimitModal: View {
     let onUpgrade: () -> Void
     @StateObject private var subscriptionManager = SubscriptionManager()
     
-    // 管理者の場合は特別な表示
-    private var isAdminUser: Bool {
-        OshiLimitManager.shared.isCurrentUserAdmin()
-    }
+    // // 管理者の場合は特別な表示
+    // private var isAdminUser: Bool {
+    //     OshiLimitManager.shared.isCurrentUserAdmin()
+    // }
 
     var body: some View {
         ZStack {
             Color.black.opacity(0.5).ignoresSafeArea()
                 .onTapGesture { isPresented = false }
-            
-            if isAdminUser {
-                // 管理者用の特別表示（実際には表示されないはずだが、念のため）
-                adminView
-            } else {
+
+            // // 管理者用の特別表示（実際には表示されないはずだが、念のため）
+            // if isAdminUser {
+            //     adminView
+            // } else {
                 // 一般ユーザー用の制限表示
                 standardView
-            }
+            // }
         }
     }
     
@@ -102,30 +102,30 @@ struct OshiLimitModal: View {
         .padding(.horizontal, 10)
     }
     
-    // 管理者用のビュー（デバッグ情報として）
+    /* 管理者用のビュー（管理者機能無効化のためコメントアウト）
     private var adminView: some View {
         VStack(spacing: 20) {
             VStack(spacing: 16) {
                 Image(systemName: "crown.fill")
                     .font(.system(size: 50))
                     .foregroundColor(.yellow)
-                
+
                 Text("管理者権限")
                     .font(.title2)
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
             }
-            
+
             VStack(spacing: 12) {
                 Text("管理者権限により無制限で推しを登録できます")
                     .font(.body)
                     .multilineTextAlignment(.center)
-                
+
                 Text("現在 \(currentOshiCount) 人の推しが登録されています")
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
-                
+
                 // デバッグ情報
                 Text("権限状態: \(OshiLimitManager.shared.getUserPermissionStatus())")
                     .font(.caption)
@@ -133,7 +133,7 @@ struct OshiLimitModal: View {
                     .multilineTextAlignment(.center)
                     .padding(.top, 8)
             }
-            
+
             // 閉じるボタン
             Button(action: { isPresented = false }) {
                 Text("閉じる")
@@ -148,6 +148,7 @@ struct OshiLimitModal: View {
         .shadow(radius: 20)
         .padding(.horizontal, 10)
     }
+    */
     
     private func generateHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .medium)

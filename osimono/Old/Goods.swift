@@ -26,7 +26,6 @@ import FirebaseAuth
 import FirebaseStorage
 import FirebaseDatabase
 import PhotosUI
-import ShimmerEffect
 import MapKit
 
 struct GoodsListView: View {

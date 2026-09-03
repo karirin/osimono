@@ -70,28 +70,45 @@ struct OshiGroupChatView: View {
     @State private var keyboardHeight: CGFloat = 0
     @State private var hasMarkedAsRead: Bool = false
     
-    @StateObject private var interstitialManager = GroupChatInterstitialManager.shared
     @StateObject private var subscriptionManager = SubscriptionManager()
-    
+
+    // グループチャット リワード広告
+    @State private var groupChatSendCount: Int = 0
+    private let groupChatSendCountKey = "GroupChatRewardSendCount"
+    private let rewardAdRequiredKey = "GroupChatRewardAdRequired"
+    @State private var rewardAdRequired: Bool = false  // 広告視聴が必須かどうか（UserDefaultsで永続化）
+
     @State private var isAdmin = false
     @State private var isCheckingAdminStatus = true
     @State private var showDeleteHistoryAlert = false
     @State private var isDeletingHistory = false
     @State private var isEditingMode = false
+    @State private var editingMessage: GroupChatMessage? = nil
+    @State private var editingText: String = ""
+    @State private var showEditMessageAlert = false
     
-    private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
-    ]
-    
+    // private let adminUserIds = [
+    //     "3UDNienzhkdheKIy77lyjMJhY4D3",
+    //     "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    // ]
+
     private var shouldShowAd: Bool {
-        return !isAdmin && !subscriptionManager.isSubscribed
+        AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)
+    }
+
+    private var isDeveloperMode: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
     }
     
     @State private var helpFlag: Bool = false
     @State private var customerFlag: Bool = false
     @ObservedObject var authManager = AuthManager()
     @State private var showSubscriptionSheet = false
+    @State private var showGroupRewardModal = false
     
     init(groupId: Binding<String>, onShowGroupList: (() -> Void)? = nil) {
         self._groupId = groupId
@@ -137,9 +154,30 @@ struct OshiGroupChatView: View {
             if helpFlag {
                 HelpModalView(isPresented: $helpFlag)
             }
-            
+
             if customerFlag {
                 ReviewView(isPresented: $customerFlag, helpFlag: $helpFlag)
+            }
+
+            // リワード広告モーダル（ZStackオーバーレイ）
+            if shouldShowAd && (showGroupRewardModal || rewardAdRequired) {
+                GroupChatRewardAdModal(
+                    onWatchAd: {
+                        showGroupRewardModal = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            showGroupChatRewardAd()
+                        }
+                    },
+                    onUpgrade: {
+                        showGroupRewardModal = false
+                        // rewardAdRequired は維持（サブスク加入しなければブロック継続）
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showSubscriptionSheet = true
+                        }
+                    }
+                )
+                .zIndex(999)
+                .allowsHitTesting(true)
             }
             
             if isDeletingHistory {
@@ -168,6 +206,16 @@ struct OshiGroupChatView: View {
         } message: {
             Text(L10n.deleteGroupHistoryWarning)
         }
+        .alert(L10n.editMessageTitle, isPresented: $showEditMessageAlert) {
+            TextField(L10n.messageContent, text: $editingText)
+            Button(L10n.save) { saveEditedMessage() }
+            Button(L10n.cancel, role: .cancel) {
+                editingMessage = nil
+                editingText = ""
+            }
+        } message: {
+            Text(L10n.adminEditWarning)
+        }
         .contentShape(Rectangle())
         .simultaneousGesture(
             TapGesture().onEnded { isTextFieldFocused = false }
@@ -186,8 +234,17 @@ struct OshiGroupChatView: View {
         .onAppear {
             checkAdminStatus()
             setupGroupChat()
+            groupChatSendCount = UserDefaults.standard.integer(forKey: groupChatSendCountKey)
+            // タブ切り替え後もブロック状態を復元
             if shouldShowAd {
-                interstitialManager.preloadInterstitialAd()
+                rewardAdRequired = UserDefaults.standard.bool(forKey: rewardAdRequiredKey)
+                if rewardAdRequired {
+                    showGroupRewardModal = true
+                }
+                RewardAdManager.shared.loadRewardedAd()
+            } else {
+                rewardAdRequired = false
+                showGroupRewardModal = false
             }
         }
         .onChange(of: groupId) { newValue in
@@ -219,12 +276,6 @@ struct OshiGroupChatView: View {
         }
         .sheet(isPresented: $showSubscriptionSheet) {
             SubscriptionPreView()
-        }
-        .onReceive(interstitialManager.$shouldShowSubscriptionSheet) { shouldShow in
-            if shouldShow && !subscriptionManager.isSubscribed && !isAdmin {
-                showSubscriptionSheet = true
-                interstitialManager.shouldShowSubscriptionSheet = false
-            }
         }
     }
     
@@ -568,7 +619,8 @@ struct OshiGroupChatView: View {
                                 userBubbleGradient: userBubbleGradient,
                                 primaryAccent: primaryAccent,
                                 secondaryAccent: secondaryAccent,
-                                oshiBubbleColor: oshiBubbleColor
+                                oshiBubbleColor: oshiBubbleColor,
+                                onEdit: isDeveloperMode ? { startEditingMessage($0) } : nil
                             )
                             .id(message.id)
                             .transition(.asymmetric(
@@ -796,11 +848,16 @@ struct OshiGroupChatView: View {
     private var sendButton: some View {
         Button(action: {
             if !inputText.isEmpty && !isLoading && !selectedMembers.isEmpty {
-                generateHapticFeedback()
-                if shouldShowAd {
-                    interstitialManager.incrementSendCount()
+                // リワード広告が必須の場合はモーダルを表示してブロック
+                if shouldShowAd && rewardAdRequired {
+                    showGroupRewardModal = true
+                    return
                 }
+                generateHapticFeedback()
                 sendMessage()
+                if shouldShowAd {
+                    incrementGroupChatCount()
+                }
             }
         }) {
             ZStack {
@@ -836,6 +893,59 @@ struct OshiGroupChatView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: inputText.isEmpty)
     }
     
+    // MARK: - グループチャット リワード広告
+
+    private func incrementGroupChatCount() {
+        groupChatSendCount += 1
+        UserDefaults.standard.set(groupChatSendCount, forKey: groupChatSendCountKey)
+        print("📊 グループチャット送信カウント: \(groupChatSendCount)")
+
+        if groupChatSendCount % 5 == 0 {
+            rewardAdRequired = true
+            UserDefaults.standard.set(true, forKey: rewardAdRequiredKey)
+            showGroupRewardModal = true
+        }
+    }
+
+    private func showGroupChatRewardAd() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let root = windowScene.windows.first?.rootViewController else {
+            print("❌ グループチャット リワード広告: rootViewController取得失敗")
+            return
+        }
+
+        let top = findTopViewControllerForAd(from: root)
+
+        guard let rewardedAd = RewardAdManager.shared.rewardedAd else {
+            print("⚠️ リワード広告未ロード、再ロード中")
+            RewardAdManager.shared.loadRewardedAd()
+            return
+        }
+
+        rewardedAd.present(from: top) {
+            DispatchQueue.main.async {
+                self.rewardAdRequired = false
+                UserDefaults.standard.set(false, forKey: self.rewardAdRequiredKey)
+                print("✅ グループチャット リワード広告視聴完了")
+            }
+        }
+    }
+
+    private func findTopViewControllerForAd(from viewController: UIViewController) -> UIViewController {
+        if let presented = viewController.presentedViewController {
+            return findTopViewControllerForAd(from: presented)
+        }
+        if let nav = viewController as? UINavigationController,
+           let top = nav.topViewController {
+            return findTopViewControllerForAd(from: top)
+        }
+        if let tab = viewController as? UITabBarController,
+           let selected = tab.selectedViewController {
+            return findTopViewControllerForAd(from: selected)
+        }
+        return viewController
+    }
+
     // MARK: - メッセージ送信（既読・タイピング機能付き）
     private func sendMessage() {
         guard !inputText.isEmpty, !selectedMembers.isEmpty else { return }
@@ -860,8 +970,8 @@ struct OshiGroupChatView: View {
                     print("メッセージ保存エラー: \(error.localizedDescription)")
                     self.inputText = userInput
                 } else {
-                    // 1〜2秒後に既読表示
-                    let readDelay = Double.random(in: 1.0...2.0)
+                    // 少し間を置いて既読表示
+                    let readDelay = Double.random(in: 2.5...5.0)
                     DispatchQueue.main.asyncAfter(deadline: .now() + readDelay) {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             showReadReceipt = true
@@ -874,7 +984,7 @@ struct OshiGroupChatView: View {
                     let respondingMembers = Array(selectedMembers.shuffled().prefix(Int.random(in: 1...respondingMemberCount)))
                     
                     // 既読後にタイピング開始
-                    let typingDelay = readDelay + Double.random(in: 1.0...2.0)
+                    let typingDelay = readDelay + Double.random(in: 1.5...3.0)
                     DispatchQueue.main.asyncAfter(deadline: .now() + typingDelay) {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                             typingMembers = respondingMembers.map { $0.id }
@@ -891,19 +1001,30 @@ struct OshiGroupChatView: View {
     private func generateGroupResponseWithDelay(for userInput: String, members: [Oshi], startDelay: TimeInterval) {
         let dispatchGroup = DispatchGroup()
         var responses: [(oshi: Oshi, content: String)] = []
+        let responseLock = NSLock()
+        let groupMemberNames = selectedMembers.map(\.name)
+        let recentResponderNames = messages
+            .suffix(8)
+            .compactMap { message in
+                selectedMembers.first(where: { $0.id == message.senderId })?.name
+            }
         
         for oshi in members {
             dispatchGroup.enter()
             
-            let recentChatHistory = Array(messages.suffix(5).map { $0.toChatMessage() })
+            let recentChatHistory = Array(messages.suffix(24).map { $0.toChatMessage() })
             
-            AIMessageGenerator.shared.generateResponse(
+            AIMessageGenerator.shared.generateGroupResponse(
                 for: userInput,
                 oshi: oshi,
-                chatHistory: recentChatHistory
+                chatHistory: recentChatHistory,
+                groupMemberNames: groupMemberNames,
+                recentResponderNames: recentResponderNames
             ) { content, error in
                 if let content = content, !content.isEmpty {
+                    responseLock.lock()
                     responses.append((oshi: oshi, content: content))
+                    responseLock.unlock()
                 }
                 dispatchGroup.leave()
             }
@@ -1009,12 +1130,7 @@ struct OshiGroupChatView: View {
     }
     
     private func checkAdminStatus() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            isAdmin = false
-            isCheckingAdminStatus = false
-            return
-        }
-        isAdmin = adminUserIds.contains(userID)
+        isAdmin = false
         isCheckingAdminStatus = false
     }
     
@@ -1137,6 +1253,52 @@ struct OshiGroupChatView: View {
         }
     }
 
+    private func startEditingMessage(_ message: GroupChatMessage) {
+        editingMessage = message
+        editingText = message.content
+        showEditMessageAlert = true
+    }
+
+    private func saveEditedMessage() {
+        let trimmedText = editingText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let editingMessage = editingMessage, !trimmedText.isEmpty else {
+            return
+        }
+
+        guard let index = messages.firstIndex(where: { $0.id == editingMessage.id }) else {
+            self.editingMessage = nil
+            editingText = ""
+            return
+        }
+
+        let shouldUpdateLastMessage = messages.last?.id == editingMessage.id
+        let updatedMessage = GroupChatMessage(
+            id: editingMessage.id,
+            content: trimmedText,
+            isUser: editingMessage.isUser,
+            timestamp: editingMessage.timestamp,
+            groupId: editingMessage.groupId,
+            senderId: editingMessage.senderId,
+            senderName: editingMessage.senderName,
+            senderImageUrl: editingMessage.senderImageUrl
+        )
+
+        messages[index] = updatedMessage
+        groupChatManager.updateMessage(updatedMessage, shouldUpdateLastMessage: shouldUpdateLastMessage) { error in
+            if let error = error {
+                print("グループチャットメッセージ編集エラー: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    if let rollbackIndex = self.messages.firstIndex(where: { $0.id == editingMessage.id }) {
+                        self.messages[rollbackIndex] = editingMessage
+                    }
+                }
+            }
+        }
+
+        self.editingMessage = nil
+        editingText = ""
+    }
+
     private func loadGroupMembers(completion: @escaping () -> Void) {
         groupChatManager.fetchGroupMembers(for: groupId) { memberIds, error in
             DispatchQueue.main.async {
@@ -1247,12 +1409,20 @@ struct OshiGroupChatView: View {
             reactor: reactor.name
         )
         
-        let recentChatHistory = Array(messages.suffix(3).map { $0.toChatMessage() })
+        let recentChatHistory = Array(messages.suffix(24).map { $0.toChatMessage() })
+        let groupMemberNames = selectedMembers.map(\.name)
+        let recentResponderNames = messages
+            .suffix(8)
+            .compactMap { message in
+                selectedMembers.first(where: { $0.id == message.senderId })?.name
+            }
         
-        AIMessageGenerator.shared.generateResponse(
+        AIMessageGenerator.shared.generateGroupResponse(
             for: reactionPrompt,
             oshi: reactor,
-            chatHistory: recentChatHistory
+            chatHistory: recentChatHistory,
+            groupMemberNames: groupMemberNames,
+            recentResponderNames: recentResponderNames
         ) { content, error in
             // 3〜6秒後に返信
             let responseDelay = Double.random(in: 3.0...6.0)
@@ -1311,6 +1481,9 @@ struct ModernGroupChatBubble: View {
     let primaryAccent: Color
     let secondaryAccent: Color
     var oshiBubbleColor: Color = Color(.secondarySystemBackground)
+    let onEdit: ((GroupChatMessage) -> Void)?
+
+    @State private var showActionSheet = false
     
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
@@ -1326,6 +1499,12 @@ struct ModernGroupChatBubble: View {
                         .background(userBubbleGradient)
                         .clipShape(ModernBubbleShape(isUser: true))
                         .shadow(color: primaryAccent.opacity(0.2), radius: 8, y: 4)
+                        .onLongPressGesture {
+                            if onEdit != nil {
+                                showActionSheet = true
+                                generateHapticFeedback()
+                            }
+                        }
                     
                     HStack(spacing: 4) {
                         if showReadReceipt {
@@ -1360,6 +1539,12 @@ struct ModernGroupChatBubble: View {
                         .background(oshiBubbleColor)
                         .clipShape(ModernBubbleShape(isUser: false))
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                        .onLongPressGesture {
+                            if onEdit != nil {
+                                showActionSheet = true
+                                generateHapticFeedback()
+                            }
+                        }
                     
                     Text(formatTime(timestamp: message.timestamp))
                         .font(.system(size: 10))
@@ -1371,6 +1556,16 @@ struct ModernGroupChatBubble: View {
             }
         }
         .padding(.vertical, 2)
+        .actionSheet(isPresented: $showActionSheet) {
+            ActionSheet(
+                title: Text(L10n.editMessageTitle),
+                message: Text(L10n.adminEditWarning),
+                buttons: [
+                    .default(Text(L10n.edit)) { onEdit?(message) },
+                    .cancel(Text(L10n.cancel))
+                ]
+            )
+        }
     }
     
     private var senderAvatar: some View {

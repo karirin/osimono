@@ -97,6 +97,13 @@ struct EnhancedTimelineRow: View {
                     },
                     alignment: .trailing
                 )
+
+                if let locationTitle = event.locationTitle, !locationTitle.isEmpty {
+                    Label(locationTitle, systemImage: "mappin.and.ellipse")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(UIColor.secondaryLabel))
+                        .lineLimit(1)
+                }
                 
                 if selectedEventID == event.id, let imageURL = event.imageURL, let url = URL(string: imageURL) {
                     AsyncImage(url: url) { phase in

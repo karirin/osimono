@@ -142,17 +142,19 @@ struct OshiItemCard: View {
     
     // データベース値（日本語）からアイコンを取得
     func iconForItemType(_ type: String) -> String {
-        return itemTypeMappings.first(where: { $0.key == type })?.icon ?? "photo"
+        let normalizedType = OshiItem.canonicalItemType(for: type)
+        return itemTypeMappings.first(where: { $0.key == normalizedType })?.icon ?? "photo"
     }
     
     // データベース値（日本語）から表示用テキストを取得
     func displayNameForItemType(_ type: String) -> String {
-        return itemTypeMappings.first(where: { $0.key == type })?.displayName ?? type
+        return OshiItem.localizedItemType(for: type)
     }
     
     // データベース値（日本語）からバッジ色を取得
     func badgeColor(for type: String) -> Color {
-        return itemTypeMappings.first(where: { $0.key == type })?.color ?? Color.gray
+        let normalizedType = OshiItem.canonicalItemType(for: type)
+        return itemTypeMappings.first(where: { $0.key == normalizedType })?.color ?? Color.gray
     }
     
     // 日付フォーマット

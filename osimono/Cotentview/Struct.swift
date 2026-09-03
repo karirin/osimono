@@ -221,6 +221,10 @@ extension String {
 }
 
 struct L10n {
+    private static func fallback(_ key: String, _ value: String) -> String {
+        Bundle.main.localizedString(forKey: key, value: value, table: nil)
+    }
+
     // Profile Section
     static let profileTitle = NSLocalizedString("profile_title", comment: "Profile section title")
     static let selectOshi = NSLocalizedString("select_oshi", comment: "Select oshi button")
@@ -817,6 +821,25 @@ struct L10n {
     static let favoriteFoodPlaceholder = NSLocalizedString("favorite_food_placeholder", comment: "Favorite food placeholder")
     static let dislikedFood = NSLocalizedString("disliked_food", comment: "Disliked food")
     static let dislikedFoodPlaceholder = NSLocalizedString("disliked_food_placeholder", comment: "Disliked food placeholder")
+    static let memoTitle = fallback("memo_title", "メモ")
+//    static let memoPlaceholder = fallback("memo_placeholder", "推しの設定メモや補足を書いてみましょう")
+    static let detailedProfileSection = fallback("detailed_profile_section", "詳細プロフィール")
+    static let relationshipSettingsSection = fallback("relationship_settings_section", "関係性・会話設定")
+    static let showDetailedSettings = fallback("show_detailed_settings", "詳細設定を入力")
+    static let hideDetailedSettings = fallback("hide_detailed_settings", "詳細設定を閉じる")
+    static let relationshipStatusTitle = fallback("relationship_status_title", "関係性")
+    static let relationshipStatusPlaceholder = fallback("relationship_status_placeholder", "例: 仲の良い幼なじみ / 頼れる先輩とファン")
+    static let relationshipDetailTitle = fallback("relationship_detail_title", "距離感・接し方")
+    static let relationshipDetailPlaceholder = fallback("relationship_detail_placeholder", "例: 普段は軽口多めで、落ち込んだ時は優しく寄り添ってくれる")
+    static let sharedMemoryTitle = fallback("shared_memory_title", "共有エピソード")
+    static let sharedMemoryPlaceholder = fallback("shared_memory_placeholder", "例: 初めて名前を呼んでくれた配信のこと")
+    static let signaturePhraseTitle = fallback("signature_phrase_title", "口癖・決め台詞")
+    static let signaturePhrasePlaceholder = fallback("signature_phrase_placeholder", "例: いつも見てるよ / 今日も最高でいこう")
+    static let conversationTopicsTitle = fallback("conversation_topics_title", "よく話す話題")
+    static let conversationTopicsPlaceholder = fallback("conversation_topics_placeholder", "例: 音楽、配信、学校生活")
+    static let forbiddenTopicsTitle = fallback("forbidden_topics_title", "避けたい話題")
+    static let forbiddenTopicsPlaceholder = fallback("forbidden_topics_placeholder", "例: 炎上話、重すぎる説教、仕事の愚痴")
+    static let listInputHint = fallback("list_input_hint", "複数ある場合は、読点・カンマ・改行で区切って入力")
     
     static let gender = NSLocalizedString("gender", comment: "Gender")
     static let addOshi = NSLocalizedString("add_oshi", comment: "addOshi")

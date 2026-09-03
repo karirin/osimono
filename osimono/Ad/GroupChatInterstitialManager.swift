@@ -32,7 +32,9 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
         super.init()
         loadSendCount()
         loadSubscriptionCounter()
-        preloadInterstitialAd()
+        if !AdConfiguration.isDisabledForDevelopment {
+            preloadInterstitialAd()
+        }
     }
     
     // MARK: - 送信カウント管理
@@ -63,6 +65,8 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
     
     /// 送信カウントをインクリメント
     func incrementSendCount() {
+        guard !AdConfiguration.isDisabledForDevelopment else { return }
+
         sendCount += 1
         saveSendCount()
         
@@ -94,6 +98,7 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
     
     /// インタースティシャル広告を事前読み込み
     func preloadInterstitialAd() {
+        guard !AdConfiguration.isDisabledForDevelopment else { return }
         guard !isLoading else { return }
         
         isLoading = true
@@ -118,6 +123,8 @@ class GroupChatInterstitialManager: NSObject, ObservableObject {
     
     /// 広告が準備できていれば表示
     private func showInterstitialIfReady() {
+        guard !AdConfiguration.isDisabledForDevelopment else { return }
+
         guard let interstitialAd = interstitialAd else {
             print("インタースティシャル広告が準備されていません")
             // 広告が読み込まれていない場合は再読み込み

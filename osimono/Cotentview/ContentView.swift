@@ -13,7 +13,6 @@ import FirebaseStorage
 import FirebaseDatabase
 import PhotosUI
 import Shimmer
-import ShimmerEffect
 
 struct ContentView: View {
     @State private var image: UIImage? = nil
@@ -566,33 +565,41 @@ struct ContentView: View {
             userPrompt = "挨拶メッセージを送ります"
         }
         
-        // AIメッセージ生成（シミュレーションの場合は固定メッセージを使用）
-        generator.generateResponse(for: userPrompt, oshi: targetOshi, chatHistory: []) { content, error in
-              if let error = error {
-                  print(L10n.aiMessageErrorMessage(error.localizedDescription))
-                  return
-              }
-            
-            guard let content = content else {
-                print("AIメッセージが空です")
-                return
+        ChatDatabaseManager.shared.fetchRecentMessages(for: targetOshi.id, limit: 14) { history, historyError in
+            if let historyError = historyError {
+                print("⚠️ 直近履歴の取得に失敗: \(historyError.localizedDescription)")
             }
-            
-            // メッセージをFirebaseに保存
-            let messageId = UUID().uuidString
-            let message = ChatMessage(
-                id: messageId,
-                content: content,
-                isUser: false,
-                timestamp: Date().timeIntervalSince1970,
-                oshiId: targetOshi.id
-            )
-            
-            ChatDatabaseManager.shared.saveMessage(message) { error in
-                if let error = error {
-                    print(L10n.chatMessageSaveErrorMessage(error.localizedDescription))
-                } else {
-                    print("ランダムAIメッセージを送信しました: \(content)")
+
+            let recentHistory = history ?? []
+
+            // AIメッセージ生成（シミュレーションの場合は固定メッセージを使用）
+            generator.generateResponse(for: userPrompt, oshi: targetOshi, chatHistory: recentHistory) { content, error in
+                  if let error = error {
+                      print(L10n.aiMessageErrorMessage(error.localizedDescription))
+                      return
+                  }
+                
+                guard let content = content else {
+                    print("AIメッセージが空です")
+                    return
+                }
+                
+                // メッセージをFirebaseに保存
+                let messageId = UUID().uuidString
+                let message = ChatMessage(
+                    id: messageId,
+                    content: content,
+                    isUser: false,
+                    timestamp: Date().timeIntervalSince1970,
+                    oshiId: targetOshi.id
+                )
+                
+                ChatDatabaseManager.shared.saveMessage(message) { error in
+                    if let error = error {
+                        print(L10n.chatMessageSaveErrorMessage(error.localizedDescription))
+                    } else {
+                        print("ランダムAIメッセージを送信しました: \(content)")
+                    }
                 }
             }
         }

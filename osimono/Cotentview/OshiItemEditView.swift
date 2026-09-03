@@ -56,36 +56,17 @@ struct OshiItemEditView: View {
     init(item: OshiItem) {
         self.item = item
         _title = State(initialValue: item.title ?? "")
-        _itemType = State(initialValue: item.itemType ?? L10n.goods)
+        _itemType = State(initialValue: OshiItem.localizedItemType(for: item.itemType ?? L10n.goods))
         _category = State(initialValue: item.category ?? "")
         _eventName = State(initialValue: item.eventName ?? "")
         _price = State(initialValue: item.price != nil ? String(item.price!) : "")
         
         // 日付の初期化を修正 - アイテムタイプに応じて適切な日付を取得
         var initialDate = Date()
-        if let itemType = item.itemType {
-            switch itemType {
-            case L10n.goods, L10n.liveRecord, L10n.snsPost:
-                if let timestamp = item.purchaseDate {
-                    initialDate = Date(timeIntervalSince1970: timestamp)
-                }
-            case L10n.pilgrimage:
-                if let timestamp = item.visitDate {
-                    initialDate = Date(timeIntervalSince1970: timestamp)
-                }
-            case L10n.other:
-                if let timestamp = item.recordDate {
-                    initialDate = Date(timeIntervalSince1970: timestamp)
-                }
-            default:
-                if let timestamp = item.createdAt {
-                    initialDate = Date(timeIntervalSince1970: timestamp)
-                }
-            }
-        } else {
-            if let timestamp = item.createdAt {
-                initialDate = Date(timeIntervalSince1970: timestamp)
-            }
+        if let resolvedDate = item.date {
+            initialDate = resolvedDate
+        } else if let timestamp = item.createdAt {
+            initialDate = Date(timeIntervalSince1970: timestamp)
         }
         
         _date = State(initialValue: initialDate)
@@ -991,29 +972,26 @@ struct OshiItem: Identifiable, Codable {
     
     // 修正されたdateプロパティ - アイテムタイプに応じて適切な日付を返す
     var date: Date? {
-        guard let itemType = itemType else {
-            // itemTypeが不明な場合はcreatedAtを使用
+        guard let normalizedKind else {
             if let timestamp = createdAt {
                 return Date(timeIntervalSince1970: timestamp)
             }
             return nil
         }
-        
-        switch itemType {
-        case "グッズ", "ライブ記録", "SNS投稿":
+
+        switch normalizedKind {
+        case .goods, .liveRecord, .snsPost:
             if let timestamp = purchaseDate {
                 return Date(timeIntervalSince1970: timestamp)
             }
-        case "聖地巡礼":
+        case .pilgrimage:
             if let timestamp = visitDate {
                 return Date(timeIntervalSince1970: timestamp)
             }
-        case "その他":
+        case .other:
             if let timestamp = recordDate {
                 return Date(timeIntervalSince1970: timestamp)
             }
-        default:
-            break
         }
         
         // フォールバック: createdAtを使用
@@ -1026,29 +1004,31 @@ struct OshiItem: Identifiable, Codable {
     
     // 各タイプごとの日付取得（既存のコードはそのまま維持）
     var typeSpecificDate: Date? {
-        switch itemType {
-        case "グッズ":
+        guard let normalizedKind else {
+            return date
+        }
+
+        switch normalizedKind {
+        case .goods:
             if let timestamp = purchaseDate {
                 return Date(timeIntervalSince1970: timestamp)
             }
-        case "ライブ記録":
+        case .liveRecord:
             if let timestamp = purchaseDate {
                 return Date(timeIntervalSince1970: timestamp)
             }
-        case "SNS投稿":
+        case .snsPost:
             if let timestamp = purchaseDate {
                 return Date(timeIntervalSince1970: timestamp)
             }
-        case "聖地巡礼":
+        case .pilgrimage:
             if let timestamp = visitDate {
                 return Date(timeIntervalSince1970: timestamp)
             }
-        case "その他":
+        case .other:
             if let timestamp = recordDate {
                 return Date(timeIntervalSince1970: timestamp)
             }
-        default:
-            break
         }
         return date
     }
@@ -1057,6 +1037,100 @@ struct OshiItem: Identifiable, Codable {
         case id, title, category, memo, imageUrl, price, purchaseDate, eventName
         case favorite, memories, tags, location, itemType, createdAt
         case locationAddress, visitDate, recordDate, details, oshiId
+    }
+}
+
+extension OshiItem {
+    enum ItemKind {
+        case goods
+        case pilgrimage
+        case liveRecord
+        case snsPost
+        case other
+    }
+
+    static func normalizedKind(for rawValue: String?) -> ItemKind? {
+        guard let rawValue else { return nil }
+
+        switch rawValue {
+        case L10n.goods, "グッズ", "Goods":
+            return .goods
+        case L10n.pilgrimage, "聖地巡礼", "Pilgrimage":
+            return .pilgrimage
+        case L10n.liveRecord, "ライブ記録", "Live Record":
+            return .liveRecord
+        case L10n.snsPost, "SNS投稿", "SNS Post":
+            return .snsPost
+        case L10n.other, "その他", "Other":
+            return .other
+        default:
+            return nil
+        }
+    }
+
+    var normalizedKind: ItemKind? {
+        Self.normalizedKind(for: itemType)
+    }
+
+    func matchesItemType(_ rawValue: String) -> Bool {
+        normalizedKind == Self.normalizedKind(for: rawValue)
+    }
+
+    static func localizedItemType(for rawValue: String) -> String {
+        guard let normalizedKind = normalizedKind(for: rawValue) else {
+            return rawValue
+        }
+
+        switch normalizedKind {
+        case .goods:
+            return L10n.goods
+        case .pilgrimage:
+            return L10n.pilgrimage
+        case .liveRecord:
+            return L10n.liveRecord
+        case .snsPost:
+            return L10n.snsPost
+        case .other:
+            return L10n.other
+        }
+    }
+
+    static func canonicalItemType(for rawValue: String) -> String {
+        guard let normalizedKind = normalizedKind(for: rawValue) else {
+            return rawValue
+        }
+
+        switch normalizedKind {
+        case .goods:
+            return "グッズ"
+        case .pilgrimage:
+            return "聖地巡礼"
+        case .liveRecord:
+            return "ライブ記録"
+        case .snsPost:
+            return "SNS投稿"
+        case .other:
+            return "その他"
+        }
+    }
+
+    static func localizedDateLabel(for rawValue: String?) -> String {
+        guard let normalizedKind = normalizedKind(for: rawValue) else {
+            return NSLocalizedString("date", comment: "Date")
+        }
+
+        switch normalizedKind {
+        case .goods:
+            return L10n.dateLabel(for: L10n.goods)
+        case .pilgrimage:
+            return L10n.dateLabel(for: L10n.pilgrimage)
+        case .liveRecord:
+            return L10n.dateLabel(for: L10n.liveRecord)
+        case .snsPost:
+            return L10n.dateLabel(for: L10n.snsPost)
+        case .other:
+            return L10n.dateLabel(for: L10n.other)
+        }
     }
 }
 
@@ -1084,5 +1158,3 @@ struct OshiItem: Identifiable, Codable {
         OshiItemEditView(item: dummyItem)
 //    TopView()
 }
-
-

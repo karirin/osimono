@@ -14,95 +14,120 @@ class OshiLimitManager {
     // 無料ユーザーの推し登録上限
     private let freeUserOshiLimit = 5
     
+    private var isLimitDisabledForDevelopment: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+    
     // 管理者ユーザーIDリスト
-    private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
-    ]
-    
+    // private let adminUserIds = [
+    //     "3UDNienzhkdheKIy77lyjMJhY4D3",
+    //     "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    // ]
+
     private init() {}
-    
+
     // 現在のユーザーが管理者かどうかをチェック（外部からも呼び出し可能）
     func isCurrentUserAdmin() -> Bool {
-        guard let currentUserId = Auth.auth().currentUser?.uid else {
-            return false
-        }
-        return adminUserIds.contains(currentUserId)
+        return false
     }
-    
+
     // 推しの登録上限数を取得
     func getOshiLimit(isSubscribed: Bool) -> Int {
-        // 管理者は無制限
-        if isCurrentUserAdmin() {
+        if isLimitDisabledForDevelopment {
             return Int.max
         }
+        // // 管理者は無制限
+        // if isCurrentUserAdmin() {
+        //     return Int.max
+        // }
         return isSubscribed ? Int.max : freeUserOshiLimit
     }
-    
+
     // 新しい推しを登録可能かチェック
     func canAddNewOshi(currentOshiCount: Int, isSubscribed: Bool) -> Bool {
-        // 管理者は無制限で登録可能
-        if isCurrentUserAdmin() {
+        if isLimitDisabledForDevelopment {
             return true
         }
-        
+        // // 管理者は無制限で登録可能
+        // if isCurrentUserAdmin() {
+        //     return true
+        // }
+
         if isSubscribed {
             return true // サブスクリプション会員は無制限
         }
         return currentOshiCount < freeUserOshiLimit
     }
-    
+
     // 残り登録可能数を取得
     func getRemainingOshiCount(currentOshiCount: Int, isSubscribed: Bool) -> Int {
-        // 管理者は無制限
-        if isCurrentUserAdmin() {
+        if isLimitDisabledForDevelopment {
             return Int.max
         }
-        
+        // // 管理者は無制限
+        // if isCurrentUserAdmin() {
+        //     return Int.max
+        // }
+
         if isSubscribed {
             return Int.max
         }
         return max(0, freeUserOshiLimit - currentOshiCount)
     }
-    
+
     // 制限に達しているかチェック
     func hasReachedOshiLimit(currentOshiCount: Int, isSubscribed: Bool) -> Bool {
-        // 管理者は制限なし
-        if isCurrentUserAdmin() {
+        if isLimitDisabledForDevelopment {
             return false
         }
-        
+        // // 管理者は制限なし
+        // if isCurrentUserAdmin() {
+        //     return false
+        // }
+
         if isSubscribed {
             return false
         }
         return currentOshiCount >= freeUserOshiLimit
     }
-    
+
     // 制限メッセージを取得
     func getLimitMessage(currentOshiCount: Int) -> String {
-        // 管理者の場合は特別メッセージ
-        if isCurrentUserAdmin() {
-            return "管理者権限により、無制限で推しを登録できます。\n現在 \(currentOshiCount) 人登録済みです。"
+        if isLimitDisabledForDevelopment {
+            return "開発者モードでは、無制限で推しを登録できます。\n現在 \(currentOshiCount) 人登録済みです。"
         }
-        
+        // // 管理者の場合は特別メッセージ
+        // if isCurrentUserAdmin() {
+        //     return "管理者権限により、無制限で推しを登録できます。\n現在 \(currentOshiCount) 人登録済みです。"
+        // }
+
         return "無料プランでは推しを\(freeUserOshiLimit)人まで登録できます。\n現在 \(currentOshiCount)/\(freeUserOshiLimit) 人登録済みです。"
     }
-    
+
     // デバッグ用：現在のユーザーの権限状態を取得
     func getUserPermissionStatus() -> String {
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             return "ユーザー未認証"
         }
-        
-        if isCurrentUserAdmin() {
-            return "管理者権限ユーザー (ID: \(currentUserId))"
-        } else {
-            return "一般ユーザー (ID: \(currentUserId))"
+
+        if isLimitDisabledForDevelopment {
+            return "開発者モード: 推し登録無制限 (ID: \(currentUserId))"
         }
+
+        // if isCurrentUserAdmin() {
+        //     return "管理者権限ユーザー (ID: \(currentUserId))"
+        // } else {
+            return "一般ユーザー (ID: \(currentUserId))"
+        // }
     }
-    
+
     // 管理者IDを安全に追加するメソッド（必要に応じて）
     func isUserAdmin(userId: String) -> Bool {
-        return adminUserIds.contains(userId)
+        return false
+        // return adminUserIds.contains(userId)
     }
 }

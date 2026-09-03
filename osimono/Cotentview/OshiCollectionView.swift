@@ -52,7 +52,7 @@ struct OshiCollectionView: View {
     @StateObject private var subscriptionManager = SubscriptionManager()
     
     private var shouldShowAd: Bool {
-        return !isAdmin && !subscriptionManager.isSubscribed
+        AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)
     }
     
     // 色の定義 - 推し活向けカラー
@@ -110,7 +110,7 @@ struct OshiCollectionView: View {
         
         // アイテムタイプフィルター（データベース値で比較）
         if selectedItemType != "すべて" {
-            result = result.filter { $0.itemType == selectedItemType }
+            result = result.filter { $0.matchesItemType(selectedItemType) }
         }
         
         // カテゴリーフィルター（データベース値で比較）
@@ -160,31 +160,20 @@ struct OshiCollectionView: View {
         return result
     }
     
-    private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
-    ]
-    
+    // private let adminUserIds = [
+    //     "3UDNienzhkdheKIy77lyjMJhY4D3",
+    //     "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    // ]
+
     @State private var isAdmin = false
     @State private var isCheckingAdminStatus = true
-    
+
     @State private var totalUnreadCount = 0
     @State private var hasNewMessages = false
-    
+
     private func checkAdminStatus() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            isAdmin = false
-            isCheckingAdminStatus = false
-            return
-        }
-        
-        // UserIDで管理者権限をチェック
-        isAdmin = adminUserIds.contains(userID)
+        isAdmin = false
         isCheckingAdminStatus = false
-        
-        if isAdmin {
-            print("🔑 管理者としてログイン中: \(userID)")
-        }
     }
     
     var body: some View {
@@ -524,12 +513,14 @@ struct OshiCollectionView: View {
     
     // アイテムタイプのアイコンを取得（マッピングを使用）
     func itemTypeIcon(for type: String) -> String {
-        return itemTypeMappings.first(where: { $0.key == type })?.icon ?? "photo"
+        let normalizedType = OshiItem.canonicalItemType(for: type)
+        return itemTypeMappings.first(where: { $0.key == normalizedType })?.icon ?? "photo"
     }
     
     // 特定のアイテムタイプの色を取得（マッピングを使用）
     func colorForItemType(_ type: String) -> Color {
-        return itemTypeMappings.first(where: { $0.key == type })?.color ?? accentColor
+        let normalizedType = OshiItem.canonicalItemType(for: type)
+        return itemTypeMappings.first(where: { $0.key == normalizedType })?.color ?? accentColor
     }
     
     // データ取得

@@ -18,6 +18,7 @@ struct LocationCardView: View {
     @EnvironmentObject private var viewModel: LocationViewModel
     @State private var userRating: Int = 0
     @State private var showRatingModal: Bool = false
+    @State private var linkedEvents: [TimelineEvent] = []
     var oshiId: String
     var onEditTapped: (() -> Void)? // Edit button tap callback
     
@@ -112,6 +113,13 @@ struct LocationCardView: View {
                     .foregroundColor(.black)
                     .font(.system(size: 16, weight: .bold))
                     .lineLimit(1)
+
+                if !linkedEvents.isEmpty {
+                    Label(linkedEventSummary, systemImage: "ticket")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(pinType.color)
+                        .lineLimit(1)
+                }
                 
                 HStack {
                     Image(systemName: "mappin.circle.fill")
@@ -167,7 +175,29 @@ struct LocationCardView: View {
                         userRating = rating
                     }
                 }
+                loadLinkedEvents(locationId: locationId)
             }
+        }
+        .onChange(of: location.id ?? "") { newLocationId in
+            guard !newLocationId.isEmpty else {
+                linkedEvents = []
+                return
+            }
+            loadLinkedEvents(locationId: newLocationId)
+        }
+    }
+
+    private var linkedEventSummary: String {
+        let titles = linkedEvents.prefix(2).map(\.title).joined(separator: "、")
+        if linkedEvents.count > 2 {
+            return "\(titles) ほか\(linkedEvents.count - 2)件"
+        }
+        return titles
+    }
+
+    private func loadLinkedEvents(locationId: String) {
+        viewModel.fetchTimelineEventsLinked(to: locationId, oshiId: oshiId) { events in
+            linkedEvents = events
         }
     }
     

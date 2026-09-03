@@ -69,10 +69,10 @@ struct SettingsView: View {
     @State private var showSubscriptionView = false
     
     // 管理者UserIDのリスト
-    private let adminUserIds = [
-        "3UDNienzhkdheKIy77lyjMJhY4D3",
-        "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
-    ]
+    // private let adminUserIds = [
+    //     "3UDNienzhkdheKIy77lyjMJhY4D3",
+    //     "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
+    // ]
     
     var body: some View {
         NavigationStack {
@@ -887,19 +887,8 @@ struct SettingsView: View {
     
     // MARK: - 管理者権限チェック
     private func checkAdminStatus() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            isAdmin = false
-            isCheckingAdminStatus = false
-            return
-        }
-        
-        // UserIDで管理者権限をチェック
-        isAdmin = adminUserIds.contains(userID)
+        isAdmin = false
         isCheckingAdminStatus = false
-        
-        if isAdmin {
-            print("🔑 管理者としてログイン中: \(userID)")
-        }
     }
     
     func saveSelectedOshiId(_ oshiId: String) {

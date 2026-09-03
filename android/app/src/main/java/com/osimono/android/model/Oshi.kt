@@ -1,0 +1,28 @@
+package com.osimono.android.model
+
+data class Oshi(
+    val id: String,
+    val name: String,
+    val imageUrl: String? = null,
+    val backgroundImageUrl: String? = null,
+    val memo: String? = null,
+    val createdAt: Double? = null,
+    val personality: String? = null,
+    val interests: List<String>? = null,
+    val speakingStyle: String? = null,
+    val birthday: String? = null,
+    val height: Int? = null,
+    val favoriteColor: String? = null,
+    val favoriteFood: String? = null,
+    val dislikedFood: String? = null,
+    val hometown: String? = null,
+    val gender: String? = null,
+    val userNickname: String? = null,
+    val relationshipStatus: String? = null,
+    val relationshipDetail: String? = null,
+    val sharedMemory: String? = null,
+    val signaturePhrase: String? = null,
+    val conversationTopics: List<String>? = null,
+    val forbiddenTopics: List<String>? = null,
+    val preferredLanguage: String? = null,
+)

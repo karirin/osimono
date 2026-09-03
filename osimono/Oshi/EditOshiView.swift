@@ -20,10 +20,10 @@ struct EditOshiView: View {
     @State private var isLoading = false
     @State private var currentEditType: UploadImageType? = nil
     @State private var image: UIImage? = nil
-    var oshi: Oshi
     var onSave: ((Oshi) -> Void)?
     var onUpdate: () -> Void // 更新後のコールバック
     var onDelete: (() -> Void)? // 削除後のコールバック
+    @State private var currentOshi: Oshi
     
     @State private var oshiList: [Oshi] = []
     @State private var isShowingOshiSelector = false
@@ -48,6 +48,13 @@ struct EditOshiView: View {
     // 色の定義
     let primaryColor = Color(.systemPink)
     let backgroundColor = Color(UIColor.systemGroupedBackground)
+
+    init(oshi: Oshi, onSave: ((Oshi) -> Void)? = nil, onUpdate: @escaping () -> Void, onDelete: (() -> Void)? = nil) {
+        self.onSave = onSave
+        self.onUpdate = onUpdate
+        self.onDelete = onDelete
+        _currentOshi = State(initialValue: oshi)
+    }
     
     var body: some View {
         ZStack {
@@ -79,6 +86,8 @@ struct EditOshiView: View {
                         Text(L10n.save)
                             .foregroundColor(primaryColor)
                     }
+                    .disabled(isLoading)
+                    .opacity(isLoading ? 0.5 : 1)
                     .padding()
                 }
                 
@@ -103,7 +112,7 @@ struct EditOshiView: View {
                                                 Circle()
                                                     .stroke(primaryColor, lineWidth: 3)
                                             )
-                                    } else if let imageUrl = oshi.imageUrl, let url = URL(string: imageUrl) {
+                                    } else if let imageUrl = currentOshi.imageUrl, let url = URL(string: imageUrl) {
                                         AsyncImage(url: url) { phase in
                                             switch phase {
                                             case .success(let image):
@@ -236,7 +245,7 @@ struct EditOshiView: View {
                                             RoundedRectangle(cornerRadius: 12)
                                                 .stroke(primaryColor, lineWidth: 1)
                                         )
-                                } else if let bgUrl = oshi.backgroundImageUrl, let url = URL(string: bgUrl) {
+                                } else if let bgUrl = currentOshi.backgroundImageUrl, let url = URL(string: bgUrl) {
                                     AsyncImage(url: url) { phase in
                                         switch phase {
                                         case .success(let image):
@@ -336,6 +345,8 @@ struct EditOshiView: View {
                             .shadow(color: primaryColor.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                         .padding(.horizontal, 30)
+                        .disabled(isLoading)
+                        .opacity(isLoading ? 0.7 : 1)
                         
                         // 削除ボタン (新規追加)
                         Button(action: {
@@ -365,7 +376,7 @@ struct EditOshiView: View {
         }
         .onAppear {
             // 初期値をセット
-            self.oshiName = oshi.name
+            self.oshiName = currentOshi.name
             fetchOshiList()
         }
         .onTapGesture {
@@ -378,11 +389,12 @@ struct EditOshiView: View {
         }
         .fullScreenCover(isPresented: $showPersonalityEditor) {
             // OshiViewModelを作成して渡す
-            let viewModel = OshiViewModel(oshi: oshi)
+            let viewModel = OshiViewModel(oshi: currentOshi)
             
             EditOshiPersonalityView(
                 viewModel: viewModel,
                 onSave: { updatedOshi in
+                    self.currentOshi = updatedOshi
                     // 親ビューに更新を通知
                     self.onSave?(updatedOshi)
                 },
@@ -425,7 +437,7 @@ struct EditOshiView: View {
             }
             Button(L10n.cancel, role: .cancel) {}
         } message: {
-            Text(L10n.deleteOshiConfirmationMessage(oshi.name))
+            Text(L10n.deleteOshiConfirmationMessage(currentOshi.name))
         }
     }
     
@@ -440,7 +452,7 @@ struct EditOshiView: View {
         
         // 1. 推しデータを削除
         dispatchGroup.enter()
-        let oshiRef = Database.database().reference().child("oshis").child(userId).child(oshi.id)
+        let oshiRef = Database.database().reference().child("oshis").child(userId).child(currentOshi.id)
         oshiRef.removeValue { error, _ in
             if let error = error {
                 deletionError = error
@@ -451,7 +463,7 @@ struct EditOshiView: View {
         
         // 2. チャット履歴を削除
         dispatchGroup.enter()
-        let chatRef = Database.database().reference().child("oshiChats").child(userId).child(oshi.id)
+        let chatRef = Database.database().reference().child("oshiChats").child(userId).child(currentOshi.id)
         chatRef.removeValue { error, _ in
             if let error = error {
                 deletionError = error
@@ -462,7 +474,7 @@ struct EditOshiView: View {
         
         // 3. アイテム記録を削除
         dispatchGroup.enter()
-        let itemsRef = Database.database().reference().child("oshiItems").child(userId).child(oshi.id)
+        let itemsRef = Database.database().reference().child("oshiItems").child(userId).child(currentOshi.id)
         itemsRef.removeValue { error, _ in
             if let error = error {
                 deletionError = error
@@ -473,7 +485,7 @@ struct EditOshiView: View {
         
         // 4. ストレージの画像を削除
         dispatchGroup.enter()
-        let storageRef = Storage.storage().reference().child("oshis").child(userId).child(oshi.id)
+        let storageRef = Storage.storage().reference().child("oshis").child(userId).child(currentOshi.id)
         storageRef.delete { error in
             // 画像が存在しない場合のエラーは無視
             if let error = error, (error as NSError).code != StorageErrorCode.objectNotFound.rawValue {
@@ -485,7 +497,7 @@ struct EditOshiView: View {
         // 5. 最後に読んだタイムスタンプを削除
         dispatchGroup.enter()
         let userRef = Database.database().reference().child("users").child(userId)
-        userRef.child("lastReadTimestamps").child(oshi.id).removeValue { error, _ in
+        userRef.child("lastReadTimestamps").child(currentOshi.id).removeValue { error, _ in
             if let error = error {
                 print("タイムスタンプ削除エラー: \(error.localizedDescription)")
             }
@@ -495,7 +507,7 @@ struct EditOshiView: View {
         // 6. 選択中の推しIDを更新（削除する推しが選択中の場合）
         dispatchGroup.enter()
         userRef.child("selectedOshiId").observeSingleEvent(of: .value) { snapshot in
-            if let selectedOshiId = snapshot.value as? String, selectedOshiId == oshi.id {
+            if let selectedOshiId = snapshot.value as? String, selectedOshiId == currentOshi.id {
                 // 削除する推しが選択中の場合、他の推しに変更するか、デフォルトに戻す
                 let oshisRef = Database.database().reference().child("oshis").child(userId)
                 oshisRef.observeSingleEvent(of: .value) { oshiSnapshot in
@@ -504,7 +516,7 @@ struct EditOshiView: View {
                     // 他の推しが存在する場合、最初の推しを選択
                     for child in oshiSnapshot.children {
                         if let childSnapshot = child as? DataSnapshot,
-                           childSnapshot.key != oshi.id {
+                           childSnapshot.key != currentOshi.id {
                             newSelectedId = childSnapshot.key
                             break
                         }
@@ -530,7 +542,7 @@ struct EditOshiView: View {
                 print("削除処理でエラーが発生しました: \(error.localizedDescription)")
                 // エラーアラートを表示することもできます
             } else {
-                print("推し「\(self.oshi.name)」を削除しました")
+                print("推し「\(self.currentOshi.name)」を削除しました")
                 
                 // 削除成功時のコールバックを呼び出し
                 self.onDelete?()
@@ -542,12 +554,18 @@ struct EditOshiView: View {
     }
     
     private func hasPersonalitySettings() -> Bool {
-        return oshi.personality != nil || oshi.speaking_style != nil ||
-               oshi.birthday != nil || oshi.height != nil ||
-               oshi.hometown != nil || oshi.favorite_color != nil ||
-               oshi.favorite_food != nil || oshi.disliked_food != nil ||
-               oshi.user_nickname != nil ||
-               (oshi.interests != nil && !oshi.interests!.isEmpty)
+        return currentOshi.personality != nil || currentOshi.speaking_style != nil ||
+               currentOshi.birthday != nil || currentOshi.height != nil ||
+               currentOshi.hometown != nil || currentOshi.favorite_color != nil ||
+               currentOshi.favorite_food != nil || currentOshi.disliked_food != nil ||
+               currentOshi.user_nickname != nil ||
+               currentOshi.relationship_status != nil ||
+               currentOshi.relationship_detail != nil ||
+               currentOshi.shared_memory != nil ||
+               currentOshi.signature_phrase != nil ||
+               (currentOshi.interests != nil && !currentOshi.interests!.isEmpty) ||
+               (currentOshi.conversation_topics != nil && !currentOshi.conversation_topics!.isEmpty) ||
+               (currentOshi.forbidden_topics != nil && !currentOshi.forbidden_topics!.isEmpty)
     }
     
     // 性格設定プレビュー
@@ -558,7 +576,7 @@ struct EditOshiView: View {
                 .foregroundColor(.gray)
             
             VStack(alignment: .leading, spacing: 8) {
-                if let userNickname = oshi.user_nickname, !userNickname.isEmpty {
+                if let userNickname = currentOshi.user_nickname, !userNickname.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "person.circle")
                             .font(.system(size: 12))
@@ -569,17 +587,27 @@ struct EditOshiView: View {
                             .foregroundColor(.primary)
                     }
                 }
+
+                if let relationshipStatus = currentOshi.relationship_status, !relationshipStatus.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "person.2")
+                            .font(.system(size: 12))
+                            .foregroundColor(primaryColor.opacity(0.8))
+
+                        Text("\(L10n.relationshipStatusTitle): \(relationshipStatus)")
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                    }
+                }
                 
                 // 性別情報を表示（既存）
-                if let gender = oshi.gender, !gender.isEmpty {
+                if let gender = currentOshi.gender, !gender.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "person.fill")
                             .font(.system(size: 12))
                             .foregroundColor(primaryColor.opacity(0.8))
                         
-                        if gender.hasPrefix("\(L10n.otherGender)：") {
-                            let detailStartIndex = gender.index(gender.startIndex, offsetBy: 4)
-                            let genderDetail = String(gender[detailStartIndex...])
+                        if let genderDetail = gender.split(separator: "：", maxSplits: 1).dropFirst().first {
                             Text("\(L10n.gender): \(genderDetail)")
                                 .font(.system(size: 14))
                                 .foregroundColor(.primary)
@@ -591,7 +619,7 @@ struct EditOshiView: View {
                     }
                 }
                 
-                if let personality = oshi.personality, !personality.isEmpty {
+                if let personality = currentOshi.personality, !personality.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 12))
@@ -603,7 +631,7 @@ struct EditOshiView: View {
                     }
                 }
                 
-                if let speakingStyle = oshi.speaking_style, !speakingStyle.isEmpty {
+                if let speakingStyle = currentOshi.speaking_style, !speakingStyle.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "bubble.left")
                             .font(.system(size: 12))
@@ -615,7 +643,7 @@ struct EditOshiView: View {
                     }
                 }
                 
-                if let birthday = oshi.birthday, !birthday.isEmpty {
+                if let birthday = currentOshi.birthday, !birthday.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "gift")
                             .font(.system(size: 12))
@@ -627,13 +655,26 @@ struct EditOshiView: View {
                     }
                 }
                 
-                if let interests = oshi.interests, !interests.isEmpty {
+                if let interests = currentOshi.interests, !interests.isEmpty {
                     HStack(alignment: .top, spacing: 4) {
                         Image(systemName: "heart")
                             .font(.system(size: 12))
                             .foregroundColor(primaryColor.opacity(0.8))
                         
                         Text("\(L10n.interests): \(interests.joined(separator: "、"))")
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                    }
+                }
+
+                if let signaturePhrase = currentOshi.signature_phrase, !signaturePhrase.isEmpty {
+                    HStack(alignment: .top, spacing: 4) {
+                        Image(systemName: "quote.bubble")
+                            .font(.system(size: 12))
+                            .foregroundColor(primaryColor.opacity(0.8))
+
+                        Text("\(L10n.signaturePhraseTitle): \(signaturePhrase)")
                             .font(.system(size: 14))
                             .foregroundColor(.primary)
                             .lineLimit(1)
@@ -655,7 +696,7 @@ struct EditOshiView: View {
         OshiSelectorView(
             isPresented: $isShowingOshiSelector,
             oshiList: $oshiList,
-            selectedOshi: oshi,
+            selectedOshi: currentOshi,
             onOshiSelected: { selectedOshi in
                 saveSelectedOshiId(selectedOshi.id)
                 presentationMode.wrappedValue.dismiss()
@@ -708,7 +749,6 @@ struct EditOshiView: View {
         } else {
             selectedBackgroundImage = image
         }
-        uploadImageToFirebase(image, type: type)
     }
     
     func fetchOshiList() {
@@ -739,6 +779,13 @@ struct EditOshiView: View {
                         let hometown = value["hometown"] as? String
                         let interests = value["interests"] as? [String]
                         let gender = value["gender"] as? String ?? L10n.maleGender // 性別情報を追加（デフォルトは男性）
+                        let userNickname = value["user_nickname"] as? String
+                        let relationshipStatus = value["relationship_status"] as? String
+                        let relationshipDetail = value["relationship_detail"] as? String
+                        let sharedMemory = value["shared_memory"] as? String
+                        let signaturePhrase = value["signature_phrase"] as? String
+                        let conversationTopics = value["conversation_topics"] as? [String]
+                        let forbiddenTopics = value["forbidden_topics"] as? [String]
                         
                         let oshi = Oshi(
                             id: id,
@@ -756,7 +803,14 @@ struct EditOshiView: View {
                             favorite_food: favoriteFood,
                             disliked_food: dislikedFood,
                             hometown: hometown,
-                            gender: gender // 性別情報を追加
+                            gender: gender,
+                            user_nickname: userNickname,
+                            relationship_status: relationshipStatus,
+                            relationship_detail: relationshipDetail,
+                            shared_memory: sharedMemory,
+                            signature_phrase: signaturePhrase,
+                            conversation_topics: conversationTopics,
+                            forbidden_topics: forbiddenTopics
                         )
                         newOshis.append(oshi)
                     }
@@ -780,7 +834,7 @@ struct EditOshiView: View {
         
         let storageRef = Storage.storage().reference()
         let filename = type == .profile ? "profile.jpg" : "background.jpg"
-        let imageRef = storageRef.child("oshis/\(userID)/\(oshi.id)/\(filename)")
+        let imageRef = storageRef.child("oshis/\(userID)/\(currentOshi.id)/\(filename)")
         
         guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
         
@@ -803,7 +857,7 @@ struct EditOshiView: View {
                 }
                 
                 if let url = url {
-                    let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
+                    let dbRef = Database.database().reference().child("oshis").child(userID).child(currentOshi.id)
                     let updates: [String: Any] = type == .profile
                     ? ["imageUrl": url.absoluteString]
                     : ["backgroundImageUrl": url.absoluteString]
@@ -816,7 +870,11 @@ struct EditOshiView: View {
     
     // 推し情報の更新
     func updateOshi() {
-        guard let userID = Auth.auth().currentUser?.uid, !oshiName.isEmpty else { return }
+        guard !isLoading else { return }
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+
+        let trimmedName = oshiName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
         
         isLoading = true
         
@@ -846,9 +904,9 @@ struct EditOshiView: View {
         
         // すべてのアップロードが完了したらデータベースを更新
         dispatchGroup.notify(queue: .main) {
-            let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
+            let dbRef = Database.database().reference().child("oshis").child(userID).child(currentOshi.id)
             var updates: [String: Any] = [
-                "name": oshiName
+                "name": trimmedName
             ]
             
             if let url = profileImageUrl {
@@ -864,27 +922,16 @@ struct EditOshiView: View {
                     isLoading = false
                     
                     if error == nil {
-                        // 更新コールバックを呼び出し
-                        onUpdate()
-                        // ビューを閉じる
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-            }
-        }
-        
-        // 画像のアップロードがない場合は直接データベースを更新
-        if selectedImage == nil && selectedBackgroundImage == nil {
-            let dbRef = Database.database().reference().child("oshis").child(userID).child(oshi.id)
-            let updates: [String: Any] = [
-                "name": oshiName
-            ]
-            
-            dbRef.updateChildValues(updates) { error, _ in
-                DispatchQueue.main.async {
-                    isLoading = false
-                    
-                    if error == nil {
+                        var updatedOshi = currentOshi
+                        updatedOshi.name = trimmedName
+                        if let url = profileImageUrl {
+                            updatedOshi.imageUrl = url
+                        }
+                        if let url = backgroundImageUrl {
+                            updatedOshi.backgroundImageUrl = url
+                        }
+                        currentOshi = updatedOshi
+                        onSave?(updatedOshi)
                         // 更新コールバックを呼び出し
                         onUpdate()
                         // ビューを閉じる
@@ -906,7 +953,7 @@ struct EditOshiView: View {
         
         let storageRef = Storage.storage().reference()
         let filename = type == .profile ? "profile.jpg" : "background.jpg"
-        let imageRef = storageRef.child("oshis/\(userID)/\(oshi.id)/\(filename)")
+        let imageRef = storageRef.child("oshis/\(userID)/\(currentOshi.id)/\(filename)")
         
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             completion(nil)

@@ -924,8 +924,8 @@
 "ai_gender_other_prefix" = "Other: ";
 "ai_gender_other_instruction" = "You are %@, please speak in a way that matches those characteristics";
 "ai_gender_instruction" = "You are %@, please speak naturally in English";
-"ai_personality_instruction" = "Your personality: %@";
-"ai_speaking_style_instruction" = "Speaking style characteristics: %@";
+"ai_personality_instruction" = "Your personality (MUST follow): %@";
+"ai_speaking_style_instruction" = "Speaking style (MUST follow this in every single response): %@";
 
 "ai_favorite_food_detail" = "favorite food is %@";
 "ai_interests_detail" = "hobbies are %@";
@@ -974,3 +974,6 @@
 "remaining" = "Remaining";
 "unlimited" = "Unlimited";
 "loading_chat" = "Loading chat...";
+"delete_oshi_button" = "Oshi";
+"chat_history_short" = "History";
+"delete_chat_history" = "Delete Chat History";

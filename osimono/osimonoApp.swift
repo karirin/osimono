@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FirebaseCore
+import FirebaseAnalytics
 
 @main
 struct osimonoApp: App {
@@ -14,6 +15,10 @@ struct osimonoApp: App {
     @State var isLoading = true
     init() {
         FirebaseApp.configure()
+        Analytics.setAnalyticsCollectionEnabled(true)
+        #if DEBUG
+        Analytics.logEvent("debug_app_launch", parameters: nil)
+        #endif
     }
     var body: some Scene {
         

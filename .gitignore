@@ -1,2 +1,21 @@
+.DS_Store
+build/
+DerivedData/
+*.xcarchive/
+*.xcuserstate
+xcuserdata/
+
+# Local secrets
 Config/Secrets.xcconfig
 osimono/Config/Secrets.xcconfig
+android/app/google-services.json
+android/local.properties
+android/keystore.properties
+*.jks
+*.keystore
+
+# Android build caches
+android/.gradle/
+android/.gradle-home/
+android/.idea/
+android/**/build/
