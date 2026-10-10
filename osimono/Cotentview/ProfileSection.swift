@@ -199,6 +199,7 @@ struct ProfileSection: View {
                             }) {
                                 profilePlaceholder
                             }
+                            .tutorialTarget(.registerOshiButton)
                         }
                     }
                     .padding(.top,10)
@@ -321,6 +322,12 @@ struct ProfileSection: View {
             if newValue {
                 navigateToAddOshiForm = true
                 showAddOshiForm = false
+            }
+        }
+        // チュートリアル：届いたメッセージの通知をタップしたら推しとのチャットを開く
+        .onReceive(TutorialManager.shared.$chatOpenRequested) { requested in
+            if requested && viewModel != nil && !navigateToChatView {
+                showChatAIView()
             }
         }
         .onChange(of: showChatView) { newValue in

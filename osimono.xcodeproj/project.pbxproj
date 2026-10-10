@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		18AB00012F90000000000001 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 18AB00022F90000000000001 /* FirebaseRemoteConfig */; };
 		180A299C2F8B98E500EA6453 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 180A299B2F8B98E500EA6453 /* GoogleMobileAds */; };
 		180A299F2F8B9C3F00EA6453 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 180A299E2F8B9C3F00EA6453 /* FirebaseAnalytics */; };
 		180A29A12F8B9C3F00EA6453 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 180A29A02F8B9C3F00EA6453 /* FirebaseAuth */; };
@@ -69,6 +70,8 @@
 		18AB0D5D2DA244880047BB3B /* Exceptions for "osimono" folder in "osimono" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Config/Base.xcconfig,
+				Config/Secrets.xcconfig,
 				Info.plist,
 				TimeLineView/TimelineMockupView.swift,
 			);
@@ -129,6 +132,7 @@
 				1870B0262D8BD224004B827B /* FirebaseAuthCombine-Community in Frameworks */,
 				1870B02A2D8BD224004B827B /* FirebaseCrashlytics in Frameworks */,
 				1870B0282D8BD224004B827B /* FirebaseCore in Frameworks */,
+				18AB00012F90000000000001 /* FirebaseRemoteConfig in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -225,6 +229,7 @@
 				180A299E2F8B9C3F00EA6453 /* FirebaseAnalytics */,
 				180A29A02F8B9C3F00EA6453 /* FirebaseAuth */,
 				180A29A22F8B9C3F00EA6453 /* FirebaseDatabase */,
+				18AB00022F90000000000001 /* FirebaseRemoteConfig */,
 				180A29A42F8B9C3F00EA6453 /* FirebaseStorage */,
 			);
 			productName = osimono;
@@ -538,7 +543,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4.6;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"osimono/Preview Content\"";
 				DEVELOPMENT_TEAM = F3XS565TSX;
 				ENABLE_PREVIEWS = YES;
@@ -563,7 +568,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 4.6;
+				MARKETING_VERSION = 4.8;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -578,7 +583,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4.6;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"osimono/Preview Content\"";
 				DEVELOPMENT_TEAM = F3XS565TSX;
 				ENABLE_PREVIEWS = YES;
@@ -603,7 +608,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 4.6;
+				MARKETING_VERSION = 4.8;
 				PRODUCT_BUNDLE_IDENTIFIER = "Swift-Beginners-app.osimono";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -785,6 +790,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		18AB00022F90000000000001 /* FirebaseRemoteConfig */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 180A299D2F8B9C3F00EA6453 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseRemoteConfig;
+		};
 		180A299B2F8B98E500EA6453 /* GoogleMobileAds */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 180A299A2F8B98E500EA6453 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;

@@ -22,6 +22,7 @@ struct OshiItemFormView: View {
     @State private var selectedImage: UIImage?
     @State private var isShowingImagePicker = false
     @State private var isLoading = false
+    @ObservedObject private var tutorialManager = TutorialManager.shared
     var oshiId: String
     
     // タグ関連状態
@@ -83,6 +84,12 @@ struct OshiItemFormView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
+                        if tutorialManager.isAt(.createPost) {
+                            TutorialInlineTip(text: L10n.tutorialCreatePostHint)
+                                .padding(.horizontal)
+                                .padding(.top, 8)
+                        }
+                        
                         // Updated item type selection
                         VStack(alignment: .leading, spacing: 8) {
                             Text(L10n.postType)
@@ -886,12 +893,14 @@ struct OshiItemFormView: View {
                 if let error = error {
                     print(L10n.aiMessageErrorMessage(error.localizedDescription))
                     self.isLoading = false
+                    self.notifyTutorialPostSaved(oshi: oshi, messageContent: nil)
                     self.presentationMode.wrappedValue.dismiss()
                     return
                 }
                 
                 guard let content = content else {
                     self.isLoading = false
+                    self.notifyTutorialPostSaved(oshi: oshi, messageContent: nil)
                     self.presentationMode.wrappedValue.dismiss()
                     return
                 }
@@ -914,11 +923,21 @@ struct OshiItemFormView: View {
                             print(L10n.chatMessageSaveErrorMessage(error.localizedDescription))
                         }
                         
+                        self.notifyTutorialPostSaved(oshi: oshi, messageContent: error == nil ? content : nil)
                         self.presentationMode.wrappedValue.dismiss()
                     }
                 }
             }
         }
+    }
+    
+    /// チュートリアル中なら「推しからメッセージが届いた」ステップへ進める
+    private func notifyTutorialPostSaved(oshi: Oshi, messageContent: String?) {
+        TutorialManager.shared.postDidSave(
+            oshiName: oshi.name,
+            oshiImageUrl: oshi.imageUrl,
+            messageContent: messageContent
+        )
     }
     
     func saveToLocationsTable(coordinate: CLLocationCoordinate2D, id: String, imageUrl: String?) {

@@ -7,11 +7,25 @@
       "**/node_modules/**"
     ],
     "rewrites": [
-      { "source": "/app-ads.txt", "destination": "/app-ads.txt" },
+      {
+        "source": "/app-ads.txt",
+        "destination": "/app-ads.txt"
+      },
       {
         "source": "**",
         "destination": "/index.html"
       }
     ]
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "*.local"
+      ]
+    }
+  ]
 }

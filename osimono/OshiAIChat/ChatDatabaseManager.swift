@@ -9,6 +9,29 @@ import Foundation
 import FirebaseDatabase
 import FirebaseAuth
 
+/// チャット履歴のリアルタイム監視。解放されると監視を解除する
+/// （解除しないと画面を開くたびに監視が増え、別の推しのチャット更新で表示が上書きされる）
+final class ChatMessagesObservation {
+    private let query: DatabaseQuery
+    private let handle: DatabaseHandle
+    private var isCancelled = false
+    
+    init(query: DatabaseQuery, handle: DatabaseHandle) {
+        self.query = query
+        self.handle = handle
+    }
+    
+    func cancel() {
+        guard !isCancelled else { return }
+        isCancelled = true
+        query.removeObserver(withHandle: handle)
+    }
+    
+    deinit {
+        cancel()
+    }
+}
+
 // チャットメッセージのデータモデル
 struct ChatMessage: Identifiable, Codable {
     let id: String
@@ -17,6 +40,10 @@ struct ChatMessage: Identifiable, Codable {
     let timestamp: TimeInterval
     let oshiId: String
     let itemId: String?  // 関連するアイテムID（オプショナル）
+    // ロールプレイの構造化返答（AIメッセージのみ）。content にはセリフ本文が入る
+    var emotion: String? = nil
+    var action: String? = nil
+    var innerThought: String? = nil
     
     // SwiftUIのIdentifiableプロトコル用
     var uuid: UUID {
@@ -24,13 +51,20 @@ struct ChatMessage: Identifiable, Codable {
     }
     
     // Firebaseから読み込むためのイニシャライザ
-    init(id: String, content: String, isUser: Bool, timestamp: TimeInterval, oshiId: String, itemId: String? = nil) {
+    init(id: String, content: String, isUser: Bool, timestamp: TimeInterval, oshiId: String, itemId: String? = nil, emotion: String? = nil, action: String? = nil, innerThought: String? = nil) {
         self.id = id
         self.content = content
         self.isUser = isUser
         self.timestamp = timestamp
         self.oshiId = oshiId
         self.itemId = itemId
+        self.emotion = emotion
+        self.action = action
+        self.innerThought = isUser ? nil : RoleplayReply.cleanInnerThought(innerThought)
+    }
+
+    var characterEmotion: CharacterEmotion {
+        CharacterEmotion(rawOrNeutral: emotion)
     }
     
     // Dictionary変換用
@@ -45,6 +79,15 @@ struct ChatMessage: Identifiable, Codable {
         
         if let itemId = itemId {
             dict["itemId"] = itemId
+        }
+        if let emotion = emotion {
+            dict["emotion"] = emotion
+        }
+        if let action = action, !action.isEmpty {
+            dict["action"] = action
+        }
+        if !isUser, let innerThought = RoleplayReply.cleanInnerThought(innerThought) {
+            dict["innerThought"] = innerThought
         }
         
         return dict
@@ -68,7 +111,10 @@ struct ChatMessage: Identifiable, Codable {
             isUser: isUser,
             timestamp: timestamp,
             oshiId: oshiId,
-            itemId: itemId
+            itemId: itemId,
+            emotion: dict["emotion"] as? String,
+            action: dict["action"] as? String,
+            innerThought: dict["innerThought"] as? String
         )
     }
 }
@@ -142,14 +188,16 @@ class ChatDatabaseManager {
     }
     
     // 特定の推しのメッセージを全て取得
-    func fetchMessages(for oshiId: String, completion: @escaping ([ChatMessage]?, Error?) -> Void) {
+    /// 戻り値を保持している間だけ監視が続く。破棄すると監視を解除する
+    @discardableResult
+    func fetchMessages(for oshiId: String, completion: @escaping ([ChatMessage]?, Error?) -> Void) -> ChatMessagesObservation? {
         guard let userId = userId else {
             completion(nil, NSError(domain: "ChatDatabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "ユーザーが認証されていません"]))
-            return
+            return nil
         }
         
-        let chatRef = database.child("oshiChats").child(userId).child(oshiId)
-        chatRef.queryOrdered(byChild: "timestamp").observe(.value) { snapshot in
+        let query = database.child("oshiChats").child(userId).child(oshiId).queryOrdered(byChild: "timestamp")
+        let handle = query.observe(.value) { snapshot in
             var messages: [ChatMessage] = []
             
             for child in snapshot.children {
@@ -164,6 +212,7 @@ class ChatDatabaseManager {
             messages.sort { $0.timestamp < $1.timestamp }
             completion(messages, nil)
         }
+        return ChatMessagesObservation(query: query, handle: handle)
     }
 
     // 特定の推しの最近のメッセージを取得
@@ -191,14 +240,15 @@ class ChatDatabaseManager {
     }
     
     // 特定のアイテムに関連するメッセージを取得
-    func fetchMessages(for oshiId: String, itemId: String, completion: @escaping ([ChatMessage]?, Error?) -> Void) {
+    @discardableResult
+    func fetchMessages(for oshiId: String, itemId: String, completion: @escaping ([ChatMessage]?, Error?) -> Void) -> ChatMessagesObservation? {
         guard let userId = userId else {
             completion(nil, NSError(domain: "ChatDatabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "ユーザーが認証されていません"]))
-            return
+            return nil
         }
         
-        let chatRef = database.child("oshiChats").child(userId).child(oshiId)
-        chatRef.queryOrdered(byChild: "itemId").queryEqual(toValue: itemId).observe(.value) { snapshot in
+        let query = database.child("oshiChats").child(userId).child(oshiId).queryOrdered(byChild: "itemId").queryEqual(toValue: itemId)
+        let handle = query.observe(.value) { snapshot in
             var messages: [ChatMessage] = []
             
             for child in snapshot.children {
@@ -213,6 +263,7 @@ class ChatDatabaseManager {
             messages.sort { $0.timestamp < $1.timestamp }
             completion(messages, nil)
         }
+        return ChatMessagesObservation(query: query, handle: handle)
     }
     
     // 未読メッセージの数を取得する

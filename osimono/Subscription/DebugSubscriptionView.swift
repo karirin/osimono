@@ -9,7 +9,7 @@ import SwiftUI
 import StoreKit
 
 struct DebugSubscriptionView: View {
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     @State private var showAlert = false
     @State private var alertMessage = ""
     
@@ -108,6 +108,34 @@ struct DebugSubscriptionView: View {
                             .background(Color.purple)
                             .cornerRadius(10)
                         }
+
+                        #if DEBUG
+                        Button(action: {
+                            PaywallCampaignManager.shared.resetForDebug()
+                            alertMessage = "ペイウォールキャンペーンをリセットしました（AI返信3回目で再表示）"
+                            showAlert = true
+                        }) {
+                            Text("オンボーディングペイウォールをリセット")
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.pink)
+                                .cornerRadius(10)
+                        }
+
+                        Button(action: {
+                            PaywallCampaignManager.shared.startWinBackNowForDebug()
+                            alertMessage = "24時間限定オファーを開始しました（アプリを再度開くと表示）"
+                            showAlert = true
+                        }) {
+                            Text("24時間限定オファーを今すぐ開始")
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.orange)
+                                .cornerRadius(10)
+                        }
+                        #endif
                     }
                     .padding()
                     .background(

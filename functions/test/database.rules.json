@@ -1,0 +1,13 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "oshis": { "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": "auth != null && auth.uid === $uid" } },
+    "users": { "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": "auth != null && auth.uid === $uid" } },
+    "communityOshi": {
+      ".read": false,
+      ".write": false,
+      "profiles": { ".indexOn": ["publishedAt", "searchName", "categoryName", "categoryDate"] }
+    }
+  }
+}

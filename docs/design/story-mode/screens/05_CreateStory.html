@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>新しい物語</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#F8F9FD;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;color:#26232B;-webkit-font-smoothing:antialiased}
+button,input,textarea{font-family:inherit;color:inherit}
+input::placeholder,textarea::placeholder{color:#B3AABD}
+input:focus,textarea:focus{outline:none;border-color:#FF9BB3 !important;background:#FFFFFF !important}
+a{color:#D6456A}a:hover{color:#B8324F}
+</style>
+</helmet>
+<div style="width: 393px; height: 2620px; position: relative; overflow: hidden; background: #F8F9FD; box-sizing: border-box; display: flex; flex-direction: column">
+
+<div style="height: 59px; flex-shrink: 0"></div>
+<div style="height: 44px; flex-shrink: 0; padding: 0 8px; display: grid; grid-template-columns: 76px minmax(0, 1fr) 76px; align-items: center">
+<button type="button" style="height: 44px; min-width: 44px; padding: 0 8px; border: 0; background: transparent; font-size: 17px; color: #D6456A; text-align: left; cursor: pointer">閉じる</button>
+<div style="text-align: center; font-size: 17px; font-weight: 600; letter-spacing: 0.01em">新しい物語</div>
+<div></div>
+</div>
+
+<div style="padding: 8px 20px 0; display: flex; flex-direction: column">
+
+<div style="position: relative; overflow: hidden; border-radius: 22px; padding: 22px 20px; background: linear-gradient(125deg, #FF758C 0%, #FF7EB3 100%); box-shadow: 0 10px 24px rgba(255,117,140,0.26); display: flex; flex-direction: column; gap: 8px; color: #FFFFFF">
+<svg width="120" height="120" viewBox="0 0 24 24" fill="#FFFFFF" fill-opacity="0.16" style="position: absolute; right: -18px; top: -22px" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"></path></svg>
+<svg width="22" height="22" viewBox="0 0 24 24" fill="#FFFFFF" fill-opacity="0.5" style="position: absolute; right: 96px; top: 74px" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"></path></svg>
+<div style="position: relative; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M10 2.5l1.6 4.9 4.9 1.6-4.9 1.6L10 15.5l-1.6-4.9L3.5 9l4.9-1.6z"></path><path d="M18 13l.9 2.6 2.6.9-2.6.9L18 20l-.9-2.6-2.6-.9 2.6-.9z"></path></svg>
+ストーリーモード
+</div>
+<h1 style="position: relative; margin: 0; font-size: 24px; font-weight: 700; line-height: 1.35">推したちと、全3話の物語へ</h1>
+<p style="position: relative; margin: 0; font-size: 15px; font-weight: 500; line-height: 1.6">出演する推しと舞台を選ぶと、AIがあなたも登場する短編を紡ぎます。</p>
+</div>
+
+<section style="margin-top: 32px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 2px">
+<span style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(135deg, #FF758C, #FF7EB3); color: #FFFFFF; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">1</span>
+<h2 style="margin: 0; flex-grow: 1; font-size: 20px; font-weight: 700">出演する推し</h2>
+<span style="height: 28px; padding: 0 10px; border-radius: 999px; background: {{counterBg}}; display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; color: {{counterColor}}">{{selCount}} / 3人選択<span style="font-size: 12px; font-weight: 500; color: #8C8497">（1〜3人）</span></span>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #ECE6EF; border-radius: 22px; padding: 16px; box-shadow: 0 2px 10px rgba(38,35,43,0.04); display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #6E6578">タップした順に配役されます。もう一度タップで外せます。</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{oshis}}" as="o" hint-placeholder-count="6">
+<button type="button" onClick="{{o.toggle}}" disabled="{{o.disabled}}" aria-label="{{o.aria}}" style="min-height: 44px; padding: 14px 6px 12px; box-sizing: border-box; border-radius: 18px; border: {{o.border}}; background: {{o.cellBg}}; opacity: {{o.opacity}}; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer">
+<div style="position: relative; width: 68px; height: 68px">
+<div style="width: 68px; height: 68px; border-radius: 50%; padding: 3px; box-sizing: border-box; background: {{o.ring}}">
+<div style="width: 100%; height: 100%; border-radius: 50%; border: 2px solid #FFFFFF; box-sizing: border-box; background: {{o.bg}}; overflow: hidden; display: flex; align-items: flex-end; justify-content: center">
+<svg width="46" height="46" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="8" fill="{{o.fg}}"></circle><path d="M5 40c1.5-9 7.5-14 15-14s13.5 5 15 14z" fill="{{o.fg}}"></path></svg>
+</div>
+</div>
+<sc-if value="{{o.selected}}" hint-placeholder-val="{{ false }}">
+<span style="position: absolute; right: -4px; top: -4px; width: 26px; height: 26px; box-sizing: border-box; border-radius: 50%; border: 2px solid #FFFFFF; background: linear-gradient(135deg, #FF758C, #FF7EB3); color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{o.order}}</span>
+</sc-if>
+</div>
+<span style="margin-top: 2px; font-size: 15px; font-weight: 600">{{o.name}}</span>
+<span style="font-size: 12px; color: #8C8497">{{o.role}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section style="margin-top: 32px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 2px">
+<span style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(135deg, #FF758C, #FF7EB3); color: #FFFFFF; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span>
+<h2 style="margin: 0; font-size: 20px; font-weight: 700">物語の設定</h2>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #ECE6EF; border-radius: 22px; padding: 18px 16px; box-shadow: 0 2px 10px rgba(38,35,43,0.04); display: flex; flex-direction: column; gap: 24px">
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 6px">
+<label for="storyTitle" style="font-size: 15px; font-weight: 600">タイトル</label>
+<span style="font-size: 12px; font-weight: 600; color: #D6456A">必須</span>
+</div>
+<input id="storyTitle" type="text" maxlength="30" value="{{title}}" onChange="{{onTitle}}" placeholder="例：放課後、秘密の作戦会議" style="height: 52px; padding: 0 14px; box-sizing: border-box; border-radius: 14px; border: {{titleBorder}}; background: #F8F9FD; font-size: 16px">
+<div style="display: flex; justify-content: space-between; gap: 8px">
+<sc-if value="{{noTitle}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #D93A55"><svg width="14" height="14" viewBox="0 0 24 24" fill="#D93A55" aria-hidden="true"><path d="M12 2a10 10 0 110 20 10 10 0 010-20zm-1 5v7h2V7zm0 9v2h2v-2z"></path></svg>タイトルを入力してください</span>
+</sc-if>
+<span style="margin-left: auto; font-size: 12px; color: #8C8497">{{titleLen}} / 30</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 15px; font-weight: 600">舞台</span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<button type="button" onClick="{{st.school.pick}}" style="height: 96px; border-radius: 16px; border: {{st.school.border}}; background: {{st.school.bg}}; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{{st.school.color}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"></path><path d="M6 11.2V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.8"></path><path d="M22 9v6"></path></svg>
+<span style="font-size: 15px; font-weight: 600">学園</span>
+</button>
+<button type="button" onClick="{{st.share.pick}}" style="height: 96px; border-radius: 16px; border: {{st.share.border}}; background: {{st.share.bg}}; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{{st.share.color}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"></path><path d="M5 9.5V20h14V9.5"></path><path d="M10 20v-5h4v5"></path></svg>
+<span style="font-size: 15px; font-weight: 600">シェアハウス</span>
+</button>
+<button type="button" onClick="{{st.fantasy.pick}}" style="height: 96px; border-radius: 16px; border: {{st.fantasy.border}}; background: {{st.fantasy.bg}}; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{{st.fantasy.color}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20L15 9"></path><path d="M13 7l4 4"></path><path d="M18 2.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"></path><path d="M8 3l.6 1.4L10 5l-1.4.6L8 7l-.6-1.4L6 5l1.4-.6z"></path></svg>
+<span style="font-size: 15px; font-weight: 600">ファンタジー</span>
+</button>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="storySynopsis" style="font-size: 15px; font-weight: 600">あらすじ</label>
+<textarea id="storySynopsis" maxlength="200" value="{{syn}}" onChange="{{onSyn}}" placeholder="例：文化祭まであと1週間。3人は誰にも言えない計画を立てることに…" style="height: 112px; padding: 12px 14px; box-sizing: border-box; border-radius: 14px; border: 1px solid #ECE6EF; background: #F8F9FD; font-size: 16px; line-height: 1.55; resize: none"></textarea>
+<span style="align-self: flex-end; font-size: 12px; color: #8C8497">{{synLen}} / 200</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 15px; font-weight: 600">雰囲気</span>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button type="button" onClick="{{md.calm.pick}}" style="height: 44px; padding: 0 18px; border-radius: 999px; border: {{md.calm.border}}; background: {{md.calm.bg}}; color: {{md.calm.color}}; font-size: 15px; font-weight: 600; cursor: pointer">ほのぼの</button>
+<button type="button" onClick="{{md.youth.pick}}" style="height: 44px; padding: 0 18px; border-radius: 999px; border: {{md.youth.border}}; background: {{md.youth.bg}}; color: {{md.youth.color}}; font-size: 15px; font-weight: 600; cursor: pointer">青春</button>
+<button type="button" onClick="{{md.thrill.pick}}" style="height: 44px; padding: 0 18px; border-radius: 999px; border: {{md.thrill.border}}; background: {{md.thrill.bg}}; color: {{md.thrill.color}}; font-size: 15px; font-weight: 600; cursor: pointer">ハラハラ</button>
+</div>
+</div>
+
+<div style="height: 1px; background: #F2EDF4; margin: -4px 0"></div>
+
+<div style="min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: -8px">
+<span style="font-size: 16px; font-weight: 600">恋愛要素あり</span>
+<button type="button" role="switch" aria-checked="{{romanceStr}}" aria-label="恋愛要素あり" onClick="{{toggleRomance}}" style="width: 51px; height: 31px; flex-shrink: 0; padding: 2px; box-sizing: border-box; border: 0; border-radius: 999px; background: {{trackBg}}; cursor: pointer; display: flex; align-items: center">
+<span style="width: 27px; height: 27px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 5px rgba(38,35,43,0.18); transform: translateX({{knobX}}); transition: transform 0.2s"></span>
+</button>
+</div>
+
+</div>
+</section>
+
+<section style="margin-top: 32px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 2px">
+<span style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(135deg, #FF758C, #FF7EB3); color: #FFFFFF; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">3</span>
+<h2 style="margin: 0; font-size: 20px; font-weight: 700">参加方法</h2>
+</div>
+
+<button type="button" onClick="{{pm.hero.pick}}" style="width: 100%; text-align: left; padding: 16px; box-sizing: border-box; border-radius: 20px; border: {{pm.hero.border}}; background: {{pm.hero.bg}}; box-shadow: {{pm.hero.shadow}}; display: flex; align-items: flex-start; gap: 14px; cursor: pointer">
+<div style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: #FFF0F5; display: flex; align-items: center; justify-content: center">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="#FF7A95" aria-hidden="true"><circle cx="12" cy="9" r="4"></circle><path d="M4.5 21c.7-4.3 3.7-6.5 7.5-6.5s6.8 2.2 7.5 6.5z"></path><path d="M19 1.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z" fill="#9B82D6"></path></svg>
+</div>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 17px; font-weight: 700">主人公になる</span>
+<span style="font-size: 13px; line-height: 1.55; color: #6E6578">あなたが物語の中心。推したちがあなたを囲んで物語が進みます。</span>
+</div>
+<span style="width: 24px; height: 24px; flex-shrink: 0; box-sizing: border-box; border-radius: 50%; border: {{pm.hero.radioBorder}}; background: {{pm.hero.radioBg}}; display: flex; align-items: center; justify-content: center">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+</span>
+</button>
+
+<button type="button" onClick="{{pm.member.pick}}" style="width: 100%; text-align: left; padding: 16px; box-sizing: border-box; border-radius: 20px; border: {{pm.member.border}}; background: {{pm.member.bg}}; box-shadow: {{pm.member.shadow}}; display: flex; align-items: flex-start; gap: 14px; cursor: pointer">
+<div style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: #F5F0FF; display: flex; align-items: center; justify-content: center">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="#A58BD8" aria-hidden="true"><circle cx="12" cy="8" r="3.4"></circle><path d="M6 19c.6-3.6 3-5.4 6-5.4s5.4 1.8 6 5.4z"></path><circle cx="5" cy="10" r="2.4" fill-opacity="0.6"></circle><path d="M.8 18.5c.4-2.6 1.9-3.9 4.2-3.9 1 0 1.8.2 2.5.7-1 1-1.7 1.9-2 3.2z" fill-opacity="0.6"></path><circle cx="19" cy="10" r="2.4" fill-opacity="0.6"></circle><path d="M23.2 18.5c-.4-2.6-1.9-3.9-4.2-3.9-1 0-1.8.2-2.5.7 1 1 1.7 1.9 2 3.2z" fill-opacity="0.6"></path></svg>
+</div>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 17px; font-weight: 700">物語の一員になる</span>
+<span style="font-size: 13px; line-height: 1.55; color: #6E6578">推しの1人が主役。あなたはそばで物語に関わる1人として参加します。</span>
+</div>
+<span style="width: 24px; height: 24px; flex-shrink: 0; box-sizing: border-box; border-radius: 50%; border: {{pm.member.radioBorder}}; background: {{pm.member.radioBg}}; display: flex; align-items: center; justify-content: center">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+</span>
+</button>
+
+<div style="background: #FFFFFF; border: 1px solid #ECE6EF; border-radius: 22px; padding: 18px 16px; box-shadow: 0 2px 10px rgba(38,35,43,0.04); display: flex; flex-direction: column; gap: 24px">
+<sc-if value="{{isMember}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<span style="font-size: 15px; font-weight: 600">主役の推し</span>
+<span style="font-size: 12px; color: #8C8497">出演する推しから1人</span>
+</div>
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<sc-for list="{{selOshis}}" as="l" hint-placeholder-count="2">
+<button type="button" onClick="{{l.pickLead}}" style="height: 48px; padding: 0 14px 0 6px; border-radius: 999px; box-sizing: border-box; border: {{l.leadBorder}}; background: {{l.leadBg}}; display: flex; align-items: center; gap: 8px; cursor: pointer">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: {{l.bg}}; overflow: hidden; display: flex; align-items: flex-end; justify-content: center"><svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="8" fill="{{l.fg}}"></circle><path d="M5 40c1.5-9 7.5-14 15-14s13.5 5 15 14z" fill="{{l.fg}}"></path></svg></span>
+<span style="font-size: 15px; font-weight: 600; color: {{l.leadColor}}">{{l.name}}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{noSel}}" hint-placeholder-val="{{ false }}">
+<div style="height: 48px; border-radius: 14px; border: 1px dashed #DCD3E3; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #8C8497">先に「出演する推し」を選んでください</div>
+</sc-if>
+</div>
+</sc-if>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="playerName" style="font-size: 15px; font-weight: 600">物語内の名前</label>
+<input id="playerName" type="text" maxlength="12" value="{{pname}}" onChange="{{onPname}}" placeholder="例：ひなた" style="height: 52px; padding: 0 14px; box-sizing: border-box; border-radius: 14px; border: 1px solid #ECE6EF; background: #F8F9FD; font-size: 16px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="playerRole" style="font-size: 15px; font-weight: 600">あなたの役柄</label>
+<input id="playerRole" type="text" maxlength="20" value="{{prole}}" onChange="{{onProle}}" placeholder="例：新聞部の部長" style="height: 52px; padding: 0 14px; box-sizing: border-box; border-radius: 14px; border: 1px solid #ECE6EF; background: #F8F9FD; font-size: 16px">
+</div>
+</div>
+</section>
+
+<section style="margin-top: 32px; background: #FFFFFF; border: 1px solid #ECE6EF; border-radius: 22px; box-shadow: 0 2px 10px rgba(38,35,43,0.04); overflow: hidden">
+<button type="button" onClick="{{toggleOpen}}" aria-expanded="{{openStr}}" style="width: 100%; min-height: 72px; padding: 14px 16px; box-sizing: border-box; border: 0; background: transparent; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer">
+<span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #F5F0FF; display: flex; align-items: center; justify-content: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8E77C7" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"></path><circle cx="16" cy="6" r="2"></circle><circle cx="10" cy="12" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>
+</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 16px; font-weight: 600">配役・推し同士の関係を変更</span>
+<span style="font-size: 13px; color: #8C8497">変更しなくても、初期値のまま始められます</span>
+</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B3AABD" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; transform: rotate({{chevDeg}}); transition: transform 0.2s" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+</button>
+<sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
+<div style="padding: 4px 16px 18px; border-top: 1px solid #F2EDF4; display: flex; flex-direction: column; gap: 22px">
+<sc-if value="{{noSel}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 14px 0 0; font-size: 13px; color: #8C8497">出演する推しを選ぶと設定できます</p>
+</sc-if>
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+<div style="margin-top: 14px; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 15px; font-weight: 600">推しの役柄</span>
+<sc-for list="{{selOshis}}" as="s" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: {{s.bg}}; overflow: hidden; display: flex; align-items: flex-end; justify-content: center"><svg width="28" height="28" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="8" fill="{{s.fg}}"></circle><path d="M5 40c1.5-9 7.5-14 15-14s13.5 5 15 14z" fill="{{s.fg}}"></path></svg></span>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<label for="{{s.inputId}}" style="font-size: 13px; color: #6E6578">{{s.name}}の役柄</label>
+<input id="{{s.inputId}}" type="text" maxlength="20" value="{{s.roleVal}}" onChange="{{s.onRole}}" style="height: 44px; padding: 0 12px; box-sizing: border-box; border-radius: 12px; border: 1px solid #ECE6EF; background: #F8F9FD; font-size: 16px">
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{hasPairs}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 15px; font-weight: 600">推し同士の関係</span>
+<sc-for list="{{pairs}}" as="p" hint-placeholder-count="1">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="display: flex; align-items: center" aria-hidden="true">
+<span style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid #FFFFFF; box-sizing: border-box; background: {{p.aBg}}"></span>
+<span style="width: 28px; height: 28px; margin-left: -8px; border-radius: 50%; border: 2px solid #FFFFFF; box-sizing: border-box; background: {{p.bBg}}"></span>
+</span>
+<span style="font-size: 14px; font-weight: 600">{{p.label}}</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 14px; background: #F2EDF4">
+<sc-for list="{{p.opts}}" as="op" hint-placeholder-count="3">
+<button type="button" onClick="{{op.pick}}" style="height: 44px; border: 0; border-radius: 11px; background: {{op.bg}}; color: {{op.color}}; box-shadow: {{op.shadow}}; font-size: 14px; font-weight: 600; cursor: pointer">{{op.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</section>
+
+<div style="height: 150px"></div>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 20px 34px; background: rgba(255,255,255,0.84); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-top: 0.5px solid #ECE6EF; display: flex; flex-direction: column; gap: 8px">
+<sc-if value="{{hint}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 13px; color: {{hintColor}}">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="{{hintColor}}" aria-hidden="true"><path d="M12 2a10 10 0 110 20 10 10 0 010-20zm-1 5v7h2V7zm0 9v2h2v-2z"></path></svg>{{hint}}
+</div>
+</sc-if>
+<button type="button" disabled="{{cannot}}" style="width: 100%; height: 56px; border: 0; border-radius: 18px; background: {{ctaBg}}; box-shadow: {{ctaShadow}}; color: {{ctaColor}}; font-size: 17px; font-weight: 700; letter-spacing: 0.02em; cursor: pointer">物語を保存して始める</button>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":393,"height":2620}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { sel: ['sakura', 'ren'], stage: 'school', mood: 'youth', romance: false, mode: 'member', lead: 'sakura', open: true, title: '放課後、秘密の作戦会議', syn: '', pname: '', prole: '', roles: {}, rel: {} };
+}
+toggle(id) {
+const sel = this.state.sel.slice();
+const i = sel.indexOf(id);
+if (i >= 0) sel.splice(i, 1); else if (sel.length < 3) sel.push(id);
+let lead = this.state.lead;
+if (sel.indexOf(lead) < 0) lead = sel[0] || null;
+this.setState({ sel: sel, lead: lead });
+}
+renderVals() {
+const s = this.state;
+const O = [
+{ id: 'sakura', name: 'さくら', role: '幼なじみ', bg: '#FFE3EC', fg: '#FFB8C9' },
+{ id: 'ren', name: '蓮', role: '生徒会長', bg: '#E3F0FA', fg: '#AFCDE6' },
+{ id: 'mio', name: 'ミオ', role: '転校生', bg: '#EDE5FB', fg: '#C9B8EE' },
+{ id: 'rei', name: 'レイ', role: '旅の剣士', bg: '#FFF1E0', fg: '#F5CFA0' },
+{ id: 'yuna', name: 'ユナ', role: '星読み', bg: '#F3E8F7', fg: '#D7BCE3' },
+{ id: 'haru', name: 'ハル', role: 'カフェ店員', bg: '#E5F5EE', fg: '#A9D8C1' }
+];
+const byId = {};
+O.forEach((o) => { byId[o.id] = o; });
+const sel = s.sel;
+const grad = 'linear-gradient(135deg, #FF758C, #FF7EB3)';
+const oshis = O.map((o) => {
+const i = sel.indexOf(o.id);
+const on = i >= 0;
+const full = sel.length >= 3 && !on;
+return Object.assign({}, o, {
+selected: on, order: i + 1, disabled: full,
+opacity: full ? '0.45' : '1',
+border: on ? '1.5px solid #FFB8C9' : '1px solid #ECE6EF',
+cellBg: on ? '#FFF7FA' : '#FFFFFF',
+ring: on ? grad : '#F2EDF4',
+aria: o.name + '（' + o.role + '）' + (on ? ' 選択中 ' + (i + 1) + '番目' : ''),
+toggle: () => this.toggle(o.id)
+});
+});
+const selOshis = sel.map((id) => {
+const o = byId[id];
+const isLead = s.lead === id;
+return Object.assign({}, o, {
+inputId: 'role-' + id,
+roleVal: s.roles[id] != null ? s.roles[id] : o.role,
+onRole: (e) => { const r = Object.assign({}, this.state.roles); r[id] = e.target.value; this.setState({ roles: r }); },
+leadBorder: isLead ? '2px solid #FF7A95' : '1px solid #ECE6EF',
+leadBg: isLead ? '#FFF0F5' : '#FFFFFF',
+leadColor: isLead ? '#D6456A' : '#26232B',
+pickLead: () => this.setState({ lead: id })
+});
+});
+const REL = [{ id: 'first', label: '初対面' }, { id: 'friend', label: '友人' }, { id: 'rival', label: 'ライバル' }];
+const pairs = [];
+for (let a = 0; a < sel.length; a++) {
+for (let b = a + 1; b < sel.length; b++) {
+const key = sel[a] + '-' + sel[b];
+const cur = s.rel[key] || 'first';
+pairs.push({
+label: byId[sel[a]].name + ' × ' + byId[sel[b]].name,
+aBg: byId[sel[a]].fg, bBg: byId[sel[b]].fg,
+opts: REL.map((r) => ({
+label: r.label,
+bg: cur === r.id ? '#FFFFFF' : 'transparent',
+color: cur === r.id ? '#D6456A' : '#6E6578',
+shadow: cur === r.id ? '0 1px 4px rgba(38,35,43,0.10)' : 'none',
+pick: () => { const m = Object.assign({}, this.state.rel); m[key] = r.id; this.setState({ rel: m }); }
+}))
+});
+}
+}
+const tile = (id) => {
+const on = s.stage === id;
+return { border: on ? '2px solid #FF7A95' : '1px solid #ECE6EF', bg: on ? '#FFF0F5' : '#FFFFFF', color: on ? '#E85A7A' : '#8C8497', pick: () => this.setState({ stage: id }) };
+};
+const chip = (id) => {
+const on = s.mood === id;
+return { border: on ? '1.5px solid #FF7A95' : '1px solid #ECE6EF', bg: on ? '#FFF0F5' : '#FFFFFF', color: on ? '#D6456A' : '#26232B', pick: () => this.setState({ mood: id }) };
+};
+const part = (id) => {
+const on = s.mode === id;
+return {
+border: on ? '2px solid #FF7A95' : '1px solid #ECE6EF',
+bg: on ? '#FFF7FA' : '#FFFFFF',
+shadow: on ? '0 6px 18px rgba(255,117,140,0.14)' : '0 2px 10px rgba(38,35,43,0.04)',
+radioBorder: on ? '0' : '2px solid #DCD3E3',
+radioBg: on ? grad : '#FFFFFF',
+pick: () => this.setState({ mode: id, lead: this.state.lead || this.state.sel[0] || null })
+};
+};
+const noSel = sel.length === 0;
+const noTitle = !s.title.trim();
+const hint = noSel ? '推しを1人以上選んでください' : (noTitle ? 'タイトルを入力してください' : '');
+const cannot = hint !== '';
+return {
+oshis: oshis, selOshis: selOshis, pairs: pairs, hasPairs: pairs.length > 0,
+selCount: sel.length, hasSel: !noSel, noSel: noSel,
+counterBg: noSel ? '#F2EDF4' : '#FFF0F5', counterColor: noSel ? '#8C8497' : '#D6456A',
+title: s.title, titleLen: s.title.length, noTitle: noTitle,
+titleBorder: noTitle ? '1.5px solid #D93A55' : '1px solid #ECE6EF',
+onTitle: (e) => this.setState({ title: e.target.value }),
+syn: s.syn, synLen: s.syn.length, onSyn: (e) => this.setState({ syn: e.target.value }),
+pname: s.pname, onPname: (e) => this.setState({ pname: e.target.value }),
+prole: s.prole, onProle: (e) => this.setState({ prole: e.target.value }),
+st: { school: tile('school'), share: tile('share'), fantasy: tile('fantasy') },
+md: { calm: chip('calm'), youth: chip('youth'), thrill: chip('thrill') },
+romanceStr: s.romance ? 'true' : 'false',
+trackBg: s.romance ? grad : '#E4DFE8', knobX: s.romance ? '20px' : '0px',
+toggleRomance: () => this.setState({ romance: !this.state.romance }),
+pm: { hero: part('hero'), member: part('member') }, isMember: s.mode === 'member',
+open: s.open, openStr: s.open ? 'true' : 'false', chevDeg: s.open ? '90deg' : '0deg',
+toggleOpen: () => this.setState({ open: !this.state.open }),
+hint: hint, hintColor: noSel ? '#6E6578' : '#D93A55', cannot: cannot,
+ctaBg: cannot ? '#ECE6EF' : 'linear-gradient(90deg, #FF758C, #FF7EB3)',
+ctaColor: cannot ? '#A69DB0' : '#FFFFFF',
+ctaShadow: cannot ? 'none' : '0 8px 20px rgba(255,117,140,0.32)'
+};
+}
+}
+</script>
+</body>
+</html>

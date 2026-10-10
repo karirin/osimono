@@ -27,7 +27,7 @@ struct OshiSelectorView: View {
     let primaryColor = Color(.systemPink)
     
     @State private var showOshiLimitModal = false
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     
     var body: some View {
         ZStack {

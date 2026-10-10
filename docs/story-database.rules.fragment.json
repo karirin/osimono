@@ -1,0 +1,16 @@
+{
+  "stories": {
+    "$uid": {
+      ".read": "auth != null && auth.uid === $uid",
+      "$storyID": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['ownerID', 'payload', 'revision', 'operationID']) && newData.child('ownerID').val() === $uid && ((!data.exists() && newData.child('revision').val() === 0) || (data.exists() && ((newData.child('revision').val() === data.child('revision').val() + 1) || (newData.child('operationID').val() === data.child('operationID').val() && newData.child('payload').val() === data.child('payload').val() && newData.child('revision').val() === data.child('revision').val()))))",
+        "ownerID": { ".validate": "newData.isString() && newData.val() === $uid" },
+        "payload": { ".validate": "newData.isString() && newData.val().length <= 120000" },
+        "revision": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9 && newData.val() % 1 === 0" },
+        "operationID": { ".validate": "newData.isString() && newData.val().length === 36" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

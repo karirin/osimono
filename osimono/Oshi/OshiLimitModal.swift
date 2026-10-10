@@ -11,7 +11,7 @@ struct OshiLimitModal: View {
     @Binding var isPresented: Bool
     let currentOshiCount: Int
     let onUpgrade: () -> Void
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     
     // // 管理者の場合は特別な表示
     // private var isAdminUser: Bool {

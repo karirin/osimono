@@ -65,8 +65,10 @@ struct SettingsView: View {
     @State private var showingUserManagement: Bool = false
     @State private var showingSystemSettings: Bool = false
     
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     @State private var showSubscriptionView = false
+    @State private var greetingsEnabled = PremiumGreetingManager.shared.isEnabled
+    @State private var showAppearanceSettings = false
     
     // 管理者UserIDのリスト
     // private let adminUserIds = [
@@ -406,7 +408,29 @@ struct SettingsView: View {
                             .padding(.horizontal)
                         }
                     }
-                    
+
+                    #if DEBUG
+                    developmentPremiumSection
+                    #endif
+
+                    premiumGreetingSection
+
+                    AppLockSettingsSection(isPremium: subscriptionManager.isSubscribed) {
+                        generateHapticFeedback()
+                        showSubscriptionView = true
+                    }
+
+                    SettingRow(
+                        icon: "paintpalette.fill",
+                        title: NSLocalizedString("chat_appearance_title", comment: "Chat appearance"),
+                        color: .pink,
+                        action: { showAppearanceSettings = true }
+                    )
+                    .padding()
+                    .background(cardColor)
+                    .cornerRadius(16)
+                    .padding(.horizontal)
+
                     VStack(spacing: 10) {
                         HStack {
                             Text(NSLocalizedString("feedback", comment: "Feedback section"))
@@ -663,7 +687,7 @@ struct SettingsView: View {
                 AdminDataOverviewView()
             }
             .fullScreenCover(isPresented: $showSubscriptionView) {
-                SubscriptionPreView()
+                SubscriptionPreView(source: .settings)
             }
 //            .navigationDestination(isPresented: $showingUserManagement) {
 //                AdminUserManagementView()
@@ -686,6 +710,9 @@ struct SettingsView: View {
                     }
                 }
             )
+        }
+        .sheet(isPresented: $showAppearanceSettings) {
+            ChatAppearanceSettingsView()
         }
         .onAppear {
             checkAdminStatus()
@@ -885,7 +912,103 @@ struct SettingsView: View {
         )
     }
     
+    #if DEBUG
+    private var developmentPremiumSection: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Text("developer_mode")
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Toggle(isOn: $subscriptionManager.debugSubscriptionEnabled) {
+                    Label("development_premium_title", systemImage: "hammer.fill")
+                        .font(.system(size: 16, weight: .medium))
+                }
+                .tint(primaryColor)
+                .accessibilityIdentifier("developmentPremiumToggle")
+
+                Text("development_premium_description")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding()
+            .background(cardColor)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .padding(.horizontal)
+        }
+    }
+    #endif
+
     // MARK: - 管理者権限チェック
+    // 推しからの朝・夜メッセージ（プレミアム限定）
+    private var premiumGreetingSection: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Text(Bundle.main.localizedString(forKey: "premium_greeting_section", value: "推しからのメッセージ", table: nil))
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal)
+
+            HStack(spacing: 12) {
+                Image(systemName: "bell.badge.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(primaryColor)
+                    .frame(width: 28)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(Bundle.main.localizedString(forKey: "premium_greeting_title", value: "朝・夜のメッセージ通知", table: nil))
+                            .font(.system(size: 16, weight: .medium))
+                        if !subscriptionManager.isSubscribed {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(.orange)
+                        }
+                    }
+                    Text(Bundle.main.localizedString(forKey: "premium_greeting_description", value: "毎朝8時と夜22時に推しからメッセージが届きます。誕生日や記念日には特別なメッセージも。", table: nil))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                if subscriptionManager.isSubscribed {
+                    Toggle("", isOn: $greetingsEnabled)
+                        .labelsHidden()
+                        .tint(primaryColor)
+                        .onChange(of: greetingsEnabled) { newValue in
+                            PremiumGreetingManager.shared.isEnabled = newValue
+                            if newValue {
+                                PremiumGreetingManager.shared.refresh(for: selectedOshi)
+                            }
+                        }
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
+                }
+            }
+            .padding()
+            .background(cardColor)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .padding(.horizontal)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard !subscriptionManager.isSubscribed else { return }
+                generateHapticFeedback()
+                showSubscriptionView = true
+            }
+        }
+    }
+
     private func checkAdminStatus() {
         isAdmin = false
         isCheckingAdminStatus = false

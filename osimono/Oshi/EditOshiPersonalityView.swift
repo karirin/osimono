@@ -288,7 +288,7 @@ struct EditOshiPersonalityView: View {
                 iconName: "sparkles"
             )
             
-            CustomTextField(
+            CustomTextEditorField(
                 title: L10n.speakingStyleFeatures,
                 placeholder: L10n.speakingStylePlaceholder,
                 text: $speakingStyle,

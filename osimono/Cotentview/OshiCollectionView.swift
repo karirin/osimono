@@ -49,7 +49,7 @@ struct OshiCollectionView: View {
     @Binding var navigateToItemForm: Bool
     @State private var navigateToAddOshiForm = false
     
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     
     private var shouldShowAd: Bool {
         AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)
@@ -436,6 +436,7 @@ struct OshiCollectionView: View {
                                 .shadow(color: Color.customPink.opacity(0.3), radius: 15, x: 0, y: 8)
                         }
                     }
+                    .tutorialTarget(.addPostButton)
                     .padding()
                 }
             }.padding(.trailing,0)

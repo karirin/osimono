@@ -9,17 +9,27 @@ import Foundation
 import FirebaseAuth
 import FirebaseDatabase
 
+/// 無料ユーザーが次の1通を送ったときの扱い
+enum MessageSendAllowance: Equatable {
+    /// 通常どおり送信・返信（isLast = 今日最後の1通）
+    case normal(isLast: Bool)
+    /// 上限超過後の1通だけ送れる。返信は途中までしか読めない
+    case teaser
+    /// 送信不可（上限モーダルを出す）
+    case blocked
+}
+
 class MessageLimitManager {
     // シングルトンインスタンス
     static let shared = MessageLimitManager()
     
-    // 1日の最大メッセージ送信回数（無料ユーザー用）
-    private let maxMessagesPerDay = 10
+    // 1日の最大メッセージ送信回数（無料ユーザー用、Remote Config で切り替え）
+    private var maxMessagesPerDay: Int { PaywallConfig.shared.freeDailyMessageLimit }
     
     // ユーザーデフォルトキー
     private let messageCountKey = "dailyMessageCount"
     private let lastResetDateKey = "lastResetDate"
-    private let subscriptionCacheKey = "isSubscribedCache"
+    private let subscriptionCacheKey = PremiumFeatures.subscriptionCacheKey
     
     private init() {
         // アプリ起動時にカウントリセットを確認
@@ -34,7 +44,7 @@ class MessageLimitManager {
     
     // サブスクリプション状態を安全にチェック（キャッシュから取得）
     private func checkSubscriptionStatus() -> Bool {
-        let cached = UserDefaults.standard.bool(forKey: subscriptionCacheKey)
+        let cached = PremiumFeatures.isActive
         print("📖 キャッシュからサブスクリプション状態取得: \(cached)")
         return cached
     }
@@ -43,13 +53,13 @@ class MessageLimitManager {
     @MainActor
     func syncSubscriptionStatus() -> Bool {
         let actual = SubscriptionManager.shared.isSubscribed
-        let cached = UserDefaults.standard.bool(forKey: subscriptionCacheKey)
+        let cached = PremiumFeatures.isActive
         
         print("🔍 サブスクリプション状態比較:")
         print("  - 実際の状態: \(actual)")
         print("  - キャッシュ状態: \(cached)")
         
-        if actual != cached {
+        if actual != cached && !PremiumFeatures.developmentPremiumEnabled {
             print("⚠️ 状態不整合を検出！キャッシュを更新します")
             UserDefaults.standard.set(actual, forKey: subscriptionCacheKey)
             print("✅ キャッシュを更新: \(actual)")
@@ -61,6 +71,8 @@ class MessageLimitManager {
     // サブスクリプション状態のキャッシュを更新（メインスレッドから呼び出し）
     @MainActor
     func updateSubscriptionCache() {
+        // 開発用プレミアムで実際の購入状態を上書きしない。
+        guard !PremiumFeatures.developmentPremiumEnabled else { return }
         let isSubscribed = SubscriptionManager.shared.isSubscribed
         let oldValue = UserDefaults.standard.bool(forKey: subscriptionCacheKey)
         
@@ -93,6 +105,7 @@ class MessageLimitManager {
             print("👑 サブスクリプション会員のため、カウント0を返却")
             return 0
         }
+        checkAndResetDailyCount()
         let count = UserDefaults.standard.integer(forKey: messageCountKey)
         print("📊 現在のメッセージカウント: \(count)")
         return count
@@ -117,6 +130,13 @@ class MessageLimitManager {
         print("📊 メッセージカウント更新: \(currentCount) → \(newCount)/\(maxMessagesPerDay)")
     }
     
+    /// 返信を受け取れなかった送信分を戻す
+    func refundCount() {
+        if checkSubscriptionStatus() { return }
+        let count = UserDefaults.standard.integer(forKey: messageCountKey)
+        UserDefaults.standard.set(max(0, count - 1), forKey: messageCountKey)
+    }
+    
     // 制限に達したかどうかを確認
     func hasReachedLimit() -> Bool {
         // サブスクリプション会員は制限なし
@@ -135,6 +155,23 @@ class MessageLimitManager {
         }
         
         return hasReached
+    }
+    
+    /// 次の1通の扱いを返す。
+    /// 上限の1通前 → 最後の1通、上限ちょうど → 続きがぼかされた返信を1回だけ、それ以降 → 送信不可
+    func sendAllowance() -> MessageSendAllowance {
+        if checkSubscriptionStatus() {
+            return .normal(isLast: false)
+        }
+        let count = getCurrentCount()
+        if count < maxMessagesPerDay - 1 {
+            return .normal(isLast: false)
+        } else if count == maxMessagesPerDay - 1 {
+            return .normal(isLast: true)
+        } else if count == maxMessagesPerDay {
+            return .teaser
+        }
+        return .blocked
     }
     
     // 残りのメッセージ数を取得
@@ -208,46 +245,50 @@ class MessageLimitManager {
         print("🔧 メッセージカウントを手動設定: \(oldCount) → \(count)")
     }
     
-    func resetCountAfterReward() {
+    /// リワード広告視聴後に送信回数を追加する。追加した回数を返す
+    @discardableResult
+    func grantRewardMessages() -> Int {
         // サブスクリプション会員はリワード不要
         if checkSubscriptionStatus() {
             print("👑 サブスクリプション会員のため、リワード処理をスキップ")
-            return
+            return 0
         }
         
+        checkAndResetDailyCount()
+        let reward = PaywallConfig.shared.adRewardMessageCount
         let oldCount = UserDefaults.standard.integer(forKey: messageCountKey)
-        UserDefaults.standard.set(0, forKey: messageCountKey)
+        // ぼかし返信で上限を超えている分は切り捨ててから差し引く
+        let newCount = max(0, min(oldCount, maxMessagesPerDay) - reward)
+        UserDefaults.standard.set(newCount, forKey: messageCountKey)
         
-        // リワード視聴回数を記録（1日1回まで等の制限を追加する場合）
-        let rewardKey = "rewardWatchedToday"
-        UserDefaults.standard.set(true, forKey: rewardKey)
-        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "lastRewardDate")
-        
-        print("🎁 リワード広告視聴後、メッセージカウントをリセット: \(oldCount) → 0")
+        print("🎁 リワード広告視聴後、メッセージカウントを更新: \(oldCount) → \(newCount)")
+        return reward
     }
     
-    // リワード広告が視聴可能かチェック
+    // リワード広告が視聴可能かチェック（無料ユーザーは何度でも視聴できる）
     func canWatchReward() -> Bool {
-        // サブスクリプション会員はリワード広告不要
-        if checkSubscriptionStatus() {
-            print("👑 サブスクリプション会員のため、リワード広告は不要")
-            return false
-        }
-        
-        let rewardKey = "rewardWatchedToday"
-        let lastRewardTimestamp = UserDefaults.standard.double(forKey: "lastRewardDate")
-        let lastRewardDate = Date(timeIntervalSince1970: lastRewardTimestamp)
-        
-        // 日付が変わっていたらリセット
-        if !Calendar.current.isDate(lastRewardDate, inSameDayAs: Date()) {
-            UserDefaults.standard.set(false, forKey: rewardKey)
-            print("🗓️ 日付変更によりリワード視聴状態をリセット")
-            return true
-        }
-        
-        let canWatch = !UserDefaults.standard.bool(forKey: rewardKey)
-        print("🎬 リワード広告視聴可能: \(canWatch)")
-        return canWatch
+        !checkSubscriptionStatus()
+    }
+    
+    // MARK: - 続きがぼかされた返信
+    private let lockedReplyIdsKey = "lockedTeaserReplyIds"
+    
+    /// 上限超過後に届いた返信のID（広告視聴またはプレミアム加入で読めるようになる）
+    func lockedReplyIds() -> Set<String> {
+        Set(UserDefaults.standard.stringArray(forKey: lockedReplyIdsKey) ?? [])
+    }
+    
+    func lockReply(id: String) {
+        var ids = lockedReplyIds()
+        ids.insert(id)
+        UserDefaults.standard.set(Array(ids), forKey: lockedReplyIdsKey)
+    }
+
+    /// 広告視聴で解除した返信を、チャットを開き直した後も読めるようにする
+    func unlockReply(id: String) {
+        var ids = lockedReplyIds()
+        ids.remove(id)
+        UserDefaults.standard.set(Array(ids), forKey: lockedReplyIdsKey)
     }
     
     // サブスクリプション会員かどうかを確認（外部向け）
@@ -259,6 +300,7 @@ class MessageLimitManager {
     
     // サブスクリプションキャッシュを強制更新（デバッグ用・緊急対応用）
     func forceUpdateSubscriptionCache(isSubscribed: Bool) {
+        guard !PremiumFeatures.developmentPremiumEnabled else { return }
         let oldValue = UserDefaults.standard.bool(forKey: subscriptionCacheKey)
         UserDefaults.standard.set(isSubscribed, forKey: subscriptionCacheKey)
         print("🔧 サブスクリプション状態を強制更新: \(oldValue) → \(isSubscribed)")
@@ -295,8 +337,6 @@ class MessageLimitManager {
         UserDefaults.standard.removeObject(forKey: messageCountKey)
         UserDefaults.standard.removeObject(forKey: lastResetDateKey)
         UserDefaults.standard.removeObject(forKey: subscriptionCacheKey)
-        UserDefaults.standard.removeObject(forKey: "rewardWatchedToday")
-        UserDefaults.standard.removeObject(forKey: "lastRewardDate")
         
         print("🗑️ MessageLimitManager: 全データをリセットしました")
         

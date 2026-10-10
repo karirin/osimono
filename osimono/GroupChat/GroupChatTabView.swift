@@ -45,7 +45,7 @@ struct GroupChatTabView: View {
     
     @State private var isAdmin = false
     
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     
     private var shouldShowAd: Bool {
         AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)

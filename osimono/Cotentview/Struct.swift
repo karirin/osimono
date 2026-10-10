@@ -913,27 +913,29 @@ struct L10n {
         return String.localizedStringWithFormat(NSLocalizedString("delete_oshi_and_all_data", comment: "Delete oshi and all related data"), oshiName)
     }
     
+    // MARK: - Tutorial
     static let tutorialWelcomeTitle = NSLocalizedString("tutorial_welcome_title", comment: "Tutorial welcome title")
-    static let tutorialSelectOshiTitle = NSLocalizedString("tutorial_select_oshi_title", comment: "Tutorial select oshi title")
-    static let tutorialAddOshiTitle = NSLocalizedString("tutorial_add_oshi_title", comment: "Tutorial add oshi title")
-    static let tutorialCreatePostTitle = NSLocalizedString("tutorial_create_post_title", comment: "Tutorial create post title")
-    static let tutorialCategoriesTitle = NSLocalizedString("tutorial_categories_title", comment: "Tutorial categories title")
-    static let tutorialMessageTitle = NSLocalizedString("tutorial_message_title", comment: "Tutorial message title")
-    static let tutorialCompletedTitle = NSLocalizedString("tutorial_completed_title", comment: "Tutorial completed title")
-    
-    // MARK: - Tutorial Messages
     static let tutorialWelcomeMessage = NSLocalizedString("tutorial_welcome_message", comment: "Tutorial welcome message")
-    static let tutorialSelectOshiMessage = NSLocalizedString("tutorial_select_oshi_message", comment: "Tutorial select oshi message")
-    static let tutorialAddOshiMessage = NSLocalizedString("tutorial_add_oshi_message", comment: "Tutorial add oshi message")
+    static let tutorialFlowRegister = NSLocalizedString("tutorial_flow_register", comment: "Tutorial flow: register oshi")
+    static let tutorialFlowPost = NSLocalizedString("tutorial_flow_post", comment: "Tutorial flow: create post")
+    static let tutorialFlowReply = NSLocalizedString("tutorial_flow_reply", comment: "Tutorial flow: reply to oshi")
+    static let tutorialRegisterOshiTitle = NSLocalizedString("tutorial_register_oshi_title", comment: "Tutorial register oshi title")
+    static let tutorialRegisterOshiMessage = NSLocalizedString("tutorial_register_oshi_message", comment: "Tutorial register oshi message")
+    static let tutorialRegisterOshiHint = NSLocalizedString("tutorial_register_oshi_hint", comment: "Tutorial hint in add oshi screen")
+    static let tutorialCreatePostTitle = NSLocalizedString("tutorial_create_post_title", comment: "Tutorial create post title")
     static let tutorialCreatePostMessage = NSLocalizedString("tutorial_create_post_message", comment: "Tutorial create post message")
-    static let tutorialCategoriesMessage = NSLocalizedString("tutorial_categories_message", comment: "Tutorial categories message")
-    static let tutorialMessageMessage = NSLocalizedString("tutorial_message_message", comment: "Tutorial message message")
+    static let tutorialCreatePostHint = NSLocalizedString("tutorial_create_post_hint", comment: "Tutorial hint in post form")
+    static let tutorialMessageArrivedTitle = NSLocalizedString("tutorial_message_arrived_title", comment: "Tutorial message arrived title")
+    static let tutorialMessageArrivedMessage = NSLocalizedString("tutorial_message_arrived_message", comment: "Tutorial message arrived message")
+    static let tutorialMessageFallback = NSLocalizedString("tutorial_message_fallback", comment: "Tutorial notification fallback text")
+    static let tutorialNow = NSLocalizedString("tutorial_now", comment: "Tutorial notification time label")
+    static let tutorialReplyHint = NSLocalizedString("tutorial_reply_hint", comment: "Tutorial hint in chat screen")
+    static let tutorialCompletedTitle = NSLocalizedString("tutorial_completed_title", comment: "Tutorial completed title")
     static let tutorialCompletedMessage = NSLocalizedString("tutorial_completed_message", comment: "Tutorial completed message")
     
     // MARK: - Tutorial Buttons
     static let tutorialSkip = NSLocalizedString("tutorial_skip", comment: "Tutorial skip button")
-    static let tutorialBack = NSLocalizedString("tutorial_back", comment: "Tutorial back button")
-    static let tutorialNext = NSLocalizedString("tutorial_next", comment: "Tutorial next button")
+    static let tutorialBegin = NSLocalizedString("tutorial_begin", comment: "Tutorial begin button")
     static let tutorialStart = NSLocalizedString("tutorial_start", comment: "Tutorial start button")
     
     // MARK: - Welcome Screen

@@ -241,6 +241,9 @@ struct ContentView: View {
                 showAddOshiForm = false
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            PremiumGreetingManager.shared.refresh(for: selectedOshi)
+        }
         .onChange(of: addFlag) { newValue in
             if newValue {
                 navigateToItemForm = true
@@ -278,6 +281,7 @@ struct ContentView: View {
                 if let selectedOshi = self.selectedOshi {
                     RandomMessageManager.shared.checkAndSendMessageIfNeeded(for: selectedOshi)
                 }
+                PremiumGreetingManager.shared.refresh(for: self.selectedOshi)
             }
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -330,6 +334,7 @@ struct ContentView: View {
         .onChange(of: selectedOshi?.id) { newOshi in
             if newOshi != nil {
                 refreshTrigger.toggle()
+                TutorialManager.shared.oshiDidBecomeAvailable()
             }
         }
         .onChange(of: isOshiChange) { newFlag in

@@ -12,14 +12,10 @@ class OshiLimitManager {
     static let shared = OshiLimitManager()
     
     // 無料ユーザーの推し登録上限
-    private let freeUserOshiLimit = 5
+    let freeUserOshiLimit = 5
     
     private var isLimitDisabledForDevelopment: Bool {
-        #if DEBUG
-        return true
-        #else
-        return false
-        #endif
+        PremiumFeatures.developmentPremiumEnabled
     }
     
     // 管理者ユーザーIDリスト

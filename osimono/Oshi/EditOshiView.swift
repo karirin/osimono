@@ -29,6 +29,7 @@ struct EditOshiView: View {
     @State private var isShowingOshiSelector = false
     @State private var selectedOshi: Oshi? // 編集対象の推し
     @State private var showAddOshiForm = false
+    @State private var publicationOshi: Oshi?
     @State private var showPersonalityEditor = false // 性格編集画面表示フラグ
     @State private var showDeleteAlert = false // 削除確認アラート
     
@@ -317,6 +318,18 @@ struct EditOshiView: View {
                                 .padding(.top, 5)
                         }
                         
+                        Button { publicationOshi = currentOshi } label: {
+                            HStack {
+                                Label(communityText("公開・作成者情報", "Publishing & creator"), systemImage: "globe.asia.australia")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .padding()
+                            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+                        }
+                        .padding(.horizontal)
+                        .disabled(isLoading)
+
                         // 保存ボタン
                         Button(action: {
                             generateHapticFeedback()
@@ -410,6 +423,7 @@ struct EditOshiView: View {
                 }
             }
         )
+        .sheet(item: $publicationOshi) { CommunityPublishView(oshi: $0) }
         .sheet(isPresented: $showImagePicker) {
             ImagePickerView { picked in
                 selectedImageForCropping = picked

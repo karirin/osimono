@@ -1,0 +1,9 @@
+{
+  "communityOshi": {
+    ".read": false,
+    ".write": false,
+    "profiles": {
+      ".indexOn": ["publishedAt", "searchName", "categoryName", "categoryDate"]
+    }
+  }
+}

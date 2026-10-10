@@ -5,68 +5,54 @@
 
 import Foundation
 import SwiftUI
+import FirebaseFunctions
 
 class AIClient {
-    static let shared = AIClient()
-    private let apiKey: String
+    // 呼び出し側は Optional として扱っている（以前は API キーが無いと nil だった）ため型は据え置く
+    static let shared: AIClient? = AIClient()
     // Character fidelity benefits more from a modestly stronger model than the nano tier.
     private let modelName = "gpt-4.1-mini-2025-04-14"
     private let responseTemperature = 0.55
+    // OpenAI の API キーはアプリに持たせず、Cloud Functions（functions/index.js の aiChat）経由で呼ぶ
+    private let functions = Functions.functions(region: "asia-northeast1")
 
-    private init?() {
-        guard let key = Bundle.main.infoDictionary?["OPENAI_API_KEY"] as? String else {
-            print("❌ OPENAI_API_KEYが見つかりません")
-            return nil
-        }
-        self.apiKey = key
-    }
+    private init() {}
 
     func sendChat(messages: [[String: String]], completion: @escaping (String?, Error?) -> Void) {
-        guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else { return }
+        sendChat(messages: messages, temperature: responseTemperature, jsonMode: false, completion: completion)
+    }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "model": modelName,
+    /// jsonMode=true のとき OpenAI の JSON mode（response_format: json_object）で返答させる
+    /// model を省略すると通常のチャットモデルを使う。cacheKey は同じ prefix のリクエストを同じキャッシュに振り分けるための OpenAI の prompt_cache_key
+    /// maxTokens を指定すると出力トークン数を制限する（暴走・コスト対策。途中で切れた出力は呼び出し側でパースして救出する）
+    func sendChat(messages: [[String: String]], temperature: Double, jsonMode: Bool, model: String? = nil, cacheKey: String? = nil, maxTokens: Int? = nil, completion: @escaping (String?, Error?) -> Void) {
+        var payload: [String: Any] = [
+            "model": model ?? modelName,
             "messages": messages,
-            "temperature": responseTemperature
+            "temperature": temperature,
+            "jsonMode": jsonMode
         ]
+        if let cacheKey = cacheKey {
+            payload["cacheKey"] = cacheKey
+        }
+        if let maxTokens = maxTokens {
+            payload["maxTokens"] = maxTokens
+        }
 
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        let callable = functions.httpsCallable("aiChat")
+        callable.timeoutInterval = 60
+        callable.call(payload) { result, error in
             if let error = error {
                 completion(nil, error)
                 return
             }
-
-            guard let data = data else {
-                completion(nil, NSError(domain: "NoData", code: 0))
+            guard let data = result?.data as? [String: Any],
+                  let content = data["content"] as? String else {
+                completion(nil, NSError(domain: "InvalidResponse", code: 1))
                 return
             }
-
-            do {
-                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-                if let errorObject = json?["error"] as? [String: Any] {
-                    let message = errorObject["message"] as? String ?? "OpenAI API returned an error."
-                    completion(nil, NSError(domain: "OpenAIAPI", code: 1, userInfo: [NSLocalizedDescriptionKey: message]))
-                    return
-                }
-
-                if let choices = json?["choices"] as? [[String: Any]],
-                   let message = choices.first?["message"] as? [String: Any],
-                   let content = message["content"] as? String {
-                    completion(content, nil)
-                } else {
-                    completion(nil, NSError(domain: "InvalidResponse", code: 1))
-                }
-            } catch {
-                completion(nil, error)
-            }
-        }.resume()
+            completion(content, nil)
+        }
     }
 }
 
@@ -520,7 +506,8 @@ class AIMessageGenerator {
         return normalized[..<endIndex].trimmingCharacters(in: .whitespacesAndNewlines) + "..."
     }
 
-    private func createContinuitySummary(from chatHistory: [ChatMessage], language: String) -> String {
+    func createContinuitySummary(from chatHistory: [ChatMessage], language: String, recentLimit: Int? = nil) -> String {
+        let recentHistoryLimit = recentLimit ?? self.recentHistoryLimit
         guard chatHistory.count > recentHistoryLimit else { return "" }
 
         let olderMessages = Array(chatHistory.dropLast(recentHistoryLimit))
@@ -726,6 +713,23 @@ class AIMessageGenerator {
         let messages = buildMessages(
             systemPrompt: systemPrompt,
             userMessage: proactivePrompt,
+            chatHistory: chatHistory,
+            language: conversationLanguage
+        )
+        client.sendChat(messages: messages, completion: completion)
+    }
+
+    /// 推しから届く定期メッセージ（朝・夜・誕生日・記念日）。instruction は会話言語に合わせて呼び出し側が組み立てる
+    func generateGreetingMessage(for oshi: Oshi, instruction: (_ language: String) -> String, chatHistory: [ChatMessage], completion: @escaping (String?, Error?) -> Void) {
+        guard let client = client else {
+            completion(nil, nil)
+            return
+        }
+
+        let conversationLanguage = languageManager.getConversationLanguage(for: oshi)
+        let messages = buildMessages(
+            systemPrompt: createLanguageAwareSystemPrompt(oshi: oshi),
+            userMessage: instruction(conversationLanguage),
             chatHistory: chatHistory,
             language: conversationLanguage
         )

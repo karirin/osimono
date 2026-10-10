@@ -20,11 +20,11 @@ struct IndividualChatTabView: View {
     @State private var unreadCounts: [String: Int] = [:]
     @State private var lastMessages: [String: String] = [:]
     @State private var lastMessageTimes: [String: TimeInterval] = [:]
+    @State private var showCommunityDiscovery = false
     @State private var showAddOshiForm = false
+    @State private var showStoryMode = false
     @State private var isEditing = false
-    @State private var showDeleteAlert = false
     @State private var showDeleteOshiAlert = false
-    @State private var oshiToDelete: Oshi?
     @State private var oshiToDeleteCompletely: Oshi?
     @State private var isDeletingOshi = false
     
@@ -33,7 +33,7 @@ struct IndividualChatTabView: View {
     @State private var customerFlag = false
     @ObservedObject var authManager = AuthManager()
     
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     
     // Animation states
     @State private var headerOpacity: Double = 1
@@ -84,7 +84,7 @@ struct IndividualChatTabView: View {
                 VStack(spacing: 0) {
                     // Header
                     HeaderView
-                    
+
                     // Ad banner (if applicable)
                     if !isAdmin && shouldShowAd {
                         BannerAdChatListView()
@@ -96,6 +96,10 @@ struct IndividualChatTabView: View {
                     if isLoading {
                         LoadingView
                     } else if oshiList.isEmpty {
+                        CommunityDiscoveryEntry { showCommunityDiscovery = true }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
+                        StoryEntryCardView
                         EmptyStateView
                     } else {
                         ChatListView
@@ -142,18 +146,7 @@ struct IndividualChatTabView: View {
         .refreshable {
             loadData()
         }
-        .alert(L10n.deleteChatHistory, isPresented: $showDeleteAlert) {
-                Button(L10n.delete, role: .destructive) {
-                    if let oshi = oshiToDelete {
-                        deleteChatHistory(for: oshi)
-                    }
-                }
-                Button(L10n.cancel, role: .cancel) {}
-            } message: {
-                Text(L10n.deleteChatHistoryMessage(oshiToDelete?.name ?? ""))
-            }
-            // MARK: - 修正箇所: アラートの多言語対応をL10nに統一
-            .alert(L10n.deleteOshiTitle, isPresented: $showDeleteOshiAlert) {
+        .alert(L10n.deleteOshiTitle, isPresented: $showDeleteOshiAlert) {
                 Button(L10n.delete, role: .destructive) {
                     if let oshi = oshiToDeleteCompletely {
                         deleteOshiCompletely(oshi)
@@ -163,14 +156,18 @@ struct IndividualChatTabView: View {
             } message: {
                 Text(L10n.deleteOshiConfirmationMessage(oshiToDeleteCompletely?.name ?? ""))
             }
+            .fullScreenCover(isPresented: $showCommunityDiscovery, onDismiss: { loadData() }) {
+                CommunityDiscoveryView {}
+            }
             .fullScreenCover(isPresented: $showAddOshiForm, onDismiss: {
                 loadData()
             }) {
                 AddOshiView()
             }
             .sheet(isPresented: $showSubscriptionPromotion) {
-                SubscriptionPreView()
+                SubscriptionPreView(source: .chatListPromo)
             }
+            .fullScreenCover(isPresented: $showStoryMode) { StoryModeView() }
         }
     
     // MARK: - Background View
@@ -409,6 +406,10 @@ struct IndividualChatTabView: View {
                     .padding(.top, 16)
                     .padding(.bottom, 8)
                 
+                CommunityDiscoveryEntry { showCommunityDiscovery = true }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
+
                 // Chat list
                 ForEach(Array(filteredOshiList.enumerated()), id: \.element.id) { index, oshi in
                     if isEditing {
@@ -432,6 +433,10 @@ struct IndividualChatTabView: View {
                         .offset(x: contentAppeared ? 0 : -20)
                         .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(Double(index) * 0.05), value: contentAppeared)
                     }
+                    // ストーリーモードの入口はチャット行の2行目のあと（1行だけならそのあと）
+                    if showsStoryEntry && index == min(1, filteredOshiList.count - 1) {
+                        StoryEntryCardView
+                    }
                 }
             }
             .padding(.bottom, 20)
@@ -439,6 +444,19 @@ struct IndividualChatTabView: View {
         .background(Color.clear)
     }
     
+    // MARK: - Story Entry
+    /// 並び替え中・検索中は入口を出さない
+    private var showsStoryEntry: Bool { !isEditing && searchText.isEmpty }
+
+    private var StoryEntryCardView: some View {
+        StoryEntryCard(oshis: oshiList) {
+            generateHapticFeedback()
+            showStoryMode = true
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+    }
+
     // MARK: - Add Oshi Card
     private var AddOshiCard: some View {
             Button(action: {
@@ -512,32 +530,8 @@ struct IndividualChatTabView: View {
             // ChatRowの外側にあるpadding(.vertical, 4)の影響を考慮
             .padding(.vertical, 4)
             
-            // Delete buttons - 縦に中央揃え
+            // 推しそのものを削除する操作だけを残す。会話は画面内で1件ずつ削除できる。
             VStack(spacing: 6) { // 間隔を調整
-                // Delete chat history
-                Button(action: {
-                    generateHapticFeedback()
-                    oshiToDelete = oshi
-                    showDeleteAlert = true
-                }) {
-                    VStack(spacing: 0) { // アイコンと文字の間隔を詰める
-                        Image(systemName: "trash")
-                            .font(.system(size: 14, weight: .medium))
-                            .padding(.bottom, 2)
-                        
-                        Text(L10n.chatHistoryShort)
-                            .font(.system(size: 8, weight: .bold)) // サイズを微調整
-                            .minimumScaleFactor(0.8)
-                    }
-                    .foregroundColor(Color(hex: "F59E0B"))
-                    .frame(width: 50, height: 40) // 幅を広げ、高さを46→40に縮小
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous) // 角丸を少し大きく
-                            .fill(Color(hex: "FEF3C7"))
-                    )
-                }
-                
-                // Delete oshi
                 Button(action: {
                     generateHapticFeedback()
                     oshiToDeleteCompletely = oshi
@@ -829,31 +823,6 @@ struct IndividualChatTabView: View {
         
         dispatchGroup.notify(queue: .main) {
             self.unreadCounts = tempUnreadCounts
-        }
-    }
-    
-    private func deleteChatHistory(for oshi: Oshi) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let chatRef = Database.database().reference()
-            .child("oshiChats")
-            .child(userId)
-            .child(oshi.id)
-        
-        chatRef.removeValue { error, _ in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("チャット履歴削除エラー: \(error.localizedDescription)")
-                } else {
-                    print("チャット履歴を削除しました: \(oshi.name)")
-                    self.lastMessages[oshi.id] = "まだメッセージがありません"
-                    self.lastMessageTimes[oshi.id] = 0
-                    self.unreadCounts[oshi.id] = 0
-                    
-                    let userRef = Database.database().reference().child("users").child(userId)
-                    userRef.child("lastReadTimestamps").child(oshi.id).removeValue()
-                }
-            }
         }
     }
     

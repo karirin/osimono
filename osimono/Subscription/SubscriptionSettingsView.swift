@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SubscriptionSettingsView: View {
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     @State private var showSubscriptionView = false
     @State private var expirationDate: Date?
     
@@ -136,7 +136,7 @@ struct SubscriptionSettingsView: View {
             }
         }
         .sheet(isPresented: $showSubscriptionView) {
-            SubscriptionPreView()
+            SubscriptionPreView(source: .subscriptionSettings)
         }
     }
     

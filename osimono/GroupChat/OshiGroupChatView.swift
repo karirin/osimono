@@ -29,6 +29,8 @@ struct OshiGroupChatView: View {
     @State private var showMemberSelection: Bool = false
     @State private var showRewardCompletedModal = false
     @State private var rewardAmount = 0
+    @ObservedObject private var appearanceStore = ChatAppearanceStore.shared
+    @State private var showAppearanceSettings = false
     
     // 新しいUI用の状態管理
     @State private var typingMembers: [String] = [] // タイピング中のメンバーID
@@ -36,12 +38,6 @@ struct OshiGroupChatView: View {
     @State private var lastSentMessageId: String? = nil
     
     // モダンカラーパレット - ダークモード対応
-    private var bgGradientStart: Color {
-        colorScheme == .dark ? Color(red: 0.1, green: 0.1, blue: 0.12) : Color(red: 0.98, green: 0.97, blue: 0.99)
-    }
-    private var bgGradientEnd: Color {
-        colorScheme == .dark ? Color(red: 0.08, green: 0.08, blue: 0.1) : Color(red: 0.95, green: 0.94, blue: 0.98)
-    }
     private let primaryAccent = Color(red: 0.91, green: 0.42, blue: 0.58)
     private let secondaryAccent = Color(red: 0.65, green: 0.45, blue: 0.85)
     private let userBubbleGradient = LinearGradient(
@@ -70,7 +66,7 @@ struct OshiGroupChatView: View {
     @State private var keyboardHeight: CGFloat = 0
     @State private var hasMarkedAsRead: Bool = false
     
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
 
     // グループチャット リワード広告
     @State private var groupChatSendCount: Int = 0
@@ -109,6 +105,8 @@ struct OshiGroupChatView: View {
     @ObservedObject var authManager = AuthManager()
     @State private var showSubscriptionSheet = false
     @State private var showGroupRewardModal = false
+    @State private var isLoadingGroupRewardAd = false
+    @State private var showGroupAdLoadFailedAlert = false
     
     init(groupId: Binding<String>, onShowGroupList: (() -> Void)? = nil) {
         self._groupId = groupId
@@ -118,13 +116,8 @@ struct OshiGroupChatView: View {
     
     var body: some View {
         ZStack {
-            // 背景グラデーション
-            LinearGradient(
-                colors: [bgGradientStart, bgGradientEnd],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            ChatAppearanceBackground(theme: appearanceStore.settings.background, photo: appearanceStore.photo)
+                .ignoresSafeArea()
             
             if isInitialLoadingComplete {
                 chatContent
@@ -174,10 +167,14 @@ struct OshiGroupChatView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             showSubscriptionSheet = true
                         }
-                    }
+                    },
+                    isAdLoading: isLoadingGroupRewardAd
                 )
                 .zIndex(999)
                 .allowsHitTesting(true)
+                .alert(NSLocalizedString("reward_ad_load_failed", comment: "Couldn't load the ad"), isPresented: $showGroupAdLoadFailedAlert) {
+                    Button("OK", role: .cancel) {}
+                }
             }
             
             if isDeletingHistory {
@@ -199,6 +196,10 @@ struct OshiGroupChatView: View {
                         )
                     )
             }
+        }
+        .environment(\.chatAppearance, appearanceStore.settings)
+        .sheet(isPresented: $showAppearanceSettings) {
+            ChatAppearanceSettingsView()
         }
         .alert(L10n.confirmDeleteHistory, isPresented: $showDeleteHistoryAlert) {
             Button(L10n.delete, role: .destructive) { deleteGroupChatHistory() }
@@ -275,7 +276,7 @@ struct OshiGroupChatView: View {
             }
         }
         .sheet(isPresented: $showSubscriptionSheet) {
-            SubscriptionPreView()
+            SubscriptionPreView(source: .groupChatLimit)
         }
     }
     
@@ -455,12 +456,22 @@ struct OshiGroupChatView: View {
                 }
                 
                 if !isEditingMode {
-                    Button(action: {
-                        generateHapticFeedback()
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                            isEditingMode = true
+                    Menu {
+                        Button {
+                            isTextFieldFocused = false
+                            showAppearanceSettings = true
+                        } label: {
+                            Label("chat_appearance_title", systemImage: "paintpalette")
                         }
-                    }) {
+                        Button {
+                            generateHapticFeedback()
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                isEditingMode = true
+                            }
+                        } label: {
+                            Label(L10n.editMessageTitle, systemImage: "pencil")
+                        }
+                    } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.primary.opacity(0.6))
@@ -471,6 +482,7 @@ struct OshiGroupChatView: View {
                                     .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
                             )
                     }
+                    .accessibilityLabel(Text("chat_settings"))
                     .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -811,12 +823,10 @@ struct OshiGroupChatView: View {
                 HStack(spacing: 8) {
                     TextField(L10n.enterMessage, text: $inputText, axis: .vertical)
                         .focused($isTextFieldFocused)
-                        .font(.system(size: 16))
+                        .chatMessageFont(sizeOffset: 1)
                         .lineLimit(1...5)
                         .onSubmit {
-                            if !inputText.isEmpty && !isLoading && !selectedMembers.isEmpty {
-                                sendMessage()
-                            }
+                            sendMessage()
                         }
                 }
                 .padding(.horizontal, 16)
@@ -847,18 +857,7 @@ struct OshiGroupChatView: View {
     
     private var sendButton: some View {
         Button(action: {
-            if !inputText.isEmpty && !isLoading && !selectedMembers.isEmpty {
-                // リワード広告が必須の場合はモーダルを表示してブロック
-                if shouldShowAd && rewardAdRequired {
-                    showGroupRewardModal = true
-                    return
-                }
-                generateHapticFeedback()
-                sendMessage()
-                if shouldShowAd {
-                    incrementGroupChatCount()
-                }
-            }
+            sendMessage()
         }) {
             ZStack {
                 Circle()
@@ -908,6 +907,28 @@ struct OshiGroupChatView: View {
     }
 
     private func showGroupChatRewardAd() {
+        guard !isLoadingGroupRewardAd else { return }
+
+        guard !AdConfiguration.isDisabledForDevelopment else {
+            unlockGroupChatAfterReward()
+            return
+        }
+
+        // まだ読み込めていなければ、読み込み完了を待ってから表示する
+        guard let rewardedAd = RewardAdManager.shared.rewardedAd else {
+            print("⚠️ リワード広告未ロード、読み込み完了後に表示")
+            isLoadingGroupRewardAd = true
+            RewardAdManager.shared.loadRewardedAd { loaded in
+                isLoadingGroupRewardAd = false
+                if loaded {
+                    showGroupChatRewardAd()
+                } else {
+                    showGroupAdLoadFailedAlert = true
+                }
+            }
+            return
+        }
+
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let root = windowScene.windows.first?.rootViewController else {
             print("❌ グループチャット リワード広告: rootViewController取得失敗")
@@ -916,19 +937,21 @@ struct OshiGroupChatView: View {
 
         let top = findTopViewControllerForAd(from: root)
 
-        guard let rewardedAd = RewardAdManager.shared.rewardedAd else {
-            print("⚠️ リワード広告未ロード、再ロード中")
-            RewardAdManager.shared.loadRewardedAd()
-            return
-        }
-
+        // 同じ広告を二度表示しないよう手放す（閉じたら RewardAdManager が次を読み込む）
+        RewardAdManager.shared.rewardedAd = nil
         rewardedAd.present(from: top) {
             DispatchQueue.main.async {
-                self.rewardAdRequired = false
-                UserDefaults.standard.set(false, forKey: self.rewardAdRequiredKey)
+                unlockGroupChatAfterReward()
                 print("✅ グループチャット リワード広告視聴完了")
             }
         }
+    }
+
+    private func unlockGroupChatAfterReward() {
+        rewardAdRequired = false
+        showGroupRewardModal = false
+        UserDefaults.standard.set(false, forKey: rewardAdRequiredKey)
+        generateHapticFeedback()
     }
 
     private func findTopViewControllerForAd(from viewController: UIViewController) -> UIViewController {
@@ -948,7 +971,16 @@ struct OshiGroupChatView: View {
 
     // MARK: - メッセージ送信（既読・タイピング機能付き）
     private func sendMessage() {
-        guard !inputText.isEmpty, !selectedMembers.isEmpty else { return }
+        guard !inputText.isEmpty, !isLoading, !selectedMembers.isEmpty else { return }
+        // 送信ボタンとキーボードの送信を同じ広告条件で判定する
+        if shouldShowAd && rewardAdRequired {
+            showGroupRewardModal = true
+            return
+        }
+        generateHapticFeedback()
+        if shouldShowAd {
+            incrementGroupChatCount()
+        }
         
         let userMessage = GroupChatMessage(
             id: UUID().uuidString,
@@ -1492,7 +1524,7 @@ struct ModernGroupChatBubble: View {
                 
                 VStack(alignment: .trailing, spacing: 4) {
                     Text(message.content)
-                        .font(.system(size: 15))
+                        .chatMessageFont()
                         .foregroundColor(.white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
@@ -1532,7 +1564,7 @@ struct ModernGroupChatBubble: View {
                     }
                     
                     Text(message.content)
-                        .font(.system(size: 15))
+                        .chatMessageFont()
                         .foregroundColor(.primary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)

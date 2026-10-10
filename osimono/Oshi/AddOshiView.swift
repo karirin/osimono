@@ -18,6 +18,8 @@ extension UIImage: Identifiable {
 struct AddOshiView: View {
     // 既存の状態変数
     @Environment(\.presentationMode) var presentationMode
+    @State private var showCommunityDiscovery = false
+    @State private var registeredCommunityOshi = false
     @State private var oshiName: String = ""
     @State private var oshiMemo: String = ""
     @State private var selectedImage: UIImage?
@@ -60,7 +62,8 @@ struct AddOshiView: View {
     @State private var showManageOshiModal = false
     @State private var showSubscriptionView = false
     @State private var oshiList: [Oshi] = []
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
+    @ObservedObject private var tutorialManager = TutorialManager.shared
     @State private var showAlert = false
     @State private var alertMessage = ""
     
@@ -129,6 +132,15 @@ struct AddOshiView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
+                        CommunityDiscoveryEntry { showCommunityDiscovery = true }
+                            .padding(.horizontal)
+                            .padding(.top, 12)
+                        if tutorialManager.isAt(.registerOshi) {
+                            TutorialInlineTip(text: L10n.tutorialRegisterOshiHint)
+                                .padding(.horizontal)
+                                .padding(.top, 8)
+                        }
+
                         // 推しプロフィール画像
                         VStack {
                             Button(action: {
@@ -556,6 +568,11 @@ struct AddOshiView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .fullScreenCover(isPresented: $showCommunityDiscovery, onDismiss: {
+            if registeredCommunityOshi { presentationMode.wrappedValue.dismiss() }
+        }) {
+            CommunityDiscoveryView { registeredCommunityOshi = true }
+        }
         .sheet(isPresented: $showImagePicker) {
             ImagePickerView { pickedImage in
                 self.selectedImageForCropping = pickedImage
@@ -579,7 +596,7 @@ struct AddOshiView: View {
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $showSubscriptionView) {
-            SubscriptionPreView()
+            SubscriptionPreView(source: .oshiLimit)
         }
         .alert(isPresented: $showAlert) {
             Alert(title: Text(L10n.notification), message: Text(alertMessage), dismissButton: .default(Text("OK")))
@@ -1013,6 +1030,7 @@ struct AddOshiView: View {
                 self.isLoading = false
                 
                 if error == nil {
+                    TutorialManager.shared.oshiDidBecomeAvailable()
                     self.presentationMode.wrappedValue.dismiss()
                 } else {
                     self.alertMessage = "\(L10n.saveError): \(error!.localizedDescription)"

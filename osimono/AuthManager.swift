@@ -16,13 +16,36 @@ class AuthManager: ObservableObject {
         }
     }
     var onLoginCompleted: (() -> Void)?
-    private var isSigningIn = false
+    /// 匿名ログインに失敗した（オフライン等）。起動画面で再試行を案内する
+    @Published var signInFailed = false
+    
+    // AuthManager は画面ごとに作られるため、同時に複数の匿名アカウントを作らないようアプリ全体で1つだけ実行する
+    private static var isSigningIn = false
+    private var authStateHandle: AuthStateDidChangeListenerHandle?
+    private var retryWorkItem: DispatchWorkItem?
     
     init() {
         user = Auth.auth().currentUser
+        // 別インスタンスでのログイン完了も反映する
+        authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            guard let self else { return }
+            if self.user?.uid != user?.uid {
+                self.user = user
+            }
+            if user != nil {
+                self.signInFailed = false
+            }
+        }
         if user == nil {
             signInAnonymously()
         }
+    }
+    
+    deinit {
+        if let handle = authStateHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+        }
+        retryWorkItem?.cancel()
     }
     
     var currentUserId: String? {
@@ -31,25 +54,43 @@ class AuthManager: ObservableObject {
     }
     
     func signInAnonymously() {
-        if isSigningIn {
+        retryWorkItem?.cancel()
+        guard Auth.auth().currentUser == nil else {
+            user = Auth.auth().currentUser
+            return
+        }
+        if Self.isSigningIn {
             print("既にサインイン処理中です")
             return
         }
-        isSigningIn = true
+        Self.isSigningIn = true
         Auth.auth().signInAnonymously { [weak self] authResult, error in
             DispatchQueue.main.async {
-                self?.isSigningIn = false
+                Self.isSigningIn = false
                 if let error = error {
                     print("匿名ログインエラー: \(error.localizedDescription)")
+                    self?.signInFailed = true
+                    self?.scheduleRetry()
                     return
                 }
                 
                 // ログイン成功
+                self?.signInFailed = false
                 self?.user = authResult?.user
                 print("匿名ユーザーとしてログインしました: \(authResult?.user.uid ?? "")")
                 self?.onLoginCompleted?()
             }
         }
+    }
+    
+    /// 通信が戻ったときに自動でログインできるよう、少し待って再試行する
+    private func scheduleRetry() {
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.user == nil else { return }
+            self.signInAnonymously()
+        }
+        retryWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: work)
     }
     
     func fetchUserFlag(completion: @escaping (Int?, Error?) -> Void) {

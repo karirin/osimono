@@ -36,6 +36,8 @@ struct OshiAIChatView: View {
     @State private var inputText: String = ""
     @State private var isLoading: Bool = false
     @State private var isFetchingMessages: Bool = true
+    // 表示中の推しのチャット履歴の監視（差し替え・画面破棄で前の監視は解除される）
+    @State private var messagesObservation: ChatMessagesObservation?
     @State private var isInitialScrollComplete: Bool = false
     @State private var shouldScrollToBottom: Bool = false
     @State private var showEditPersonality = false
@@ -48,19 +50,33 @@ struct OshiAIChatView: View {
     @State private var helpFlag: Bool = false
     @ObservedObject var authManager = AuthManager()
     @State private var showSubscriptionView = false
+    /// 次に開くペイウォールの入口（オンボーディング時のみ切り替え、閉じたら戻す）
+    @State private var paywallSource: PaywallSource = .chatLimit
     
     // 新しいUI用の状態管理
     @State private var showReadReceipt: Bool = false
     @State private var isTyping: Bool = false
     @State private var lastSentMessageId: String? = nil
+    // ロールプレイ
+    @State private var roleplaySituation = RoleplaySituation()
+    @State private var showRoleplaySettings = false
+    @State private var roleplayTrialStatus = RoleplayTrial.status
+    // 関係性
+    @StateObject private var relationshipFeed = RelationshipFeed()
+    @State private var showRelationshipDetail = false
+    /// ステージアップ演出を出す位置（直前のメッセージID → イベント）
+    @State private var stageUpBanners: [String: RelationshipEvent] = [:]
+    /// AI返信待ちの間は次のメッセージを送らせない（記憶・要約・関係性の更新が競合しないように）
+    @State private var isAwaitingReply = false
+    @ObservedObject private var tutorialManager = TutorialManager.shared
+    @State private var showReplyErrorAlert = false
+    @StateObject private var adjustmentStore = ConversationAdjustmentStore()
+    @ObservedObject private var chatInterstitial = IndividualChatInterstitialManager.shared
+    @State private var isChatVisible = false
+    @ObservedObject private var appearanceStore = ChatAppearanceStore.shared
+    @State private var showAppearanceSettings = false
     
     // モダンカラーパレット - ダークモード対応
-    private var bgGradientStart: Color {
-        colorScheme == .dark ? Color(red: 0.1, green: 0.1, blue: 0.12) : Color(red: 0.98, green: 0.97, blue: 0.99)
-    }
-    private var bgGradientEnd: Color {
-        colorScheme == .dark ? Color(red: 0.08, green: 0.08, blue: 0.1) : Color(red: 0.95, green: 0.94, blue: 0.98)
-    }
     private let primaryAccent = Color(red: 0.91, green: 0.42, blue: 0.58) // ソフトピンク
     private let secondaryAccent = Color(red: 0.65, green: 0.45, blue: 0.85) // ラベンダー
     private var oshiBubbleColor: Color {
@@ -81,8 +97,13 @@ struct OshiAIChatView: View {
     @State private var loadCompleteOshiData: Bool = false
     var showBackButton: Bool = true
     @State private var showMessageLimitModal = false
+    /// 上限超過後に届いた、続きがぼかされている返信のID
+    @State private var lockedReplyIds: Set<String> = []
+    /// ぼかされた返信から制限画面を開いた場合、広告視聴後に解除する返信
+    @State private var requestedUnlockReplyId: String?
     @State private var rewardedAd: RewardedAd?
     @State private var isLoadingAd = false
+    @State private var showAdLoadFailedAlert = false
     var isEmbedded: Bool = false
     
     @State private var editingMessage: ChatMessage? = nil
@@ -96,7 +117,7 @@ struct OshiAIChatView: View {
     //     "bZwehJdm4RTQ7JWjl20yaxTWS7l2"
     // ]
 
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
 
     private var shouldShowAd: Bool {
         AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)
@@ -131,13 +152,8 @@ struct OshiAIChatView: View {
 
     var body: some View {
         ZStack {
-            // 背景グラデーション
-            LinearGradient(
-                colors: [bgGradientStart, bgGradientEnd],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            ChatAppearanceBackground(theme: appearanceStore.settings.background, photo: appearanceStore.photo)
+                .ignoresSafeArea()
             
             chatContent
                 .allowsHitTesting(!showRewardCompletedModal)
@@ -155,7 +171,26 @@ struct OshiAIChatView: View {
                 )
 
             // モーダル群
-            // MessageLimitModal は廃止（インタースティシャル広告に移行）
+            if showMessageLimitModal {
+                MessageLimitModal(
+                    isPresented: $showMessageLimitModal,
+                    onWatchAd: { showRewardAd() },
+                    onUpgrade: {
+                        showMessageLimitModal = false
+                        showSubscriptionView = true
+                    },
+                    remainingMessages: remainingMessages,
+                    oshiName: viewModel.selectedOshi.name,
+                    canWatchAd: !subscriptionManager.isSubscribed && !isAdmin,
+                    isAdLoading: isLoadingAd,
+                    unlocksReply: messages.contains {
+                        !$0.isUser && $0.oshiId == viewModel.selectedOshi.id && lockedReplyIds.contains($0.id)
+                    }
+                )
+                .alert(NSLocalizedString("reward_ad_load_failed", comment: "Couldn't load the ad"), isPresented: $showAdLoadFailedAlert) {
+                    Button("OK", role: .cancel) {}
+                }
+            }
 
             if showRewardCompletedModal {
                 RewardCompletedModal(
@@ -168,19 +203,28 @@ struct OshiAIChatView: View {
                 HelpModalView(isPresented: $helpFlag)
             }
         }
+        .environment(\.chatAppearance, appearanceStore.settings)
+        .sheet(isPresented: $showAppearanceSettings) {
+            ChatAppearanceSettingsView()
+        }
+        .background(editPersonalityLink)
         .overlay(adminAlerts)
         .onReceive(Publishers.keyboardHeight) { height in
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { keyboardHeight = height }
         }
         .dismissKeyboardOnTap()
         .onAppear {
+            isChatVisible = true
             setupView()
             checkAdminStatus()
+            tutorialManager.chatDidAppear()
             MessageLimitManager.shared.forceUpdateSubscriptionCache(isSubscribed: subscriptionManager.isSubscribed)
             if shouldShowAd {
+                loadRewardedAd()
                 IndividualChatInterstitialManager.shared.preloadAd()
             }
             remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+            lockedReplyIds = MessageLimitManager.shared.lockedReplyIds()
             
             authManager.fetchUserFlag { userFlag, error in
                 if let error = error {
@@ -195,27 +239,80 @@ struct OshiAIChatView: View {
             }
         }
         .onChange(of: viewModel.selectedOshi.id) { handleOshiChange(newId: $0) }
+        .onChange(of: showMessageLimitModal) { isPresented in
+            if !isPresented { requestedUnlockReplyId = nil }
+        }
+        .onChange(of: authManager.user?.uid) { _ in
+            adjustmentStore.load(oshiID: viewModel.selectedOshi.id)
+        }
         .onChange(of: subscriptionManager.isSubscribed) { newValue in
             MessageLimitManager.shared.forceUpdateSubscriptionCache(isSubscribed: newValue)
             remainingMessages = MessageLimitManager.shared.getRemainingMessages()
         }
-        .onDisappear { cleanup() }
+        .onDisappear {
+            isChatVisible = false
+            cleanup()
+            tutorialManager.chatDidDisappear()
+        }
+        .task(id: automaticAdjustmentCandidate) {
+            guard automaticAdjustmentCandidate != nil else { return }
+            do { try await Task.sleep(nanoseconds: 2_000_000_000) } catch { return }
+            adjustmentStore.offerAutomatically { canPresentAdjustment }
+        }
+        .onChange(of: adjustmentStore.item) { _ in shouldScrollToBottom = true }
+        .onChange(of: adjustmentStore.selectingItem) { _ in shouldScrollToBottom = true }
         .navigationBarHidden(true)
-        .onReceive(IndividualChatInterstitialManager.shared.$shouldShowSubscriptionSheet) { shouldShow in
-            if shouldShow && !subscriptionManager.isSubscribed && !isAdmin {
-                showSubscriptionView = true
-                IndividualChatInterstitialManager.shared.shouldShowSubscriptionSheet = false
+        .sheet(isPresented: $showRoleplaySettings, onDismiss: { roleplayTrialStatus = RoleplayTrial.status }) {
+            RoleplaySettingsView(oshi: viewModel.selectedOshi) { situation in
+                roleplaySituation = situation
             }
         }
+        .sheet(isPresented: $showRelationshipDetail) {
+            RelationshipDetailView(oshi: viewModel.selectedOshi) { situation in
+                roleplaySituation = situation
+            }
+        }
+        .onChange(of: relationshipFeed.pendingEvent?.id) { _ in presentPendingStageUpIfPossible() }
+        .onChange(of: isAwaitingReply) { _ in presentPendingStageUpIfPossible() }
+        .onChange(of: isFetchingMessages) { _ in presentPendingStageUpIfPossible() }
+        .onChange(of: adjustmentStore.isSaving) { _ in presentPendingStageUpIfPossible() }
+        .alert(
+            Bundle.main.localizedString(forKey: "roleplay_reply_error_title", value: "返信を受け取れませんでした", table: nil),
+            isPresented: $showReplyErrorAlert
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(Bundle.main.localizedString(forKey: "roleplay_reply_error_message", value: "通信状況を確認して、もう一度メッセージを送ってください。", table: nil))
+        }
         .sheet(isPresented: $showSubscriptionView) {
-            SubscriptionPreView()
+            SubscriptionPreView(source: paywallSource)
                 .onDisappear {
+                    paywallSource = .chatLimit
                     MessageLimitManager.shared.updateSubscriptionCacheAsync()
                     remainingMessages = MessageLimitManager.shared.getRemainingMessages()
                 }
         }
     }
     
+    private var canPresentAdjustment: Bool {
+        isChatVisible && !isFetchingMessages && !isAwaitingReply && !isTyping && !isLoading
+        && !isTextFieldFocused && inputText.isEmpty && keyboardHeight == 0
+        && !showEditPersonality && !showRoleplaySettings && !showRelationshipDetail
+        && !showAppearanceSettings
+        && !showSubscriptionView && !showMessageLimitModal && !showRewardCompletedModal
+        && !helpFlag && !showReplyErrorAlert && !showEditAlert && !showDeleteAlert
+        && !showLimitAlert && !showAdLoadFailedAlert && !isLoadingAd
+        && !tutorialManager.isShowingTutorial && tutorialManager.arrivedMessage == nil
+        && !chatInterstitial.isPresenting && relationshipFeed.pendingEvent == nil
+        && !adjustmentStore.isSaving
+    }
+    private var automaticAdjustmentCandidate: String? {
+        guard canPresentAdjustment, adjustmentStore.item == nil, !adjustmentStore.selectingItem,
+              adjustmentStore.notice == nil,
+              let item = adjustmentStore.state?.nextItem(now: Date()) else { return nil }
+        return "\(viewModel.selectedOshi.id)-\(item.rawValue)"
+    }
+
     // MARK: - メイン画面コンテンツ
     private var chatContent: some View {
         VStack(spacing: 0) {
@@ -248,59 +345,95 @@ struct OshiAIChatView: View {
                 }
             }
             
-            // プロフィール画像
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [primaryAccent.opacity(0.3), secondaryAccent.opacity(0.3)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 46, height: 46)
-                
-                profileImage
-                    .frame(width: 42, height: 42)
-                    .clipShape(Circle())
+            // プロフィール画像（外周リング = 次の関係までの進み具合）
+            Button(action: openRelationshipDetail) {
+                RelationshipAvatarRing(relationship: relationshipFeed.relationship) {
+                    profileImage
+                }
             }
-            
-            VStack(alignment: .leading, spacing: 2) {
+            .buttonStyle(.plain)
+
+            VStack(alignment: .leading, spacing: 0) {
                 Text(viewModel.selectedOshi.name)
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundColor(.primary)
-                
+                    .lineLimit(1)
+                    .onTapGesture(perform: openRelationshipDetail)
+
                 HStack(spacing: 4) {
                     if isTyping {
                         TypingIndicatorDots()
                         Text(L10n.typing)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(primaryAccent)
+                            .padding(.vertical, 4)
+                    } else {
+                        RelationshipStatusLabel(relationship: relationshipFeed.relationship, action: openRelationshipDetail)
+                            .fixedSize()
+                        Text("·")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.secondary.opacity(0.6))
+                        situationLabel
                     }
                 }
             }
             
             Spacer()
             
-            // 設定ボタン
-            Button(action: {
-                generateHapticFeedback()
-                isTextFieldFocused = false
-                showEditPersonality = true
-            }) {
+            // Both routes use the existing header settings entry point.
+            Menu {
+                Button {
+                    isTextFieldFocused = false
+                    showAppearanceSettings = true
+                } label: {
+                    Label("chat_appearance_title", systemImage: "paintpalette")
+                }
+                Divider()
+                Menu {
+                    ForEach(RoleplayReplyLength.allCases) { length in
+                        Button {
+                            isTextFieldFocused = false
+                            adjustmentStore.selectItem(.length)
+                            adjustmentStore.choose(length.adjustmentChoice, viewModel: viewModel)
+                        } label: {
+                            if RoleplayReplyLength(choice: ConversationAdjustmentItem.length.savedChoice(in: viewModel.selectedOshi.speaking_style)) == length {
+                                Label(length.title, systemImage: "checkmark")
+                            } else {
+                                Text(length.title)
+                            }
+                        }
+                    }
+                } label: {
+                    Label("roleplay_reply_length_title", systemImage: "text.alignleft")
+                }
+                .disabled(adjustmentStore.isSaving || isAwaitingReply || isTyping)
+                Button {
+                    isTextFieldFocused = false
+                    showRoleplaySettings = true
+                } label: {
+                    Label("roleplay_character_settings_entry", systemImage: "person.text.rectangle")
+                }
+                .disabled(adjustmentStore.isSaving || isAwaitingReply || isTyping)
+                Button(ConversationAdjustmentText.string("adjustment_open")) {
+                    isTextFieldFocused = false
+                    adjustmentStore.openManually()
+                    shouldScrollToBottom = true
+                }
+                .disabled(adjustmentStore.isSaving)
+                Button(L10n.editPersonalityTraits) {
+                    generateHapticFeedback()
+                    isTextFieldFocused = false
+                    showEditPersonality = true
+                }
+                .disabled(adjustmentStore.isSaving)
+            } label: {
                 Image(systemName: "slider.horizontal.3")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary.opacity(0.6))
                     .frame(width: 36, height: 36)
-                    .background(
-                        Circle()
-                            .fill(Color(.secondarySystemBackground))
-                            .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
-                    )
+                    .background(Circle().fill(Color(.secondarySystemBackground)))
             }
-            
-            // 残りメッセージ表示
-            subscriptionBadge
+            .accessibilityLabel(ConversationAdjustmentText.string("adjustment_settings"))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -311,29 +444,136 @@ struct OshiAIChatView: View {
         )
     }
     
-    // サブスクリプションバッジ
-    private var subscriptionBadge: some View {
-        Group {
-            if subscriptionManager.isSubscribed {
-                HStack(spacing: 4) {
+    private func openRelationshipDetail() {
+        generateHapticFeedback()
+        isTextFieldFocused = false
+        showRelationshipDetail = true
+    }
+
+    // 現在のシチュエーション（タップでロールプレイ設定）
+    private var situationLabel: some View {
+        Button(action: {
+            generateHapticFeedback()
+            isTextFieldFocused = false
+            showRoleplaySettings = true
+        }) {
+            let isPremium = subscriptionManager.isSubscribed
+            // 無料ユーザーはお試し中だけシチュエーションが有効
+            let isSet = !roleplaySituation.shortLabel.isEmpty && (isPremium || RoleplayTrial.isActive)
+            HStack(spacing: 2) {
+                if !isPremium && roleplayTrialStatus == .used {
+                    // お試し済み: 続きはプレミアム限定
                     Image(systemName: "crown.fill")
-                        .font(.system(size: 11))
-                    Text(L10n.unlimited)
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .font(.system(size: 9))
+                        .foregroundColor(.orange)
                 }
-                .foregroundColor(.orange)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(Color.orange.opacity(0.12))
-                )
-            } else {
-                EmptyView()
+                Text(situationChipText(isSet: isSet, isPremium: isPremium))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(isSet ? .secondary : primaryAccent)
+                    .lineLimit(1)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.secondary.opacity(0.6))
+            }
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isAwaitingReply || isTyping)
+        .accessibilityLabel(Bundle.main.localizedString(forKey: "roleplay_settings_title", value: "ロールプレイ設定", table: nil))
+    }
+
+    private func situationChipText(isSet: Bool, isPremium: Bool) -> String {
+        let base = isSet
+            ? roleplaySituation.shortLabel
+            : Bundle.main.localizedString(forKey: "roleplay_chip_label", value: "ロールプレイ設定", table: nil)
+        guard !isPremium else { return base }
+        switch roleplayTrialStatus {
+        case .available:
+            return Bundle.main.localizedString(forKey: "roleplay_chip_trial_available", value: "ロールプレイを無料で体験", table: nil)
+        case .active(let remaining):
+            return base + String(format: Bundle.main.localizedString(forKey: "roleplay_chip_trial_remaining", value: "（残り%d回）", table: nil), remaining)
+        case .used:
+            return base
+        }
+    }
+
+    private func loadRoleplaySituation() {
+        roleplayTrialStatus = RoleplayTrial.status
+        let oshiId = viewModel.selectedOshi.id
+        RoleplayRepository.shared.fetchState(oshiId: oshiId) { state in
+            DispatchQueue.main.async {
+                guard viewModel.selectedOshi.id == oshiId else { return }
+                roleplaySituation = state.situation
+            }
+        }
+        relationshipFeed.start(oshiId: oshiId)
+    }
+
+    /// 未演出のステージアップがあれば、チャット上で演出してからキャラクターの反応（LLM生成）を出す。
+    /// 返信待ち・読み込み中は待ち、終わった時点で改めて呼ばれる。
+    private func presentPendingStageUpIfPossible() {
+        guard let event = relationshipFeed.pendingEvent,
+              !isAwaitingReply, !isTyping, !isFetchingMessages, !adjustmentStore.isSaving,
+              let anchorId = messages.last?.id else { return }
+        let oshi = viewModel.selectedOshi
+        relationshipFeed.markHandled(event)
+        isAwaitingReply = true
+
+        RoleplayRepository.shared.claimEventAnnouncement(event, oshiId: oshi.id) { claimed in
+            DispatchQueue.main.async {
+                // 別端末・別画面で既に演出済み、または推しが切り替わった
+                guard claimed, viewModel.selectedOshi.id == oshi.id else {
+                    isAwaitingReply = false
+                    return
+                }
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                    stageUpBanners[anchorId] = event
+                }
+                shouldScrollToBottom = true
+                generateHapticFeedback()
+
+                let requestedAt = Date()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    if viewModel.selectedOshi.id == oshi.id {
+                        withAnimation { isTyping = true }
+                    }
+                }
+                RoleplayChatService.shared.generateStageUpReaction(event: event, oshi: oshi, chatHistory: messages) { reply in
+                    // 演出を見てもらう時間を取ってから返す
+                    let wait = max(3.0 - Date().timeIntervalSince(requestedAt), 0)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
+                        withAnimation { isTyping = false }
+                        isAwaitingReply = false
+                        guard let reply = reply, !reply.message.isEmpty else { return }
+                        let aiMessage = ChatMessage(
+                            id: UUID().uuidString,
+                            content: reply.message,
+                            isUser: false,
+                            timestamp: Date().timeIntervalSince1970,
+                            oshiId: oshi.id,
+                            itemId: oshiItem?.id,
+                            emotion: reply.emotion.rawValue,
+                            action: reply.action,
+                            innerThought: reply.innerThought
+                        )
+                        if viewModel.selectedOshi.id == oshi.id {
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                                messages.append(aiMessage)
+                            }
+                            shouldScrollToBottom = true
+                        }
+                        ChatDatabaseManager.shared.saveMessage(aiMessage) { error in
+                            if let error = error {
+                                print("❌ ステージアップ反応の保存エラー: \(error.localizedDescription)")
+                            }
+                        }
+                    }
+                }
             }
         }
     }
-    
+
     // MARK: - チャットメッセージリスト
     private var chatMessagesView: some View {
         ScrollViewReader { proxy in
@@ -358,15 +598,29 @@ struct OshiAIChatView: View {
                                 userBubbleGradient: userBubbleGradient,
                                 oshiBubbleColor: oshiBubbleColor,
                                 onEdit: (isAdmin || isDeveloperMode) ? { startEditingMessage($0) } : nil,
-                                onDelete: isAdmin ? { confirmDeleteMessage($0) } : nil
+                                // 編集は管理者だけ、削除は全ユーザーが使えるようにする。
+                                onDelete: { confirmDeleteMessage($0) },
+                                isLocked: !message.isUser && lockedReplyIds.contains(message.id) && !subscriptionManager.isSubscribed && !isAdmin,
+                                onUnlock: {
+                                    requestedUnlockReplyId = message.id
+                                    showMessageLimitModal = true
+                                }
                             )
                             .id(message.id)
                             .transition(.asymmetric(
                                 insertion: .scale(scale: 0.9).combined(with: .opacity),
                                 removal: .opacity
                             ))
+
+                            // 関係ステージが変わったときの演出（このメッセージの直後に出す）
+                            if let event = stageUpBanners[message.id] {
+                                RelationshipStageUpBanner(event: event, oshiName: viewModel.selectedOshi.name) {
+                                    showRelationshipDetail = true
+                                }
+                                .transition(.scale(scale: 0.9).combined(with: .opacity))
+                            }
                         }
-                        
+
                         // タイピングインジケーター
                         if isTyping {
                             TypingBubble(
@@ -379,10 +633,13 @@ struct OshiAIChatView: View {
                             ))
                         }
                         
-                        Color.clear
-                            .frame(height: 20)
-                            .id("bottomMarker")
                     }
+                    if adjustmentStore.item != nil || adjustmentStore.selectingItem || adjustmentStore.notice != nil {
+                        ConversationAdjustmentCard(store: adjustmentStore, viewModel: viewModel, isReplyPending: isAwaitingReply || isTyping)
+                    }
+                    Color.clear
+                        .frame(height: 20)
+                        .id("bottomMarker")
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 16)
@@ -401,7 +658,7 @@ struct OshiAIChatView: View {
                 }
             }
             .onChange(of: shouldScrollToBottom) { shouldScroll in
-                if shouldScroll && !messages.isEmpty {
+                if shouldScroll {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                         proxy.scrollTo("bottomMarker", anchor: .bottom)
                     }
@@ -516,6 +773,13 @@ struct OshiAIChatView: View {
             Divider()
                 .opacity(0.3)
             
+            if tutorialManager.isAt(.reply) {
+                TutorialInlineTip(text: L10n.tutorialReplyHint, icon: "hand.point.down.fill")
+                    .padding(.horizontal, 16)
+                    .padding(.top, 10)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            
             HStack(spacing: 12) {
                 // テキストフィールド
                 HStack(spacing: 8) {
@@ -525,10 +789,10 @@ struct OshiAIChatView: View {
                         axis: .vertical
                     )
                     .focused($isTextFieldFocused)
-                    .font(.system(size: 16))
+                    .chatMessageFont(sizeOffset: 1)
                     .lineLimit(1...5)
                     .onSubmit {
-                        if !inputText.isEmpty && !isLoading {
+                        if canSend {
                             sendMessage()
                         }
                     }
@@ -561,9 +825,13 @@ struct OshiAIChatView: View {
         .opacity(isInitialScrollComplete ? 1 : 0)
     }
     
+    private var canSend: Bool {
+        !inputText.isEmpty && !isLoading && !isAwaitingReply && !adjustmentStore.isSaving
+    }
+
     private var sendButton: some View {
         Button(action: {
-            if !inputText.isEmpty && !isLoading {
+            if canSend {
                 generateHapticFeedback()
                 sendMessage()
             }
@@ -594,11 +862,33 @@ struct OshiAIChatView: View {
                     .offset(y: -1)
             }
         }
-        .disabled(inputText.isEmpty || isLoading)
+        .disabled(!canSend)
+        .opacity(isAwaitingReply ? 0.5 : 1.0)
         .scaleEffect(inputText.isEmpty ? 0.95 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: inputText.isEmpty)
     }
     
+    // MARK: - 推し設定画面への遷移
+    private var editPersonalityLink: some View {
+        NavigationLink(
+            destination: FirebaseDataLoader(oshiId: viewModel.selectedOshi.id) { loadedOshi in
+                EditOshiPersonalityView(
+                    viewModel: OshiViewModel(oshi: loadedOshi ?? viewModel.selectedOshi),
+                    onSave: { updatedOshi in
+                        self.viewModel.selectedOshi = updatedOshi
+                    },
+                    onUpdate: {
+                        loadOshiData()
+                    }
+                )
+            }
+            .id(editScreenID),
+            isActive: $showEditPersonality,
+            label: { EmptyView() }
+        )
+        .hidden()
+    }
+
     // MARK: - オーバーレイ
     private var overlaysView: some View {
         ZStack {
@@ -625,30 +915,12 @@ struct OshiAIChatView: View {
                 }
             }
             
-            // NavigationLink
-            NavigationLink(
-                destination: FirebaseDataLoader(oshiId: viewModel.selectedOshi.id) { loadedOshi in
-                    EditOshiPersonalityView(
-                        viewModel: OshiViewModel(oshi: loadedOshi ?? viewModel.selectedOshi),
-                        onSave: { updatedOshi in
-                            self.viewModel.selectedOshi = updatedOshi
-                        },
-                        onUpdate: {
-                            loadOshiData()
-                        }
-                    )
-                }
-                .id(editScreenID),
-                isActive: $showEditPersonality,
-                label: { EmptyView() }
-            )
-            .hidden()
         }
     }
     
     // MARK: - メッセージ送信（既読・タイピング機能付き）
     private func sendMessage() {
-        guard !inputText.isEmpty else { return }
+        guard !inputText.isEmpty, !isAwaitingReply, !adjustmentStore.isSaving else { return }
         
         let isSubscribed = subscriptionManager.isSubscribed
         
@@ -656,8 +928,19 @@ struct OshiAIChatView: View {
             MessageLimitManager.shared.forceUpdateSubscriptionCache(isSubscribed: isSubscribed)
         }
         
-        // メッセージ上限チェックは廃止（インタースティシャル広告に移行）
+        // 無料ユーザーの1日の上限チェック
+        let isLimitedUser = !isSubscribed && !isAdmin
+        let allowance = isLimitedUser ? MessageLimitManager.shared.sendAllowance() : .normal(isLast: false)
+        if allowance == .blocked {
+            isTextFieldFocused = false
+            showMessageLimitModal = true
+            return
+        }
+        if isLimitedUser {
+            MessageLimitManager.shared.incrementCount()
+        }
         remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+        let isLastMessageToday = allowance == .normal(isLast: true)
         
         // ユーザーメッセージを作成
         let userMessageId = UUID().uuidString
@@ -671,6 +954,10 @@ struct OshiAIChatView: View {
         )
         
         let userInput = inputText
+        // 返信待ちの間に推しが切り替わっても、返信は送信した推しのチャットに保存する
+        let oshiId = viewModel.selectedOshi.id
+        let sendingUserID = Auth.auth().currentUser?.uid
+        isAwaitingReply = true
         lastSentMessageId = userMessageId
         showReadReceipt = false
         
@@ -683,6 +970,7 @@ struct OshiAIChatView: View {
             messages.append(userMessage)
         }
         shouldScrollToBottom = true
+        tutorialManager.replyDidSend()
         
         // Firebaseに保存
         ChatDatabaseManager.shared.saveMessage(userMessage) { error in
@@ -692,7 +980,8 @@ struct OshiAIChatView: View {
         }
 
         // 5回に1回インタースティシャル広告を表示
-        if shouldShowAd {
+        // 上限直前・ぼかし返信の回は上限モーダルが出るので、広告を重ねない
+        if shouldShowAd && allowance == .normal(isLast: false) {
             IndividualChatInterstitialManager.shared.incrementAndShowIfNeeded()
         }
 
@@ -716,7 +1005,7 @@ struct OshiAIChatView: View {
         let sendTime = Date()
 
         // AI応答を生成
-        AIMessageGenerator.shared.generateResponse(for: userInput, oshi: viewModel.selectedOshi, chatHistory: messages) { content, error in
+        RoleplayChatService.shared.generateReply(for: userInput, oshi: viewModel.selectedOshi, chatHistory: messages) { reply, error, roleplayTrialEnded in
             // タイピング開始後、最低5秒は表示してから返信を出す
             let elapsed = Date().timeIntervalSince(sendTime)
             let minShowTime = typingDelay + 5.0
@@ -727,32 +1016,56 @@ struct OshiAIChatView: View {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     isTyping = false
                 }
+                isAwaitingReply = false
+                let isSameOshi = viewModel.selectedOshi.id == oshiId
                 
-                if let error = error {
-                    print("❌ AI返信生成エラー: \(error.localizedDescription)")
+                guard let reply = reply, !reply.message.isEmpty else {
+                    print("❌ AI返信生成エラー: \(error?.localizedDescription ?? "empty reply")")
+                    if isLimitedUser {
+                        MessageLimitManager.shared.refundCount()
+                        remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+                    }
+                    if isSameOshi {
+                        showReplyErrorAlert = true
+                    }
+                    tutorialManager.replyDidFail()
                     return
                 }
                 
-                guard let content = content else {
-                    return
+                if let userID = sendingUserID, Auth.auth().currentUser?.uid == userID {
+                    adjustmentStore.recordRound(userID: userID, oshiID: oshiId, messageID: userMessageId)
                 }
-                
-                // AI返信を追加
+
+                // AI返信を追加（content はセリフ本文、emotion / action は構造化データとして保持）
                 let aiMessageId = UUID().uuidString
                 let aiMessage = ChatMessage(
                     id: aiMessageId,
-                    content: content,
+                    content: reply.message,
                     isUser: false,
                     timestamp: Date().timeIntervalSince1970,
-                    oshiId: viewModel.selectedOshi.id,
-                    itemId: oshiItem?.id
+                    oshiId: oshiId,
+                    itemId: oshiItem?.id,
+                    emotion: reply.emotion.rawValue,
+                    action: reply.action,
+                    innerThought: reply.innerThought
                 )
                 
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                    messages.append(aiMessage)
+                // 上限超過後の返信は途中までしか読めないようにする
+                if allowance == .teaser {
+                    MessageLimitManager.shared.lockReply(id: aiMessageId)
+                    lockedReplyIds.insert(aiMessageId)
                 }
-                shouldScrollToBottom = true
-                generateHapticFeedback()
+                
+                // 別の推しに切り替わっていたら画面には出さず保存だけする
+                if isSameOshi {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                        messages.append(aiMessage)
+                    }
+                    shouldScrollToBottom = true
+                    generateHapticFeedback()
+                    presentOnboardingPaywallIfNeeded()
+                }
+                tutorialManager.replyDidArrive()
                 
                 // Firebaseに保存
                 ChatDatabaseManager.shared.saveMessage(aiMessage) { error in
@@ -764,11 +1077,107 @@ struct OshiAIChatView: View {
                 // 既読表示をリセット
                 lastSentMessageId = nil
                 showReadReceipt = false
+                
+                roleplayTrialStatus = RoleplayTrial.status
+                guard isSameOshi else { return }
+                if roleplayTrialEnded {
+                    // ロールプレイのお試しを使い切った → 続きはプレミアムで
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        isTextFieldFocused = false
+                        paywallSource = .roleplay
+                        showSubscriptionView = true
+                    }
+                } else if isLastMessageToday {
+                    presentLastMessageFarewell(oshiId: oshiId)
+                } else if allowance == .teaser {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        isTextFieldFocused = false
+                        showMessageLimitModal = true
+                    }
+                }
             }
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.markMessagesAsRead()
+        }
+    }
+    
+    /// 今日最後の1通への返信のあと、推しに名残惜しいセリフを言わせてから上限モーダルを出す
+    private func presentLastMessageFarewell(oshiId: String) {
+        // セリフ〜モーダルの間に次のメッセージを送らせない
+        isAwaitingReply = true
+        let oshi = viewModel.selectedOshi
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            guard viewModel.selectedOshi.id == oshiId else {
+                isAwaitingReply = false
+                return
+            }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                isTyping = true
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                isTyping = false
+            }
+            guard viewModel.selectedOshi.id == oshiId else {
+                isAwaitingReply = false
+                return
+            }
+            let language = LanguageManager.shared.getConversationLanguage(for: oshi)
+            // 会話履歴（Firebase）には保存しない、この場限りのセリフ
+            let farewell = ChatMessage(
+                id: UUID().uuidString,
+                content: limitFarewellLine(for: oshi, language: language),
+                isUser: false,
+                timestamp: Date().timeIntervalSince1970,
+                oshiId: oshiId,
+                itemId: oshiItem?.id,
+                emotion: CharacterEmotion.sad.rawValue,
+                action: LanguageManager.shared.localizedString("limit_oshi_want_more_action", language: language, fallback: "")
+            )
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                messages.append(farewell)
+            }
+            shouldScrollToBottom = true
+            generateHapticFeedback()
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                isAwaitingReply = false
+                guard viewModel.selectedOshi.id == oshiId else { return }
+                isTextFieldFocused = false
+                showMessageLimitModal = true
+            }
+        }
+    }
+    
+    /// 推しの呼び方・話し方に合わせた「もっと話したいな…」のセリフ
+    private func limitFarewellLine(for oshi: Oshi, language: String) -> String {
+        let style = oshi.speaking_style?.lowercased() ?? ""
+        let isPolite = ["敬語", "丁寧", "です", "polite", "formal"].contains { style.contains($0) }
+        let nickname = oshi.user_nickname?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let base = isPolite ? "limit_oshi_want_more_polite" : "limit_oshi_want_more_casual"
+        if nickname.isEmpty {
+            return LanguageManager.shared.localizedString("\(base)_no_name", language: language, fallback: "…")
+        }
+        let format = LanguageManager.shared.localizedString(base, language: language, fallback: "%@…")
+        return String(format: format, nickname)
+    }
+    
+    /// 最初の会話が盛り上がった直後（数回やりとりした後）に一度だけペイウォールを出す
+    private func presentOnboardingPaywallIfNeeded() {
+        guard PaywallCampaignManager.shared.registerAIReplyAndCheckOnboarding(
+            isSubscribed: subscriptionManager.isSubscribed,
+            isAdmin: isAdmin
+        ) else { return }
+        // 返信を読む時間を置いてから表示する
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            guard !showSubscriptionView, !subscriptionManager.isSubscribed else { return }
+            paywallSource = .onboarding
+            showSubscriptionView = true
         }
     }
     
@@ -797,7 +1206,10 @@ struct OshiAIChatView: View {
                 isUser: editingMessage.isUser,
                 timestamp: editingMessage.timestamp,
                 oshiId: editingMessage.oshiId,
-                itemId: editingMessage.itemId
+                itemId: editingMessage.itemId,
+                emotion: editingMessage.emotion,
+                action: editingMessage.action,
+                innerThought: editingMessage.innerThought
             )
             messages[index] = updatedMessage
             
@@ -935,14 +1347,22 @@ struct OshiAIChatView: View {
     }
     
     private func loadMessages() {
+        loadRoleplaySituation()
         isFetchingMessages = true
         isInitialScrollComplete = false
+        
+        // 前の推しの監視を解除してから新しく監視する
+        messagesObservation?.cancel()
+        messagesObservation = nil
+        let oshiId = viewModel.selectedOshi.id
         
         if let item = oshiItem {
             let itemId = item.id
             
-            ChatDatabaseManager.shared.fetchMessages(for: viewModel.selectedOshi.id, itemId: itemId) { fetchedMessages, error in
+            messagesObservation = ChatDatabaseManager.shared.fetchMessages(for: oshiId, itemId: itemId) { fetchedMessages, error in
                 DispatchQueue.main.async {
+                    // 別の推しに切り替わった後に届いた更新は反映しない
+                    guard viewModel.selectedOshi.id == oshiId else { return }
                     if let error = error {
                         print("メッセージ読み込みエラー: \(error.localizedDescription)")
                         isFetchingMessages = false
@@ -968,8 +1388,10 @@ struct OshiAIChatView: View {
                 }
             }
         } else {
-            ChatDatabaseManager.shared.fetchMessages(for: viewModel.selectedOshi.id) { fetchedMessages, error in
+            messagesObservation = ChatDatabaseManager.shared.fetchMessages(for: oshiId) { fetchedMessages, error in
                 DispatchQueue.main.async {
+                    // 別の推しに切り替わった後に届いた更新は反映しない
+                    guard viewModel.selectedOshi.id == oshiId else { return }
                     if let error = error {
                         print("メッセージ読み込みエラー: \(error.localizedDescription)")
                         isFetchingMessages = false
@@ -1064,6 +1486,8 @@ struct OshiAIChatView: View {
     }
     
     private func resetViewState() {
+        adjustmentStore.load(oshiID: viewModel.selectedOshi.id)
+        requestedUnlockReplyId = nil
         messages = []
         isInitialScrollComplete = false
         isFetchingMessages = true
@@ -1073,6 +1497,7 @@ struct OshiAIChatView: View {
         isTyping = false
         showReadReceipt = false
         lastSentMessageId = nil
+        stageUpBanners = [:]
     }
 
     private func loadOshiData() {
@@ -1284,37 +1709,47 @@ struct OshiAIChatView: View {
         }
     }
     
-    private func loadRewardedAd() {
+    private func loadRewardedAd(completion: ((Bool) -> Void)? = nil) {
         guard !AdConfiguration.isDisabledForDevelopment else {
             rewardedAd = nil
             isLoadingAd = false
+            completion?(false)
             return
         }
 
         let request = Request()
-        RewardedAd.load(with: "ca-app-pub-4898800212808837/3373075660", request: request) { [self] ad, error in
-            if let error = error {
-                print("リワード広告の読み込みに失敗しました: \(error.localizedDescription)")
-                return
-            }
+        RewardedAd.load(with: "ca-app-pub-4898800212808837/3373075660", request: request) { ad, error in
             DispatchQueue.main.async {
+                if let error = error {
+                    print("リワード広告の読み込みに失敗しました: \(error.localizedDescription)")
+                    completion?(false)
+                    return
+                }
                 self.rewardedAd = ad
+                completion?(ad != nil)
             }
         }
     }
     
     private func showRewardAd() {
+        guard !isLoadingAd else { return }
+        
         guard !AdConfiguration.isDisabledForDevelopment else {
-            MessageLimitManager.shared.resetCountAfterReward()
-            remainingMessages = MessageLimitManager.shared.getRemainingMessages()
-            showMessageLimitModal = false
-            rewardAmount = 10
-            showRewardCompletedModal = true
+            grantReward()
             return
         }
 
+        // まだ読み込めていなければ、読み込み完了を待ってから表示する
         guard let rewardedAd = rewardedAd else {
-            loadRewardedAd()
+            isLoadingAd = true
+            loadRewardedAd { loaded in
+                isLoadingAd = false
+                if loaded, showMessageLimitModal {
+                    showRewardAd()
+                } else if !loaded {
+                    showAdLoadFailedAlert = true
+                }
+            }
             return
         }
         
@@ -1323,20 +1758,34 @@ struct OshiAIChatView: View {
             return
         }
         
+        self.rewardedAd = nil
         rewardedAd.present(from: rootViewController) {
             DispatchQueue.main.async {
-                MessageLimitManager.shared.resetCountAfterReward()
-                self.remainingMessages = MessageLimitManager.shared.getRemainingMessages()
-                self.showMessageLimitModal = false
-                self.rewardAmount = 10
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    self.showRewardCompletedModal = true
-                }
-                
+                grantReward()
                 generateHapticFeedback()
-                self.loadRewardedAd()
             }
+        }
+        // 次の視聴に備えて先読み
+        loadRewardedAd()
+    }
+    
+    private func grantReward() {
+        rewardAmount = MessageLimitManager.shared.grantRewardMessages()
+        if rewardAmount > 0 {
+            let lockedReplies = messages.filter {
+                !$0.isUser && $0.oshiId == viewModel.selectedOshi.id && lockedReplyIds.contains($0.id)
+            }
+            let replyId = lockedReplies.first(where: { $0.id == requestedUnlockReplyId })?.id
+                ?? lockedReplies.last?.id
+            if let replyId {
+                MessageLimitManager.shared.unlockReply(id: replyId)
+                lockedReplyIds.remove(replyId)
+            }
+        }
+        remainingMessages = MessageLimitManager.shared.getRemainingMessages()
+        showMessageLimitModal = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            showRewardCompletedModal = true
         }
     }
     
@@ -1423,6 +1872,9 @@ struct ModernChatBubble: View {
     let oshiBubbleColor: Color
     let onEdit: ((ChatMessage) -> Void)?
     let onDelete: ((ChatMessage) -> Void)?
+    /// 上限超過後の返信：途中までだけ見せて、続きはぼかす
+    var isLocked: Bool = false
+    var onUnlock: (() -> Void)? = nil
     
     @State private var showActionSheet = false
     
@@ -1434,7 +1886,7 @@ struct ModernChatBubble: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     // メッセージバブル
                     Text(message.content)
-                        .font(.system(size: 15))
+                        .chatMessageFont()
                         .foregroundColor(.white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
@@ -1466,9 +1918,19 @@ struct ModernChatBubble: View {
                     .frame(width: 36, height: 36)
                 
                 VStack(alignment: .leading, spacing: 4) {
+                    // ロールプレイの動作描写
+                    if let action = message.action, !action.isEmpty {
+                        Text(action)
+                            .chatMessageFont(sizeOffset: -3)
+                            .italic()
+                            .foregroundColor(.secondary)
+                            .padding(.leading, 6)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
                     // メッセージバブル
-                    Text(message.content)
-                        .font(.system(size: 15))
+                    oshiMessageText
+                        .chatMessageFont()
                         .foregroundColor(.primary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
@@ -1482,11 +1944,15 @@ struct ModernChatBubble: View {
                             }
                         }
                     
-                    // 時間表示
-                    Text(formatTime(timestamp: message.timestamp))
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                        .padding(.leading, 4)
+                    if !isLocked, let thought = RoleplayReply.cleanInnerThought(message.innerThought) {
+                        InnerThoughtView(thought: thought) {
+                            replyMetadata
+                        }
+                        .id(message.id)
+                    } else {
+                        replyMetadata
+                            .padding(.leading, 4)
+                    }
                 }
                 
                 Spacer(minLength: 60)
@@ -1495,8 +1961,8 @@ struct ModernChatBubble: View {
         .padding(.vertical, 2)
         .actionSheet(isPresented: $showActionSheet) {
             ActionSheet(
-                title: Text(L10n.editMessageTitle), // 変更
-                message: Text(L10n.adminEditWarning), // 変更
+                title: Text(onEdit == nil ? L10n.deleteMessageTitle : L10n.editMessageTitle),
+                message: Text(onEdit == nil ? L10n.deleteMessageWarning : L10n.adminEditWarning),
                 buttons: actionSheetButtons
             )
         }
@@ -1504,6 +1970,70 @@ struct ModernChatBubble: View {
 
     private var canShowActions: Bool {
         onEdit != nil || onDelete != nil
+    }
+
+    private var replyMetadata: some View {
+        HStack(spacing: 4) {
+            Text(formatTime(timestamp: message.timestamp))
+                .font(.system(size: 10))
+                .foregroundColor(.secondary)
+            if !message.characterEmotion.indicator.isEmpty {
+                Text(message.characterEmotion.indicator)
+                    .font(.system(size: 10))
+            }
+        }
+        .fixedSize()
+    }
+    
+    @ViewBuilder
+    private var oshiMessageText: some View {
+        if isLocked {
+            let preview = lockedPreview
+            VStack(alignment: .leading, spacing: 8) {
+                Text(preview.visible + "…")
+                Text(preview.hidden)
+                    .blur(radius: 6)
+                    .accessibilityHidden(true)
+                Button(action: { onUnlock?() }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "lock.fill")
+                        Text(NSLocalizedString("limit_locked_reply_unlock", comment: "Read the rest"))
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule().fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.91, green: 0.42, blue: 0.58),
+                                    Color(red: 0.65, green: 0.45, blue: 0.85)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        } else {
+            Text(message.content)
+        }
+    }
+    
+    /// 冒頭の3分の1ほど（最大40文字）だけ読めるようにする
+    private var lockedPreview: (visible: String, hidden: String) {
+        let chars = Array(message.content)
+        let visibleCount = min(max(chars.count / 3, 1), 40)
+        let visible = String(chars.prefix(visibleCount))
+        var hidden = String(chars.dropFirst(visibleCount))
+        // 短い返信でも「続きがある」ように見せる
+        while hidden.count < 24 {
+            hidden += hidden.isEmpty ? "……" : hidden
+        }
+        return (visible, hidden)
     }
 
     private var actionSheetButtons: [ActionSheet.Button] {

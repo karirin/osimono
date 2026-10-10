@@ -20,6 +20,8 @@ class SubscriptionManager: ObservableObject {
     @Published var currentSubscription: SKProduct?
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    // 無料トライアル（導入オファー）の対象になっているプロダクトID
+    @Published var introOfferEligibleProductIDs: Set<String> = []
     
     private var updateListenerTask: Task<Void, Error>? = nil
     
@@ -30,26 +32,32 @@ class SubscriptionManager: ObservableObject {
         "yearlySub"
     ]
     
-    @Published var debugSubscriptionEnabled: Bool = false {
+    @Published var debugSubscriptionEnabled: Bool = PremiumFeatures.developmentPremiumEnabled {
         didSet {
-            if debugSubscriptionEnabled {
-                isSubscribed = true
-                print("🐛 デバッグモード: サブスクリプション有効")
-            } else {
-                // 実際の状態を確認
-                Task {
-                    await updateSubscriptionStatus()
-                }
+            #if DEBUG
+            UserDefaults.standard.set(debugSubscriptionEnabled, forKey: PremiumFeatures.developmentPremiumKey)
+            #endif
+            isSubscribed = PremiumFeatures.isActive
+            Task {
+                await updateSubscriptionStatus()
             }
         }
     }
     
-    init() {
+    // アプリ全体で SubscriptionManager.shared の1つだけを使う
+    // （画面ごとに作ると isSubscribed=false から始まり、課金ユーザーが一時的に無料扱いになるため）
+    private init() {
+        // StoreKit の確認が終わるまでは前回の状態を使う
+        isSubscribed = PremiumFeatures.isActive
+        
         // トランザクションの監視を開始
         updateListenerTask = listenForTransactions()
         
         Task {
+            // 商品情報の取得（通信）を待たずに、まず購読状態を確定させる
+            await updateSubscriptionStatus()
             await requestProducts()
+            // currentSubscription を商品情報と紐付けるためにもう一度確認
             await updateSubscriptionStatus()
         }
     }
@@ -114,6 +122,8 @@ class SubscriptionManager: ObservableObject {
             }
             
             print("✅ 取得した商品数: \(subscriptionProducts.count)")
+            
+            await updateIntroOfferEligibility()
             
             if subscriptionProducts.isEmpty {
                 #if targetEnvironment(simulator)
@@ -188,6 +198,36 @@ class SubscriptionManager: ObservableObject {
         isLoading = false
     }
     
+    // 無料トライアルの対象かどうかを更新（同じグループで一度でも購読したユーザーは対象外）
+    func updateIntroOfferEligibility() async {
+        var eligibleIDs: Set<String> = []
+        for product in subscriptionProducts {
+            guard let subscription = product.subscription,
+                  subscription.introductoryOffer?.paymentMode == .freeTrial else { continue }
+            if await subscription.isEligibleForIntroOffer {
+                eligibleIDs.insert(product.id)
+            }
+        }
+        introOfferEligibleProductIDs = eligibleIDs
+        print("🎁 無料トライアル対象: \(eligibleIDs)")
+    }
+    
+    // 無料トライアルの日数（対象外・トライアルなし・Remote Config で訴求オフの場合はnil）
+    func freeTrialDays(for product: SKProduct) -> Int? {
+        guard PaywallConfig.shared.trialEnabled,
+              introOfferEligibleProductIDs.contains(product.id),
+              let offer = product.subscription?.introductoryOffer,
+              offer.paymentMode == .freeTrial else { return nil }
+        let period = offer.period
+        switch period.unit {
+        case .day: return period.value * offer.periodCount
+        case .week: return period.value * 7 * offer.periodCount
+        case .month: return period.value * 30 * offer.periodCount
+        case .year: return period.value * 365 * offer.periodCount
+        @unknown default: return nil
+        }
+    }
+    
     // 商品の順序を取得（ソート用）
     private func getProductOrder(_ product: SKProduct) -> Int {
         if product.id.contains("weeklySub") {
@@ -231,7 +271,7 @@ class SubscriptionManager: ObservableObject {
             switch result {
             case .success(let verification):
                 print("✅ 購入成功")
-                let transaction = checkVerified(verification)
+                let transaction = try checkVerified(verification)
                 await updateSubscriptionStatus()
                 await transaction.finish()
                 isLoading = false
@@ -265,7 +305,7 @@ class SubscriptionManager: ObservableObject {
         // 現在有効なエンタイトルメントをチェック
         for await result in SKTransaction.currentEntitlements {
             do {
-                let transaction = checkVerified(result)
+                let transaction = try checkVerified(result)
                 print("📋 エンタイトルメント確認: \(transaction.productID)")
                 
                 // サブスクリプションIDに含まれているかチェック
@@ -284,19 +324,26 @@ class SubscriptionManager: ObservableObject {
             }
         }
         
-        self.isSubscribed = hasActiveSubscription
+        // 購入状態だけを保存し、開発用プレミアムが Release ビルドに引き継がれないようにする。
+        UserDefaults.standard.set(hasActiveSubscription, forKey: PremiumFeatures.subscriptionCacheKey)
+        self.isSubscribed = PremiumFeatures.isActive
         self.currentSubscription = activeSubscription
+        if isSubscribed {
+            // 購読済みなら翌日の限定オファー通知は不要
+            PaywallCampaignManager.shared.cancelWinBack()
+        }
         
-        print("📊 サブスクリプション状態: \(hasActiveSubscription ? "有効" : "無効")")
+        print("📊 サブスクリプション状態: \(isSubscribed ? "有効" : "無効")")
     }
     
     // トランザクションの監視
     func listenForTransactions() -> Task<Void, Error> {
-        return Task.detached {
+        return Task.detached { [weak self] in
             print("👂 トランザクション監視を開始")
             for await result in SKTransaction.updates {
+                guard let self else { return }
                 do {
-                    let transaction = await self.checkVerified(result)
+                    let transaction = try await self.checkVerified(result)
                     print("🔄 新しいトランザクション: \(transaction.productID)")
                     await self.updateSubscriptionStatus()
                     await transaction.finish()
@@ -307,12 +354,16 @@ class SubscriptionManager: ObservableObject {
         }
     }
     
-    // トランザクションの検証
-    func checkVerified<T>(_ result: VerificationResult<T>) -> T {
+    enum VerificationError: Error {
+        case unverified
+    }
+    
+    // トランザクションの検証（未検証のものはクラッシュさせずに無視できるよう throw する）
+    func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
-        case .unverified:
-            print("⚠️ 未検証のトランザクションが検出されました")
-            fatalError("未検証のトランザクション")
+        case .unverified(_, let error):
+            print("⚠️ 未検証のトランザクションを無視します: \(error)")
+            throw VerificationError.unverified
         case .verified(let safe):
             return safe
         }
@@ -342,7 +393,7 @@ class SubscriptionManager: ObservableObject {
         
         do {
             guard let status = try await subscription.status.first else { return nil }
-            let verifiedTx = checkVerified(status.transaction)
+            let verifiedTx = try checkVerified(status.transaction)
             return verifiedTx.expirationDate
         } catch {
             print("❌ 有効期限の取得に失敗しました: \(error)")
@@ -439,8 +490,8 @@ class SubscriptionManager: ObservableObject {
         
         do {
             guard let status = try await subscription.status.first else { return nil }
-            let renewalInfo = checkVerified(status.renewalInfo)
-            let verifiedTx = checkVerified(status.transaction)
+            let renewalInfo = try checkVerified(status.renewalInfo)
+            let verifiedTx = try checkVerified(status.transaction)
             
             return SubscriptionDetails(
                 isActive: isSubscribed,

@@ -12,7 +12,15 @@ struct MessageLimitModal: View {
     let onWatchAd: () -> Void
     let onUpgrade: () -> Void
     let remainingMessages: Int
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    /// 指定すると「◯◯ともっと話そう」のように推しの名前入りのタイトルにする
+    var oshiName: String? = nil
+    /// リワード広告の控えめなリンクを出すか
+    var canWatchAd: Bool = false
+    /// リワード広告の読み込み中
+    var isAdLoading: Bool = false
+    /// 広告視聴でぼかし返信も解除される場合
+    var unlocksReply: Bool = false
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     
     // Animation states
     @State private var showBackground = false
@@ -279,7 +287,7 @@ struct MessageLimitModal: View {
     private var contentSection: some View {
         VStack(spacing: 16) {
             // Title
-            Text(NSLocalizedString("daily_limit_reached_title", comment: "Daily conversation limit reached"))
+            Text(titleText)
                 .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundStyle(
                     LinearGradient(
@@ -324,6 +332,13 @@ struct MessageLimitModal: View {
             .offset(y: showContent ? 0 : 15)
         }
         .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1), value: showContent)
+    }
+    
+    private var titleText: String {
+        if let name = oshiName, !name.isEmpty {
+            return String(format: NSLocalizedString("limit_modal_title_with_oshi", comment: "Keep talking with %@"), name)
+        }
+        return NSLocalizedString("daily_limit_reached_title", comment: "Daily conversation limit reached")
     }
     
     // MARK: - Buttons Section
@@ -397,12 +412,28 @@ struct MessageLimitModal: View {
             }
             .buttonStyle(ScaleButtonStyle())
             
-            // Watch ad button (非表示 - 個人チャットではインタースティシャル広告に移行)
-//            Button(action: {
-//                generateHapticFeedback()
-//                onWatchAd()
-//            }) { ... }
-//            .buttonStyle(ScaleButtonStyle())
+            // 広告はアップグレードより目立たせない、控えめなテキストリンク
+            if canWatchAd {
+                Button(action: {
+                    onWatchAd()
+                }) {
+                    Text(isAdLoading
+                         ? NSLocalizedString("reward_ad_loading", comment: "Loading ad...")
+                         : String(
+                            format: NSLocalizedString(
+                                unlocksReply ? "limit_watch_ad_and_unlock_link" : "limit_watch_ad_link",
+                                comment: "Watch an ad to continue chatting"
+                            ),
+                            PaywallConfig.shared.adRewardMessageCount
+                         ))
+                        .font(.system(size: 13, weight: .medium))
+                        .underline(!isAdLoading)
+                        .foregroundColor(.white.opacity(0.55))
+                }
+                .buttonStyle(.plain)
+                .disabled(isAdLoading)
+                .padding(.top, 2)
+            }
             
             // Dismiss button
             Button(action: {

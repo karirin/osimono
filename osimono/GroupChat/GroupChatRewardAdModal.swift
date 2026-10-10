@@ -4,6 +4,8 @@ import SwiftUI
 struct GroupChatRewardAdModal: View {
     let onWatchAd: () -> Void
     let onUpgrade: () -> Void
+    /// リワード広告の読み込み中
+    var isAdLoading: Bool = false
 
     @State private var showBackground = false
     @State private var showCard = false
@@ -346,15 +348,20 @@ struct GroupChatRewardAdModal: View {
                             .foregroundStyle(premiumGradient)
                     }
 
-                    Text("広告を視聴して続ける")
+                    Text(isAdLoading ? NSLocalizedString("reward_ad_loading", comment: "Loading ad...") : "広告を視聴して続ける")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.white.opacity(0.9))
 
                     Spacer()
 
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color(hex: "9D4EDD").opacity(0.6))
+                    if isAdLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Color(hex: "9D4EDD").opacity(0.6))
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -368,6 +375,7 @@ struct GroupChatRewardAdModal: View {
                 )
             }
             .buttonStyle(ScaleButtonStyle())
+            .disabled(isAdLoading)
         }
         .opacity(showButtons ? 1 : 0)
         .offset(y: showButtons ? 0 : 20)

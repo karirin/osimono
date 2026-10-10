@@ -18,6 +18,8 @@ struct TopView: View {
     @State private var selectedOshi: Oshi? = nil
     @State private var viewModel: OshiViewModel? = nil
     @State private var showAddOshiFlag = false
+    @State private var showWinBackPaywall = false
+    @Environment(\.scenePhase) private var scenePhase
     
     @State private var hasLoadedProfileImages = false
     @State private var cachedImageURLs: [String: String] = [:] // oshiId: imageUrl
@@ -156,6 +158,24 @@ struct TopView: View {
         .onDisappear {
             // メモリリーク防止のために監視を解除
             removeObserver()
+        }
+        // ペイウォールを閉じた人向けの24時間限定オファー（通知タップ・再起動時）
+        .onChange(of: scenePhase) { phase in
+            if phase == .active { presentWinBackOfferIfNeeded() }
+        }
+        .task { presentWinBackOfferIfNeeded() }
+        .sheet(isPresented: $showWinBackPaywall) {
+            SubscriptionPreView(source: .winBack)
+        }
+    }
+    
+    private func presentWinBackOfferIfNeeded() {
+        Task { @MainActor in
+            guard !showWinBackPaywall, !showAddOshiFlag,
+                  await PaywallCampaignManager.shared.winBackExpiryToPresent() != nil else { return }
+            // 起動アニメーション・チュートリアルと重ならないよう少し待つ
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            showWinBackPaywall = true
         }
     }
     

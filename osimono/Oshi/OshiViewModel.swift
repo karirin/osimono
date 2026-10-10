@@ -120,6 +120,25 @@ class OshiViewModel: ObservableObject {
         }
     }
     
+    /// Refresh the two registered fields before generation, including edits made in other screens/devices.
+    static func fetchConversationSettings(for oshi: Oshi, completion: @escaping (Oshi?, Error?) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            completion(nil, NSError(domain: "OshiViewModel", code: 401)); return
+        }
+        Database.database().reference().child("oshis").child(userID).child(oshi.id).getData { error, snapshot in
+            guard Auth.auth().currentUser?.uid == userID else {
+                completion(nil, NSError(domain: "OshiViewModel", code: 401)); return
+            }
+            guard error == nil, let data = snapshot?.value as? [String: Any] else {
+                completion(nil, error ?? NSError(domain: "OshiViewModel", code: 404)); return
+            }
+            var fresh = oshi
+            fresh.speaking_style = data["speaking_style"] as? String
+            fresh.relationship_detail = data["relationship_detail"] as? String
+            completion(fresh, nil)
+        }
+    }
+
     // Firebase に保存する
     func saveOshiData(_ updatedOshi: Oshi, completion: @escaping (Error?) -> Void) {
         guard let userID = Auth.auth().currentUser?.uid else {

@@ -11,6 +11,7 @@ class IndividualChatInterstitialManager: NSObject, ObservableObject {
 
     // SwiftUIのナビゲーションと切り離すための独立ウィンドウ
     private var adWindow: UIWindow?
+    @Published private(set) var isPresenting = false
 
     private let triggerInterval: Int = 5
     private let sendCountKey = "IndividualChatSendCount"
@@ -85,6 +86,7 @@ class IndividualChatInterstitialManager: NSObject, ObservableObject {
         window.windowLevel = .alert + 1
         window.makeKeyAndVisible()
         adWindow = window
+        isPresenting = true
 
         print("📺 個人チャット インタースティシャル広告表示")
         ad.present(from: rootVC)
@@ -96,6 +98,7 @@ extension IndividualChatInterstitialManager: FullScreenContentDelegate {
         // 独立ウィンドウを閉じる
         adWindow?.isHidden = true
         adWindow = nil
+        isPresenting = false
         interstitialAd = nil
         preloadAd()
         checkAndShowSubscriptionSheet()
@@ -105,6 +108,7 @@ extension IndividualChatInterstitialManager: FullScreenContentDelegate {
         print("❌ 個人チャット インタースティシャル広告表示エラー: \(error.localizedDescription)")
         adWindow?.isHidden = true
         adWindow = nil
+        isPresenting = false
         interstitialAd = nil
         preloadAd()
         checkAndShowSubscriptionSheet()

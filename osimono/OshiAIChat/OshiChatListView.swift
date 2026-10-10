@@ -29,8 +29,6 @@ struct OshiChatListView: View {
     @State private var unreadCounts: [String: Int] = [:]
     @State private var lastMessages: [String: String] = [:]
     @State private var lastMessageTimes: [String: TimeInterval] = [:]
-    @State private var showDeleteAlert = false
-    @State private var oshiToDelete: Oshi?
     @Environment(\.presentationMode) var presentationMode
     
     @State private var isEditing = false
@@ -59,7 +57,7 @@ struct OshiChatListView: View {
     }
     
     @State private var isCheckingAdminStatus = true
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     
     private var shouldShowAd: Bool {
         AdConfiguration.shouldShowAds(isAdmin: isAdmin, isSubscribed: subscriptionManager.isSubscribed)
@@ -133,16 +131,6 @@ struct OshiChatListView: View {
         }
         .refreshable {
             loadData()
-        }
-        .alert("チャット履歴を削除", isPresented: $showDeleteAlert) {
-            Button("削除", role: .destructive) {
-                if let oshi = oshiToDelete {
-                    deleteChatHistory(for: oshi)
-                }
-            }
-            Button("キャンセル", role: .cancel) {}
-        } message: {
-            Text("\(oshiToDelete?.name ?? "")とのチャット履歴を削除しますか？この操作は元に戻せません。")
         }
         .alert("推しを削除", isPresented: $showDeleteOshiAlert) {
             Button("削除", role: .destructive) {
@@ -751,26 +739,6 @@ struct OshiChatListView: View {
     // MARK: - 編集モードボタン
     private func editModeButtons(oshi: Oshi) -> some View {
         HStack(spacing: 8) {
-            // チャット履歴削除
-            Button(action: {
-                generateHapticFeedback()
-                oshiToDelete = oshi
-                showDeleteAlert = true
-            }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 18, weight: .medium))
-                    Text("履歴")
-                        .font(.system(size: 10, weight: .medium))
-                }
-                .foregroundColor(.orange)
-                .frame(width: 50, height: 50)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.orange.opacity(0.1))
-                )
-            }
-            
             // 推し削除
             Button(action: {
                 generateHapticFeedback()
@@ -909,32 +877,6 @@ struct OshiChatListView: View {
         
         if count % 10 == 0 {
             customerFlag = true
-        }
-    }
-    
-    // MARK: - チャット履歴削除
-    private func deleteChatHistory(for oshi: Oshi) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let chatRef = Database.database().reference()
-            .child("oshiChats")
-            .child(userId)
-            .child(oshi.id)
-        
-        chatRef.removeValue { error, _ in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("チャット履歴削除エラー: \(error.localizedDescription)")
-                } else {
-                    print("チャット履歴を削除しました: \(oshi.name)")
-                    self.lastMessages[oshi.id] = "まだメッセージがありません"
-                    self.lastMessageTimes[oshi.id] = 0
-                    self.unreadCounts[oshi.id] = 0
-                    
-                    let userRef = Database.database().reference().child("users").child(userId)
-                    userRef.child("lastReadTimestamps").child(oshi.id).removeValue()
-                }
-            }
         }
     }
     
